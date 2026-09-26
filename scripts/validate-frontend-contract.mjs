@@ -74,6 +74,7 @@ const required = [
   [app, "../api/workspace-schedule?workspace=", "workspace schedule API"],
   [operatorApp, "onboarding?.status", "operator onboarding summary"],
   [operatorApp, "../api/operator/pilot-kickoff?workspace=", "operator pilot kickoff export"],
+  [operatorApp, "pilotMeasures", "operator pilot proof measures"],
   [app, "delete-workspace-data", "workspace deletion control"],
   [app, "/diff?workspace=", "source difference API"],
   [app, "source-diff", "source difference inspector"],

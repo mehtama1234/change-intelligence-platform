@@ -694,16 +694,21 @@ function buildOperatorOnboardingSummary({ workspace, profile, questionCount, wat
   return { workspaceId: workspace.id, status: missing.length ? "needs_setup" : deliveryCount ? "active" : "ready_for_first_delivery", missingSteps: missing, deliveryCount };
 }
 
-function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, onboardingByWorkspace, schedules = new Map(), schedulerStatuses = {}, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs, remediationSlaMs }) {
+function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, outcomes = [], briefings = [], refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, onboardingByWorkspace, schedules = new Map(), schedulerStatuses = {}, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs, remediationSlaMs }) {
   const summaries = workspaces.map((workspace) => {
     const workspaceDeliveries = deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
     const reviewed = workspaceDeliveries.filter((delivery) => delivery.review);
     const workspaceDecisions = decisions.filter((decision) => decision.workspaceId === workspace.id);
+    const workspaceAudit = auditEntries.filter((entry) => entry.workspaceId === workspace.id);
+    const workspaceAlerts = alerts.filter((alert) => alert.workspaceId === workspace.id);
+    const workspaceOutcomes = outcomes.filter((outcome) => outcome.workspaceId === workspace.id);
+    const workspaceBriefings = briefings.filter((briefing) => briefing.workspaceId === workspace.id);
+    const pilotMeasures = buildPilotMetrics({ workspaceId: workspace.id, auditEntries: workspaceAudit, alerts: workspaceAlerts, outcomes: workspaceOutcomes, briefings: workspaceBriefings }).measures;
     const profile = profiles.find((candidate) => candidate.workspaceId === workspace.id);
     const latestDeliveryAt = workspaceDeliveries.map((delivery) => delivery.generatedAt).sort().at(-1) ?? null;
     const cadenceMs = { weekly: 7 * 86400000, monthly: 31 * 86400000, quarterly: 93 * 86400000 }[profile?.cadence] ?? null;
     const deliveryDelayed = Boolean(profile && cadenceMs && (!latestDeliveryAt || Date.parse(latestDeliveryAt) + cadenceMs < Date.now()));
-    return { id: workspace.id, name: workspace.name, pilotConfigured: Boolean(profile), deliveries: workspaceDeliveries.length, reviewedDeliveries: reviewed.length, usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, latestDeliveryAt, deliveryDelayed, latestDecision: workspaceDecisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)))[0]?.decision ?? null, schedule: schedules.get(workspace.id) ?? null, onboarding: onboardingByWorkspace.get(workspace.id) ?? { workspaceId: workspace.id, status: "needs_setup", missingSteps: ["decision_question", "source_scope", "success_measures", "delivery_cadence", "saved_question"], deliveryCount: workspaceDeliveries.length } };
+    return { id: workspace.id, name: workspace.name, pilotConfigured: Boolean(profile), deliveries: workspaceDeliveries.length, reviewedDeliveries: reviewed.length, usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, latestDeliveryAt, deliveryDelayed, latestDecision: workspaceDecisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)))[0]?.decision ?? null, pilotMeasures: { sourceTraceInspections: pilotMeasures.sourceTraceInspections, briefingReuseCount: pilotMeasures.briefingReuseCount, briefingReuseRate: pilotMeasures.briefingReuseRate, falseAlerts: pilotMeasures.falseAlerts, medianCorrectionResponseMs: pilotMeasures.medianCorrectionResponseMs }, schedule: schedules.get(workspace.id) ?? null, onboarding: onboardingByWorkspace.get(workspace.id) ?? { workspaceId: workspace.id, status: "needs_setup", missingSteps: ["decision_question", "source_scope", "success_measures", "delivery_cadence", "saved_question"], deliveryCount: workspaceDeliveries.length } };
   });
   const reviewed = deliveries.filter((delivery) => delivery.review);
   const now = Date.now();
@@ -2250,6 +2255,8 @@ const server = createServer(async (request, response) => {
       const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
       const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
       const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions;
+      const outcomes = store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes").outcomes;
+      const briefings = (await readJson(briefingsPath, { briefings: [] })).briefings;
       const alerts = store.alertsLedger().alerts;
       const refreshHistory = (await readJson(refreshHistoryPath, { runs: [] })).runs ?? [];
       const sourceScan = await readJson(sourceScanPath, { sources: [] });
@@ -2266,7 +2273,7 @@ const server = createServer(async (request, response) => {
       const backupScheduler = await readJson(backupSchedulerStatusPath, { status: "not_started" });
       const notificationScheduler = await readJson(notificationSchedulerStatusPath, { status: "not_started" });
       const schedules = new Map(workspaces.map((workspace) => [workspace.id, buildWorkspaceSchedule({ workspaceId: workspace.id, profile: profiles.find((profile) => profile.workspaceId === workspace.id) ?? null, deliveries: deliveries.filter((delivery) => delivery.workspaceId === workspace.id), scheduler })]));
-      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, onboardingByWorkspace, schedules, schedulerStatuses: { refresh: scheduler, backup: backupScheduler, notification: notificationScheduler }, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs, remediationSlaMs: operatorRemediationSlaMs }));
+      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, outcomes, briefings, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, onboardingByWorkspace, schedules, schedulerStatuses: { refresh: scheduler, backup: backupScheduler, notification: notificationScheduler }, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs, remediationSlaMs: operatorRemediationSlaMs }));
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));
