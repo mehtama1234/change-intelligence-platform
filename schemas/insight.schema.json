@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://change-intelligence-platform.local/schemas/insight.schema.json",
+  "title": "Bounded insight",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "plainLanguageSummary",
+    "recordIds",
+    "whatWouldChangeOurMind",
+    "status"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]+$" },
+    "title": { "type": "string", "minLength": 1 },
+    "plainLanguageSummary": { "type": "string", "minLength": 1 },
+    "recordIds": { "type": "array", "minItems": 2, "items": { "type": "string" } },
+    "strongestAlternative": { "type": "string", "minLength": 1 },
+    "whatWouldChangeOurMind": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "nextTest": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["draft", "reviewed", "published", "held", "retired"] },
+    "refreshBy": { "type": "string", "format": "date" }
+  },
+  "additionalProperties": false
+}

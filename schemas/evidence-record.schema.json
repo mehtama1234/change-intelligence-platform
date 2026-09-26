@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://change-intelligence-platform.local/schemas/evidence-record.schema.json",
+  "title": "Evidence record",
+  "type": "object",
+  "required": [
+    "id",
+    "sourceRole",
+    "sourceRepository",
+    "sourceRef",
+    "title",
+    "observation",
+    "claimState",
+    "asOf",
+    "limits"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]+$" },
+    "sourceRole": {
+      "type": "string",
+      "enum": [
+        "trend_signal",
+        "company_report",
+        "industry",
+        "private_company",
+        "social_cultural",
+        "institutional",
+        "research",
+        "geopolitical",
+        "open_question"
+      ]
+    },
+    "sourceRepository": { "type": "string", "minLength": 1 },
+    "sourceRef": { "type": "string", "minLength": 1 },
+    "sourceLocator": { "type": "string" },
+    "title": { "type": "string", "minLength": 1 },
+    "observation": { "type": "string", "minLength": 1 },
+    "company": { "type": "string" },
+    "industry": { "type": "string" },
+    "theme": { "type": "string" },
+    "mechanism": { "type": "string" },
+    "affectedGroups": { "type": "array", "items": { "type": "string" } },
+    "claimState": {
+      "type": "string",
+      "enum": [
+        "reported",
+        "calculated",
+        "measured",
+        "compared",
+        "interpreted",
+        "inferred_across_sources",
+        "open",
+        "disproved_or_weakened"
+      ]
+    },
+    "asOf": { "type": "string", "format": "date" },
+    "reportingPeriod": { "type": "string" },
+    "unit": { "type": "string" },
+    "denominator": { "type": "string" },
+    "limits": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "relatedRecordIds": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

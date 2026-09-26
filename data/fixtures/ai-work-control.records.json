@@ -1,0 +1,95 @@
+{
+  "domain": "ai-work-control",
+  "records": [
+    {
+      "id": "signal-ai-work-control-001",
+      "sourceRole": "trend_signal",
+      "sourceRepository": "trend-hunting",
+      "sourceRef": "analysis/DEEP-TRENDS-CROSS-THEME-SYNTHESIS-V2.md",
+      "sourceLocator": "AI and agency lane",
+      "title": "AI capability is not the same as worker control",
+      "observation": "The existing synthesis separates access to AI capability from control over tasks, worker welfare, and successful remedy.",
+      "theme": "ai-work-control",
+      "mechanism": "A tool can increase capability while leaving decision rights, measurement, and correction with an employer or platform.",
+      "affectedGroups": ["workers", "customers", "employers"],
+      "claimState": "interpreted",
+      "asOf": "2026-09-22",
+      "limits": ["This is a synthesis boundary, not a pooled causal estimate."]
+    },
+    {
+      "id": "research-ai-work-control-001",
+      "sourceRole": "research",
+      "sourceRepository": "trend-hunting",
+      "sourceRef": "analysis/DEEP-TRENDS-CROSS-THEME-SYNTHESIS-V2.md",
+      "sourceLocator": "AI agency evidence summary",
+      "title": "AI access can reduce some work without changing all output",
+      "observation": "The recorded evidence describes a field experiment across 66 firms and 7,137 knowledge workers in which AI access reduced email time and some work outside regular hours, without changing task quantity or composition.",
+      "theme": "ai-work-control",
+      "mechanism": "AI may remove one visible task while leaving the wider allocation of work and control unchanged.",
+      "affectedGroups": ["knowledge_workers", "managers"],
+      "claimState": "reported",
+      "asOf": "2026-09-22",
+      "unit": "workers and firms",
+      "denominator": "7,137 workers across 66 firms",
+      "limits": ["The record does not establish a universal productivity effect.", "It does not by itself establish durable worker welfare or bargaining effects."]
+    },
+    {
+      "id": "company-ai-work-control-001",
+      "sourceRole": "company_report",
+      "sourceRepository": "company-atlas-lab",
+      "sourceRef": "local-runs/cross-company-ai-outcome-evidence-board-v1.html",
+      "sourceLocator": "cross-company AI outcome evidence board",
+      "title": "Company AI claims require separate outcome evidence",
+      "observation": "The Atlas board separates company AI claims from independent outcome evidence and records open proof requirements rather than treating deployment language as realized benefit.",
+      "theme": "ai-work-control",
+      "mechanism": "Company adoption language can describe an input or intention without proving a customer, worker, or public outcome.",
+      "affectedGroups": ["workers", "customers", "institutions"],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "limits": ["The board is a research surface; it is not itself independent outcome evidence."]
+    },
+    {
+      "id": "social-ai-work-control-001",
+      "sourceRole": "social_cultural",
+      "sourceRepository": "cultural-geopolitical-theme-mining",
+      "sourceRef": "site/ai-work-control-073.html",
+      "sourceLocator": "AI work-control reader page",
+      "title": "Capability can arrive with dependence",
+      "observation": "The reader layer frames AI infrastructure as potentially building useful capability and dependence together, while keeping portability, exit, and state-control effects open.",
+      "theme": "ai-work-control",
+      "mechanism": "A service can make work possible while increasing reliance on a provider or system that the user cannot easily replace.",
+      "affectedGroups": ["workers", "organizations", "public institutions"],
+      "claimState": "interpreted",
+      "asOf": "2026-09-25",
+      "limits": ["The page preserves open questions about application migration, outcomes, portability, and exit."]
+    },
+    {
+      "id": "open-ai-work-control-001",
+      "sourceRole": "open_question",
+      "sourceRepository": "change-intelligence-platform",
+      "sourceRef": "domains/ai-work-control/DOMAIN-BRIEF.md",
+      "sourceLocator": "Initial open questions",
+      "title": "Can workers and customers correct or leave AI-mediated systems?",
+      "observation": "The first vertical slice still needs compatible evidence on correction, appeal, switching, and exit after an AI-mediated decision or workflow change.",
+      "theme": "ai-work-control",
+      "mechanism": "Control is incomplete if a person cannot understand, correct, or leave the system without losing ordinary access.",
+      "affectedGroups": ["workers", "customers", "institutions"],
+      "claimState": "open",
+      "asOf": "2026-09-25",
+      "limits": ["This is a research request, not a finding."]
+    }
+  ],
+  "insights": [
+    {
+      "id": "insight-ai-capability-control-gap-001",
+      "title": "AI can return time without returning control",
+      "plainLanguageSummary": "The current evidence supports a narrower reading than 'AI makes work more productive': AI can remove visible tasks while decisions, measurement, correction, and dependence remain controlled by the employer or platform.",
+      "recordIds": ["signal-ai-work-control-001", "research-ai-work-control-001", "company-ai-work-control-001", "social-ai-work-control-001"],
+      "strongestAlternative": "The apparent control gap may be temporary because early deployments have not yet matured into stable workflow changes.",
+      "whatWouldChangeOurMind": ["A compatible longitudinal study shows durable control, pay, and remedy improvements for affected workers.", "Company and independent records show that workers can understand, correct, and leave AI-mediated decisions without material penalty."],
+      "nextTest": "Track one named AI-mediated workflow from company deployment through worker/customer use, correction, appeal, and exit evidence.",
+      "status": "draft",
+      "refreshBy": "2026-12-31"
+    }
+  ]
+}
