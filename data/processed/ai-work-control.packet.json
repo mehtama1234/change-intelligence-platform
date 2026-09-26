@@ -2000,6 +2000,32 @@
       ]
     },
     {
+      "id": "cultural-named-workplace-system-stage-ledger",
+      "sourceRole": "research",
+      "sourceRepository": "cultural-geopolitical-theme-mining",
+      "sourceRef": "analysis/projects/ai-work-control/data/named-workplace-system-stage-ledger-v1.json",
+      "sourceLocator": "five named workplace system stage comparison",
+      "sourceDigest": "c049f8c116bf62caddef4cce87ec71f35f612ef7556b4647ac0e7253482135cc",
+      "sourceBytes": 9957,
+      "sourceExcerpt": " governance is not proof of live worker control or welfare improvement.\" }, { \"event_id\": \"DE-MS-PLACES-2025-COUNTRY-TARGETING\", \"system_and_owner\": \"Microsoft Places; Microsoft Digital product group with works-council approval conditions\", \"dated_implementation_or_rule\": \"2025-05-08 reported product intervention during internal rollout\", \"worker_exposure\": \"Location sharing and cross-country visibility were the decision surface; worker take-up and actual exposure not observed\", \"worker_voice\": \"Works-council concern about cross-country location visibility reported\", \"specific_control_or_rule_change\": \"Country-level feature targeting and default opt-out for employee location sharing reported",
+      "title": "Named workplace systems reach governance and remedy stages before lived outcomes are measured",
+      "observation": "A five-case ledger follows IBM Germany AI systems, Microsoft Places and Copilot, OpenAI/Statsig recruitment systems, and Apple recruitment systems through named owners, dated rules, worker voice, control changes, enforcement or remedy, and the remaining worker, household, and exit gaps.",
+      "theme": "ai-work-control",
+      "mechanism": "A named system can acquire formal governance, consent, correction, or monetary-remedy rules without producing a measured worker-level or household outcome.",
+      "affectedGroups": [
+        "workers",
+        "works councils",
+        "job applicants",
+        "households",
+        "employers"
+      ],
+      "claimState": "compared",
+      "asOf": "2026-09-17",
+      "limits": [
+        "The ledger is a bounded stage comparison, not a common workplace panel or causal estimate; most cases do not observe actual exposure, enforcement, worker welfare, household security, or practical exit."
+      ]
+    },
+    {
       "id": "cultural-amazon-bandameeda-remedy",
       "sourceRole": "research",
       "sourceRepository": "cultural-geopolitical-theme-mining",
@@ -2065,10 +2091,12 @@
         "cultural-nber-ai-task-adoption",
         "cultural-nber-ai-access-time-boundary",
         "cultural-jrc-algorithmic-management-outcomes",
+        "cultural-named-workplace-system-stage-ledger",
         "cultural-amazon-bandameeda-remedy"
       ],
       "namedWorkflowRecordIds": [
-        "cultural-nber-ai-access-time-boundary"
+        "cultural-nber-ai-access-time-boundary",
+        "cultural-named-workplace-system-stage-ledger"
       ],
       "counterexampleRecordIds": [
         "trend-uber-kumar-review-counterexample"
@@ -2079,20 +2107,26 @@
         "worker use",
         "email time",
         "after-hours work",
-        "task quantity and composition"
+        "task quantity and composition",
+        "named owner and dated rule",
+        "worker voice",
+        "formal control or consent rule",
+        "reported enforcement or monetary remedy"
       ],
       "missingStages": [
+        "same-workplace exposure linkage",
         "manager reallocation",
         "performance or pace rule",
         "pay or promotion",
-        "correction or appeal",
+        "successful correction or appeal",
         "health or household result",
         "exit or durable result"
       ],
       "canSupport": [
         "Company reports show commercial and operational movement.",
-        "Independent records show measured control, adoption, working-condition, or remedy observations.",
+        "Independent records show measured control, adoption, working-condition, governance, or remedy observations.",
         "W33795 provides randomized evidence from tool access to short-run worker time patterns.",
+        "The named-system ledger shows that formal governance and reported remedies are distinct from lived outcomes.",
         "The counterexample shows that human review does not guarantee restoration."
       ],
       "cannotSupport": [

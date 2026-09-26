@@ -350,6 +350,24 @@
       "excerptTerms": ["70,316", "lower autonomy", "stress"]
     },
     {
+      "id": "cultural-named-workplace-system-stage-ledger",
+      "sourceRole": "research",
+      "sourceRepository": "cultural-geopolitical-theme-mining",
+      "sourcePath": "analysis/projects/ai-work-control/data/named-workplace-system-stage-ledger-v1.json",
+      "sourceLocator": "five named workplace system stage comparison",
+      "title": "Named workplace systems reach governance and remedy stages before lived outcomes are measured",
+      "observation": "A five-case ledger follows IBM Germany AI systems, Microsoft Places and Copilot, OpenAI/Statsig recruitment systems, and Apple recruitment systems through named owners, dated rules, worker voice, control changes, enforcement or remedy, and the remaining worker, household, and exit gaps.",
+      "theme": "ai-work-control",
+      "mechanism": "A named system can acquire formal governance, consent, correction, or monetary-remedy rules without producing a measured worker-level or household outcome.",
+      "affectedGroups": ["workers", "works councils", "job applicants", "households", "employers"],
+      "claimState": "compared",
+      "asOf": "2026-09-17",
+      "unit": "five named workplace system cases",
+      "denominator": "Five committed local records; cases retain their own evidence boundaries and are not pooled estimates",
+      "limits": ["The ledger is a bounded stage comparison, not a common workplace panel or causal estimate; most cases do not observe actual exposure, enforcement, worker welfare, household security, or practical exit."],
+      "excerptTerms": ["Microsoft Places", "worker outcome", "household outcome", "Apple"]
+    },
+    {
       "id": "cultural-amazon-bandameeda-remedy",
       "sourceRole": "research",
       "sourceRepository": "cultural-geopolitical-theme-mining",
@@ -392,13 +410,13 @@
       "title": "Company movement versus worker control and remedy",
       "question": "Does reported AI capability or deployment movement produce more worker control, usable correction, and durable remedy?",
       "companyRecordIds": ["atlas-c3-ai-report-window", "atlas-nvidia-ai-platform-window", "atlas-microsoft-cloud-window", "atlas-oracle-cloud-window", "atlas-broadcom-ai-infrastructure-window"],
-      "independentRecordIds": ["trend-ai-agency-control-measure", "cultural-nber-ai-task-adoption", "cultural-nber-ai-access-time-boundary", "cultural-jrc-algorithmic-management-outcomes", "cultural-amazon-bandameeda-remedy"],
-      "namedWorkflowRecordIds": ["cultural-nber-ai-access-time-boundary"],
+      "independentRecordIds": ["trend-ai-agency-control-measure", "cultural-nber-ai-task-adoption", "cultural-nber-ai-access-time-boundary", "cultural-jrc-algorithmic-management-outcomes", "cultural-named-workplace-system-stage-ledger", "cultural-amazon-bandameeda-remedy"],
+      "namedWorkflowRecordIds": ["cultural-nber-ai-access-time-boundary", "cultural-named-workplace-system-stage-ledger"],
       "counterexampleRecordIds": ["trend-uber-kumar-review-counterexample"],
       "status": "named_workflow_partial",
-      "measuredStages": ["tool access assignment", "worker use", "email time", "after-hours work", "task quantity and composition"],
-      "missingStages": ["manager reallocation", "performance or pace rule", "pay or promotion", "correction or appeal", "health or household result", "exit or durable result"],
-      "canSupport": ["Company reports show commercial and operational movement.", "Independent records show measured control, adoption, working-condition, or remedy observations.", "W33795 provides randomized evidence from tool access to short-run worker time patterns.", "The counterexample shows that human review does not guarantee restoration."],
+      "measuredStages": ["tool access assignment", "worker use", "email time", "after-hours work", "task quantity and composition", "named owner and dated rule", "worker voice", "formal control or consent rule", "reported enforcement or monetary remedy"],
+      "missingStages": ["same-workplace exposure linkage", "manager reallocation", "performance or pace rule", "pay or promotion", "successful correction or appeal", "health or household result", "exit or durable result"],
+      "canSupport": ["Company reports show commercial and operational movement.", "Independent records show measured control, adoption, working-condition, governance, or remedy observations.", "W33795 provides randomized evidence from tool access to short-run worker time patterns.", "The named-system ledger shows that formal governance and reported remedies are distinct from lived outcomes.", "The counterexample shows that human review does not guarantee restoration."],
       "cannotSupport": ["W33795 does not connect to one of the five public companies or establish that their reported movement caused the worker result.", "The evidence does not yet follow the same worker and workplace from access through correction, reallocation, and later result."],
       "nextTest": "Join the W33795-style access event to a workplace rule and later outcome: tool access → time/task change → manager reallocation or evaluation rule → worker discretion/pace → pay, health, family time, appeal, or exit."
     }
