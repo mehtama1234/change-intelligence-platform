@@ -45,6 +45,11 @@ jobs:
         run: npm ci
       - name: Install Chromium and Linux dependencies
         run: npx playwright install --with-deps chromium
+      - name: Materialize runtime from the research contract snapshot
+        run: npm run refresh
+        env:
+          REFRESH_SKIP_SEC: "1"
+          REFRESH_RETRIES: "0"
       - name: Run clean-checkout contract tests
         run: npm run ci:core
       - name: Run browser acceptance
