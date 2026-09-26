@@ -25,6 +25,7 @@
     "evaluate:insight-quality": "node scripts/evaluate-insight-quality.mjs",
     "sync:runtime-store": "node scripts/sync-runtime-store.mjs",
     "backup:runtime": "node scripts/backup-runtime.mjs",
+    "backup:scheduler": "node scripts/backup-scheduler.mjs",
     "restore:runtime": "node scripts/restore-runtime.mjs",
     "verify:e2e": "node scripts/verify-end-to-end.mjs",
     "test:read-model": "node scripts/test-read-model.mjs",
@@ -62,8 +63,9 @@
     "test:provisioned-workspace-flow": "node scripts/test-provisioned-workspace-flow.mjs",
     "test:frontend-runtime": "node scripts/test-frontend-runtime.mjs",
     "test:frontend-browser": "node scripts/test-frontend-browser.mjs",
+    "test:backup-scheduler": "node scripts/test-backup-scheduler.mjs",
     "test:operator-delivery": "node scripts/test-operator-delivery.mjs",
-    "ci:core": "npm run validate:fixtures && npm run validate:packet && npm run validate:adapters && npm run validate:company-report-windows && npm run validate:deployment && npm run validate:frontend && npm run test:frontend-runtime && npm run evaluate:insight-quality && npm run test:insight-quality && npm run test:review-flow && npm run test:insight-publication && npm run test:insight-provenance && npm run test:insight-recovery && npm run test:source-scan-runtime && npm run test:sec-report-windows && npm run test:refresh-runtime && npm run test:refresh-cadence && npm run test:source-availability && npm run test:availability-delivery && npm run test:scheduler && npm run test:read-model && npm run test:question-matching && npm run test:insight-opportunities && npm run test:insight-promotion && npm run test:storage && npm run test:api:auth && npm run test:pilot-delivery && npm run test:workspace-delivery && npm run test:workspace-deletion && npm run test:workspace-sources && npm run test:private-source-retrieval && npm run test:provisioned-workspace-flow",
+    "ci:core": "npm run validate:fixtures && npm run validate:packet && npm run validate:adapters && npm run validate:company-report-windows && npm run validate:deployment && npm run validate:frontend && npm run test:frontend-runtime && npm run test:backup-scheduler && npm run evaluate:insight-quality && npm run test:insight-quality && npm run test:review-flow && npm run test:insight-publication && npm run test:insight-provenance && npm run test:insight-recovery && npm run test:source-scan-runtime && npm run test:sec-report-windows && npm run test:refresh-runtime && npm run test:refresh-cadence && npm run test:source-availability && npm run test:availability-delivery && npm run test:scheduler && npm run test:read-model && npm run test:question-matching && npm run test:insight-opportunities && npm run test:insight-promotion && npm run test:storage && npm run test:api:auth && npm run test:pilot-delivery && npm run test:workspace-delivery && npm run test:workspace-deletion && npm run test:workspace-sources && npm run test:private-source-retrieval && npm run test:provisioned-workspace-flow",
     "serve": "node server.mjs",
     "refresh": "node scripts/run-refresh-cycle.mjs",
     "scheduler": "node scripts/scheduler.mjs"

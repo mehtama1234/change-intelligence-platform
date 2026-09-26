@@ -39,6 +39,17 @@ services:
       - change-intelligence-runtime:/app/runtime
       - ${RESEARCH_ROOT:?Set RESEARCH_ROOT}:/app/research:ro
     restart: unless-stopped
+  change-intelligence-backup:
+    build: .
+    command: ["node", "scripts/backup-scheduler.mjs"]
+    environment:
+      RUNTIME_DATA_DIR: /app/runtime
+      BACKUP_DIR: /app/backups
+      BACKUP_INTERVAL_MS: ${BACKUP_INTERVAL_MS:-86400000}
+    volumes:
+      - change-intelligence-runtime:/app/runtime
+      - change-intelligence-backups:/app/backups
+    restart: unless-stopped
 
 volumes:
   change-intelligence-runtime:

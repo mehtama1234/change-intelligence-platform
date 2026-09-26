@@ -1,0 +1,25 @@
+import { mkdir, readFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import { mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { createRuntimeStore } from "../storage.mjs";
+
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
+const base = await mkdtemp(resolve(tmpdir(), "change-intelligence-backup-scheduler-"));
+const runtimeDir = resolve(base, "runtime");
+const backupDir = resolve(base, "backups");
+await mkdir(runtimeDir, { recursive: true });
+const store = createRuntimeStore(runtimeDir);
+store.close();
+const child = spawn(process.execPath, [resolve(root, "scripts/backup-scheduler.mjs")], { cwd: root, env: { ...process.env, RUNTIME_DATA_DIR: runtimeDir, BACKUP_DIR: backupDir, BACKUP_INTERVAL_MS: "10", BACKUP_SCHEDULER_MAX_CYCLES: "1" }, stdio: ["ignore", "pipe", "pipe"] });
+let output = "";
+child.stdout.on("data", (data) => { output += data; });
+child.stderr.on("data", (data) => { output += data; });
+const exitCode = await new Promise((resolveExit) => child.once("exit", (code) => resolveExit(code)));
+if (exitCode !== 0) throw new Error(`Backup scheduler exited ${exitCode}: ${output}`);
+const status = JSON.parse(await readFile(resolve(runtimeDir, "backup-scheduler-status.json"), "utf8"));
+const manifest = JSON.parse(await readFile(resolve(backupDir, "manifest.json"), "utf8"));
+if (status.status !== "stopped" || status.runCount !== 1 || status.lastRunStatus !== "complete" || !status.lastBackupFileCount || manifest.schemaVersion !== "runtime-backup-v1" || !manifest.files.some((file) => file.name === "change-intelligence.sqlite")) throw new Error(`Backup scheduler contract failed: ${JSON.stringify({ status, manifest })}`);
+console.log(`Backup scheduler test passed: one scheduled backup produced ${status.lastBackupFileCount} manifest files and stopped cleanly.`);

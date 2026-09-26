@@ -33,6 +33,7 @@ const runtimeFiles = [
   "operator-notification-attempts.json",
   "pilot-readiness.json",
   "scheduler-status.json",
+  "backup-scheduler-status.json",
   "refresh-scope.json",
   "refresh-scope-state.json",
   "latest-source-availability.json",

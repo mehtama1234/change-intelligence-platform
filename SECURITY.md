@@ -180,9 +180,12 @@ and restore tests must verify both the database and generated research
 artifacts.
 
 Use `npm run backup:runtime` with an explicit `BACKUP_DIR` to create a
-checksum-manifested backup. Restore into an explicit `RUNTIME_DATA_DIR` with
-`npm run restore:runtime`; the backup test exercises database and compatibility
-ledger recovery before a deployment is trusted.
+checksum-manifested backup. The Compose deployment runs the same operation in
+the separate `change-intelligence-backup` worker; configure its cadence with
+`BACKUP_INTERVAL_MS`. Its status receipt is exposed in `/api/operations` and
+included in later backups. Restore into an explicit `RUNTIME_DATA_DIR` with
+`npm run restore:runtime`; the backup tests exercise database, compatibility
+ledger, and scheduler-status recovery before a deployment is trusted.
 
 Operational probes are separate: `/api/health` is a liveness check, while
 `/api/readiness` returns `200` only when the database is intact, the latest
