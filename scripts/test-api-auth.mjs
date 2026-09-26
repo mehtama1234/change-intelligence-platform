@@ -9,6 +9,7 @@ const base = `http://127.0.0.1:${port}`;
 const runtimeDir = `/tmp/change-intelligence-api-auth-${Date.now()}`;
 await mkdir(runtimeDir, { recursive: true });
 await writeFile(`${runtimeDir}/review-events.json`, `${JSON.stringify({ schemaVersion: "review-event-ledger-v1", events: [{ id: "private-event", eventType: "briefing_republish", workspaceId: "other-private-workspace", targetId: "private-briefing", occurredAt: new Date().toISOString() }] }, null, 2)}\n`);
+await writeFile(`${runtimeDir}/source-availability-events.json`, `${JSON.stringify({ schemaVersion: "source-availability-event-ledger-v1", events: [{ id: "availability-event-test", sourceId: "trend-hunting-ai-control", repository: "trend-hunting", fromStatus: "unavailable", toStatus: "available", occurredAt: new Date().toISOString() }] }, null, 2)}\n`);
 const child = spawn(process.execPath, [resolve(root, "server.mjs")], {
   cwd: root,
   env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher", "outsider-token": "outside-user", "operator-token": "ops-user" }), OPERATOR_ACTORS_JSON: JSON.stringify(["ops-user"]), OPERATOR_MAX_FAILED_REFRESHES: "-1" },
@@ -39,7 +40,7 @@ try {
   if (outsiderTimeline.status !== 403) throw new Error(`Expected non-member timeline read to return 403, received ${outsiderTimeline.status}`);
   const memberTimeline = await fetch(`${base}/api/timeline?workspace=demo-research`, { headers: authHeaders });
   const memberTimelineBody = await memberTimeline.json();
-  if (memberTimeline.status !== 200 || memberTimelineBody.events.some((event) => event.id === "private-event")) throw new Error("Workspace timeline leaked an event from another workspace.");
+  if (memberTimeline.status !== 200 || memberTimelineBody.events.some((event) => event.id === "private-event") || !memberTimelineBody.events.some((event) => event.eventType === "source_availability" && event.sourceId === "trend-hunting-ai-control")) throw new Error("Workspace timeline leaked a private event or omitted source availability history.");
   const outsiderUsage = await fetch(`${base}/api/usage?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderUsage.status !== 403) throw new Error(`Expected non-member usage read to return 403, received ${outsiderUsage.status}`);
   const outsiderUpdate = await fetch(`${base}/api/workspace-update?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });

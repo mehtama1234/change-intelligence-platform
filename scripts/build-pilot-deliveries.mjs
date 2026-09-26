@@ -71,6 +71,7 @@ for (const profile of profiles) {
       staleLinkedInsights: linkedInsights.filter((insight) => insight.state === "stale").length
       ,openAvailabilityAlerts: openAvailabilityAlerts.length
       ,unavailableSources: sourceAvailability.counts?.unavailable ?? 0
+      ,unavailableSourceIds: openAvailabilityAlerts.map((alert) => alert.sourceId)
     },
     briefings: workspaceBriefings.map((briefing) => ({ id: briefing.id, title: briefing.title, state: briefing.state, publication: briefing.publication, evidenceDigest: briefing.evidenceDigest, staleReason: briefing.staleReason ?? null, insightProvenance: briefing.insightProvenance ?? [] })),
     insightProvenance: linkedInsights,

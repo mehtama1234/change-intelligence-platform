@@ -1278,6 +1278,8 @@ const server = createServer(async (request, response) => {
       const briefingPublications = store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications").publications;
       const insightPublications = store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications").publications;
       const decisionOutcomes = store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes").outcomes;
+      const pilotDeliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
+      const availabilityHistory = await readJson(resolve(runtimeDir, "source-availability-events.json"), { events: [] });
       const sourceHistory = await readJson(sourceScanHistoryPath, { runs: [] });
       const sourceRuns = sourceHistory.runs?.length ? sourceHistory.runs : [{ runId: null, sources: sourceSnapshots }];
       const allEvents = [
@@ -1285,7 +1287,9 @@ const server = createServer(async (request, response) => {
         ...reviewEvents,
         ...briefingPublications.map((publication) => ({ eventType: "briefing_publish", targetId: publication.briefingId, workspaceId: publication.workspaceId, reviewer: publication.publishedBy, currentEvidenceDigest: publication.evidenceDigest, occurredAt: publication.publishedAt, publicationId: publication.id })),
         ...insightPublications.map((publication) => ({ eventType: "insight_publish", targetId: publication.candidateId, candidateKey: publication.candidateKey, workspaceId: publication.workspaceId, reviewer: publication.publisher, currentEvidenceDigest: publication.evidenceDigest, occurredAt: publication.publishedAt, publicationId: publication.id })),
-        ...decisionOutcomes.map((outcome) => ({ eventType: "decision_outcome", targetId: outcome.briefingId, workspaceId: outcome.workspaceId, reviewer: outcome.recordedBy, status: outcome.outcomeState, decisionState: outcome.decisionState, occurredAt: outcome.recordedAt, decisionOutcomeId: outcome.id }))
+        ...decisionOutcomes.map((outcome) => ({ eventType: "decision_outcome", targetId: outcome.briefingId, workspaceId: outcome.workspaceId, reviewer: outcome.recordedBy, status: outcome.outcomeState, decisionState: outcome.decisionState, occurredAt: outcome.recordedAt, decisionOutcomeId: outcome.id, insightPublicationIds: outcome.insightProvenance?.map((insight) => insight.publicationId) ?? [] })),
+        ...(availabilityHistory.events ?? []).map((event) => ({ eventType: "source_availability", targetId: event.sourceId, sourceId: event.sourceId, repository: event.repository, status: `${event.fromStatus}_to_${event.toStatus}`, reason: event.reason, occurredAt: event.occurredAt, availabilityEventId: event.id })),
+        ...pilotDeliveries.map((delivery) => ({ eventType: "customer_delivery", targetId: delivery.id, workspaceId: delivery.workspaceId, status: delivery.status, deliveryStatus: delivery.status, refreshRunId: delivery.refreshRunId, unavailableSourceIds: delivery.snapshot?.unavailableSourceIds ?? [], occurredAt: delivery.generatedAt }))
       ];
       const visible = (event) => !event.workspaceId || !access.workspaceIds || access.workspaceIds.includes(event.workspaceId);
       const events = allEvents.filter(visible).sort((a, b) => String(a.occurredAt).localeCompare(String(b.occurredAt)));
