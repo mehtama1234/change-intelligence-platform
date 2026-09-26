@@ -259,6 +259,27 @@
         <div id="questions-items" class="record-list" aria-live="polite"></div>
       </section>
 
+      <section id="workspace-support" aria-labelledby="workspace-support-title">
+        <div class="section-heading">
+          <p class="eyebrow">Customer workspace · support</p>
+          <h2 id="workspace-support-title">Get help with the service</h2>
+          <p id="workspace-support-summary" class="muted">Loading support requests…</p>
+        </div>
+        <form id="workspace-support-form" class="question-form">
+          <label for="support-category">What needs attention?</label>
+          <select id="support-category"><option value="delivery">A delivery or briefing</option><option value="source">A source or evidence problem</option><option value="access">Access or workspace setup</option><option value="billing">Offer or billing question</option><option value="other">Something else</option></select>
+          <label for="support-severity">Urgency</label>
+          <select id="support-severity"><option value="normal">Normal</option><option value="low">Low</option><option value="urgent">Urgent</option></select>
+          <label for="support-summary">Short description</label>
+          <input id="support-summary" minlength="5" maxlength="200" required placeholder="e.g. The latest delivery is missing a source">
+          <label for="support-details">Details</label>
+          <textarea id="support-details" minlength="10" maxlength="3000" required placeholder="Explain what happened and what you need checked."></textarea>
+          <button type="submit">Send support request</button>
+          <p id="workspace-support-status" class="muted" role="status"></p>
+        </form>
+        <div id="workspace-support-items" class="record-list" aria-live="polite"></div>
+      </section>
+
       <section id="decision-feedback" aria-labelledby="decision-feedback-title">
         <div class="section-heading">
           <p class="eyebrow">Customer workspace · learning loop</p>

@@ -198,6 +198,12 @@ Use separate stores for:
 - review decisions and publication versions;
 - customer watchlists and private workspaces.
 
+Customer support requests are stored as workspace-scoped runtime records. The
+customer read model exposes only requests visible to that workspace; the
+operator read model exposes the service queue. State changes append history and
+audit entries, so resolving a service issue does not rewrite the original
+customer report.
+
 Every published artifact should record source IDs, source versions, generation
 time, code version, reviewer state, and known limitations.
 

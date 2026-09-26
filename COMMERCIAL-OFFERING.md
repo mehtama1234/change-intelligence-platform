@@ -129,6 +129,14 @@ Customers are not paying for more articles. They pay for reduced uncertainty:
 - reusable, auditable briefings;
 - an institutional memory that survives staff turnover.
 
+Support is part of the offer. A workspace member can open a private request
+about a delivery, source, access, offer, or other service problem. The request
+keeps its original description, urgency, owner, and status history inside the
+workspace. The operator queue can acknowledge, investigate, resolve, or close
+it without exposing one customer's request to another customer. A support
+resolution is service evidence; it is not proof that the underlying research
+was correct.
+
 ## Trust requirements
 
 Every commercial insight must show:

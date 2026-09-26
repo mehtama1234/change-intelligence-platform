@@ -19,11 +19,14 @@ const required = [
   [html, 'id="pilot-kickoff-export"', "pilot kickoff export control"],
   [html, 'id="pilot-closeout-export"', "pilot closeout export control"],
   [html, 'id="workspace-sources"', "private source workspace panel"],
+  [html, 'id="workspace-support"', "customer support panel"],
+  [html, 'id="workspace-support-form"', "customer support form"],
   [html, 'id="workspace-source-form"', "private source intake form"],
   [html, 'id="workspace-retention"', "workspace retention control"],
   [html, 'id="workspace-onboarding"', "workspace onboarding panel"],
   [operatorHtml, 'id="operator-workspaces"', "operator workspace queue"],
   [operatorHtml, 'id="operator-invitations"', "operator invitation outbox"],
+  [operatorHtml, 'id="operator-support-requests"', "operator support queue"],
   [operatorHtml, 'id="operator-refresh-failures"', "operator refresh failure queue"],
   [operatorHtml, 'id="operator-kickoff-status"', "operator kickoff status"],
   [operatorHtml, 'id="export-cohort"', "operator cohort export control"],
@@ -71,6 +74,8 @@ const required = [
   [app, "../api/workspace-sources?workspace=", "private source API"],
   [app, "workspace-source-form", "private source intake command"],
   [app, "review-private-source", "private source review control"],
+  [app, "../api/support-requests", "customer support API"],
+  [app, "workspace-support-status", "customer support submission"],
   [app, "../api/workspace-retention?workspace=", "workspace retention API"],
   [app, "../api/workspace-deletion", "workspace deletion API"],
   [app, "../api/workspace-onboarding?workspace=", "workspace onboarding API"],
@@ -137,6 +142,8 @@ const required = [
   , [operatorApp, "/api/operator/warnings/", "operator warning action API"]
   , [operatorApp, "/api/operator/notifications", "operator notification API"]
   , [operatorApp, "/api/operator/workspace-invitations", "workspace invitation outbox API"]
+  , [operatorApp, "/api/operator/support-requests", "operator support queue API"]
+  , [operatorApp, "operator-support-action", "operator support action"]
   , [operatorApp, "/api/operator/workspace-refresh-failures", "workspace refresh failure API"]
   , [operatorApp, "/api/operator/notification-routes", "operator routing API"]
   , [operatorApp, "/api/operator/workspaces", "operator workspace provisioning API"]

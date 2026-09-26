@@ -373,6 +373,10 @@ monitor sources and jobs
 - monthly quality review;
 - quarterly taxonomy and product review.
 
+The support path is part of the production gate: a workspace member can open a
+tenant-scoped request, an operator can own and update it, and both sides can
+reopen the request history without exposing another customer's details.
+
 ### Gate
 
 The team can detect, explain, correct, and communicate a bad source, bad

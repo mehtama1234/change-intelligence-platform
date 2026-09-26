@@ -84,6 +84,14 @@ freshness, failed steps, held deliveries, false alerts, dead letters, and
 stale briefings before sharing an update externally. A successful job receipt
 does not prove that an insight is correct or useful.
 
+Review the customer support queue at least once per business day. Acknowledge
+urgent requests first, record what was checked in the operator note, and move
+each request through `acknowledged`, `in_progress`, `resolved`, or `closed`.
+Never answer a customer by changing the original request: the service keeps the
+request and appends a status event so the customer can see what happened. A
+resolved support request closes a service task; it does not silently change the
+research evidence or publish an unreviewed claim.
+
 ## Notification failure
 
 The notification service retries pending webhooks on `NOTIFICATION_INTERVAL_MS`

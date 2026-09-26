@@ -54,6 +54,7 @@ const sourceAvailabilityPath = resolve(runtimeDir, "latest-source-availability.j
 const evidenceLedgerPath = resolve(runtimeDir, "versioned-evidence-ledger.json");
 const reviewDecisionsPath = resolve(runtimeDir, "review-decisions.json");
 const reviewEventsPath = resolve(runtimeDir, "review-events.json");
+const supportRequestsPath = resolve(runtimeDir, "workspace-support-requests.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const workspaceRegistryPath = resolve(runtimeDir, "workspace-registry.json");
 const workspaceInvitationsPath = resolve(runtimeDir, "workspace-invitations.json");
@@ -104,7 +105,8 @@ await importRuntimeLedgers(store, {
   sourceScan: sourceScanPath,
   evidenceLedger: evidenceLedgerPath,
   reviewDecisions: reviewDecisionsPath,
-  reviewEvents: reviewEventsPath
+  reviewEvents: reviewEventsPath,
+  supportRequests: supportRequestsPath
 });
 
 const json = (response, status, body) => {
@@ -540,6 +542,7 @@ async function persistWorkspaceLedgersAfterDeletion() {
     [pilotReadinessPath, store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots")],
     [reviewDecisionsPath, store.recordsLedger("review_decision", "review-decision-ledger-v1", "decisions")],
     [reviewEventsPath, store.recordsLedger("review_event", "review-event-ledger-v1", "events")],
+    [supportRequestsPath, store.recordsLedger("support_request", "workspace-support-request-ledger-v1", "requests")],
     [auditPath, store.auditLedger()]
   ];
   await Promise.all(ledgers.map(([path, body]) => writeFile(path, `${JSON.stringify(body, null, 2)}\n`)));
@@ -1446,6 +1449,33 @@ const server = createServer(async (request, response) => {
       await writeFile(pilotProfilesPath, `${JSON.stringify(store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles"), null, 2)}\n`);
       return json(response, 200, profile);
     }
+    if (request.method === "POST" && url.pathname === "/api/support-requests") {
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member) return json(response, 403, { error: "You are not a member of this workspace." });
+      const category = String(body.category ?? "other");
+      const severity = String(body.severity ?? "normal");
+      const summary = String(body.summary ?? "").trim().slice(0, 200);
+      const details = String(body.details ?? "").trim().slice(0, 3000);
+      const allowedCategories = ["delivery", "source", "access", "billing", "other"];
+      if (!allowedCategories.includes(category)) return json(response, 400, { error: "Support category is invalid." });
+      if (!["low", "normal", "urgent"].includes(severity)) return json(response, 400, { error: "Support severity is invalid." });
+      if (summary.length < 5) return json(response, 400, { error: "Describe the support issue in at least five characters." });
+      if (details.length < 10) return json(response, 400, { error: "Include at least ten characters of detail so the team can investigate." });
+      const now = new Date().toISOString();
+      const record = { id: `support-${randomUUID()}`, workspaceId: workspace.id, category, severity, summary, details, status: "open", createdBy: member.id, createdRole: member.role, createdAt: now, updatedAt: now, resolvedAt: null, operatorNote: null, history: [{ status: "open", note: null, actorId: member.id, actorRole: member.role, occurredAt: now }] };
+      store.commitRecord({ kind: "support_request", record, audit: { requestId, action: "create_support_request", targetId: record.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "open", occurredAt: now }, operation: { key: idempotencyKey, action: "create_support_request", status: 201, body: record, completedAt: now } });
+      await writeFile(supportRequestsPath, `${JSON.stringify(store.recordsLedger("support_request", "workspace-support-request-ledger-v1", "requests"), null, 2)}\n`);
+      return json(response, 201, record);
+    }
     if (request.method === "POST" && url.pathname.startsWith("/api/pilot-deliveries/") && url.pathname.endsWith("/review")) {
       const deliveryId = decodeURIComponent(url.pathname.slice("/api/pilot-deliveries/".length, -"/review".length));
       const body = await requestBody(request);
@@ -1549,6 +1579,27 @@ const server = createServer(async (request, response) => {
       }
       await writeFile(operatorWarningsPath, `${JSON.stringify(store.recordsLedger("operator_warning", "operator-warning-event-ledger-v1", "events"), null, 2)}\n`);
       return json(response, 200, event);
+    }
+    if (request.method === "POST" && url.pathname.startsWith("/api/operator/support-requests/") && url.pathname.endsWith("/state")) {
+      const requestIdTarget = decodeURIComponent(url.pathname.slice("/api/operator/support-requests/".length, -"/state".length));
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const body = await requestBody(request);
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (!idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for operator writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const requestRecord = store.findRecord("support_request", requestIdTarget);
+      if (!requestRecord) return json(response, 404, { error: "Support request not found." });
+      const status = String(body.status ?? "");
+      const note = String(body.note ?? "").trim().slice(0, 2000);
+      if (!["acknowledged", "in_progress", "resolved", "closed"].includes(status)) return json(response, 400, { error: "Support status is invalid." });
+      if (!note) return json(response, 400, { error: "A note is required when updating a support request." });
+      const now = new Date().toISOString();
+      const updated = { ...requestRecord, status, updatedAt: now, resolvedAt: ["resolved", "closed"].includes(status) ? (requestRecord.resolvedAt ?? now) : null, operatorNote: note, history: [...(requestRecord.history ?? []), { status, note, actorId: operator.actorId, actorRole: "operator", occurredAt: now }] };
+      store.commitRecord({ kind: "support_request", record: updated, audit: { requestId, action: "update_support_request", targetId: updated.id, workspaceId: updated.workspaceId, actorId: operator.actorId, actorRole: "operator", result: status, occurredAt: now }, operation: { key: idempotencyKey, action: "update_support_request", status: 200, body: updated, completedAt: now } });
+      await writeFile(supportRequestsPath, `${JSON.stringify(store.recordsLedger("support_request", "workspace-support-request-ledger-v1", "requests"), null, 2)}\n`);
+      return json(response, 200, updated);
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/operator/notifications/") && url.pathname.endsWith("/dispatch")) {
       const notificationId = decodeURIComponent(url.pathname.slice("/api/operator/notifications/".length, -"/dispatch".length));
@@ -2279,6 +2330,12 @@ const server = createServer(async (request, response) => {
       const attempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
       return json(response, 200, { schemaVersion: "operator-notification-outbox-v1", notifications: store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications.map(({ body, ...notification }) => ({ ...notification, attemptHistory: attempts.filter((attempt) => attempt.notificationId === notification.id) })) });
     }
+    if (url.pathname === "/api/operator/support-requests") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const requests = store.recordsLedger("support_request", "workspace-support-request-ledger-v1", "requests").requests;
+      return json(response, 200, { schemaVersion: "operator-support-request-read-model-v1", requests: requests.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))) });
+    }
     if (url.pathname === "/api/operator/workspace-invitations") {
       const operator = operatorAccess(request);
       if (operator.error) return json(response, operator.error.status, operator.error.body);
@@ -2471,6 +2528,15 @@ const server = createServer(async (request, response) => {
       const notifications = store.recordsLedger("delivery_notification", "workspace-delivery-notification-ledger-v1", "notifications").notifications;
       const visible = notifications.filter((notification) => !access.workspaceIds || access.workspaceIds.includes(notification.workspaceId)).map(({ body, ...notification }) => notification);
       return json(response, 200, { schemaVersion: "workspace-delivery-notification-read-model-v1", workspaceId: access.workspaceId, notifications: visible.slice().sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))) });
+    }
+    if (url.pathname === "/api/support-requests") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      const requests = store.recordsLedger("support_request", "workspace-support-request-ledger-v1", "requests").requests;
+      const visible = access.workspaceIds ? requests.filter((supportRequest) => access.workspaceIds.includes(supportRequest.workspaceId)) : requests;
+      const workspace = access.workspaceId ? await workspaceConfig(access.workspaceId) : null;
+      const member = workspace?.members?.find((candidate) => candidate.id === access.actorId);
+      return json(response, 200, { schemaVersion: "workspace-support-request-read-model-v1", workspaceId: access.workspaceId, canSubmit: Boolean(member), requests: visible.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))) });
     }
     if (url.pathname === "/api/alerts") {
       const workspaceId = url.searchParams.get("workspace");

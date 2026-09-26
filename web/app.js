@@ -34,7 +34,7 @@ async function loadWorkspaces() {
   if (!workspaces.some((workspace) => workspace.id === state.workspaceId)) state.workspaceId = workspaces[0].id;
   select.value = state.workspaceId;
   setWorkspaceStatus(state.token ? "Connected." : "Demo workspace.");
-  await Promise.all([loadChanges(), loadOperations(), loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists(), loadComparisonViews(), loadWorkspaceSources()]);
+  await Promise.all([loadChanges(), loadOperations(), loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists(), loadComparisonViews(), loadWorkspaceSources(), loadSupportRequests()]);
 }
 
 async function loadComparisonViews() {
@@ -92,6 +92,24 @@ async function loadWorkspaceSources() {
     byId("workspace-source-status").textContent = result.ok ? "Private source review saved." : `Could not save review (${result.status}).`;
     if (result.ok) await loadWorkspaceSources();
   }));
+}
+
+async function loadSupportRequests() {
+  const response = await apiFetch(`../api/support-requests?workspace=${encodeURIComponent(state.workspaceId)}`);
+  if (!response.ok) throw new Error(`Support requests unavailable (${response.status})`);
+  const body = await response.json();
+  byId("workspace-support-summary").textContent = `${body.requests.length} request${body.requests.length === 1 ? "" : "s"}. The service team can acknowledge, investigate, and close a request without exposing it to other workspaces.`;
+  byId("workspace-support-items").innerHTML = body.requests.length ? body.requests.map((supportRequest) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(supportRequest.status.replaceAll("_", " "))}</span><span>${escapeHtml(supportRequest.category)}</span><span>${escapeHtml(supportRequest.severity)}</span><span>${escapeHtml(supportRequest.updatedAt)}</span></div><h3>${escapeHtml(supportRequest.summary)}</h3><p>${escapeHtml(supportRequest.details)}</p>${supportRequest.operatorNote ? `<p class="muted">Service note: ${escapeHtml(supportRequest.operatorNote)}</p>` : ""}<details><summary>Request history</summary><ul>${(supportRequest.history || []).map((event) => `<li>${escapeHtml(event.occurredAt)} · ${escapeHtml(event.status)}${event.note ? ` · ${escapeHtml(event.note)}` : ""}</li>`).join("")}</ul></details></article>`).join("") : `<p class="muted">No support requests yet.</p>`;
+  const form = byId("workspace-support-form");
+  form.hidden = !body.canSubmit;
+  form.onsubmit = async (event) => {
+    event.preventDefault();
+    const status = byId("workspace-support-status");
+    status.textContent = "Sending…";
+    const result = await apiFetch("../api/support-requests", { method: "POST", body: { category: byId("support-category").value, severity: byId("support-severity").value, summary: byId("support-summary").value, details: byId("support-details").value } });
+    status.textContent = result.ok ? "Support request sent." : `Could not send support request (${result.status}).`;
+    if (result.ok) { byId("support-summary").value = ""; byId("support-details").value = ""; await loadSupportRequests(); }
+  };
 }
 
 async function loadAlerts() {
