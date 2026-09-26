@@ -16,17 +16,24 @@ let lock;
 
 async function runStep(name, script, optional = false) {
   const startedAt = new Date().toISOString();
-  try {
-    const result = await exec(process.execPath, [resolve(root, "scripts", script)], {
-      cwd: root,
-      env: process.env,
-      maxBuffer: 10 * 1024 * 1024
-    });
-    steps.push({ name, status: "complete", startedAt, endedAt: new Date().toISOString(), output: result.stdout.trim().slice(-2000) });
-  } catch (error) {
-    const status = optional ? "warning" : "failed";
-    steps.push({ name, status, startedAt, endedAt: new Date().toISOString(), exitCode: error.code, output: `${error.stdout ?? ""}${error.stderr ?? ""}`.trim().slice(-2000) });
+  const maxAttempts = Math.max(1, Number(process.env.REFRESH_RETRIES ?? 2) + 1);
+  let lastError;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const result = await exec(process.execPath, [resolve(root, "scripts", script)], {
+        cwd: root,
+        env: process.env,
+        maxBuffer: 10 * 1024 * 1024
+      });
+      steps.push({ name, status: "complete", attempts: attempt, startedAt, endedAt: new Date().toISOString(), output: result.stdout.trim().slice(-2000) });
+      return;
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxAttempts) await new Promise((resolveSleep) => setTimeout(resolveSleep, Number(process.env.REFRESH_RETRY_DELAY_MS ?? 1000) * attempt));
+    }
   }
+  const status = optional ? "warning" : "failed";
+  steps.push({ name, status, attempts: maxAttempts, startedAt, endedAt: new Date().toISOString(), exitCode: lastError?.code, output: `${lastError?.stdout ?? ""}${lastError?.stderr ?? ""}`.trim().slice(-2000) });
 }
 
 try {

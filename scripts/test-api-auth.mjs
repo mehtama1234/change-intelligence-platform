@@ -5,9 +5,10 @@ import { resolve } from "node:path";
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const port = 8791;
 const base = `http://127.0.0.1:${port}`;
+const runtimeDir = `/tmp/change-intelligence-api-auth-${Date.now()}`;
 const child = spawn(process.execPath, [resolve(root, "server.mjs")], {
   cwd: root,
-  env: { ...process.env, PORT: String(port), AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher" }) },
+  env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher" }) },
   stdio: ["ignore", "pipe", "pipe"]
 });
 let output = "";

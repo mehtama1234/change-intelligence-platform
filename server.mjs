@@ -1,29 +1,31 @@
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
-import { readFile, readdir, writeFile } from "node:fs/promises";
+import { readFile, readdir, writeFile, mkdir } from "node:fs/promises";
 import { resolve, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)));
 const port = Number(process.env.PORT ?? 8780);
+const runtimeDir = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control");
 const packetPath = resolve(root, "data/processed/ai-work-control.packet.json");
-const reviewPath = resolve(root, "data/processed/runs/ai-work-control/latest-review-work.json");
-const historyPath = resolve(root, "data/processed/runs/ai-work-control/versioned-evidence-ledger.json");
-const refreshPath = resolve(root, "data/processed/runs/ai-work-control/latest-refresh.json");
-const alertsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-alerts.json");
-const questionsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-questions.json");
-const questionEvaluationsPath = resolve(root, "data/processed/runs/ai-work-control/question-evaluations.json");
-const briefingsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-briefings.json");
-const briefingPublicationsPath = resolve(root, "data/processed/runs/ai-work-control/briefing-publications.json");
-const insightDecisionsPath = resolve(root, "data/processed/runs/ai-work-control/insight-decisions.json");
-const insightCandidatesPath = resolve(root, "data/processed/runs/ai-work-control/insight-candidates.json");
-const insightPublicationsPath = resolve(root, "data/processed/runs/ai-work-control/insight-publications.json");
-const auditPath = resolve(root, "data/processed/runs/ai-work-control/audit-log.json");
-const operationsPath = resolve(root, "data/processed/runs/ai-work-control/idempotency-operations.json");
+const reviewPath = resolve(runtimeDir, "latest-review-work.json");
+const historyPath = resolve(runtimeDir, "versioned-evidence-ledger.json");
+const refreshPath = resolve(runtimeDir, "latest-refresh.json");
+const alertsPath = resolve(runtimeDir, "workspace-alerts.json");
+const questionsPath = resolve(runtimeDir, "workspace-questions.json");
+const questionEvaluationsPath = resolve(runtimeDir, "question-evaluations.json");
+const briefingsPath = resolve(runtimeDir, "workspace-briefings.json");
+const briefingPublicationsPath = resolve(runtimeDir, "briefing-publications.json");
+const insightDecisionsPath = resolve(runtimeDir, "insight-decisions.json");
+const insightCandidatesPath = resolve(runtimeDir, "insight-candidates.json");
+const insightPublicationsPath = resolve(runtimeDir, "insight-publications.json");
+const auditPath = resolve(runtimeDir, "audit-log.json");
+const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const authMode = process.env.AUTH_MODE ?? "demo";
 const tokenActors = authMode === "token" ? JSON.parse(process.env.AUTH_TOKENS_JSON ?? "{}") : {};
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
+await mkdir(runtimeDir, { recursive: true });
 
 const json = (response, status, body) => {
   response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
