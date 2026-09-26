@@ -160,6 +160,13 @@ Retry requests are operator-only, idempotent, and claimed by the scheduler
 before any source work begins. A customer cannot cause an arbitrary refresh or
 force an unreviewed delivery by manipulating the retry state.
 
+Customer handoff acknowledgment is a workspace-member action, not an operator
+or cross-tenant action. The server checks membership and notification ownership
+before changing the notification, requires an idempotency key for token-auth
+writes, and closes the matching refresh outcome only after the notification is
+accepted. This prevents a caller from acknowledging another workspace's work
+or making an incomplete delivery look successful.
+
 Token-authenticated write requests must also send an `Idempotency-Key`. A
 retry with the same key replays the original result instead of creating a
 second question, decision, publication, or acknowledgment.

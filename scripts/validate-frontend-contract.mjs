@@ -81,6 +81,7 @@ const required = [
   [app, "../api/notification-preferences", "notification preference API"],
   [app, "../api/workspace-notifications", "workspace notification history API"],
   [app, "../api/workspace-delivery-notifications", "workspace delivery notification API"],
+  [app, "acknowledge-workspace-notification", "workspace notification acknowledgment"],
   [app, "../api/ingestion", "research ingestion API"],
   [app, "../api/pilot-metrics?workspace=", "pilot metrics API"],
   [app, "../api/workspace-update?workspace=", "workspace update API"],

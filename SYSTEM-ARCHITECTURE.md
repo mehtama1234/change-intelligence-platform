@@ -282,9 +282,11 @@ retry. This keeps customer delivery separate from internal recovery work.
 
 The refresh runner claims `retry_requested` items before it starts source work.
 It records the retry run ID and attempt count, and the outcome recorder either
-resolves the item when a prepared delivery exists or reopens it with the new
+keeps the item open until the prepared handoff is accepted by the customer (or
+an approved delivery channel records delivery), or reopens it with the new
 failed step list. A retry therefore describes a real execution attempt, not
-just an operator button click.
+just an operator button click. The resolved record includes the resolution
+time, so service health measures the path from failure to customer acceptance.
 
 The aggregate operator view includes the same schedule state for each tenant,
 so a configured workspace waiting for its first refresh is visible without

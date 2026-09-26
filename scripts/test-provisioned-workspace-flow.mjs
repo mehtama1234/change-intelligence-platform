@@ -74,9 +74,15 @@ try {
   const refreshReceipt = JSON.parse(await readFile(`${runtimeDir}/latest-refresh.json`, "utf8"));
   if (refreshReceipt.status !== "complete" || deliveries.deliveries[0].refreshRunId !== "provisioned-flow-refresh") throw new Error(`The actual refresh cycle did not complete for the provisioned workspace: ${JSON.stringify(refreshReceipt)}`);
   const refreshOutcomes = JSON.parse(await readFile(`${runtimeDir}/workspace-refresh-outcomes.json`, "utf8"));
-  if (!Array.isArray(refreshOutcomes.outcomes) || refreshOutcomes.outcomes.some((outcome) => outcome.workspaceId === workspaceId && outcome.status !== "resolved")) throw new Error(`Workspace refresh outcome ledger did not record a clean first run: ${JSON.stringify(refreshOutcomes)}`);
+  if (!Array.isArray(refreshOutcomes.outcomes) || refreshOutcomes.outcomes.find((outcome) => outcome.workspaceId === workspaceId)?.reason !== "notification_pending") throw new Error(`Workspace refresh outcome ledger did not wait for customer acceptance: ${JSON.stringify(refreshOutcomes)}`);
   const handoffNotifications = await (await fetch(`${base}/api/workspace-delivery-notifications?workspace=${encodeURIComponent(workspaceId)}`, { headers: auth })).json();
   if (!handoffNotifications.notifications.some((notification) => notification.type === "pilot_delivery" && notification.deliveryId === deliveries.deliveries[0].id && notification.status === "pending")) throw new Error("The actual refresh cycle did not create the first handoff notification.");
+  const handoffNotification = handoffNotifications.notifications.find((notification) => notification.type === "pilot_delivery" && notification.deliveryId === deliveries.deliveries[0].id);
+  const acknowledged = await post(`/api/workspace-delivery-notifications/${encodeURIComponent(handoffNotification.id)}/acknowledge`, auth, { workspaceId }, "flow-handoff-ack");
+  if (acknowledged.status !== "acknowledged" || acknowledged.acknowledgedBy !== "flow-owner") throw new Error("Customer acknowledgment did not persist for the prepared handoff.");
+  const acknowledgedOutcomes = JSON.parse(await readFile(`${runtimeDir}/workspace-refresh-outcomes.json`, "utf8"));
+  const resolvedOutcome = acknowledgedOutcomes.outcomes.find((outcome) => outcome.workspaceId === workspaceId);
+  if (resolvedOutcome?.status !== "resolved" || resolvedOutcome.resolution !== "customer_acknowledged" || !Number.isFinite(resolvedOutcome.timeToResolutionMs)) throw new Error(`Customer acknowledgment did not close the workspace outcome with timing: ${JSON.stringify(acknowledgedOutcomes)}`);
   const afterResponse = await fetch(`${base}/api/workspace-onboarding?workspace=${encodeURIComponent(workspaceId)}`, { headers: auth });
   const after = await afterResponse.json();
   if (after.status !== "active" || after.steps.find((step) => step.id === "first_delivery")?.status !== "ready") throw new Error(`Onboarding did not become active after the first handoff: ${JSON.stringify(after)}`);

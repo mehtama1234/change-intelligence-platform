@@ -12,18 +12,21 @@ const failedSteps = JSON.parse(process.env.REFRESH_FAILED_STEPS ?? "[]");
 if (!runId) throw new Error("REFRESH_RUN_ID is required.");
 const profiles = (await readJson(resolve(runtimeDir, "workspace-pilot-profiles.json"), { profiles: [] })).profiles ?? [];
 const deliveries = (await readJson(resolve(runtimeDir, "workspace-pilot-deliveries.json"), { deliveries: [] })).deliveries ?? [];
+const notifications = (await readJson(resolve(runtimeDir, "workspace-delivery-notifications.json"), { notifications: [] })).notifications ?? [];
 const ledger = await readJson(resolve(runtimeDir, "workspace-refresh-outcomes.json"), { schemaVersion: "workspace-refresh-outcome-ledger-v1", outcomes: [] });
 const outcomes = [...(ledger.outcomes ?? [])];
 for (const profile of profiles) {
   const delivery = deliveries.find((candidate) => candidate.workspaceId === profile.workspaceId && candidate.refreshRunId === runId);
   const validDelivery = delivery?.status === "prepared";
+  const notification = delivery ? notifications.find((candidate) => candidate.deliveryId === delivery.id) : null;
+  const customerAccepted = notification?.status === "delivered" || notification?.status === "acknowledged";
   const existing = outcomes.filter((outcome) => outcome.workspaceId === profile.workspaceId).at(-1);
-  if (status === "complete" && validDelivery) {
-    if (existing?.status === "open" || existing?.status === "retry_requested" || existing?.status === "retrying") outcomes.push({ ...existing, status: "resolved", resolvedAt: endedAt, resolvedRunId: runId, deliveryId: delivery.id, retryCompletedAt: existing.status === "retrying" ? endedAt : existing.retryCompletedAt ?? null });
+  if (status === "complete" && validDelivery && customerAccepted) {
+    if (existing?.status === "open" || existing?.status === "retry_requested" || existing?.status === "retrying") outcomes.push({ ...existing, status: "resolved", resolvedAt: endedAt, resolvedRunId: runId, deliveryId: delivery.id, resolution: "customer_notification_accepted", retryCompletedAt: existing.status === "retrying" ? endedAt : existing.retryCompletedAt ?? null, timeToResolutionMs: Number.isFinite(Date.parse(existing.observedAt)) ? Math.max(0, Date.parse(endedAt) - Date.parse(existing.observedAt)) : null });
     continue;
   }
-  if (status === "complete" && !validDelivery || status !== "complete") {
-    const reason = status !== "complete" ? "refresh_failed" : delivery ? "delivery_not_prepared" : "delivery_not_created";
+  if (status === "complete" && !validDelivery || status !== "complete" || (status === "complete" && validDelivery && !customerAccepted)) {
+    const reason = status !== "complete" ? "refresh_failed" : !validDelivery ? (delivery ? "delivery_not_prepared" : "delivery_not_created") : "notification_pending";
     if (existing?.runId === runId) continue;
     if (existing?.status === "retrying" || existing?.status === "retry_requested") outcomes.push({ ...existing, status: "open", runId, reason, failedSteps, deliveryId: delivery?.id ?? null, observedAt: endedAt, retryFailedAt: existing.status === "retrying" ? endedAt : existing.retryFailedAt ?? null });
     else outcomes.push({ id: `workspace-refresh-outcome-${profile.workspaceId}-${runId}`, workspaceId: profile.workspaceId, profileId: profile.id, runId, status: "open", reason, failedSteps, deliveryId: delivery?.id ?? null, observedAt: endedAt, retryRequestedAt: null, retryRequestedBy: null, resolvedAt: null, resolvedRunId: null });

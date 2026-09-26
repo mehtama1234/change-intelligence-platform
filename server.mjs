@@ -1284,6 +1284,35 @@ const server = createServer(async (request, response) => {
       await writeFile(notificationPreferencesPath, `${JSON.stringify(store.recordsLedger("notification_preference", "workspace-notification-preference-ledger-v1", "preferences"), null, 2)}\n`);
       return json(response, 200, preferences);
     }
+    if (request.method === "POST" && url.pathname.startsWith("/api/workspace-delivery-notifications/") && url.pathname.endsWith("/acknowledge")) {
+      const notificationId = decodeURIComponent(url.pathname.slice("/api/workspace-delivery-notifications/".length, -"/acknowledge".length));
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const access = await workspaceAccess(request, body.workspaceId);
+      if (denyWorkspaceRead(response, access)) return;
+      const notification = store.findRecord("delivery_notification", notificationId);
+      if (!notification || notification.workspaceId !== access.workspaceId) return json(response, 404, { error: "Workspace notification not found." });
+      if (notification.status === "acknowledged") return json(response, 200, notification);
+      if (notification.status !== "pending") return json(response, 409, { error: "Only pending workspace notifications can be acknowledged." });
+      const workspace = await workspaceConfig(access.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!member) return json(response, 403, { error: "You are not a member of this workspace." });
+      const now = new Date().toISOString();
+      const acknowledged = { ...notification, status: "acknowledged", acknowledgedAt: now, acknowledgedBy: member.id, acknowledgedRole: member.role };
+      store.commitRecord({ kind: "delivery_notification", record: acknowledged, audit: { requestId, action: "acknowledge_workspace_notification", targetId: notification.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "acknowledged", occurredAt: now }, operation: { key: idempotencyKey, action: "acknowledge_workspace_notification", status: 200, body: acknowledged, completedAt: now } });
+      await writeFile(deliveryNotificationsPath, `${JSON.stringify(store.recordsLedger("delivery_notification", "workspace-delivery-notification-ledger-v1", "notifications"), null, 2)}\n`);
+      if (notification.type === "pilot_delivery" && notification.deliveryStatus === "prepared") {
+        const outcomeLedger = await readJson(workspaceRefreshOutcomesPath, { schemaVersion: "workspace-refresh-outcome-ledger-v1", outcomes: [] });
+        const outcomes = (outcomeLedger.outcomes ?? []).map((outcome) => outcome.workspaceId === workspace.id && outcome.deliveryId === notification.deliveryId && outcome.status !== "resolved" ? { ...outcome, status: "resolved", resolvedAt: now, resolvedBy: member.id, resolution: "customer_acknowledged", timeToResolutionMs: Number.isFinite(Date.parse(outcome.observedAt)) ? Math.max(0, Date.parse(now) - Date.parse(outcome.observedAt)) : null, resolvedRunId: outcome.resolvedRunId ?? notification.refreshRunId ?? null } : outcome);
+        await writeFile(workspaceRefreshOutcomesPath, `${JSON.stringify({ ...outcomeLedger, updatedAt: now, outcomes }, null, 2)}\n`);
+      }
+      return json(response, 200, acknowledged);
+    }
     if (request.method === "POST" && url.pathname === "/api/workspace-pilot") {
       const body = await requestBody(request);
       const actorId = authenticatedActor(request, body);

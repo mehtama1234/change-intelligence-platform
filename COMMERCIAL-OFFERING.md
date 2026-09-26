@@ -170,3 +170,11 @@ Retry history is tied to the refresh run that actually attempted recovery.
 This lets the service team explain whether a missed handoff was fixed, remains
 blocked, or needs a different source or research decision before another
 customer delivery is sent.
+
+The service does not count a prepared handoff as customer success by itself.
+The customer-facing notification remains pending until a workspace member
+acknowledges it (or an approved delivery channel records successful delivery).
+That acceptance closes the operator item and records how long it took from the
+failed refresh to an accepted handoff. The commercial service can therefore
+measure not only whether it produced work, but whether the customer actually
+received and accepted the work.
