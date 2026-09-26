@@ -38,6 +38,7 @@ const required = [
   [app, "../api/workspace-pilot", "pilot profile command"],
   [app, "../api/pilot-deliveries?workspace=", "pilot delivery API"],
   [app, "../api/pilot-report?workspace=", "pilot report API"],
+  [app, "../api/pilot-report/decision", "pilot decision command"],
   [app, "/review", "pilot delivery review command"],
   [app, "../api/timeline?workspace=", "workspace timeline API"],
   [app, "../api/evidence/", "evidence inspection API"],

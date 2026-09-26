@@ -54,6 +54,11 @@ shows how often deliveries were useful, whether they informed or changed a
 decision, how the agreed measures are trending, and which problems remain
 open. This gives both sides a basis for improving or ending the pilot.
 
+The report also marks when there are enough reviewed deliveries for a human
+checkpoint. The partner records one of four choices—improve, continue, expand,
+or stop—with the reason and next step. The system preserves that decision as
+part of the pilot history; it does not make the commercial decision silently.
+
 ### Team workspace
 
 Private watchlists, competitors, themes, saved questions, shared briefings,

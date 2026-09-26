@@ -24,6 +24,7 @@ const childEnv = {
   WATCHLISTS_PATH: resolve(runDir, "workspace-watchlists.json"),
   PILOT_PROFILES_PATH: resolve(runDir, "workspace-pilot-profiles.json"),
   PILOT_DELIVERIES_PATH: resolve(runDir, "workspace-pilot-deliveries.json"),
+  PILOT_DECISIONS_PATH: resolve(runDir, "workspace-pilot-decisions.json"),
   REVIEW_OUTPUT_DIR: runDir,
   EVIDENCE_OUTPUT_DIR: runDir,
   QUESTIONS_PATH: resolve(runDir, "workspace-questions.json"),

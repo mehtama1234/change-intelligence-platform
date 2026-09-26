@@ -25,6 +25,7 @@ const decisionOutcomesPath = resolve(runtimeDir, "decision-outcomes.json");
 const watchlistsPath = resolve(runtimeDir, "workspace-watchlists.json");
 const pilotProfilesPath = resolve(runtimeDir, "workspace-pilot-profiles.json");
 const pilotDeliveriesPath = resolve(runtimeDir, "workspace-pilot-deliveries.json");
+const pilotDecisionsPath = resolve(runtimeDir, "workspace-pilot-decisions.json");
 const auditPath = resolve(runtimeDir, "audit-log.json");
 const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
 const sourceScanPath = resolve(runtimeDir, "latest-source-scan.json");
@@ -55,6 +56,7 @@ await importRuntimeLedgers(store, {
   watchlists: watchlistsPath,
   pilotProfiles: pilotProfilesPath,
   pilotDeliveries: pilotDeliveriesPath,
+  pilotDecisions: pilotDecisionsPath,
   workspaceDir,
   sourceScan: sourceScanPath,
   evidenceLedger: evidenceLedgerPath,
@@ -218,7 +220,7 @@ function buildWorkspaceUpdate({ workspaceId, workspaceName, refresh, readiness, 
   };
 }
 
-function buildPilotLearningReport({ workspaceId, profile, deliveries }) {
+function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions }) {
   const reviewed = deliveries.filter((delivery) => delivery.review);
   const count = (items, value) => items.filter((item) => item === value).length;
   const usefulnessValues = reviewed.map((delivery) => delivery.review.usefulness);
@@ -240,11 +242,13 @@ function buildPilotLearningReport({ workspaceId, profile, deliveries }) {
     decisionQuestion: profile?.decisionQuestion ?? null,
     generatedAt: new Date().toISOString(),
     observation: { deliveries: deliveries.length, reviewedDeliveries: reviewed.length, unreviewedDeliveries: deliveries.length - reviewed.length },
+    checkpoint: { state: reviewed.length >= 3 ? "enough_observations_for_checkpoint" : "more_observations_needed", reviewedDeliveriesRequired: 3, explanation: reviewed.length >= 3 ? "The workspace has at least three reviewed deliveries; a human checkpoint can use this report." : "Use this report as a learning log, but collect at least three reviewed deliveries before making a commercial decision." },
     usefulness: { useful: count(usefulnessValues, "useful"), notUseful: count(usefulnessValues, "not_useful"), unclear: count(usefulnessValues, "unclear"), rate: reviewed.length ? count(usefulnessValues, "useful") / reviewed.length : null },
     decisionImpact: { changedDecision: count(impactValues, "changed_decision"), informedDecision: count(impactValues, "informed_decision"), noChange: count(impactValues, "no_change"), notApplicable: count(impactValues, "not_applicable") },
     measures,
     openIssues,
     recentNotes: reviewed.slice().sort((a, b) => String(b.review.reviewedAt).localeCompare(String(a.review.reviewedAt))).slice(0, 5).map((delivery) => ({ deliveryId: delivery.id, usefulness: delivery.review.usefulness, note: delivery.review.note, reviewedAt: delivery.review.reviewedAt })),
+    latestDecision: decisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)))[0] ?? null,
     limitation: "This report summarizes what this partner recorded about this pilot. It does not establish general market value, causation, or performance outside this workspace."
   };
 }
@@ -621,6 +625,31 @@ const server = createServer(async (request, response) => {
       await writeFile(pilotDeliveriesPath, `${JSON.stringify(store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries"), null, 2)}\n`);
       return json(response, 200, reviewedDelivery);
     }
+    if (request.method === "POST" && url.pathname === "/api/pilot-report/decision") {
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot record a pilot decision." });
+      const decision = String(body.decision ?? "");
+      const note = String(body.note ?? "").trim().slice(0, 2000);
+      const nextStep = String(body.nextStep ?? "").trim().slice(0, 1000);
+      if (!["improve", "continue", "expand", "stop"].includes(decision)) return json(response, 400, { error: "Decision must be improve, continue, expand, or stop." });
+      if (!note || !nextStep) return json(response, 400, { error: "A decision note and next step are required." });
+      const now = new Date().toISOString();
+      const record = { id: `pilot-decision-${randomUUID()}`, workspaceId: workspace.id, decision, note, nextStep, decidedBy: member.id, decidedRole: member.role, decidedAt: now, reviewAt: body.reviewAt ? String(body.reviewAt).slice(0, 32) : null };
+      store.commitRecord({ kind: "pilot_decision", record, audit: { requestId, action: "decide_pilot", targetId: record.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: decision, occurredAt: now }, operation: { key: idempotencyKey, action: "decide_pilot", status: 201, body: record, completedAt: now } });
+      store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "pilot_decision", targetId: record.id, workspaceId: workspace.id, reviewer: member.id, reviewerRole: member.role, outcome: decision, occurredAt: now, pilotDecisionId: record.id }]);
+      await writeReviewEvents();
+      await writeFile(pilotDecisionsPath, `${JSON.stringify(store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions"), null, 2)}\n`);
+      return json(response, 201, record);
+    }
     if (request.method === "GET" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/export")) {
       const briefingId = decodeURIComponent(url.pathname.slice("/api/briefings/".length, -"/export".length));
       const workspaceId = url.searchParams.get("workspace");
@@ -859,7 +888,8 @@ const server = createServer(async (request, response) => {
       const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
       const profile = profiles.find((candidate) => !access.workspaceIds || access.workspaceIds.includes(candidate.workspaceId));
       const visible = deliveries.filter((delivery) => !access.workspaceIds || access.workspaceIds.includes(delivery.workspaceId));
-      return json(response, 200, buildPilotLearningReport({ workspaceId: access.workspaceId, profile, deliveries: visible }));
+      const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions.filter((decision) => !access.workspaceIds || access.workspaceIds.includes(decision.workspaceId));
+      return json(response, 200, buildPilotLearningReport({ workspaceId: access.workspaceId, profile, deliveries: visible, decisions }));
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));
