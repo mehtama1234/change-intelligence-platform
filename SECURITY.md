@@ -26,6 +26,8 @@ content.
 Operator warning limits are configuration, not hidden product judgments:
 `OPERATOR_MAX_FALSE_ALERT_RATE` defaults to `0.4`, while failed refreshes and
 delayed deliveries default to `0`. Source age uses `MAX_SOURCE_AGE_MS`. The
+automatic policy uses `OPERATOR_WARNING_ACK_SLA_MS` (four hours by default) to
+decide when an open warning is overdue.
 operator response returns the observed value and threshold beside each warning.
 Operator warning acknowledgments and resolutions require the same explicit
 operator allowlist, an idempotency key, a note, and an audit receipt. The

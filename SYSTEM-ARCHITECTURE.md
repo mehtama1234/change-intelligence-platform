@@ -41,6 +41,9 @@ Adapter output is then hashed and stored as a source snapshot before review.
     measures.
 12. **Operator health read model** — aggregates refresh failures, source age,
     alert dispositions, and delivery timing without exposing customer content.
+13. **Operator policy evaluator** — runs after each refresh, applies warning
+    thresholds and acknowledgment deadlines, escalates overdue warnings once,
+    and writes private notification-outbox records for dispatch.
 
 ## Background jobs
 
@@ -56,6 +59,11 @@ After the research steps complete, a configured pilot workspace receives a
 delivery snapshot. It records what the refresh produced and what the partner
 should review. It does not claim that free-text success measures were met
 without a human assessment.
+
+The operator policy evaluator runs before the runtime-store synchronization. It
+is safe to rerun: a resolved warning is left alone, an already escalated
+warning is not escalated again, and each warning has at most one notification
+outbox item.
 
 The system should create review work, not silently publish uncertain claims.
 

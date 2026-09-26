@@ -95,6 +95,7 @@ try {
   await runStep("evaluate-insight-quality", "evaluate-insight-quality.mjs");
   await runStep("publish-insight-candidates", "build-ai-work-control-packet.mjs");
   await runStep("build-pilot-deliveries", "build-pilot-deliveries.mjs");
+  await runStep("evaluate-operator-warnings", "evaluate-operator-warnings.mjs");
   await runStep("sync-runtime-store", "sync-runtime-store.mjs");
   const failed = steps.filter((step) => step.status === "failed");
   const receipt = {

@@ -1,0 +1,25 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const exec = promisify(execFile);
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
+const runtimeDir = `/tmp/change-intelligence-operator-policy-${Date.now()}`;
+await mkdir(runtimeDir, { recursive: true });
+const old = new Date(Date.now() - 2 * 86400000).toISOString();
+const write = (name, value) => writeFile(resolve(runtimeDir, name), `${JSON.stringify(value, null, 2)}\n`);
+await write("refresh-history.json", { schemaVersion: "refresh-history-v1", runs: [{ runId: "failed-old-run", status: "partial", endedAt: old, steps: [] }] });
+await write("latest-source-scan.json", { schemaVersion: "source-scan-receipt-v1", generatedAt: old, counts: { missing: 0 }, sources: [{ id: "old-source", checkedAt: old }] });
+await write("workspace-alerts.json", { schemaVersion: "workspace-alert-ledger-v1", workspaces: [], alerts: [] });
+await write("workspace-pilot-profiles.json", { schemaVersion: "workspace-pilot-profile-ledger-v1", profiles: [] });
+await write("workspace-pilot-deliveries.json", { schemaVersion: "workspace-pilot-delivery-ledger-v1", deliveries: [] });
+await exec(process.execPath, [resolve(root, "scripts/evaluate-operator-warnings.mjs")], { cwd: root, env: { ...process.env, RUNTIME_DATA_DIR: runtimeDir, OPERATOR_WARNING_ACK_SLA_MS: "0", OPERATOR_MAX_FAILED_REFRESHES: "-1", MAX_SOURCE_AGE_MS: "0" } });
+const firstWarnings = JSON.parse(await readFile(resolve(runtimeDir, "operator-warning-events.json"), "utf8"));
+const firstNotifications = JSON.parse(await readFile(resolve(runtimeDir, "operator-notification-outbox.json"), "utf8"));
+if (firstWarnings.events.length !== 2 || firstWarnings.events.some((event) => event.escalationState !== "escalated") || firstNotifications.notifications.length !== 2 || firstNotifications.notifications.some((notification) => notification.status !== "pending")) throw new Error("Overdue operator warnings did not create escalated events and pending notifications.");
+await exec(process.execPath, [resolve(root, "scripts/evaluate-operator-warnings.mjs")], { cwd: root, env: { ...process.env, RUNTIME_DATA_DIR: runtimeDir, OPERATOR_WARNING_ACK_SLA_MS: "0", OPERATOR_MAX_FAILED_REFRESHES: "-1", MAX_SOURCE_AGE_MS: "0" } });
+const secondNotifications = JSON.parse(await readFile(resolve(runtimeDir, "operator-notification-outbox.json"), "utf8"));
+if (secondNotifications.notifications.length !== 2) throw new Error("Repeated policy evaluation duplicated operator notifications.");
+console.log("Operator escalation test passed: overdue warnings escalated once and produced durable outbox records.");

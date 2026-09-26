@@ -15,7 +15,7 @@ const insightEvaluation = await json("data/processed/runs/ai-work-control/insigh
 const errors = [];
 const assert = (condition, message) => { if (!condition) errors.push(message); };
 const records = new Map(packet.records.map((record) => [record.id, record]));
-const requiredSteps = ["capture-sec-filings", "extract-sec-xbrl", "validate-source-adapters", "scan-repositories", "evaluate-watchlists", "process-review-work", "materialize-evidence", "build-packet", "evaluate-questions", "build-question-briefings", "publish-question-evaluations", "generate-insight-candidates", "evaluate-insight-quality", "publish-insight-candidates", "sync-runtime-store"];
+const requiredSteps = ["capture-sec-filings", "extract-sec-xbrl", "validate-source-adapters", "scan-repositories", "evaluate-watchlists", "process-review-work", "materialize-evidence", "build-packet", "evaluate-questions", "build-question-briefings", "publish-question-evaluations", "generate-insight-candidates", "evaluate-insight-quality", "publish-insight-candidates", "evaluate-operator-warnings", "sync-runtime-store"];
 
 assert(packet.records.length >= 7, "packet should contain the six-repository vertical slice records");
 assert(new Set(packet.records.map((record) => record.sourceRepository)).size === 6, "packet must cover all six research repositories");
