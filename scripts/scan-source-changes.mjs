@@ -9,6 +9,7 @@ const registryPath = resolve(root, "data/source-registry.json");
 const mapPath = resolve(root, "data/source-maps/ai-work-control.sources.json");
 const runDir = resolve(root, "data/processed/runs/ai-work-control");
 const latestPath = resolve(runDir, "latest-source-scan.json");
+const historyPath = resolve(runDir, "source-scan-history.json");
 const registry = JSON.parse(await readFile(registryPath, "utf8"));
 const map = JSON.parse(await readFile(mapPath, "utf8"));
 const configuredRepositories = new Set(registry.repositories.map((repository) => repository.id));
@@ -74,5 +75,9 @@ const receipt = {
 
 await mkdir(runDir, { recursive: true });
 await writeFile(latestPath, `${JSON.stringify(receipt, null, 2)}\n`);
+const history = existsSync(historyPath) ? JSON.parse(await readFile(historyPath, "utf8")) : { schemaVersion: "source-scan-history-v1", runs: [] };
+history.runs = [...(history.runs ?? []), { runId: receipt.runId, generatedAt: receipt.generatedAt, counts: receipt.counts, sources: receipt.sources }].slice(-100);
+history.updatedAt = receipt.generatedAt;
+await writeFile(historyPath, `${JSON.stringify(history, null, 2)}\n`);
 console.log(JSON.stringify({ runId: receipt.runId, counts, reviewRequired: receipt.reviewRequired, repositories: receipt.repositories.length }, null, 2));
 console.log(`Wrote ${latestPath}`);

@@ -24,6 +24,7 @@ const insightPublicationsPath = resolve(runtimeDir, "insight-publications.json")
 const auditPath = resolve(runtimeDir, "audit-log.json");
 const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
 const sourceScanPath = resolve(runtimeDir, "latest-source-scan.json");
+const sourceScanHistoryPath = resolve(runtimeDir, "source-scan-history.json");
 const evidenceLedgerPath = resolve(runtimeDir, "versioned-evidence-ledger.json");
 const reviewDecisionsPath = resolve(runtimeDir, "review-decisions.json");
 const reviewEventsPath = resolve(runtimeDir, "review-events.json");
@@ -486,8 +487,10 @@ const server = createServer(async (request, response) => {
       const reviewEvents = store.recordsLedger("review_event", "review-event-ledger-v1", "events").events;
       const briefingPublications = store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications").publications;
       const insightPublications = store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications").publications;
+      const sourceHistory = await readJson(sourceScanHistoryPath, { runs: [] });
+      const sourceRuns = sourceHistory.runs?.length ? sourceHistory.runs : [{ runId: null, sources: sourceSnapshots }];
       const allEvents = [
-        ...sourceSnapshots.map((snapshot) => ({ eventType: "source_scan", targetId: snapshot.id, sourceId: snapshot.id, status: snapshot.status, previousDigest: snapshot.previousSha256 ?? null, currentDigest: snapshot.sha256 ?? null, occurredAt: snapshot.checkedAt })),
+        ...sourceRuns.flatMap((run) => (run.sources ?? []).map((snapshot) => ({ eventType: "source_scan", targetId: snapshot.id, sourceId: snapshot.id, scanRunId: run.runId, status: snapshot.status, previousDigest: snapshot.previousSha256 ?? null, currentDigest: snapshot.sha256 ?? null, occurredAt: snapshot.checkedAt }))),
         ...reviewEvents,
         ...briefingPublications.map((publication) => ({ eventType: "briefing_publish", targetId: publication.briefingId, workspaceId: publication.workspaceId, reviewer: publication.publishedBy, currentEvidenceDigest: publication.evidenceDigest, occurredAt: publication.publishedAt, publicationId: publication.id })),
         ...insightPublications.map((publication) => ({ eventType: "insight_publish", targetId: publication.candidateId, candidateKey: publication.candidateKey, workspaceId: publication.workspaceId, reviewer: publication.publisher, currentEvidenceDigest: publication.evidenceDigest, occurredAt: publication.publishedAt, publicationId: publication.id }))

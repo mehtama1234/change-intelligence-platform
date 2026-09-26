@@ -12,6 +12,7 @@ const runtimeFiles = [
   "insight-decisions.json",
   "insight-publications.json",
   "latest-source-scan.json",
+  "source-scan-history.json",
   "versioned-evidence-ledger.json",
   "review-decisions.json",
   "review-events.json",
