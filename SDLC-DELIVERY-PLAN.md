@@ -84,6 +84,7 @@ Define the research system before building ingestion or interface code.
 
 - define the first domain taxonomy;
 - map signal, pressure, mechanism, response, outcome, and counterexample;
+- identify one named workflow and separate measured stages from missing stages;
 - define annual and quarterly report fields;
 - define company, industry, private-company, social, institutional, and
   outcome records;

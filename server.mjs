@@ -245,7 +245,7 @@ function buildCoverage(packet, registry) {
   });
   const outcomeBridges = (packet.outcomeBridges ?? []).map((bridge) => {
     const group = (ids) => (ids ?? []).map((id) => recordsById.get(id)).filter(Boolean).map((record) => ({ id: record.id, title: record.title, sourceRole: record.sourceRole, claimState: record.claimState, asOf: record.asOf ?? null }));
-    return { ...bridge, companyRecords: group(bridge.companyRecordIds), independentRecords: group(bridge.independentRecordIds), counterexampleRecords: group(bridge.counterexampleRecordIds) };
+    return { ...bridge, companyRecords: group(bridge.companyRecordIds), independentRecords: group(bridge.independentRecordIds), namedWorkflowRecords: group(bridge.namedWorkflowRecordIds), counterexampleRecords: group(bridge.counterexampleRecordIds) };
   });
   return { schemaVersion: "coverage-read-model-v1", domain: packet.domain ?? null, sourceSnapshotDate: packet.sourceSnapshotDate ?? null, repositories, reportWindows, outcomeBridges, requirements, summary: { ready: requirements.filter((item) => item.status === "ready").length, partial: requirements.filter((item) => item.status === "partial").length, missing: requirements.filter((item) => item.status === "missing").length } };
 }

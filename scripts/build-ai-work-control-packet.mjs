@@ -217,7 +217,7 @@ for (const ingestedSource of ingestion?.records ?? map.sources) {
 }
 
 const outcomeBridges = (map.outcomeBridges ?? []).map((bridge) => {
-  const referencedIds = [...(bridge.companyRecordIds ?? []), ...(bridge.independentRecordIds ?? []), ...(bridge.counterexampleRecordIds ?? [])];
+  const referencedIds = [...(bridge.companyRecordIds ?? []), ...(bridge.independentRecordIds ?? []), ...(bridge.namedWorkflowRecordIds ?? []), ...(bridge.counterexampleRecordIds ?? [])];
   const missingIds = referencedIds.filter((id) => !records.some((record) => record.id === id));
   if (missingIds.length) throw new Error(`${bridge.id}: missing referenced records: ${missingIds.join(", ")}`);
   return bridge;

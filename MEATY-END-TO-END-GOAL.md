@@ -74,6 +74,9 @@ The goal is complete only when all of the following are true:
 - at least five private-company records show customer pain and business model;
 - at least three independent sources test the central domain hypothesis;
 - at least one counterexample weakens or complicates the main story.
+- at least one named workflow follows a defined intervention into a measured
+  result, with the unmeasured correction, distribution, and durability stages
+  shown rather than filled in by inference.
 
 ### Product completeness
 

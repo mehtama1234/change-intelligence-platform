@@ -1951,6 +1951,31 @@
       ]
     },
     {
+      "id": "cultural-nber-ai-access-time-boundary",
+      "sourceRole": "research",
+      "sourceRepository": "cultural-geopolitical-theme-mining",
+      "sourceRef": "analysis/projects/ai-work-control/findings/ai-work-control-075.md",
+      "sourceLocator": "NBER W33795 randomized field experiment",
+      "sourceDigest": "9b6d2b63c663133a4129b3cb153b3eb6aa1b13dd9dbe911fc8f6e483b96ff10f",
+      "sourceBytes": 6781,
+      "sourceExcerpt": "atus:** provisional randomized field-experiment finding · **Checked:** 2026-09-15 ## The bounded finding An NBER field experiment across 66 firms and 7,137 knowledge workers randomly provided some workers access to a generative-AI tool integrated into email, meetings, and writing applications. The paper reports less email time and less work outside regular hours among treated users, but no detectable change in the quantity or composition of tasks from individual-level access. The safe interpretation is narrower than “AI transformed work”: > Individual AI access can move the boundary of when and how quickly some work > is done before it changes who coordinates the work, which tasks exist, or ",
+      "title": "AI access can change the time boundary of work before task structure",
+      "observation": "A randomized field experiment across 66 firms and 7,137 knowledge workers provided some workers access to an integrated generative-AI tool. Treated workers used less email time and worked less outside regular hours, while individual-level task quantity and composition did not detectably change in the study window.",
+      "theme": "ai-work-control",
+      "mechanism": "Access to an AI tool can change when work is done before it changes who controls the work, how tasks are assigned, or where saved time goes.",
+      "affectedGroups": [
+        "knowledge workers",
+        "managers",
+        "households",
+        "firms"
+      ],
+      "claimState": "measured",
+      "asOf": "2026-09-15",
+      "limits": [
+        "The study does not observe manager reallocation, performance targets, pay, promotion, health, household time, refusal, appeal, correction, or exit, and the six-month result is not a long-run organizational outcome."
+      ]
+    },
+    {
       "id": "cultural-jrc-algorithmic-management-outcomes",
       "sourceRole": "research",
       "sourceRepository": "cultural-geopolitical-theme-mining",
@@ -2038,23 +2063,43 @@
       "independentRecordIds": [
         "trend-ai-agency-control-measure",
         "cultural-nber-ai-task-adoption",
+        "cultural-nber-ai-access-time-boundary",
         "cultural-jrc-algorithmic-management-outcomes",
         "cultural-amazon-bandameeda-remedy"
+      ],
+      "namedWorkflowRecordIds": [
+        "cultural-nber-ai-access-time-boundary"
       ],
       "counterexampleRecordIds": [
         "trend-uber-kumar-review-counterexample"
       ],
-      "status": "cross_context_not_matched",
+      "status": "named_workflow_partial",
+      "measuredStages": [
+        "tool access assignment",
+        "worker use",
+        "email time",
+        "after-hours work",
+        "task quantity and composition"
+      ],
+      "missingStages": [
+        "manager reallocation",
+        "performance or pace rule",
+        "pay or promotion",
+        "correction or appeal",
+        "health or household result",
+        "exit or durable result"
+      ],
       "canSupport": [
         "Company reports show commercial and operational movement.",
         "Independent records show measured control, adoption, working-condition, or remedy observations.",
+        "W33795 provides randomized evidence from tool access to short-run worker time patterns.",
         "The counterexample shows that human review does not guarantee restoration."
       ],
       "cannotSupport": [
-        "These records do not follow the same named workflow, employer, worker cohort, model, or period from deployment to outcome.",
-        "The comparison does not establish that a company's reported movement caused the independent worker outcomes."
+        "W33795 does not connect to one of the five public companies or establish that their reported movement caused the worker result.",
+        "The evidence does not yet follow the same worker and workplace from access through correction, reallocation, and later result."
       ],
-      "nextTest": "Select one named AI-mediated workflow and follow the same population across deployment, use, correction, appeal, exit, and later result for at least two periods."
+      "nextTest": "Join the W33795-style access event to a workplace rule and later outcome: tool access → time/task change → manager reallocation or evaluation rule → worker discretion/pace → pay, health, family time, appeal, or exit."
     }
   ],
   "insights": [

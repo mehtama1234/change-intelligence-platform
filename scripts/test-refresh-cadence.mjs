@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 
 const exec = promisify(execFile);
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
+const sourceMap = JSON.parse(await readFile(resolve(root, "data/source-maps/ai-work-control.sources.json"), "utf8"));
+const expectedRecordCount = sourceMap.sources.length;
 const runtimeDir = await mkdtemp(resolve(tmpdir(), "change-intelligence-cadence-"));
 await writeFile(resolve(runtimeDir, "workspace-watchlists.json"), `${JSON.stringify({ schemaVersion: "workspace-watchlist-ledger-v1", watchlists: [] }, null, 2)}\n`);
 await writeFile(resolve(runtimeDir, "workspace-comparison-views.json"), `${JSON.stringify({ schemaVersion: "workspace-comparison-view-ledger-v1", views: [] }, null, 2)}\n`);
@@ -23,5 +25,5 @@ const scan = JSON.parse(await readFile(resolve(runtimeDir, "latest-source-scan.j
 const ingestion = JSON.parse(await readFile(resolve(runtimeDir, "research-ingestion.json"), "utf8"));
 const packet = JSON.parse(await readFile(resolve(runtimeDir, "ai-work-control.packet.json"), "utf8"));
 const evidence = JSON.parse(await readFile(resolve(runtimeDir, "versioned-evidence-ledger.json"), "utf8"));
-if (firstReceipt.status !== "complete" || secondReceipt.status !== "complete" || secondReceipt.scope.dueRepositories.length !== 0 || secondReceipt.scope.deferredRepositories.length !== 6 || scope.deferredRepositories.length !== 6 || scan.counts.deferred !== scan.sources.length || ingestion.records.length !== packet.records.length || packet.records.length !== 20 || evidence.activeResearchRecordCount !== 20 || packet.records.filter((record) => record.researchReview?.state === "accepted_for_research").length !== 20) throw new Error("Cadence refresh did not defer repositories while preserving the complete evidence packet and accepted research ledger.");
-console.log("Refresh cadence test passed: a second hourly run deferred all six repositories and preserved all 20 records and accepted evidence versions.");
+if (firstReceipt.status !== "complete" || secondReceipt.status !== "complete" || secondReceipt.scope.dueRepositories.length !== 0 || secondReceipt.scope.deferredRepositories.length !== 6 || scope.deferredRepositories.length !== 6 || scan.counts.deferred !== scan.sources.length || ingestion.records.length !== packet.records.length || packet.records.length !== expectedRecordCount || evidence.activeResearchRecordCount !== expectedRecordCount || packet.records.filter((record) => record.researchReview?.state === "accepted_for_research").length !== expectedRecordCount) throw new Error("Cadence refresh did not defer repositories while preserving the complete evidence packet and accepted research ledger.");
+console.log(`Refresh cadence test passed: a second hourly run deferred all six repositories and preserved all ${expectedRecordCount} records and accepted evidence versions.`);
