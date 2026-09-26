@@ -611,20 +611,22 @@
     },
     "insightCandidates": {
       "schemaVersion": "insight-candidate-ledger-v1",
-      "generatedAt": "2026-09-26T10:10:25.000Z",
+      "generatedAt": "2026-09-26T10:14:48.918Z",
       "candidates": [
         {
           "id": "candidate-insight-ai-capability-control-gap-001-d49f41b81c49",
           "insightId": "insight-ai-capability-control-gap-001",
           "title": "AI can return time without returning control",
           "plainLanguageSummary": "The current evidence supports a narrower reading than 'AI makes work more productive': AI can remove visible tasks while decisions, measurement, correction, and dependence remain controlled by an employer, platform, or infrastructure provider.",
-          "status": "stale",
-          "publication": "needs_republish",
-          "staleReason": "The evidence digest changed after the last publication. Re-review the changed evidence before publishing again.",
-          "previousEvidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
-          "generatedAt": "2026-09-26T10:10:25.000Z",
+          "status": "accepted_for_publication",
+          "publication": "not_published",
+          "generatedAt": "2026-09-26T10:14:48.918Z",
           "candidateKey": "insight-ai-capability-control-gap-001",
           "evidenceDigest": "d49f41b81c499015a01374eebe317b9dfde6f4a37a8b908213e95e712efc7c38",
+          "decisionId": "insight-decision-51a11fc5-dc1b-41b4-a869-c438ce4d8198",
+          "decidedBy": "demo-researcher",
+          "decidedAt": "2026-09-26T10:13:31.863Z",
+          "decisionNote": "Re-reviewed the changed evidence digest and retained the bounded reading, its limits, and its falsifiers.",
           "evidence": [
             {
               "recordId": "trend-hunting-ai-control",
@@ -754,11 +756,15 @@
           "insightId": "insight-ai-specialist-layer-before-outcomes-002",
           "title": "AI demand is building specialist layers before results are clear",
           "plainLanguageSummary": "The current records show AI-related businesses appearing at several layers—compute, networking, implementation, comparison, and fundraising tools—while the customer result is still mostly unmeasured. This supports a map of where activity is forming, not a claim that the activity creates value.",
-          "status": "needs_researcher_review",
+          "status": "accepted_for_publication",
           "publication": "not_published",
-          "generatedAt": "2026-09-26T10:10:25.000Z",
+          "generatedAt": "2026-09-26T10:14:48.918Z",
           "candidateKey": "insight-ai-specialist-layer-before-outcomes-002",
           "evidenceDigest": "c45cdefc1214943831d91a4eac1a43837b4d3cafaeef27ef9f8019c5744e7c7e",
+          "decisionId": "insight-decision-f7c4e7aa-d09a-4fb2-bd3e-190d17305217",
+          "decidedBy": "demo-researcher",
+          "decidedAt": "2026-09-26T10:13:31.897Z",
+          "decisionNote": "Accepted for publication review after checking the seven linked records, alternative explanation, falsifiers, and limits.",
           "evidence": [
             {
               "recordId": "inc5000-coreweave-ai-infrastructure",

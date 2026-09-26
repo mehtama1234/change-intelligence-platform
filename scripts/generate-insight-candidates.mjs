@@ -31,7 +31,10 @@ const candidates = packet.insights.map((insight) => {
   const currentDecision = decision?.evidenceDigest === evidenceDigest ? decision : undefined;
   const publication = latestPublication.get(candidateKey);
   const currentPublication = publication?.evidenceDigest === evidenceDigest && currentDecision?.decision === "accept" ? publication : undefined;
-  const stalePublication = publication && !currentPublication;
+  // A changed publication makes the candidate stale until a researcher reviews
+  // the new digest. Once that review accepts the candidate, keep the old
+  // publication history but move the candidate back to the publishable queue.
+  const stalePublication = publication && !currentPublication && !currentDecision;
   const resultingState = currentPublication ? "published" : stalePublication ? "stale" : currentDecision ? ({ accept: "accepted_for_publication", defer: "deferred", reject: "rejected", correct: "correction_required" }[currentDecision.decision] ?? "needs_researcher_review") : "needs_researcher_review";
   return {
     id: `candidate-${insight.id}-${evidenceDigest.slice(0, 12)}`,
