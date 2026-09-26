@@ -284,7 +284,10 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
   const trend = refreshHistory.slice(-30).map((run) => {
     const scan = scansByRun.get(run.runId);
     const runDeliveries = deliveriesByRun.get(run.runId) ?? [];
-    return { runId: run.runId, startedAt: run.startedAt ?? null, endedAt: run.endedAt ?? null, status: run.status, failedSteps: (run.steps ?? []).filter((step) => step.status === "failed").map((step) => step.name), staleSources: scan?.counts?.changed ?? null, missingSources: scan?.counts?.missing ?? null, deliveriesPrepared: runDeliveries.length, deliveriesReviewed: runDeliveries.filter((delivery) => delivery.review).length };
+    const runAlerts = alerts.filter((alert) => alert.scanRunId === run.runId);
+    const runEnd = Date.parse(run.endedAt ?? "") || Date.now();
+    const sourceAgesAtRun = (scan?.sources ?? []).map((source) => Date.parse(source.checkedAt)).filter(Number.isFinite).map((checkedAt) => Math.max(0, runEnd - checkedAt));
+    return { runId: run.runId, startedAt: run.startedAt ?? null, endedAt: run.endedAt ?? null, status: run.status, failedSteps: (run.steps ?? []).filter((step) => step.status === "failed").map((step) => step.name), changedSources: scan?.counts?.changed ?? null, missingSources: scan?.counts?.missing ?? null, oldestSourceAgeMs: sourceAgesAtRun.length ? Math.max(...sourceAgesAtRun) : null, alertsSeen: runAlerts.length, usefulAlerts: runAlerts.filter((alert) => alert.resolutionDisposition === "useful").length, falseAlerts: runAlerts.filter((alert) => alert.resolutionDisposition === "false_positive").length, correctionAlerts: runAlerts.filter((alert) => alert.resolutionDisposition === "needs_correction").length, deliveriesPrepared: runDeliveries.length, deliveriesReviewed: runDeliveries.filter((delivery) => delivery.review).length };
   });
   return {
     schemaVersion: "operator-pilot-overview-v1",
