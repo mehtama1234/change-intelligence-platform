@@ -83,6 +83,12 @@
           <p id="atlas-compare-status" class="muted" role="status"></p>
         </form>
         <div id="atlas-compare-results" class="table-wrap" aria-live="polite"></div>
+        <form id="atlas-save-comparison-form" class="question-form">
+          <label for="atlas-comparison-name">Save the current comparison</label>
+          <div><input id="atlas-comparison-name" minlength="3" maxlength="120" placeholder="e.g. AI infrastructure peers" required><button type="submit">Save comparison</button></div>
+          <p id="atlas-save-comparison-status" class="muted" role="status"></p>
+        </form>
+        <div id="atlas-saved-comparisons" class="record-list" aria-live="polite"></div>
         <div id="atlas-detail" class="inspector" aria-live="polite" hidden></div>
       </section>
 

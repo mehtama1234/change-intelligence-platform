@@ -99,7 +99,7 @@ export function createRuntimeStore(runtimeDir) {
     return { ...operation, body: parseJson(bodyJson, {}) };
   }
 
-  const importLegacy = db.transaction(({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, pilotProfiles, pilotDeliveries, pilotDecisions, operatorWarnings, operatorNotifications, operatorRoutes, operatorAttempts, pilotReadiness, sourceScan, evidenceLedger, reviewDecisions, reviewEvents }) => {
+  const importLegacy = db.transaction(({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, comparisonViews, pilotProfiles, pilotDeliveries, pilotDecisions, operatorWarnings, operatorNotifications, operatorRoutes, operatorAttempts, pilotReadiness, sourceScan, evidenceLedger, reviewDecisions, reviewEvents }) => {
     const shouldImportQuestions = db.prepare("SELECT COUNT(*) AS count FROM questions").get().count === 0;
     const shouldImportAudit = db.prepare("SELECT COUNT(*) AS count FROM audit_entries").get().count === 0;
     const shouldImportOperations = db.prepare("SELECT COUNT(*) AS count FROM idempotency_operations").get().count === 0;
@@ -134,6 +134,7 @@ export function createRuntimeStore(runtimeDir) {
     importRecords("insight_publication", insightPublications?.publications);
     importRecords("decision_outcome", decisionOutcomes?.outcomes);
     importRecords("watchlist", watchlists?.watchlists);
+    importRecords("comparison_view", comparisonViews?.views);
     importRecords("pilot_profile", pilotProfiles?.profiles);
     importRecords("pilot_delivery", pilotDeliveries?.deliveries);
     importRecords("pilot_decision", pilotDecisions?.decisions);
@@ -202,7 +203,7 @@ export async function importRuntimeLedgers(store, paths) {
       throw error;
     }
   };
-  const [questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, pilotProfiles, pilotDeliveries, pilotDecisions, operatorWarnings, operatorNotifications, operatorRoutes, operatorAttempts, pilotReadiness, sourceScan, evidenceLedger, reviewDecisions, reviewEvents] = await Promise.all([
+  const [questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, comparisonViews, pilotProfiles, pilotDeliveries, pilotDecisions, operatorWarnings, operatorNotifications, operatorRoutes, operatorAttempts, pilotReadiness, sourceScan, evidenceLedger, reviewDecisions, reviewEvents] = await Promise.all([
     read(paths.questions, { questions: [] }),
     read(paths.audit, { entries: [] }),
     read(paths.operations, { operations: [] }),
@@ -212,6 +213,7 @@ export async function importRuntimeLedgers(store, paths) {
     read(paths.insightPublications, { publications: [] }),
     read(paths.decisionOutcomes, { outcomes: [] }),
     read(paths.watchlists, { watchlists: [] }),
+    read(paths.comparisonViews, { views: [] }),
     read(paths.pilotProfiles, { profiles: [] }),
     read(paths.pilotDeliveries, { deliveries: [] }),
     read(paths.pilotDecisions, { decisions: [] }),
@@ -237,13 +239,14 @@ export async function importRuntimeLedgers(store, paths) {
     const files = (await readdir(paths.workspaceDir)).filter((file) => file.endsWith(".json"));
     watchlists.watchlists = (await Promise.all(files.map(async (file) => parseJson(await readFile(resolve(paths.workspaceDir, file), "utf8"), {})))).flatMap((workspace) => (workspace.watchlists ?? []).map((watchlist) => ({ ...watchlist, workspaceId: workspace.id })));
   }
-  store.importLegacy({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, pilotProfiles, pilotDeliveries, pilotDecisions, operatorWarnings, operatorNotifications, operatorRoutes, operatorAttempts, pilotReadiness, sourceScan, evidenceLedger, reviewDecisions, reviewEvents });
+  store.importLegacy({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, comparisonViews, pilotProfiles, pilotDeliveries, pilotDecisions, operatorWarnings, operatorNotifications, operatorRoutes, operatorAttempts, pilotReadiness, sourceScan, evidenceLedger, reviewDecisions, reviewEvents });
   store.syncRecords("alert", alerts.alerts);
   store.syncRecords("briefing_publication", briefingPublications.publications);
   store.syncRecords("insight_decision", insightDecisions.decisions);
   store.syncRecords("insight_publication", insightPublications.publications);
   store.syncRecords("decision_outcome", decisionOutcomes.outcomes);
   store.syncRecords("watchlist", watchlists.watchlists);
+  store.syncRecords("comparison_view", comparisonViews.views);
   store.syncRecords("pilot_profile", pilotProfiles.profiles);
   store.syncRecords("pilot_delivery", pilotDeliveries.deliveries);
   store.syncRecords("pilot_decision", pilotDecisions.decisions);
@@ -265,6 +268,7 @@ export async function importRuntimeLedgers(store, paths) {
   await writeFile(paths.insightPublications, `${JSON.stringify(store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications"), null, 2)}\n`);
   if (paths.decisionOutcomes) await writeFile(paths.decisionOutcomes, `${JSON.stringify(store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes"), null, 2)}\n`);
   if (paths.watchlists) await writeFile(paths.watchlists, `${JSON.stringify(store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists"), null, 2)}\n`);
+  if (paths.comparisonViews) await writeFile(paths.comparisonViews, `${JSON.stringify(store.recordsLedger("comparison_view", "workspace-comparison-view-ledger-v1", "views"), null, 2)}\n`);
   if (paths.pilotProfiles) await writeFile(paths.pilotProfiles, `${JSON.stringify(store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles"), null, 2)}\n`);
   if (paths.pilotDeliveries) await writeFile(paths.pilotDeliveries, `${JSON.stringify(store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries"), null, 2)}\n`);
   if (paths.pilotDecisions) await writeFile(paths.pilotDecisions, `${JSON.stringify(store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions"), null, 2)}\n`);

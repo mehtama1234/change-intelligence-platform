@@ -44,6 +44,8 @@ try {
   if (alertsResponse.status !== 200 || !alert) throw new Error("Mutation test has no seeded alert.");
   const watchlistResponse = await fetch(`${base}/api/watchlists`, { method: "POST", headers: write(`watchlist-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", name: "Durability watchlist", sourceIds: ["trend-hunting-ai-control"], alertOn: ["changed", "missing"] }) });
   if (watchlistResponse.status !== 201) throw new Error(`Watchlist creation failed: ${watchlistResponse.status}`);
+  const comparisonResponse = await fetch(`${base}/api/comparison-views`, { method: "POST", headers: write(`comparison-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", name: "AI platform comparison", kind: "companies", entityIds: ["company:nvidia", "company:microsoft"] }) });
+  if (comparisonResponse.status !== 201) throw new Error(`Comparison view creation failed: ${comparisonResponse.status}`);
   const profileResponse = await fetch(`${base}/api/workspace-pilot`, { method: "POST", headers: write(`pilot-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", decisionQuestion: "Which control changes should this team act on next?", decisionContext: "Pilot setup durability test.", cadence: "monthly", successMeasures: ["Time to answer the question", "Useful alerts reviewed"], nextReviewAt: "2026-10-31" }) });
   if (profileResponse.status !== 200) throw new Error(`Pilot profile creation failed: ${profileResponse.status}`);
   await exec(process.execPath, [resolve(root, "scripts/build-pilot-deliveries.mjs")], { cwd: root, env: { ...environment, REFRESH_RUN_ID: "mutation-delivery" } });
@@ -97,6 +99,9 @@ try {
   if (pilot.measures.alertsResolved < 1 || pilot.measures.usefulAlerts < 1 || pilot.measures.decisionFeedbackRecords < 1 || pilot.measures.decisionsUsingBriefings < 1 || pilot.measures.readingsHeld < 1) throw new Error("Pilot metrics did not aggregate durable alert and decision outcomes.");
   const watchlists = await (await fetch(`${base}/api/watchlists?workspace=demo-research`, { headers: auth })).json();
   if (!watchlists.some((watchlist) => watchlist.name === "Durability watchlist")) throw new Error("Watchlist did not survive restart.");
+  const comparisonViewsResponse = await fetch(`${base}/api/comparison-views?workspace=demo-research`, { headers: auth });
+  const comparisonViews = await comparisonViewsResponse.json();
+  if (comparisonViewsResponse.status !== 200 || !comparisonViews.some((view) => view.name === "AI platform comparison" && view.entityIds.length === 2)) throw new Error("Comparison view did not survive restart.");
   const pilotProfile = await (await fetch(`${base}/api/workspace-pilot?workspace=demo-research`, { headers: auth })).json();
   if (pilotProfile.profile?.decisionQuestion !== "Which control changes should this team act on next?" || pilotProfile.profile?.cadence !== "monthly") throw new Error("Pilot profile did not survive restart.");
   const restoredDeliveries = await (await fetch(`${base}/api/pilot-deliveries?workspace=demo-research`, { headers: auth })).json();

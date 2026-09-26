@@ -27,6 +27,7 @@ const insightCandidatesPath = resolve(runtimeDir, "insight-candidates.json");
 const insightPublicationsPath = resolve(runtimeDir, "insight-publications.json");
 const decisionOutcomesPath = resolve(runtimeDir, "decision-outcomes.json");
 const watchlistsPath = resolve(runtimeDir, "workspace-watchlists.json");
+const comparisonViewsPath = resolve(runtimeDir, "workspace-comparison-views.json");
 const pilotProfilesPath = resolve(runtimeDir, "workspace-pilot-profiles.json");
 const pilotDeliveriesPath = resolve(runtimeDir, "workspace-pilot-deliveries.json");
 const pilotDecisionsPath = resolve(runtimeDir, "workspace-pilot-decisions.json");
@@ -67,6 +68,7 @@ await importRuntimeLedgers(store, {
   insightPublications: insightPublicationsPath,
   decisionOutcomes: decisionOutcomesPath,
   watchlists: watchlistsPath,
+  comparisonViews: comparisonViewsPath,
   pilotProfiles: pilotProfilesPath,
   pilotDeliveries: pilotDeliveriesPath,
   pilotDecisions: pilotDecisionsPath,
@@ -714,6 +716,31 @@ const server = createServer(async (request, response) => {
       await writeFile(watchlistsPath, `${JSON.stringify(store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists"), null, 2)}\n`);
       return json(response, 201, watchlist);
     }
+    if (request.method === "POST" && url.pathname === "/api/comparison-views") {
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot save comparisons." });
+      const kind = String(body.kind ?? "");
+      const entityIds = [...new Set((Array.isArray(body.entityIds) ? body.entityIds : []).map((value) => String(value).trim()).filter(Boolean))].slice(0, 8);
+      const name = String(body.name ?? "").trim();
+      if (!["companies", "industries"].includes(kind) || entityIds.length < 2 || name.length < 3 || name.length > 120) return json(response, 400, { error: "Provide a name and at least two companies or industries." });
+      const atlas = await readJson(atlasPath, await readJson(staticAtlasPath, { entities: {} }));
+      const known = new Map((atlas.entities?.[kind] ?? []).map((entity) => [entity.id, entity]));
+      if (entityIds.some((id) => !known.has(id))) return json(response, 400, { error: "Every comparison entity must exist in the current atlas." });
+      const now = new Date().toISOString();
+      const view = { id: `comparison-${randomUUID()}`, workspaceId: workspace.id, name, kind, entityIds, entityLabels: entityIds.map((id) => known.get(id).label), createdBy: member.id, createdRole: member.role, createdAt: now, updatedAt: now };
+      store.commitRecord({ kind: "comparison_view", record: view, audit: { requestId, action: "create_comparison_view", targetId: view.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "created", occurredAt: now }, operation: { key: idempotencyKey, action: "create_comparison_view", status: 201, body: view, completedAt: now } });
+      await writeFile(comparisonViewsPath, `${JSON.stringify(store.recordsLedger("comparison_view", "workspace-comparison-view-ledger-v1", "views"), null, 2)}\n`);
+      return json(response, 201, view);
+    }
     if (request.method === "POST" && url.pathname === "/api/workspace-pilot") {
       const body = await requestBody(request);
       const actorId = authenticatedActor(request, body);
@@ -1247,6 +1274,12 @@ const server = createServer(async (request, response) => {
       if (denyWorkspaceRead(response, access)) return;
       const watchlists = store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists").watchlists;
       return json(response, 200, access.workspaceIds ? watchlists.filter((watchlist) => access.workspaceIds.includes(watchlist.workspaceId)) : watchlists);
+    }
+    if (url.pathname === "/api/comparison-views") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      const views = store.recordsLedger("comparison_view", "workspace-comparison-view-ledger-v1", "views").views;
+      return json(response, 200, access.workspaceIds ? views.filter((view) => access.workspaceIds.includes(view.workspaceId)) : views);
     }
     if (url.pathname === "/api/alerts") {
       const workspaceId = url.searchParams.get("workspace");

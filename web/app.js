@@ -33,7 +33,15 @@ async function loadWorkspaces() {
   if (!workspaces.some((workspace) => workspace.id === state.workspaceId)) state.workspaceId = workspaces[0].id;
   select.value = state.workspaceId;
   setWorkspaceStatus(state.token ? "Connected." : "Demo workspace.");
-  await Promise.all([loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists()]);
+  await Promise.all([loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists(), loadComparisonViews()]);
+}
+
+async function loadComparisonViews() {
+  const response = await apiFetch(`../api/comparison-views?workspace=${encodeURIComponent(state.workspaceId)}`);
+  if (!response.ok) throw new Error(`Saved comparisons unavailable (${response.status})`);
+  const views = await response.json();
+  byId("atlas-saved-comparisons").innerHTML = views.length ? `<h3>Saved comparisons</h3>${views.slice().reverse().map((view) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(view.kind)}</span><span>${escapeHtml(view.createdAt)}</span></div><h3>${escapeHtml(view.name)}</h3><p>${escapeHtml(view.entityLabels.join(" · "))}</p><button class="link-button reopen-comparison" data-comparison-kind="${escapeHtml(view.kind)}" data-comparison-ids="${escapeHtml(view.entityIds.join(","))}" type="button">Reopen comparison</button></article>`).join("")}` : `<p class="muted">No saved comparisons yet.</p>`;
+  document.querySelectorAll(".reopen-comparison").forEach((button) => button.addEventListener("click", () => { const kind = byId("atlas-compare-kind"); const entities = byId("atlas-compare-entities"); kind.value = button.dataset.comparisonKind; kind.dispatchEvent(new Event("change")); const ids = new Set(button.dataset.comparisonIds.split(",")); [...entities.options].forEach((option) => { option.selected = ids.has(option.value); }); compareAtlasEntities(kind.value, [...ids]); }));
 }
 
 async function loadWatchlists() {
@@ -188,6 +196,7 @@ async function loadAtlas() {
   populateCompareEntities();
   compareKind.onchange = populateCompareEntities;
   byId("atlas-compare-form").onsubmit = async (event) => { event.preventDefault(); const ids = [...compareEntities.selectedOptions].map((option) => option.value); if (ids.length < 2) { byId("atlas-compare-status").textContent = "Choose at least two entities."; return; } await compareAtlasEntities(compareKind.value, ids); };
+  byId("atlas-save-comparison-form").onsubmit = async (event) => { event.preventDefault(); const ids = [...compareEntities.selectedOptions].map((option) => option.value); const status = byId("atlas-save-comparison-status"); if (ids.length < 2) { status.textContent = "Choose at least two entities before saving."; return; } const response = await apiFetch("../api/comparison-views", { method: "POST", body: { name: byId("atlas-comparison-name").value, kind: compareKind.value, entityIds: ids } }); status.textContent = response.ok ? "Comparison saved to this workspace." : `Could not save comparison (${response.status}).`; if (response.ok) { byId("atlas-comparison-name").value = ""; await loadComparisonViews(); } };
 }
 
 async function compareAtlasEntities(kind, ids) {
