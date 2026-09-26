@@ -32,8 +32,9 @@
     "test:review-flow": "node scripts/test-review-flow.mjs",
     "test:source-scan-runtime": "node scripts/test-source-scan-runtime-dir.mjs",
     "test:refresh-runtime": "node scripts/test-refresh-runtime-dir.mjs",
+    "validate:deployment": "node scripts/validate-deployment-config.mjs",
     "test:api:auth": "node scripts/test-api-auth.mjs",
-    "ci:core": "npm run validate:fixtures && npm run validate:packet && npm run validate:adapters && npm run evaluate:insight-quality && npm run test:insight-quality && npm run test:review-flow && npm run test:source-scan-runtime && npm run test:refresh-runtime && npm run test:read-model && npm run test:storage && npm run test:api:auth",
+    "ci:core": "npm run validate:fixtures && npm run validate:packet && npm run validate:adapters && npm run validate:deployment && npm run evaluate:insight-quality && npm run test:insight-quality && npm run test:review-flow && npm run test:source-scan-runtime && npm run test:refresh-runtime && npm run test:read-model && npm run test:storage && npm run test:api:auth",
     "serve": "node server.mjs",
     "refresh": "node scripts/run-refresh-cycle.mjs",
     "scheduler": "node scripts/scheduler.mjs"
