@@ -53,6 +53,7 @@ const required = [
   [styles, "@media (max-width: 700px)", "responsive layout"],
   [styles, ":focus", "keyboard focus styling"]
   , [operatorHtml, 'id="operator-workspaces"', "operator workspace table"]
+  , [operatorHtml, 'id="operator-history"', "operator refresh history"]
   , [operatorApp, "/api/operator/pilot-overview", "operator overview API"]
 ];
 const missing = required.filter(([text, value]) => !text.includes(value)).map(([, , label]) => label);
