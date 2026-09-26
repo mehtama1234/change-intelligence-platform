@@ -23,6 +23,7 @@ const insightCandidatesPath = resolve(runtimeDir, "insight-candidates.json");
 const insightPublicationsPath = resolve(runtimeDir, "insight-publications.json");
 const decisionOutcomesPath = resolve(runtimeDir, "decision-outcomes.json");
 const watchlistsPath = resolve(runtimeDir, "workspace-watchlists.json");
+const pilotProfilesPath = resolve(runtimeDir, "workspace-pilot-profiles.json");
 const auditPath = resolve(runtimeDir, "audit-log.json");
 const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
 const sourceScanPath = resolve(runtimeDir, "latest-source-scan.json");
@@ -51,6 +52,7 @@ await importRuntimeLedgers(store, {
   insightPublications: insightPublicationsPath,
   decisionOutcomes: decisionOutcomesPath,
   watchlists: watchlistsPath,
+  pilotProfiles: pilotProfilesPath,
   workspaceDir,
   sourceScan: sourceScanPath,
   evidenceLedger: evidenceLedgerPath,
@@ -524,6 +526,33 @@ const server = createServer(async (request, response) => {
       await writeFile(watchlistsPath, `${JSON.stringify(store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists"), null, 2)}\n`);
       return json(response, 201, watchlist);
     }
+    if (request.method === "POST" && url.pathname === "/api/workspace-pilot") {
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot configure the pilot." });
+      const decisionQuestion = String(body.decisionQuestion ?? "").trim();
+      const decisionContext = String(body.decisionContext ?? "").trim().slice(0, 2000);
+      const cadence = String(body.cadence ?? "monthly");
+      const successMeasures = [...new Set((Array.isArray(body.successMeasures) ? body.successMeasures : []).map((value) => String(value).trim()).filter(Boolean))].slice(0, 8);
+      const nextReviewAt = body.nextReviewAt ? String(body.nextReviewAt).slice(0, 32) : null;
+      if (decisionQuestion.length < 8 || decisionQuestion.length > 500) return json(response, 400, { error: "Decision question must be between 8 and 500 characters." });
+      if (!["weekly", "monthly", "quarterly"].includes(cadence)) return json(response, 400, { error: "Cadence must be weekly, monthly, or quarterly." });
+      if (!successMeasures.length) return json(response, 400, { error: "Provide at least one success measure." });
+      if (nextReviewAt && !Number.isFinite(Date.parse(nextReviewAt))) return json(response, 400, { error: "Next review date must be a valid date." });
+      const now = new Date().toISOString();
+      const profile = { id: `pilot-${workspace.id}`, workspaceId: workspace.id, status: "active", decisionQuestion, decisionContext, cadence, successMeasures, nextReviewAt, configuredBy: member.id, configuredRole: member.role, createdAt: store.findRecord("pilot_profile", `pilot-${workspace.id}`)?.createdAt ?? now, updatedAt: now };
+      store.commitRecord({ kind: "pilot_profile", record: profile, audit: { requestId, action: "configure_pilot", targetId: profile.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "configured", occurredAt: now }, operation: { key: idempotencyKey, action: "configure_pilot", status: 200, body: profile, completedAt: now } });
+      await writeFile(pilotProfilesPath, `${JSON.stringify(store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles"), null, 2)}\n`);
+      return json(response, 200, profile);
+    }
     if (request.method === "GET" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/export")) {
       const briefingId = decodeURIComponent(url.pathname.slice("/api/briefings/".length, -"/export".length));
       const workspaceId = url.searchParams.get("workspace");
@@ -741,6 +770,12 @@ const server = createServer(async (request, response) => {
         if (!access.workspaceIds || access.workspaceIds.includes(workspace.id)) workspaces.push({ id: workspace.id, name: workspace.name, memberCount: workspace.members?.length ?? 0 });
       }
       return json(response, 200, workspaces);
+    }
+    if (url.pathname === "/api/workspace-pilot") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
+      return json(response, 200, { schemaVersion: "workspace-pilot-read-model-v1", workspaceId: access.workspaceId, profile: access.workspaceIds ? profiles.find((profile) => access.workspaceIds.includes(profile.workspaceId)) ?? null : profiles });
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

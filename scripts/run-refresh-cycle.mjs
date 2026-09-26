@@ -22,6 +22,7 @@ const childEnv = {
   SOURCE_SCAN_PATH: resolve(runDir, "latest-source-scan.json"),
   ALERT_OUTPUT_DIR: runDir,
   WATCHLISTS_PATH: resolve(runDir, "workspace-watchlists.json"),
+  PILOT_PROFILES_PATH: resolve(runDir, "workspace-pilot-profiles.json"),
   REVIEW_OUTPUT_DIR: runDir,
   EVIDENCE_OUTPUT_DIR: runDir,
   QUESTIONS_PATH: resolve(runDir, "workspace-questions.json"),

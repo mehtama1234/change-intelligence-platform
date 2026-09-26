@@ -15,6 +15,7 @@ try {
     briefingPublications: resolve(runtimeDir, "briefing-publications.json"),
     insightDecisions: resolve(runtimeDir, "insight-decisions.json"),
     insightPublications: resolve(runtimeDir, "insight-publications.json"),
+    pilotProfiles: resolve(runtimeDir, "workspace-pilot-profiles.json"),
     workspaceDir: resolve(root, "data/fixtures/workspaces"),
     sourceScan: resolve(runtimeDir, "latest-source-scan.json"),
     evidenceLedger: resolve(runtimeDir, "versioned-evidence-ledger.json"),

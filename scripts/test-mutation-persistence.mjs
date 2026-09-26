@@ -41,6 +41,8 @@ try {
   if (alertsResponse.status !== 200 || !alert) throw new Error("Mutation test has no seeded alert.");
   const watchlistResponse = await fetch(`${base}/api/watchlists`, { method: "POST", headers: write(`watchlist-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", name: "Durability watchlist", sourceIds: ["trend-hunting-ai-control"], alertOn: ["changed", "missing"] }) });
   if (watchlistResponse.status !== 201) throw new Error(`Watchlist creation failed: ${watchlistResponse.status}`);
+  const profileResponse = await fetch(`${base}/api/workspace-pilot`, { method: "POST", headers: write(`pilot-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", decisionQuestion: "Which control changes should this team act on next?", decisionContext: "Pilot setup durability test.", cadence: "monthly", successMeasures: ["Time to answer the question", "Useful alerts reviewed"], nextReviewAt: "2026-10-31" }) });
+  if (profileResponse.status !== 200) throw new Error(`Pilot profile creation failed: ${profileResponse.status}`);
   const acknowledgedResponse = await fetch(`${base}/api/alerts/${encodeURIComponent(alert.id)}/acknowledge`, { method: "POST", headers: write(`alert-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", note: "Durability test" }) });
   if (acknowledgedResponse.status !== 200) throw new Error(`Alert acknowledgement failed: ${acknowledgedResponse.status}`);
   const resolvedResponse = await fetch(`${base}/api/alerts/${encodeURIComponent(alert.id)}/resolve`, { method: "POST", headers: write(`resolve-alert-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", disposition: "useful", note: "Durability test" }) });
@@ -71,7 +73,7 @@ try {
   if (restoredAlerts.find((item) => item.id === alert.id)?.acknowledgmentNote !== "Durability test") throw new Error("Alert acknowledgement did not survive restart.");
   const audit = await (await fetch(`${base}/api/audit?workspace=demo-research`, { headers: auth })).json();
   const actions = new Set(audit.map((entry) => entry.action));
-  if (!["acknowledge_alert", "resolve_alert", "create_watchlist", "publish_briefing", "export_briefing", "record_decision_outcome", "decide_insight", "review_source"].every((action) => actions.has(action))) throw new Error("Mutation and export audit records did not survive restart.");
+  if (!["acknowledge_alert", "resolve_alert", "create_watchlist", "configure_pilot", "publish_briefing", "export_briefing", "record_decision_outcome", "decide_insight", "review_source"].every((action) => actions.has(action))) throw new Error("Mutation and export audit records did not survive restart.");
   const history = await (await fetch(`${base}/api/evidence-history`, { headers: auth })).json();
   if (!history.decisionHistory.some((decision) => decision.candidateId === "review-test-candidate")) throw new Error("Source review decision did not survive restart.");
   const traceEvidence = await fetch(`${base}/api/evidence/trend-hunting-ai-control?workspace=demo-research`, { headers: auth });
@@ -83,6 +85,8 @@ try {
   if (pilot.measures.alertsResolved < 1 || pilot.measures.usefulAlerts < 1 || pilot.measures.decisionFeedbackRecords < 1 || pilot.measures.decisionsUsingBriefings < 1 || pilot.measures.readingsHeld < 1) throw new Error("Pilot metrics did not aggregate durable alert and decision outcomes.");
   const watchlists = await (await fetch(`${base}/api/watchlists?workspace=demo-research`, { headers: auth })).json();
   if (!watchlists.some((watchlist) => watchlist.name === "Durability watchlist")) throw new Error("Watchlist did not survive restart.");
+  const pilotProfile = await (await fetch(`${base}/api/workspace-pilot?workspace=demo-research`, { headers: auth })).json();
+  if (pilotProfile.profile?.decisionQuestion !== "Which control changes should this team act on next?" || pilotProfile.profile?.cadence !== "monthly") throw new Error("Pilot profile did not survive restart.");
   const outcomes = await (await fetch(`${base}/api/decision-outcomes?workspace=demo-research`, { headers: auth })).json();
   if (!outcomes.some((outcome) => outcome.briefingId === briefing.id && outcome.outcomeState === "held")) throw new Error("Decision outcome did not survive restart.");
   const timeline = await (await fetch(`${base}/api/timeline`, { headers: auth })).json();

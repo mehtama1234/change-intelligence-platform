@@ -72,12 +72,13 @@ async function loadChanges() {
 
 async function loadOperations() {
   const workspace = encodeURIComponent(state.workspaceId);
-  const [response, usageResponse, metricsResponse, updateResponse] = await Promise.all([apiFetch("../api/operations"), apiFetch(`../api/usage?workspace=${workspace}`), apiFetch(`../api/pilot-metrics?workspace=${workspace}`), apiFetch(`../api/workspace-update?workspace=${workspace}`)]);
-  if (!response.ok || !usageResponse.ok || !metricsResponse.ok || !updateResponse.ok) throw new Error(`Operations unavailable (${response.status})`);
+  const [response, usageResponse, metricsResponse, updateResponse, profileResponse] = await Promise.all([apiFetch("../api/operations"), apiFetch(`../api/usage?workspace=${workspace}`), apiFetch(`../api/pilot-metrics?workspace=${workspace}`), apiFetch(`../api/workspace-update?workspace=${workspace}`), apiFetch(`../api/workspace-pilot?workspace=${workspace}`)]);
+  if (!response.ok || !usageResponse.ok || !metricsResponse.ok || !updateResponse.ok || !profileResponse.ok) throw new Error(`Operations unavailable (${response.status})`);
   const operations = await response.json();
   const usage = await usageResponse.json();
   const pilot = await metricsResponse.json();
   const update = await updateResponse.json();
+  const pilotProfile = await profileResponse.json();
   const readiness = operations.readiness;
   const refresh = operations.refresh;
   byId("operations-summary").textContent = `Last run ${refresh.runId || "not recorded"} · ${refresh.status} · ${refresh.endedAt || "no completion time"}.`;
@@ -102,6 +103,16 @@ async function loadOperations() {
     <tr><th scope="row">Later result</th><td>${escapeHtml(measures.knownDecisionResults)} known · ${escapeHtml(measures.readingsHeld)} held · ${escapeHtml(measures.readingsChanged)} changed · ${escapeHtml(measures.readingsWrong)} wrong</td><td>What users later recorded about the reading.</td></tr>
   </tbody></table><p class="muted">${escapeHtml(pilot.interpretation)}</p>`;
   byId("workspace-update").innerHTML = `<article class="record-card"><div class="record-meta"><span class="role">customer handoff</span><span>${escapeHtml(update.freshness.readiness)}</span><span>${escapeHtml(update.freshness.refreshStatus)}</span></div><h3>${escapeHtml(update.headline)}</h3><p>${escapeHtml(update.limitation)}</p><h4>Next actions</h4>${update.actions.length ? `<ul>${update.actions.map((action) => `<li>${escapeHtml(action.label)} (${escapeHtml(action.count)})</li>`).join("")}</ul>` : `<p class="muted">No follow-up action is currently recorded.</p>`}<details><summary>Open current changes</summary>${update.changes.length ? `<ul>${update.changes.map((change) => `<li><strong>${escapeHtml(change.watchlistName)}</strong> — ${escapeHtml(change.reason)}</li>`).join("")}</ul>` : `<p class="muted">No open changes.</p>`}</details></article>`;
+  const profile = pilotProfile.profile;
+  byId("pilot-profile").innerHTML = `<article class="record-card"><div class="record-meta"><span class="role">pilot setup</span><span>${profile ? escapeHtml(profile.status) : "not configured"}</span></div><h3>${profile ? "What this pilot is meant to help decide" : "Set up this design-partner pilot"}</h3><p>${profile ? escapeHtml(profile.decisionQuestion) : "Record the decision, delivery rhythm, and measures that will determine whether this workspace is useful."}</p>${profile ? `<p class="muted">${escapeHtml(profile.cadence)} updates · review ${escapeHtml(profile.nextReviewAt || "not scheduled")} · measures: ${profile.successMeasures.map(escapeHtml).join("; ")}</p>` : ""}<form id="pilot-profile-form"><label>Decision question <input id="pilot-decision-question" required minlength="8" maxlength="500" value="${escapeHtml(profile?.decisionQuestion || "")}"></label><label>Context <textarea id="pilot-decision-context" maxlength="2000">${escapeHtml(profile?.decisionContext || "")}</textarea></label><label>Update rhythm <select id="pilot-cadence"><option value="weekly" ${profile?.cadence === "weekly" ? "selected" : ""}>Weekly</option><option value="monthly" ${!profile || profile.cadence === "monthly" ? "selected" : ""}>Monthly</option><option value="quarterly" ${profile?.cadence === "quarterly" ? "selected" : ""}>Quarterly</option></select></label><label>Success measures <textarea id="pilot-success-measures" required placeholder="One measure per line">${escapeHtml(profile?.successMeasures?.join("\n") || "")}</textarea></label><label>Next review date <input id="pilot-next-review" type="date" value="${escapeHtml(profile?.nextReviewAt?.slice(0, 10) || "")}"></label><button type="submit">Save pilot setup</button><span id="pilot-profile-status" class="muted" role="status"></span></form></article>`;
+  byId("pilot-profile-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const status = byId("pilot-profile-status");
+    status.textContent = "Saving…";
+    const result = await apiFetch("../api/workspace-pilot", { method: "POST", body: { decisionQuestion: byId("pilot-decision-question").value, decisionContext: byId("pilot-decision-context").value, cadence: byId("pilot-cadence").value, successMeasures: byId("pilot-success-measures").value.split("\n").map((value) => value.trim()).filter(Boolean), nextReviewAt: byId("pilot-next-review").value || null } });
+    status.textContent = result.ok ? "Pilot setup saved." : "Could not save pilot setup.";
+    if (result.ok) await loadOperations();
+  });
   const history = operations.refreshHistory ?? [];
   byId("operations-history").innerHTML = history.length ? `<table><caption>Recent refresh runs</caption><thead><tr><th>Run</th><th>Status</th><th>Steps</th><th>Ended</th></tr></thead><tbody>${history.slice().reverse().slice(0, 8).map((run) => `<tr><th scope="row"><code>${escapeHtml(run.runId)}</code></th><td>${escapeHtml(run.status)}</td><td>${run.steps.filter((step) => step.status === "complete").length}/${run.steps.length} complete</td><td>${escapeHtml(run.endedAt)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No refresh history recorded yet.</p>`;
 }

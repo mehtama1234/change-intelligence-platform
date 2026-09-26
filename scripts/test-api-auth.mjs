@@ -46,6 +46,8 @@ try {
   if (outsiderUpdate.status !== 403) throw new Error(`Expected non-member workspace update read to return 403, received ${outsiderUpdate.status}`);
   const memberUpdate = await fetch(`${base}/api/workspace-update?workspace=demo-research`, { headers: authHeaders });
   if (memberUpdate.status !== 200) throw new Error(`Workspace member update read failed: ${memberUpdate.status}`);
+  const outsiderPilot = await fetch(`${base}/api/workspace-pilot?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderPilot.status !== 403) throw new Error(`Expected non-member pilot read to return 403, received ${outsiderPilot.status}`);
   const memberUsage = await fetch(`${base}/api/usage?workspace=demo-research`, { headers: authHeaders });
   if (memberUsage.status !== 200) throw new Error(`Workspace member usage read failed: ${memberUsage.status}`);
   const outsiderEvidence = await fetch(`${base}/api/evidence/trend-hunting-ai-control?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
