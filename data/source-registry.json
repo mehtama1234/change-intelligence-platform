@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "source-registry-v1",
+  "researchRoot": "/home/mehta/git-repo",
+  "repositories": [
+    {
+      "id": "trend-hunting",
+      "adapter": "repository-files",
+      "refresh": "weekly",
+      "purpose": "cross-theme signals, outcome bridges, and counterexamples"
+    },
+    {
+      "id": "cultural-geopolitical-theme-mining",
+      "adapter": "repository-files",
+      "refresh": "weekly",
+      "purpose": "social, institutional, political, and geopolitical records"
+    },
+    {
+      "id": "annual-report-research",
+      "adapter": "repository-files",
+      "refresh": "quarterly",
+      "purpose": "annual reports, filings, company themes, and quarterly movement"
+    },
+    {
+      "id": "ibis-industries",
+      "adapter": "repository-files",
+      "refresh": "monthly",
+      "purpose": "industry structure, operators, bottlenecks, and sector economics"
+    },
+    {
+      "id": "inc5000-analysis",
+      "adapter": "repository-files",
+      "refresh": "monthly",
+      "purpose": "private-company growth, customer pain, and business models"
+    },
+    {
+      "id": "company-atlas-lab",
+      "adapter": "repository-files",
+      "refresh": "weekly",
+      "purpose": "company dossiers, question matrices, cases, and briefings"
+    }
+  ]
+}
