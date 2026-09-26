@@ -80,6 +80,8 @@ const required = [
   [operatorApp, "../api/operator/pilot-closeout?workspace=", "operator pilot closeout export"],
   [operatorApp, "../api/operator/pilot-cohort", "operator cohort export"],
   [operatorApp, "pilotMeasures", "operator pilot proof measures"],
+  [operatorApp, "medianAnswerTimeMinutes", "operator answer-time measure"],
+  [operatorApp, "missedImportantChanges", "operator missed-change measure"],
   [app, "delete-workspace-data", "workspace deletion control"],
   [app, "/diff?workspace=", "source difference API"],
   [app, "source-diff", "source difference inspector"],
