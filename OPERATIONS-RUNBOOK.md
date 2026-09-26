@@ -18,8 +18,9 @@ and that the deployment uses the Compose services in this repository.
 
 For GitHub Actions, add a repository secret named
 `RESEARCH_REPOSITORIES_TOKEN` with read-only access to the private
-`company-atlas-lab` repository. CI deliberately fails when this secret is
-missing; it does not replace private research inputs with stale fixtures.
+`company-atlas-lab`, `trend-hunting`, and `inc5000-analysis` repositories. CI
+deliberately fails when this secret is missing; it does not replace private
+research inputs with stale fixtures.
 
 Check the rendered deployment before starting it:
 

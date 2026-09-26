@@ -21,14 +21,16 @@ jobs:
       - name: Materialize research repositories
         run: |
           mkdir -p "$RESEARCH_ROOT"
-          for repository in annual-report-research trend-hunting cultural-geopolitical-theme-mining ibis-industries inc5000-analysis; do
+          for repository in annual-report-research cultural-geopolitical-theme-mining ibis-industries; do
             git clone --depth 1 --branch main "https://github.com/mehtama1234/${repository}.git" "$RESEARCH_ROOT/$repository"
           done
           if [ -z "${RESEARCH_REPOSITORIES_TOKEN:-}" ]; then
-            echo "::error::Set the RESEARCH_REPOSITORIES_TOKEN repository secret so CI can read the private company-atlas-lab repository."
+            echo "::error::Set the RESEARCH_REPOSITORIES_TOKEN repository secret so CI can read the private research repositories."
             exit 1
           fi
-          git -c "http.extraheader=AUTHORIZATION: bearer ${RESEARCH_REPOSITORIES_TOKEN}" clone --depth 1 --branch main "https://github.com/mehtama1234/company-atlas-lab.git" "$RESEARCH_ROOT/company-atlas-lab"
+          for repository in company-atlas-lab trend-hunting inc5000-analysis; do
+            git -c "http.extraheader=AUTHORIZATION: bearer ${RESEARCH_REPOSITORIES_TOKEN}" clone --depth 1 --branch main "https://github.com/mehtama1234/${repository}.git" "$RESEARCH_ROOT/$repository"
+          done
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
