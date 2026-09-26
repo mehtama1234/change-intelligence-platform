@@ -70,6 +70,10 @@ aid. It exposes its recommendation, evidence basis, and human-checkpoint flag;
 it cannot create an `expand`, `continue`, `improve`, or `stop` decision by itself.
 Readiness snapshots are recorded per workspace and the history read model shows
 only that workspace’s counts and recommendation changes.
+Delivery correction feedback follows the same membership and idempotency rules
+as delivery review. It is stored as workspace-scoped pilot history, is visible
+only in that workspace’s learning report, and is a request for research
+follow-up rather than an automatic change to shared evidence.
 Customer refresh-handoff notifications are also workspace-scoped. The
 `/api/workspace-delivery-notifications` read model exposes only the notification
 state, bounded subject/body, delivery identity, and timestamps for the caller’s

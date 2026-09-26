@@ -83,6 +83,12 @@ decision and later mark whether the reading held, changed, was wrong, or is
 still unknown. This creates a measured feedback loop without pretending that
 one customer's experience is a general outcome.
 
+After each recurring pilot delivery, the customer can also report whether the
+handoff was inaccurate, missing important context, unclear, or aimed at the
+wrong scope. A non-empty correction note is required. The pilot report counts
+these corrections and keeps them as follow-up work; it does not silently turn
+customer feedback into a corrected fact.
+
 ### Watchlist and alerts
 
 Tracks selected companies, industries, themes, policies, and evidence gaps.

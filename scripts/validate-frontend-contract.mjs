@@ -61,6 +61,7 @@ const required = [
   [app, "../api/workspace-pilot?workspace=", "pilot profile API"],
   [app, "../api/workspace-pilot", "pilot profile command"],
   [app, "../api/pilot-deliveries?workspace=", "pilot delivery API"],
+  [app, "pilot-delivery-correction", "delivery correction feedback"],
   [app, "../api/pilot-report?workspace=", "pilot report API"],
   [app, "../api/pilot-report/decision", "pilot decision command"],
   [app, "/review", "pilot delivery review command"],
