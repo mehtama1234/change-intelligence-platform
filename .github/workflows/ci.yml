@@ -19,7 +19,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Prepare checked-in research contract snapshot
-        run: node scripts/prepare-ci-research-snapshot.mjs
+        run: CI_RESEARCH_ROOT="$RESEARCH_ROOT" node scripts/prepare-ci-research-snapshot.mjs
       - name: Validate live research repositories when credentials are configured
         if: ${{ env.RESEARCH_REPOSITORIES_TOKEN != '' }}
         run: |
