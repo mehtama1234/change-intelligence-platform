@@ -218,6 +218,37 @@ function buildWorkspaceUpdate({ workspaceId, workspaceName, refresh, readiness, 
   };
 }
 
+function buildPilotLearningReport({ workspaceId, profile, deliveries }) {
+  const reviewed = deliveries.filter((delivery) => delivery.review);
+  const count = (items, value) => items.filter((item) => item === value).length;
+  const usefulnessValues = reviewed.map((delivery) => delivery.review.usefulness);
+  const impactValues = reviewed.map((delivery) => delivery.review.decisionImpact);
+  const measureNames = [...new Set([...(profile?.successMeasures ?? []), ...deliveries.flatMap((delivery) => delivery.successMeasures ?? [])])];
+  const measures = measureNames.map((name) => {
+    const assessments = reviewed.flatMap((delivery) => delivery.review.measureAssessments ?? []).filter((assessment) => assessment.name === name);
+    return { name, observations: assessments.length, states: { met: count(assessments.map((assessment) => assessment.state), "met"), partiallyMet: count(assessments.map((assessment) => assessment.state), "partially_met"), notMet: count(assessments.map((assessment) => assessment.state), "not_met"), unknown: count(assessments.map((assessment) => assessment.state), "unknown") }, latestState: assessments.at(-1)?.state ?? null };
+  });
+  const openIssues = [];
+  if (!reviewed.length) openIssues.push("No delivery has been reviewed yet.");
+  if (deliveries.length > reviewed.length) openIssues.push(`${deliveries.length - reviewed.length} delivery${deliveries.length - reviewed.length === 1 ? " is" : "s are"} waiting for partner review.`);
+  if (count(usefulnessValues, "not_useful") || count(usefulnessValues, "unclear")) openIssues.push(`${count(usefulnessValues, "not_useful") + count(usefulnessValues, "unclear")} reviewed deliver${count(usefulnessValues, "not_useful") + count(usefulnessValues, "unclear") === 1 ? "y was" : "ies were"} not clearly useful.`);
+  if (measures.some((measure) => measure.states.notMet || measure.states.unknown)) openIssues.push("At least one agreed success measure is not met or still unknown.");
+  return {
+    schemaVersion: "pilot-learning-report-v1",
+    workspaceId,
+    profileId: profile?.id ?? null,
+    decisionQuestion: profile?.decisionQuestion ?? null,
+    generatedAt: new Date().toISOString(),
+    observation: { deliveries: deliveries.length, reviewedDeliveries: reviewed.length, unreviewedDeliveries: deliveries.length - reviewed.length },
+    usefulness: { useful: count(usefulnessValues, "useful"), notUseful: count(usefulnessValues, "not_useful"), unclear: count(usefulnessValues, "unclear"), rate: reviewed.length ? count(usefulnessValues, "useful") / reviewed.length : null },
+    decisionImpact: { changedDecision: count(impactValues, "changed_decision"), informedDecision: count(impactValues, "informed_decision"), noChange: count(impactValues, "no_change"), notApplicable: count(impactValues, "not_applicable") },
+    measures,
+    openIssues,
+    recentNotes: reviewed.slice().sort((a, b) => String(b.review.reviewedAt).localeCompare(String(a.review.reviewedAt))).slice(0, 5).map((delivery) => ({ deliveryId: delivery.id, usefulness: delivery.review.usefulness, note: delivery.review.note, reviewedAt: delivery.review.reviewedAt })),
+    limitation: "This report summarizes what this partner recorded about this pilot. It does not establish general market value, causation, or performance outside this workspace."
+  };
+}
+
 async function appendAudit(entry) {
   store.appendAudit(entry);
   await writeFile(auditPath, `${JSON.stringify(store.auditLedger(), null, 2)}\n`);
@@ -820,6 +851,15 @@ const server = createServer(async (request, response) => {
       const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
       const visible = access.workspaceIds ? deliveries.filter((delivery) => access.workspaceIds.includes(delivery.workspaceId)) : deliveries;
       return json(response, 200, { schemaVersion: "workspace-pilot-delivery-read-model-v1", workspaceId: access.workspaceId, deliveries: visible.slice().sort((a, b) => String(b.generatedAt).localeCompare(String(a.generatedAt))) });
+    }
+    if (url.pathname === "/api/pilot-report") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
+      const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
+      const profile = profiles.find((candidate) => !access.workspaceIds || access.workspaceIds.includes(candidate.workspaceId));
+      const visible = deliveries.filter((delivery) => !access.workspaceIds || access.workspaceIds.includes(delivery.workspaceId));
+      return json(response, 200, buildPilotLearningReport({ workspaceId: access.workspaceId, profile, deliveries: visible }));
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

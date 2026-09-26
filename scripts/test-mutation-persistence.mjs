@@ -99,6 +99,8 @@ try {
   if (pilotProfile.profile?.decisionQuestion !== "Which control changes should this team act on next?" || pilotProfile.profile?.cadence !== "monthly") throw new Error("Pilot profile did not survive restart.");
   const restoredDeliveries = await (await fetch(`${base}/api/pilot-deliveries?workspace=demo-research`, { headers: auth })).json();
   if (restoredDeliveries.deliveries.find((item) => item.id === delivery.id)?.review?.usefulness !== "useful") throw new Error("Pilot delivery review did not survive restart.");
+  const learningReport = await (await fetch(`${base}/api/pilot-report?workspace=demo-research`, { headers: auth })).json();
+  if (learningReport.observation.reviewedDeliveries < 1 || learningReport.usefulness.useful < 1 || learningReport.decisionImpact.informedDecision < 1 || !learningReport.measures.some((measure) => measure.latestState === "met")) throw new Error("Pilot learning report did not aggregate the reviewed delivery.");
   const outcomes = await (await fetch(`${base}/api/decision-outcomes?workspace=demo-research`, { headers: auth })).json();
   if (!outcomes.some((outcome) => outcome.briefingId === briefing.id && outcome.outcomeState === "held")) throw new Error("Decision outcome did not survive restart.");
   const timeline = await (await fetch(`${base}/api/timeline`, { headers: auth })).json();

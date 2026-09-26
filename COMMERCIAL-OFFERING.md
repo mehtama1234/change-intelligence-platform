@@ -49,6 +49,11 @@ and alert snapshot, the agreed success measures, and the next review date.
 Measures that require human judgment remain marked for partner review instead
 of being converted into a made-up score.
 
+After several cycles, the workspace produces a pilot learning report. It
+shows how often deliveries were useful, whether they informed or changed a
+decision, how the agreed measures are trending, and which problems remain
+open. This gives both sides a basis for improving or ending the pilot.
+
 ### Team workspace
 
 Private watchlists, competitors, themes, saved questions, shared briefings,

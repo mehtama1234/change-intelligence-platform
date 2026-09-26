@@ -72,14 +72,15 @@ async function loadChanges() {
 
 async function loadOperations() {
   const workspace = encodeURIComponent(state.workspaceId);
-  const [response, usageResponse, metricsResponse, updateResponse, profileResponse, deliveryResponse] = await Promise.all([apiFetch("../api/operations"), apiFetch(`../api/usage?workspace=${workspace}`), apiFetch(`../api/pilot-metrics?workspace=${workspace}`), apiFetch(`../api/workspace-update?workspace=${workspace}`), apiFetch(`../api/workspace-pilot?workspace=${workspace}`), apiFetch(`../api/pilot-deliveries?workspace=${workspace}`)]);
-  if (!response.ok || !usageResponse.ok || !metricsResponse.ok || !updateResponse.ok || !profileResponse.ok || !deliveryResponse.ok) throw new Error(`Operations unavailable (${response.status})`);
+  const [response, usageResponse, metricsResponse, updateResponse, profileResponse, deliveryResponse, reportResponse] = await Promise.all([apiFetch("../api/operations"), apiFetch(`../api/usage?workspace=${workspace}`), apiFetch(`../api/pilot-metrics?workspace=${workspace}`), apiFetch(`../api/workspace-update?workspace=${workspace}`), apiFetch(`../api/workspace-pilot?workspace=${workspace}`), apiFetch(`../api/pilot-deliveries?workspace=${workspace}`), apiFetch(`../api/pilot-report?workspace=${workspace}`)]);
+  if (!response.ok || !usageResponse.ok || !metricsResponse.ok || !updateResponse.ok || !profileResponse.ok || !deliveryResponse.ok || !reportResponse.ok) throw new Error(`Operations unavailable (${response.status})`);
   const operations = await response.json();
   const usage = await usageResponse.json();
   const pilot = await metricsResponse.json();
   const update = await updateResponse.json();
   const pilotProfile = await profileResponse.json();
   const deliveries = await deliveryResponse.json();
+  const report = await reportResponse.json();
   const readiness = operations.readiness;
   const refresh = operations.refresh;
   byId("operations-summary").textContent = `Last run ${refresh.runId || "not recorded"} · ${refresh.status} · ${refresh.endedAt || "no completion time"}.`;
@@ -120,6 +121,8 @@ async function loadOperations() {
     status.textContent = result.ok ? "Delivery review saved." : "Could not save delivery review.";
     if (result.ok) await loadOperations();
   });
+  const usefulnessRate = report.usefulness.rate === null ? "not enough observations" : `${Math.round(report.usefulness.rate * 100)}% useful`;
+  byId("pilot-report").innerHTML = `<article class="record-card"><div class="record-meta"><span class="role">pilot learning</span><span>${escapeHtml(report.observation.reviewedDeliveries)} reviewed</span><span>${escapeHtml(usefulnessRate)}</span></div><h3>What this partner has learned so far</h3><p>${escapeHtml(report.limitation)}</p><p>Decision impact: ${escapeHtml(report.decisionImpact.changedDecision)} changed · ${escapeHtml(report.decisionImpact.informedDecision)} informed · ${escapeHtml(report.decisionImpact.noChange)} unchanged.</p><h4>Open issues</h4>${report.openIssues.length ? `<ul>${report.openIssues.map((issue) => `<li>${escapeHtml(issue)}</li>`).join("")}</ul>` : `<p class="muted">No unresolved issue is recorded.</p>`}<details><summary>Open measure observations</summary>${report.measures.length ? `<ul>${report.measures.map((measure) => `<li><strong>${escapeHtml(measure.name)}</strong> — ${escapeHtml(measure.observations)} observations; latest: ${escapeHtml(measure.latestState || "not assessed")}</li>`).join("")}</ul>` : `<p class="muted">No success measures configured.</p>`}</details></article>`;
   byId("pilot-profile-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const status = byId("pilot-profile-status");
