@@ -28,7 +28,9 @@ Operator warning limits are configuration, not hidden product judgments:
 delayed deliveries default to `0`. Source age uses `MAX_SOURCE_AGE_MS`. The
 operator response returns the observed value and threshold beside each warning.
 Operator warning acknowledgments and resolutions require the same explicit
-operator allowlist, an idempotency key, a note, and an audit receipt.
+operator allowlist, an idempotency key, a note, and an audit receipt. The
+warning record also preserves the assigned operator, escalation state, and
+response time.
 
 Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map

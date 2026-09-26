@@ -287,11 +287,11 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
   const falseAlertRate = dispositions.length ? alerts.filter((alert) => alert.resolutionDisposition === "false_positive").length / dispositions.length : null;
   const delayedDeliveries = summaries.filter((workspace) => workspace.deliveryDelayed).length;
   const warnings = [];
-  if (failedRuns.length > maxFailedRefreshes) warnings.push({ id: "refresh-failures", severity: "high", observed: failedRuns.length, threshold: maxFailedRefreshes, message: "One or more refresh runs are failing; inspect the failed steps before customer delivery." });
+  if (failedRuns.length > maxFailedRefreshes) warnings.push({ id: "refresh-failures", severity: "high", observed: failedRuns.length, threshold: maxFailedRefreshes, observedAt: failedRuns[0]?.endedAt ?? new Date(now).toISOString(), message: "One or more refresh runs are failing; inspect the failed steps before customer delivery." });
   const staleSources = sourceAges.filter((source) => source.ageMs > maxSourceAgeMs).length;
-  if (staleSources > 0 || (sourceScan.counts?.missing ?? 0) > 0) warnings.push({ id: "source-freshness", severity: "high", observed: { stale: staleSources, missing: sourceScan.counts?.missing ?? 0 }, threshold: { maxAgeMs: maxSourceAgeMs, missing: 0 }, message: "Sources are too old or unavailable for a fully current reading." });
-  if (falseAlertRate !== null && falseAlertRate > maxFalseAlertRate) warnings.push({ id: "false-alert-rate", severity: "medium", observed: falseAlertRate, threshold: maxFalseAlertRate, message: "The recorded false-alert rate is above the operating limit; review watchlist rules and source changes." });
-  if (delayedDeliveries > maxDelayedDeliveries) warnings.push({ id: "delivery-delay", severity: "medium", observed: delayedDeliveries, threshold: maxDelayedDeliveries, message: "Configured pilot deliveries are behind their expected cadence." });
+  if (staleSources > 0 || (sourceScan.counts?.missing ?? 0) > 0) warnings.push({ id: "source-freshness", severity: "high", observed: { stale: staleSources, missing: sourceScan.counts?.missing ?? 0 }, threshold: { maxAgeMs: maxSourceAgeMs, missing: 0 }, observedAt: sourceScan.generatedAt ?? sourceScan.sources?.map((source) => source.checkedAt).sort()[0] ?? new Date(now).toISOString(), message: "Sources are too old or unavailable for a fully current reading." });
+  if (falseAlertRate !== null && falseAlertRate > maxFalseAlertRate) warnings.push({ id: "false-alert-rate", severity: "medium", observed: falseAlertRate, threshold: maxFalseAlertRate, observedAt: alerts.map((alert) => alert.resolvedAt).filter(Boolean).sort()[0] ?? new Date(now).toISOString(), message: "The recorded false-alert rate is above the operating limit; review watchlist rules and source changes." });
+  if (delayedDeliveries > maxDelayedDeliveries) warnings.push({ id: "delivery-delay", severity: "medium", observed: delayedDeliveries, threshold: maxDelayedDeliveries, observedAt: new Date(now).toISOString(), message: "Configured pilot deliveries are behind their expected cadence." });
   const scansByRun = new Map((sourceScanHistory.runs ?? []).map((run) => [run.runId, run]));
   const deliveriesByRun = new Map();
   for (const delivery of deliveries) deliveriesByRun.set(delivery.refreshRunId, (deliveriesByRun.get(delivery.refreshRunId) ?? []).concat(delivery));
@@ -304,7 +304,7 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
     return { runId: run.runId, startedAt: run.startedAt ?? null, endedAt: run.endedAt ?? null, status: run.status, failedSteps: (run.steps ?? []).filter((step) => step.status === "failed").map((step) => step.name), changedSources: scan?.counts?.changed ?? null, missingSources: scan?.counts?.missing ?? null, oldestSourceAgeMs: sourceAgesAtRun.length ? Math.max(...sourceAgesAtRun) : null, alertsSeen: runAlerts.length, usefulAlerts: runAlerts.filter((alert) => alert.resolutionDisposition === "useful").length, falseAlerts: runAlerts.filter((alert) => alert.resolutionDisposition === "false_positive").length, correctionAlerts: runAlerts.filter((alert) => alert.resolutionDisposition === "needs_correction").length, deliveriesPrepared: runDeliveries.length, deliveriesReviewed: runDeliveries.filter((delivery) => delivery.review).length };
   });
   const warningById = new Map(warningEvents.map((event) => [event.warningId, event]));
-  const warningLifecycle = warnings.map((warning) => ({ ...warning, lifecycle: warningById.get(warning.id)?.state ?? "open", lastActionAt: warningById.get(warning.id)?.actedAt ?? null, actionNote: warningById.get(warning.id)?.note ?? null }));
+  const warningLifecycle = warnings.map((warning) => ({ ...warning, lifecycle: warningById.get(warning.id)?.state ?? "open", ownerId: warningById.get(warning.id)?.ownerId ?? null, escalationState: warningById.get(warning.id)?.escalationState ?? "normal", lastActionAt: warningById.get(warning.id)?.actedAt ?? null, responseTimeMs: warningById.get(warning.id)?.responseTimeMs ?? null, actionNote: warningById.get(warning.id)?.note ?? null }));
   return {
     schemaVersion: "operator-pilot-overview-v1",
     generatedAt: new Date().toISOString(),
@@ -728,10 +728,16 @@ const server = createServer(async (request, response) => {
       if (!["refresh-failures", "source-freshness", "false-alert-rate", "delivery-delay"].includes(warningId)) return json(response, 400, { error: "Unknown operator warning." });
       const state = String(body.state ?? "");
       const note = String(body.note ?? "").trim().slice(0, 2000);
+      const ownerId = String(body.ownerId ?? "").trim().slice(0, 120) || operator.actorId;
+      const escalationState = String(body.escalationState ?? "normal");
       if (!["acknowledged", "resolved"].includes(state)) return json(response, 400, { error: "Warning state must be acknowledged or resolved." });
+      if (!["normal", "escalated"].includes(escalationState)) return json(response, 400, { error: "Escalation state must be normal or escalated." });
       if (!note) return json(response, 400, { error: "A note is required." });
       const now = new Date().toISOString();
-      const event = { id: `operator-warning-${warningId}`, warningId, state, note, actedBy: operator.actorId, actedAt: now };
+      const warningObservation = { "refresh-failures": null, "source-freshness": null, "false-alert-rate": null, "delivery-delay": null }[warningId];
+      const observedAt = body.observedAt ? String(body.observedAt).slice(0, 32) : warningObservation;
+      const responseTimeMs = observedAt && Number.isFinite(Date.parse(observedAt)) ? Math.max(0, Date.parse(now) - Date.parse(observedAt)) : null;
+      const event = { id: `operator-warning-${warningId}`, warningId, state, note, ownerId, escalationState, observedAt, responseTimeMs, actedBy: operator.actorId, actedAt: now };
       store.commitRecord({ kind: "operator_warning", record: event, audit: { requestId, action: "change_operator_warning", targetId: warningId, workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: state, occurredAt: now }, operation: { key: idempotencyKey, action: "change_operator_warning", status: 200, body: event, completedAt: now } });
       await writeFile(operatorWarningsPath, `${JSON.stringify(store.recordsLedger("operator_warning", "operator-warning-event-ledger-v1", "events"), null, 2)}\n`);
       return json(response, 200, event);
