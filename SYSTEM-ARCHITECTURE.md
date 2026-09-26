@@ -114,6 +114,11 @@ outage time, recovery time, affected workspaces, held deliveries, and released
 deliveries. It supports source, event-type, and time filters while applying the
 same workspace visibility rules as the other customer read models.
 
+Researchers and workspace owners can record remediation as `started` or
+`completed` on a source-availability alert. That action is audited and appears
+in the timeline, but it does not close the alert. Only a later independent
+availability check can establish recovery and close the operational alert.
+
 ## Storage
 
 Use separate stores for:

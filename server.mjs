@@ -540,6 +540,41 @@ const server = createServer(async (request, response) => {
       await writeFile(alertsPath, `${JSON.stringify(store.alertsLedger(alertMetadata.workspaces ?? []), null, 2)}\n`);
       return json(response, 200, alert);
     }
+    if (request.method === "POST" && url.pathname.startsWith("/api/alerts/") && url.pathname.endsWith("/remediation")) {
+      const alertId = decodeURIComponent(url.pathname.slice("/api/alerts/".length, -"/remediation".length));
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot record remediation." });
+      const alert = store.findRecord("alert", alertId);
+      if (!alert || alert.workspaceId !== workspace.id) return json(response, 404, { error: "Alert not found in this workspace." });
+      if (alert.kind !== "source_availability") return json(response, 400, { error: "Remediation tracking is only available for source availability alerts." });
+      const remediationState = String(body.state ?? "");
+      if (!["started", "completed"].includes(remediationState)) return json(response, 400, { error: "Remediation state must be started or completed." });
+      const note = String(body.note ?? "").trim().slice(0, 2000);
+      if (!note) return json(response, 400, { error: "A remediation note is required." });
+      const now = new Date().toISOString();
+      alert.remediationState = remediationState;
+      alert.remediationAction = String(body.action ?? alert.recommendedAction ?? "Check the source connection.").trim().slice(0, 500);
+      alert.remediationBy = member.id;
+      alert.remediationRole = member.role;
+      alert.remediationAt = now;
+      alert.remediationNote = note;
+      const auditEntry = { requestId, action: "record_alert_remediation", targetId: alert.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: remediationState, occurredAt: now };
+      store.commitRecord({ kind: "alert", record: alert, audit: auditEntry, operation: { key: idempotencyKey, action: "record_alert_remediation", status: 200, body: alert, completedAt: now } });
+      const alertMetadata = await readJson(alertsPath, { workspaces: [] });
+      await writeFile(alertsPath, `${JSON.stringify(store.alertsLedger(alertMetadata.workspaces ?? []), null, 2)}\n`);
+      store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "source_remediation", targetId: alert.id, workspaceId: workspace.id, sourceId: alert.sourceId, reviewer: member.id, reviewerRole: member.role, status: remediationState, outcome: remediationState, remediationAction: alert.remediationAction, occurredAt: now }]);
+      await writeReviewEvents();
+      return json(response, 200, alert);
+    }
     if (request.method === "POST" && url.pathname.startsWith("/api/alerts/") && url.pathname.endsWith("/resolve")) {
       const alertId = decodeURIComponent(url.pathname.slice("/api/alerts/".length, -"/resolve".length));
       const body = await requestBody(request);

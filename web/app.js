@@ -5,7 +5,7 @@ const byId = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
 }[char]));
-const alertActionsMarkup = (alert) => `<div class="review-actions"><button class="acknowledge-alert" data-alert-id="${escapeHtml(alert.id)}" type="button">Acknowledge</button><button class="resolve-alert" data-alert-id="${escapeHtml(alert.id)}" data-disposition="useful" type="button">Useful</button><button class="resolve-alert" data-alert-id="${escapeHtml(alert.id)}" data-disposition="false_positive" type="button">False positive</button><button class="resolve-alert" data-alert-id="${escapeHtml(alert.id)}" data-disposition="needs_correction" type="button">Needs correction</button></div>`;
+const alertActionsMarkup = (alert) => `<div class="review-actions"><button class="acknowledge-alert" data-alert-id="${escapeHtml(alert.id)}" type="button">Acknowledge</button>${alert.kind === "source_availability" ? `<button class="remediation-alert" data-alert-id="${escapeHtml(alert.id)}" data-remediation-state="started" type="button">Mark remediation started</button><button class="remediation-alert" data-alert-id="${escapeHtml(alert.id)}" data-remediation-state="completed" type="button">Mark remediation completed</button>` : ""}<button class="resolve-alert" data-alert-id="${escapeHtml(alert.id)}" data-disposition="useful" type="button">Useful</button><button class="resolve-alert" data-alert-id="${escapeHtml(alert.id)}" data-disposition="false_positive" type="button">False positive</button><button class="resolve-alert" data-alert-id="${escapeHtml(alert.id)}" data-disposition="needs_correction" type="button">Needs correction</button></div>`;
 
 function apiFetch(path, options = {}) {
   const headers = new Headers(options.headers || {});
@@ -500,6 +500,13 @@ document.addEventListener("click", (event) => {
     if (["false_positive", "needs_correction"].includes(disposition) && !note?.trim()) return;
     resolveButton.disabled = true;
     apiFetch(`../api/alerts/${encodeURIComponent(resolveButton.dataset.alertId)}/resolve`, { method: "POST", body: { disposition, note } }).then((response) => { if (!response.ok) resolveButton.disabled = false; return loadAlerts(); });
+  }
+  const remediationButton = event.target.closest(".remediation-alert");
+  if (remediationButton) {
+    const note = window.prompt("What did you do or verify?");
+    if (!note?.trim()) return;
+    remediationButton.disabled = true;
+    apiFetch(`../api/alerts/${encodeURIComponent(remediationButton.dataset.alertId)}/remediation`, { method: "POST", body: { state: remediationButton.dataset.remediationState, note } }).then((response) => { if (!response.ok) remediationButton.disabled = false; return loadAlerts(); });
   }
   const recordButton = event.target.closest(".inspect-record");
   if (recordButton) inspectEvidence(recordButton.dataset.recordId).catch((error) => showInspector("Inspection unavailable", error.message, ""));
