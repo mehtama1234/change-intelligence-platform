@@ -133,6 +133,7 @@ async function loadOperations() {
     status.textContent = result.ok ? "Checkpoint saved." : "Could not save checkpoint.";
     if (result.ok) await loadOperations();
   });
+  byId("pilot-history").innerHTML = report.deliveryHistory.length ? `<table><caption>Pilot history · one row per refresh delivery</caption><thead><tr><th>Generated</th><th>Status</th><th>Usefulness</th><th>Decision impact</th><th>Headline</th></tr></thead><tbody>${report.deliveryHistory.map((delivery) => `<tr><th scope="row">${escapeHtml(delivery.generatedAt)}</th><td>${escapeHtml(delivery.status)}</td><td>${escapeHtml(delivery.usefulness)}</td><td>${escapeHtml(delivery.decisionImpact)}</td><td>${escapeHtml(delivery.headline)}</td></tr>`).join("")}</tbody></table>${report.decisionHistory.length ? `<details><summary>Checkpoint history</summary><ul>${report.decisionHistory.map((decision) => `<li>${escapeHtml(decision.decidedAt)} — <strong>${escapeHtml(decision.decision)}</strong>: ${escapeHtml(decision.nextStep)}</li>`).join("")}</ul></details>` : ""}` : `<p class="muted">No delivery history exists yet. Complete a refresh after configuring the pilot.</p>`;
   byId("pilot-profile-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const status = byId("pilot-profile-status");

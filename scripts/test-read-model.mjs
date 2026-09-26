@@ -65,7 +65,7 @@ try {
   if (deliveriesResponse.status !== 200 || deliveries.schemaVersion !== "workspace-pilot-delivery-read-model-v1" || !Array.isArray(deliveries.deliveries)) throw new Error("Pilot delivery read model contract failed.");
   const reportResponse = await request("/api/pilot-report?workspace=demo-research");
   const report = await reportResponse.json();
-  if (reportResponse.status !== 200 || report.schemaVersion !== "pilot-learning-report-v1" || !report.observation || !Array.isArray(report.openIssues) || !report.limitation.includes("does not establish")) throw new Error("Pilot learning report contract failed.");
+  if (reportResponse.status !== 200 || report.schemaVersion !== "pilot-learning-report-v1" || !report.observation || !Array.isArray(report.openIssues) || !Array.isArray(report.deliveryHistory) || !Array.isArray(report.decisionHistory) || !report.limitation.includes("does not establish")) throw new Error("Pilot learning report contract failed.");
   const evidenceResponse = await request("/api/evidence/trend-hunting-ai-control?workspace=demo-research");
   const evidence = await evidenceResponse.json();
   if (evidenceResponse.status !== 200 || evidence.schemaVersion !== "evidence-inspection-v1" || evidence.record.id !== "trend-hunting-ai-control" || !evidence.source.excerpt || !evidence.insightLinks.length) throw new Error("Evidence inspection contract failed.");

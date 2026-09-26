@@ -59,6 +59,11 @@ checkpoint. The partner records one of four choices—improve, continue, expand,
 or stop—with the reason and next step. The system preserves that decision as
 part of the pilot history; it does not make the commercial decision silently.
 
+The history view keeps every refresh in order, including whether it was
+reviewed, useful, and connected to a decision. This lets a buyer see whether
+the product is becoming dependable over time instead of judging it from one
+impressive briefing.
+
 ### Team workspace
 
 Private watchlists, competitors, themes, saved questions, shared briefings,

@@ -249,6 +249,8 @@ function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions 
     openIssues,
     recentNotes: reviewed.slice().sort((a, b) => String(b.review.reviewedAt).localeCompare(String(a.review.reviewedAt))).slice(0, 5).map((delivery) => ({ deliveryId: delivery.id, usefulness: delivery.review.usefulness, note: delivery.review.note, reviewedAt: delivery.review.reviewedAt })),
     latestDecision: decisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)))[0] ?? null,
+    decisionHistory: decisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt))).map((decision) => ({ decision: decision.decision, note: decision.note, nextStep: decision.nextStep, decidedAt: decision.decidedAt })),
+    deliveryHistory: deliveries.slice().sort((a, b) => String(b.generatedAt).localeCompare(String(a.generatedAt))).map((delivery) => ({ id: delivery.id, generatedAt: delivery.generatedAt, status: delivery.status, refreshRunId: delivery.refreshRunId, headline: delivery.headline, usefulness: delivery.review?.usefulness ?? "not reviewed", decisionImpact: delivery.review?.decisionImpact ?? "not reviewed", reviewedAt: delivery.review?.reviewedAt ?? null })) ,
     limitation: "This report summarizes what this partner recorded about this pilot. It does not establish general market value, causation, or performance outside this workspace."
   };
 }

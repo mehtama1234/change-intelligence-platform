@@ -18,6 +18,7 @@ const required = [
   [html, 'id="pilot-profile"', "pilot profile"],
   [html, 'id="pilot-delivery"', "pilot delivery"],
   [html, 'id="pilot-report"', "pilot learning report"],
+  [html, 'id="pilot-history"', "pilot history"],
   [html, 'id="coverage-panel"', "evidence coverage panel"],
   [html, 'id="review-queue"', "source review queue"],
   [html, 'id="evidence-history-items"', "research timeline"],
