@@ -43,6 +43,8 @@ try {
   if (watchlistResponse.status !== 201) throw new Error(`Watchlist creation failed: ${watchlistResponse.status}`);
   const acknowledgedResponse = await fetch(`${base}/api/alerts/${encodeURIComponent(alert.id)}/acknowledge`, { method: "POST", headers: write(`alert-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", note: "Durability test" }) });
   if (acknowledgedResponse.status !== 200) throw new Error(`Alert acknowledgement failed: ${acknowledgedResponse.status}`);
+  const resolvedResponse = await fetch(`${base}/api/alerts/${encodeURIComponent(alert.id)}/resolve`, { method: "POST", headers: write(`resolve-alert-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", disposition: "useful", note: "Durability test" }) });
+  if (resolvedResponse.status !== 200) throw new Error(`Alert resolution failed: ${resolvedResponse.status}`);
   const briefings = JSON.parse(await readFile(resolve(runtimeDir, "workspace-briefings.json"), "utf8"));
   const briefing = briefings.briefings[0];
   briefing.state = "stale";
@@ -69,20 +71,20 @@ try {
   if (restoredAlerts.find((item) => item.id === alert.id)?.acknowledgmentNote !== "Durability test") throw new Error("Alert acknowledgement did not survive restart.");
   const audit = await (await fetch(`${base}/api/audit?workspace=demo-research`, { headers: auth })).json();
   const actions = new Set(audit.map((entry) => entry.action));
-  if (!["acknowledge_alert", "create_watchlist", "publish_briefing", "export_briefing", "record_decision_outcome", "decide_insight", "review_source"].every((action) => actions.has(action))) throw new Error("Mutation and export audit records did not survive restart.");
+  if (!["acknowledge_alert", "resolve_alert", "create_watchlist", "publish_briefing", "export_briefing", "record_decision_outcome", "decide_insight", "review_source"].every((action) => actions.has(action))) throw new Error("Mutation and export audit records did not survive restart.");
   const history = await (await fetch(`${base}/api/evidence-history`, { headers: auth })).json();
   if (!history.decisionHistory.some((decision) => decision.candidateId === "review-test-candidate")) throw new Error("Source review decision did not survive restart.");
   const traceEvidence = await fetch(`${base}/api/evidence/trend-hunting-ai-control?workspace=demo-research`, { headers: auth });
   const traceInsight = await fetch(`${base}/api/insights/insight-ai-capability-control-gap-001?workspace=demo-research`, { headers: auth });
   if (traceEvidence.status !== 200 || traceInsight.status !== 200) throw new Error("Authenticated source-trace inspections failed.");
   const usage = await (await fetch(`${base}/api/usage?workspace=demo-research`, { headers: auth })).json();
-  if (usage.measures.evidenceInspections < 1 || usage.measures.insightInspections < 1 || usage.measures.briefingsExported < 1 || usage.measures.decisionOutcomesRecorded < 1 || usage.measures.watchlistsCreated < 1) throw new Error("Workspace usage did not count source tracing, export, decision feedback, and watchlist actions.");
+  if (usage.measures.evidenceInspections < 1 || usage.measures.insightInspections < 1 || usage.measures.briefingsExported < 1 || usage.measures.decisionOutcomesRecorded < 1 || usage.measures.watchlistsCreated < 1 || usage.measures.alertsResolved < 1) throw new Error("Workspace usage did not count source tracing, export, decision feedback, watchlist, and alert actions.");
   const watchlists = await (await fetch(`${base}/api/watchlists?workspace=demo-research`, { headers: auth })).json();
   if (!watchlists.some((watchlist) => watchlist.name === "Durability watchlist")) throw new Error("Watchlist did not survive restart.");
   const outcomes = await (await fetch(`${base}/api/decision-outcomes?workspace=demo-research`, { headers: auth })).json();
   if (!outcomes.some((outcome) => outcome.briefingId === briefing.id && outcome.outcomeState === "held")) throw new Error("Decision outcome did not survive restart.");
   const timeline = await (await fetch(`${base}/api/timeline`, { headers: auth })).json();
-  if (!timeline.events.some((event) => event.eventType === "source_review") || !timeline.events.some((event) => event.eventType === "briefing_republish") || !timeline.events.some((event) => event.eventType === "decision_outcome")) throw new Error("Review and decision timeline events did not survive restart.");
+  if (!timeline.events.some((event) => event.eventType === "source_review") || !timeline.events.some((event) => event.eventType === "briefing_republish") || !timeline.events.some((event) => event.eventType === "decision_outcome") || !timeline.events.some((event) => event.eventType === "alert_resolution")) throw new Error("Review, decision, and alert timeline events did not survive restart.");
   console.log("Mutation persistence test passed: alert, briefing, insight, source-review, and timeline state survived restart.");
 } finally {
   if (child && child.exitCode === null) await stop(child);

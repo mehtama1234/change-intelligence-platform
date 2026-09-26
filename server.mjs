@@ -240,6 +240,39 @@ const server = createServer(async (request, response) => {
       await writeFile(alertsPath, `${JSON.stringify(store.alertsLedger(alertMetadata.workspaces ?? []), null, 2)}\n`);
       return json(response, 200, alert);
     }
+    if (request.method === "POST" && url.pathname.startsWith("/api/alerts/") && url.pathname.endsWith("/resolve")) {
+      const alertId = decodeURIComponent(url.pathname.slice("/api/alerts/".length, -"/resolve".length));
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot resolve alerts." });
+      const alert = store.findRecord("alert", alertId);
+      if (!alert || alert.workspaceId !== workspace.id) return json(response, 404, { error: "Alert not found in this workspace." });
+      const disposition = String(body.disposition ?? "");
+      if (!["useful", "false_positive", "needs_correction"].includes(disposition)) return json(response, 400, { error: "Disposition must be useful, false_positive, or needs_correction." });
+      if (["false_positive", "needs_correction"].includes(disposition) && !String(body.note ?? "").trim()) return json(response, 400, { error: "False-positive and correction dispositions require a note." });
+      const now = new Date().toISOString();
+      alert.state = "resolved";
+      alert.resolvedBy = member.id;
+      alert.resolvedRole = member.role;
+      alert.resolvedAt = now;
+      alert.resolutionDisposition = disposition;
+      alert.resolutionNote = String(body.note ?? "").slice(0, 2000);
+      alert.responseTimeMs = Math.max(0, Date.parse(now) - (Date.parse(alert.createdAt) || Date.now()));
+      store.commitRecord({ kind: "alert", record: alert, audit: { requestId, action: "resolve_alert", targetId: alert.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: disposition, occurredAt: now }, operation: { key: idempotencyKey, action: "resolve_alert", status: 200, body: alert, completedAt: now } });
+      const alertMetadata = await readJson(alertsPath, { workspaces: [] });
+      await writeFile(alertsPath, `${JSON.stringify(store.alertsLedger(alertMetadata.workspaces ?? []), null, 2)}\n`);
+      store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "alert_resolution", targetId: alert.id, workspaceId: workspace.id, reviewer: member.id, reviewerRole: member.role, status: disposition, outcome: disposition, occurredAt: now }]);
+      await writeReviewEvents();
+      return json(response, 200, alert);
+    }
     if (request.method === "POST" && url.pathname === "/api/questions") {
       const body = await requestBody(request);
       const actorId = authenticatedActor(request, body);
@@ -480,7 +513,7 @@ const server = createServer(async (request, response) => {
       if (denyWorkspaceRead(response, access)) return;
       const entries = store.auditLedger().entries.filter((entry) => !access.workspaceIds || access.workspaceIds.includes(entry.workspaceId));
       const counts = Object.fromEntries([...new Set(entries.map((entry) => entry.action))].map((action) => [action, entries.filter((entry) => entry.action === action).length]));
-      return json(response, 200, { schemaVersion: "workspace-usage-v1", workspaceId: access.workspaceId, activity: { totalAuditEvents: entries.length, actions: counts, lastActivityAt: entries.at(-1)?.occurredAt ?? null }, measures: { questionsSaved: counts.create_question ?? 0, evidenceInspections: counts.inspect_evidence ?? 0, insightInspections: counts.inspect_insight ?? 0, sourceReviews: counts.review_source ?? 0, alertsAcknowledged: counts.acknowledge_alert ?? 0, briefingsPublished: counts.publish_briefing ?? 0, briefingsExported: counts.export_briefing ?? 0, insightsPublished: counts.publish_insight ?? 0, decisionOutcomesRecorded: counts.record_decision_outcome ?? 0, watchlistsCreated: counts.create_watchlist ?? 0 } });
+      return json(response, 200, { schemaVersion: "workspace-usage-v1", workspaceId: access.workspaceId, activity: { totalAuditEvents: entries.length, actions: counts, lastActivityAt: entries.at(-1)?.occurredAt ?? null }, measures: { questionsSaved: counts.create_question ?? 0, evidenceInspections: counts.inspect_evidence ?? 0, insightInspections: counts.inspect_insight ?? 0, sourceReviews: counts.review_source ?? 0, alertsAcknowledged: counts.acknowledge_alert ?? 0, alertsResolved: counts.resolve_alert ?? 0, falseAlerts: entries.filter((entry) => entry.action === "resolve_alert" && entry.result === "false_positive").length, briefingsPublished: counts.publish_briefing ?? 0, briefingsExported: counts.export_briefing ?? 0, insightsPublished: counts.publish_insight ?? 0, decisionOutcomesRecorded: counts.record_decision_outcome ?? 0, watchlistsCreated: counts.create_watchlist ?? 0 } });
     }
     if (url.pathname === "/metrics") {
       const readiness = await readinessReport();

@@ -5,6 +5,7 @@ const byId = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
 }[char]));
+const alertActionsMarkup = (alert) => `<div class="review-actions"><button class="acknowledge-alert" data-alert-id="${escapeHtml(alert.id)}" type="button">Acknowledge</button><button class="resolve-alert" data-alert-id="${escapeHtml(alert.id)}" data-disposition="useful" type="button">Useful</button><button class="resolve-alert" data-alert-id="${escapeHtml(alert.id)}" data-disposition="false_positive" type="button">False positive</button><button class="resolve-alert" data-alert-id="${escapeHtml(alert.id)}" data-disposition="needs_correction" type="button">Needs correction</button></div>`;
 
 function apiFetch(path, options = {}) {
   const headers = new Headers(options.headers || {});
@@ -50,7 +51,7 @@ async function loadAlerts() {
   byId("workspace-alerts").hidden = false;
   const openAlerts = alerts.filter((alert) => alert.state === "open");
   byId("alerts-summary").textContent = `${openAlerts.length} open alert${openAlerts.length === 1 ? "" : "s"} in this workspace.`;
-  byId("alerts-items").innerHTML = openAlerts.length ? openAlerts.map((alert) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(alert.severity)}</span><span>${escapeHtml(alert.kind.replaceAll("_", " "))}</span></div><h3>${escapeHtml(alert.watchlistName)}</h3><p>${escapeHtml(alert.reason)}</p><details><summary>Open alert source</summary><dl><dt>Repository</dt><dd>${escapeHtml(alert.repository)}</dd><dt>Source</dt><dd><code>${escapeHtml(alert.sourcePath)}</code></dd></dl></details><button class="acknowledge-alert" data-alert-id="${escapeHtml(alert.id)}" type="button">Acknowledge</button></article>`).join("") : `<p class="muted">No open watchlist alerts.</p>`;
+  byId("alerts-items").innerHTML = openAlerts.length ? openAlerts.map((alert) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(alert.severity)}</span><span>${escapeHtml(alert.kind.replaceAll("_", " "))}</span></div><h3>${escapeHtml(alert.watchlistName)}</h3><p>${escapeHtml(alert.reason)}</p><details><summary>Open alert source</summary><dl><dt>Repository</dt><dd>${escapeHtml(alert.repository)}</dd><dt>Source</dt><dd><code>${escapeHtml(alert.sourcePath)}</code></dd></dl></details>${alertActionsMarkup(alert)}</article>`).join("") : `<p class="muted">No open watchlist alerts.</p>`;
   document.querySelectorAll(".acknowledge-alert").forEach((button) => button.addEventListener("click", async () => {
     button.disabled = true;
     const result = await apiFetch(`../api/alerts/${encodeURIComponent(button.dataset.alertId)}/acknowledge`, { method: "POST", body: { note: "Acknowledged from workspace reader." } });
@@ -86,7 +87,7 @@ async function loadOperations() {
     ["Backup", readiness.checks.backup.status]
   ];
   const activity = usage.measures;
-  const activityCards = [["Questions", activity.questionsSaved], ["Source reviews", activity.sourceReviews], ["Briefing exports", activity.briefingsExported], ["Decision feedback", activity.decisionOutcomesRecorded], ["Alerts acknowledged", activity.alertsAcknowledged]];
+  const activityCards = [["Questions", activity.questionsSaved], ["Source reviews", activity.sourceReviews], ["Briefing exports", activity.briefingsExported], ["Decision feedback", activity.decisionOutcomesRecorded], ["Alerts resolved", activity.alertsResolved], ["False alerts", activity.falseAlerts], ["Watchlists", activity.watchlistsCreated]];
   byId("operations-cards").innerHTML = [...checks.map(([label, status]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong class="operation-${escapeHtml(status)}">${escapeHtml(status)}</strong></div>`), ...activityCards.map(([label, value]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`)].join("");
   const history = operations.refreshHistory ?? [];
   byId("operations-history").innerHTML = history.length ? `<table><caption>Recent refresh runs</caption><thead><tr><th>Run</th><th>Status</th><th>Steps</th><th>Ended</th></tr></thead><tbody>${history.slice().reverse().slice(0, 8).map((run) => `<tr><th scope="row"><code>${escapeHtml(run.runId)}</code></th><td>${escapeHtml(run.status)}</td><td>${run.steps.filter((step) => step.status === "complete").length}/${run.steps.length} complete</td><td>${escapeHtml(run.endedAt)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No refresh history recorded yet.</p>`;
@@ -245,7 +246,7 @@ function render() {
     byId("workspace-alerts").hidden = false;
     const openAlerts = workspaceAlerts.alerts.filter((alert) => alert.state === "open");
     byId("alerts-summary").textContent = `${openAlerts.length} open alert${openAlerts.length === 1 ? "" : "s"} across ${workspaceAlerts.workspaces.length} workspace${workspaceAlerts.workspaces.length === 1 ? "" : "s"}.`;
-    byId("alerts-items").innerHTML = openAlerts.length ? openAlerts.map((alert) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(alert.severity)}</span><span>${escapeHtml(alert.kind.replaceAll("_", " "))}</span></div><h3>${escapeHtml(alert.watchlistName)}</h3><p>${escapeHtml(alert.reason)}</p><details><summary>Open alert source</summary><dl><dt>Workspace</dt><dd>${escapeHtml(alert.workspaceId)}</dd><dt>Repository</dt><dd>${escapeHtml(alert.repository)}</dd><dt>Source</dt><dd><code>${escapeHtml(alert.sourcePath)}</code></dd></dl></details></article>`).join("") : `<p class="muted">No open watchlist alerts.</p>`;
+    byId("alerts-items").innerHTML = openAlerts.length ? openAlerts.map((alert) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(alert.severity)}</span><span>${escapeHtml(alert.kind.replaceAll("_", " "))}</span></div><h3>${escapeHtml(alert.watchlistName)}</h3><p>${escapeHtml(alert.reason)}</p><details><summary>Open alert source</summary><dl><dt>Workspace</dt><dd>${escapeHtml(alert.workspaceId)}</dd><dt>Repository</dt><dd>${escapeHtml(alert.repository)}</dd><dt>Source</dt><dd><code>${escapeHtml(alert.sourcePath)}</code></dd></dl></details>${alertActionsMarkup(alert)}</article>`).join("") : `<p class="muted">No open watchlist alerts.</p>`;
   }
 
   const reportRecords = records.filter((record) => record.reportWindow);
@@ -295,6 +296,14 @@ function render() {
 }
 
 document.addEventListener("click", (event) => {
+  const resolveButton = event.target.closest(".resolve-alert");
+  if (resolveButton) {
+    const disposition = resolveButton.dataset.disposition;
+    const note = ["false_positive", "needs_correction"].includes(disposition) ? window.prompt("Add a short explanation:") : "Alert disposition recorded from workspace reader.";
+    if (["false_positive", "needs_correction"].includes(disposition) && !note?.trim()) return;
+    resolveButton.disabled = true;
+    apiFetch(`../api/alerts/${encodeURIComponent(resolveButton.dataset.alertId)}/resolve`, { method: "POST", body: { disposition, note } }).then((response) => { if (!response.ok) resolveButton.disabled = false; return loadAlerts(); });
+  }
   const recordButton = event.target.closest(".inspect-record");
   if (recordButton) inspectEvidence(recordButton.dataset.recordId).catch((error) => showInspector("Inspection unavailable", error.message, ""));
   const insightButton = event.target.closest(".inspect-insight-link");

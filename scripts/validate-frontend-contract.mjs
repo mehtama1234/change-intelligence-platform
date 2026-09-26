@@ -20,6 +20,7 @@ const required = [
   [html, 'id="decision-feedback"', "decision feedback register"],
   [app, "decision-outcome-form", "decision feedback form"],
   [app, "/outcome", "decision outcome API"],
+  [app, "resolve-alert", "alert disposition controls"],
   [html, 'id="report-history"', "annual quarterly report view"],
   [html, 'id="next-test"', "next-test view"],
   [html, 'aria-live="polite"', "live update announcement"],
