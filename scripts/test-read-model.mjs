@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -6,6 +7,10 @@ const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const port = 8793;
 const base = `http://127.0.0.1:${port}`;
 const runtimeDir = `/tmp/change-intelligence-read-model-${Date.now()}`;
+await mkdir(runtimeDir, { recursive: true });
+const sourceMap = JSON.parse(await readFile(resolve(root, "data/source-maps/ai-work-control.sources.json"), "utf8"));
+const checkedAt = new Date().toISOString();
+await writeFile(resolve(runtimeDir, "latest-source-scan.json"), `${JSON.stringify({ schemaVersion: "source-scan-receipt-v1", runId: "scan-read-model-fixture", generatedAt: checkedAt, counts: { new: 0, changed: 0, unchanged: sourceMap.sources.length, missing: 0 }, sources: sourceMap.sources.map((source) => ({ id: source.id, repository: source.sourceRepository, path: source.sourcePath, status: "unchanged", needsReview: false, checkedAt })) }, null, 2)}\n`);
 const child = spawn(process.execPath, [resolve(root, "server.mjs")], {
   cwd: root,
   env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir },
@@ -32,6 +37,9 @@ try {
   const recordsResponse = await request("/api/records?sourceRole=company_report");
   const filteredRecords = await recordsResponse.json();
   if (recordsResponse.status !== 200 || filteredRecords.schemaVersion !== "evidence-record-read-model-v1" || !filteredRecords.records.every((record) => record.sourceRole === "company_report")) throw new Error("Filtered record read model contract failed.");
+  const changesResponse = await request("/api/changes?includeUnchanged=true");
+  const changes = await changesResponse.json();
+  if (changesResponse.status !== 200 || changes.schemaVersion !== "source-change-feed-v1" || changes.changes.length !== 7) throw new Error("Source change feed contract failed.");
   const evidenceResponse = await request("/api/evidence/trend-hunting-ai-control");
   const evidence = await evidenceResponse.json();
   if (evidenceResponse.status !== 200 || evidence.schemaVersion !== "evidence-inspection-v1" || evidence.record.id !== "trend-hunting-ai-control" || !evidence.source.excerpt || !evidence.insightLinks.length) throw new Error("Evidence inspection contract failed.");

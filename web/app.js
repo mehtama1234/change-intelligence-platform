@@ -51,6 +51,16 @@ async function loadAlerts() {
   }));
 }
 
+async function loadChanges() {
+  const response = await apiFetch("../api/changes?includeUnchanged=true");
+  if (!response.ok) throw new Error(`Change feed unavailable (${response.status})`);
+  const feed = await response.json();
+  const reviewCount = feed.changes.filter((change) => change.needsReview).length;
+  byId("change-feed-summary").textContent = `${feed.changes.length} sources checked in refresh ${feed.runId || "not yet run"}; ${reviewCount} need review.`;
+  const visible = feed.changes.filter((change) => change.status !== "unchanged");
+  byId("change-feed-items").innerHTML = visible.length ? visible.map((change) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(change.status)}</span><span>${change.needsReview ? "needs review" : "no review"}</span><span>${escapeHtml(change.repository)}</span></div><h3>${escapeHtml(change.sourcePath)}</h3><p>${escapeHtml(change.reason || "No source change recorded.")}</p><details><summary>Open source hashes</summary><dl><dt>Previous</dt><dd><code>${escapeHtml(change.previousSha256 || "none")}</code></dd><dt>Current</dt><dd><code>${escapeHtml(change.currentSha256 || "missing")}</code></dd><dt>Checked</dt><dd>${escapeHtml(change.checkedAt)}</dd></dl></details></article>`).join("") : `<p class="muted">No source bytes changed in the latest scan.</p>`;
+}
+
 function showInspector(title, summary, content) {
   byId("evidence-inspector").hidden = false;
   byId("inspector-title").textContent = title;
@@ -250,6 +260,7 @@ byId("save-token").addEventListener("click", async () => {
 });
 byId("token-input").value = state.token;
 loadWorkspaces().catch((error) => { setWorkspaceStatus(error.message); byId("questions-summary").textContent = error.message; });
+loadChanges().catch((error) => { byId("change-feed-summary").textContent = error.message; });
 
 fetch(fixtureUrl).then((response) => {
   if (!response.ok) throw new Error(`Fixture unavailable (${response.status})`);

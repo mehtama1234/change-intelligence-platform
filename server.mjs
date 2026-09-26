@@ -365,6 +365,12 @@ const server = createServer(async (request, response) => {
       const values = (field) => [...new Set(packet.records.map((record) => record[field]).filter(Boolean))].sort().map((value) => ({ value, count: packet.records.filter((record) => record[field] === value).length }));
       return json(response, 200, { schemaVersion: "catalog-read-model-v1", domain: packet.domain, sourceSnapshotDate: packet.sourceSnapshotDate, recordCount: packet.records.length, repositoryCount: new Set(packet.records.map((record) => record.sourceRepository)).size, themes: values("theme"), companies: values("company"), industries: values("industry"), sourceRoles: values("sourceRole") });
     }
+    if (url.pathname === "/api/changes") {
+      const scan = await readJson(sourceScanPath, { schemaVersion: "source-scan-receipt-v1", runId: null, generatedAt: null, counts: {}, sources: [] });
+      const includeUnchanged = url.searchParams.get("includeUnchanged") === "true";
+      const changes = (scan.sources ?? []).filter((source) => includeUnchanged || source.status !== "unchanged").map((source) => ({ id: source.id, repository: source.repository, sourcePath: source.path, status: source.status, needsReview: source.needsReview, reason: source.reviewReason, checkedAt: source.checkedAt, previousSha256: source.previousSha256 ?? null, currentSha256: source.sha256 ?? null }));
+      return json(response, 200, { schemaVersion: "source-change-feed-v1", runId: scan.runId, generatedAt: scan.generatedAt, counts: scan.counts, changes });
+    }
     if (url.pathname === "/api/packet") return json(response, 200, publicPacket(await readJson(packetPath, { error: "Packet has not been built." })));
     if (url.pathname.startsWith("/api/evidence/")) {
       const recordId = decodeURIComponent(url.pathname.slice("/api/evidence/".length));
