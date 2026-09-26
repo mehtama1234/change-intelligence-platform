@@ -11,6 +11,12 @@
       <p class="eyebrow">Change Intelligence Platform · first vertical slice</p>
       <h1>AI, work, and enterprise control</h1>
       <p class="lede">A source-linked reading of what AI may change at work, what the current evidence supports, and what remains unproven.</p>
+      <div class="workspace-context" aria-label="Workspace connection">
+        <label for="workspace-select">Workspace <select id="workspace-select"><option value="demo-research">Loading workspaces…</option></select></label>
+        <label for="token-input">API token <input id="token-input" type="password" autocomplete="off" placeholder="Optional in demo mode"></label>
+        <button id="save-token" type="button">Connect</button>
+        <span id="workspace-status" class="muted" role="status"></span>
+      </div>
     </header>
 
     <main>

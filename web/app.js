@@ -1,10 +1,55 @@
 const fixtureUrl = "../api/packet";
-const state = { packet: null, role: "all" };
+const state = { packet: null, role: "all", workspaceId: "demo-research", actorId: "demo-researcher", token: sessionStorage.getItem("change-intelligence-token") || "" };
 
 const byId = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
 }[char]));
+
+function apiFetch(path, options = {}) {
+  const headers = new Headers(options.headers || {});
+  if (state.token) headers.set("Authorization", `Bearer ${state.token}`);
+  let body = options.body;
+  if (body && typeof body === "object") {
+    body = { ...body, workspaceId: state.workspaceId };
+    if (!state.token) body.actorId = state.actorId;
+    headers.set("content-type", "application/json");
+    body = JSON.stringify(body);
+  }
+  if (options.method && options.method !== "GET") headers.set("Idempotency-Key", crypto.randomUUID?.() || `web-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  return fetch(path, { ...options, headers, body });
+}
+
+function setWorkspaceStatus(message) { byId("workspace-status").textContent = message; }
+
+async function loadWorkspaces() {
+  const response = await apiFetch("../api/workspaces");
+  if (!response.ok) throw new Error(response.status === 401 ? "Enter a token to connect to a workspace." : `Workspaces unavailable (${response.status})`);
+  const workspaces = await response.json();
+  if (!workspaces.length) throw new Error("This account has no workspace access.");
+  const select = byId("workspace-select");
+  select.innerHTML = workspaces.map((workspace) => `<option value="${escapeHtml(workspace.id)}">${escapeHtml(workspace.name)}</option>`).join("");
+  if (!workspaces.some((workspace) => workspace.id === state.workspaceId)) state.workspaceId = workspaces[0].id;
+  select.value = state.workspaceId;
+  setWorkspaceStatus(state.token ? "Connected." : "Demo workspace.");
+  await Promise.all([loadQuestions(), loadAlerts()]);
+}
+
+async function loadAlerts() {
+  const response = await apiFetch(`../api/alerts?workspace=${encodeURIComponent(state.workspaceId)}`);
+  if (!response.ok) throw new Error(`Alerts unavailable (${response.status})`);
+  const alerts = await response.json();
+  byId("workspace-alerts").hidden = false;
+  const openAlerts = alerts.filter((alert) => alert.state === "open");
+  byId("alerts-summary").textContent = `${openAlerts.length} open alert${openAlerts.length === 1 ? "" : "s"} in this workspace.`;
+  byId("alerts-items").innerHTML = openAlerts.length ? openAlerts.map((alert) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(alert.severity)}</span><span>${escapeHtml(alert.kind.replaceAll("_", " "))}</span></div><h3>${escapeHtml(alert.watchlistName)}</h3><p>${escapeHtml(alert.reason)}</p><details><summary>Open alert source</summary><dl><dt>Repository</dt><dd>${escapeHtml(alert.repository)}</dd><dt>Source</dt><dd><code>${escapeHtml(alert.sourcePath)}</code></dd></dl></details><button class="acknowledge-alert" data-alert-id="${escapeHtml(alert.id)}" type="button">Acknowledge</button></article>`).join("") : `<p class="muted">No open watchlist alerts.</p>`;
+  document.querySelectorAll(".acknowledge-alert").forEach((button) => button.addEventListener("click", async () => {
+    button.disabled = true;
+    const result = await apiFetch(`../api/alerts/${encodeURIComponent(button.dataset.alertId)}/acknowledge`, { method: "POST", body: { note: "Acknowledged from workspace reader." } });
+    if (!result.ok) button.disabled = false;
+    await loadAlerts();
+  }));
+}
 
 function showInspector(title, summary, content) {
   byId("evidence-inspector").hidden = false;
@@ -66,11 +111,11 @@ function render() {
     byId("insight-status").textContent = insightCandidate.status.replaceAll("_", " ");
     byId("insight-review-actions").innerHTML = insightCandidate.status === "needs_researcher_review" ? `<button id="accept-insight" type="button">Accept for publication review</button>` : insightCandidate.status === "accepted_for_publication" ? `<button id="publish-insight" type="button">Publish insight</button>` : insightCandidate.status === "published" ? `<span>Published by ${escapeHtml(insightCandidate.publishedBy || "researcher")}.</span>` : `<span>Decision recorded by ${escapeHtml(insightCandidate.decidedBy || "researcher")}.</span>`;
     byId("accept-insight")?.addEventListener("click", async () => {
-      const response = await fetch(`../api/insight-candidates/${encodeURIComponent(insightCandidate.id)}/decision`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", actorId: "demo-researcher", decision: "accept", note: "Accepted for publication review after evidence inspection." }) });
+      const response = await apiFetch(`../api/insight-candidates/${encodeURIComponent(insightCandidate.id)}/decision`, { method: "POST", body: { decision: "accept", note: "Accepted for publication review after evidence inspection." } });
       if (response.ok) byId("insight-review-actions").textContent = "Accepted for publication review.";
     });
     byId("publish-insight")?.addEventListener("click", async () => {
-      const response = await fetch(`../api/insight-candidates/${encodeURIComponent(insightCandidate.id)}/publish`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", actorId: "demo-researcher", note: "Published after review." }) });
+      const response = await apiFetch(`../api/insight-candidates/${encodeURIComponent(insightCandidate.id)}/publish`, { method: "POST", body: { note: "Published after review." } });
       if (response.ok) byId("insight-review-actions").textContent = "Published.";
     });
   }
@@ -141,7 +186,8 @@ byId("role-filter").addEventListener("change", (event) => {
 });
 
 async function loadQuestions() {
-  const [response, evaluationsResponse, briefingsResponse] = await Promise.all([fetch("../api/questions?workspace=demo-research"), fetch("../api/question-evaluations?workspace=demo-research"), fetch("../api/briefings?workspace=demo-research")]);
+  const workspace = encodeURIComponent(state.workspaceId);
+  const [response, evaluationsResponse, briefingsResponse] = await Promise.all([apiFetch(`../api/questions?workspace=${workspace}`), apiFetch(`../api/question-evaluations?workspace=${workspace}`), apiFetch(`../api/briefings?workspace=${workspace}`)]);
   if (!response.ok || !evaluationsResponse.ok || !briefingsResponse.ok) throw new Error(`Questions unavailable (${response.status})`);
   const questions = await response.json();
   const evaluations = await evaluationsResponse.json();
@@ -152,7 +198,7 @@ async function loadQuestions() {
   byId("questions-items").innerHTML = questions.length ? questions.map((question) => { const evaluation = evaluationByQuestion.get(question.id); const briefing = briefingByQuestion.get(question.id); return `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(question.state)}</span><span>${escapeHtml(question.createdBy)}</span>${evaluation ? `<span>${escapeHtml(evaluation.state.replaceAll("_", " "))}</span>` : ""}${briefing ? `<span>${escapeHtml(briefing.state)}</span>` : ""}</div><h3>${escapeHtml(question.question)}</h3><p class="muted">Saved ${escapeHtml(question.createdAt)} · Last evaluated: ${escapeHtml(question.lastEvaluatedAt || "not yet")} · Evidence matches: ${evaluation?.matchedRecordIds.length ?? 0}</p>${evaluation ? `<details><summary>Open evaluation boundary</summary><p>${escapeHtml(evaluation.limitation)}</p><p>Matching records: ${escapeHtml(evaluation.matchedRecordIds.join(", ") || "none")}</p>${briefing ? `<p>Briefing: ${escapeHtml(briefing.reading)}</p><p>Next test: ${escapeHtml(briefing.nextTest)}</p>${briefing.state !== "published" ? `<button class="publish-briefing" data-briefing-id="${escapeHtml(briefing.id)}">Publish draft</button>` : `<p>Published by ${escapeHtml(briefing.publishedBy || "researcher")}.</p>`}` : ""}</details>` : ""}</article>`; }).join("") : `<p class="muted">No saved questions yet.</p>`;
   document.querySelectorAll(".publish-briefing").forEach((button) => button.addEventListener("click", async () => {
     button.disabled = true;
-    const response = await fetch(`../api/briefings/${encodeURIComponent(button.dataset.briefingId)}/publish`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", actorId: "demo-researcher" }) });
+    const response = await apiFetch(`../api/briefings/${encodeURIComponent(button.dataset.briefingId)}/publish`, { method: "POST", body: {} });
     if (!response.ok) button.disabled = false;
     await loadQuestions();
   }));
@@ -164,7 +210,7 @@ byId("question-form").addEventListener("submit", async (event) => {
   const status = byId("question-status");
   status.textContent = "Saving…";
   try {
-    const response = await fetch("../api/questions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", actorId: "demo-researcher", question: input.value }) });
+    const response = await apiFetch("../api/questions", { method: "POST", body: { question: input.value } });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Question could not be saved.");
     input.value = "";
@@ -175,7 +221,14 @@ byId("question-form").addEventListener("submit", async (event) => {
   }
 });
 
-loadQuestions().catch((error) => { byId("questions-summary").textContent = error.message; });
+byId("workspace-select").addEventListener("change", async (event) => { state.workspaceId = event.target.value; await Promise.all([loadQuestions(), loadAlerts()]); });
+byId("save-token").addEventListener("click", async () => {
+  const token = byId("token-input").value.trim();
+  if (token) { state.token = token; sessionStorage.setItem("change-intelligence-token", token); } else { state.token = ""; sessionStorage.removeItem("change-intelligence-token"); }
+  try { await loadWorkspaces(); } catch (error) { setWorkspaceStatus(error.message); }
+});
+byId("token-input").value = state.token;
+loadWorkspaces().catch((error) => { setWorkspaceStatus(error.message); byId("questions-summary").textContent = error.message; });
 
 fetch(fixtureUrl).then((response) => {
   if (!response.ok) throw new Error(`Fixture unavailable (${response.status})`);

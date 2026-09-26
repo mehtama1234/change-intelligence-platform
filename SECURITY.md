@@ -21,6 +21,11 @@ request without a token receives `401`; a signed-in user who is not a member of
 the requested workspace receives `403`; a request without a workspace filter
 returns only workspaces where that actor is a member. The domain evidence packet
 and source-linked inspection endpoints are not customer-private workspace data.
+The public packet intentionally omits workspace alerts, questions, evaluations,
+and briefings; those are available only through membership-checked endpoints.
+The demo reader keeps a manually entered token only for the current browser
+session; production should replace this with an identity provider and secure
+session cookie.
 
 Token-authenticated write requests must also send an `Idempotency-Key`. A
 retry with the same key replays the original result instead of creating a

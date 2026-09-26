@@ -131,6 +131,14 @@ async function storeOperation(operation) {
   await writeFile(operationsPath, `${JSON.stringify(store.operationsLedger(), null, 2)}\n`);
 }
 
+function publicPacket(packet) {
+  const operations = { ...(packet.operations ?? {}) };
+  delete operations.workspaceAlerts;
+  delete operations.questionEvaluations;
+  delete operations.briefings;
+  return { ...packet, operations };
+}
+
 function ageMs(value, now) {
   const timestamp = Date.parse(value ?? "");
   return Number.isFinite(timestamp) ? Math.max(0, now - timestamp) : null;
@@ -316,7 +324,7 @@ const server = createServer(async (request, response) => {
       ];
       return text(response, 200, `${values.map(([name, value]) => `${name} ${value}`).join("\n")}\n`);
     }
-    if (url.pathname === "/api/packet") return json(response, 200, await readJson(packetPath, { error: "Packet has not been built." }));
+    if (url.pathname === "/api/packet") return json(response, 200, publicPacket(await readJson(packetPath, { error: "Packet has not been built." })));
     if (url.pathname.startsWith("/api/evidence/")) {
       const recordId = decodeURIComponent(url.pathname.slice("/api/evidence/".length));
       const packet = await readJson(packetPath, { records: [], insights: [] });

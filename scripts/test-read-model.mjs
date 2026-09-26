@@ -23,6 +23,9 @@ async function request(path) {
 }
 
 try {
+  const packetResponse = await request("/api/packet");
+  const packet = await packetResponse.json();
+  if (packetResponse.status !== 200 || packet.operations?.workspaceAlerts || packet.operations?.questionEvaluations || packet.operations?.briefings) throw new Error("Public packet exposed workspace-private operations.");
   const evidenceResponse = await request("/api/evidence/trend-hunting-ai-control");
   const evidence = await evidenceResponse.json();
   if (evidenceResponse.status !== 200 || evidence.schemaVersion !== "evidence-inspection-v1" || evidence.record.id !== "trend-hunting-ai-control" || !evidence.source.excerpt || !evidence.insightLinks.length) throw new Error("Evidence inspection contract failed.");
