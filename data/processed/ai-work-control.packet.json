@@ -24,6 +24,17 @@
           "records": []
         }
       }
+    },
+    "workspaceAlerts": {
+      "schemaVersion": "workspace-alert-ledger-v1",
+      "generatedAt": "2026-09-26T04:20:28.314Z",
+      "workspaces": [
+        {
+          "id": "demo-research",
+          "name": "Demo research workspace"
+        }
+      ],
+      "alerts": []
     }
   },
   "records": [

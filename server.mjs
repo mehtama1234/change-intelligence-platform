@@ -9,6 +9,7 @@ const packetPath = resolve(root, "data/processed/ai-work-control.packet.json");
 const reviewPath = resolve(root, "data/processed/runs/ai-work-control/latest-review-work.json");
 const historyPath = resolve(root, "data/processed/runs/ai-work-control/versioned-evidence-ledger.json");
 const refreshPath = resolve(root, "data/processed/runs/ai-work-control/latest-refresh.json");
+const alertsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-alerts.json");
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 
 const json = (response, status, body) => {
@@ -32,6 +33,12 @@ const server = createServer(async (request, response) => {
     if (url.pathname === "/api/review-work") return json(response, 200, await readJson(reviewPath, { schemaVersion: "source-review-work-v1", reviewRequired: 0, candidates: [] }));
     if (url.pathname === "/api/evidence-history") return json(response, 200, await readJson(historyPath, { schemaVersion: "versioned-evidence-ledger-v1", records: [], decisionHistory: [] }));
     if (url.pathname === "/api/refresh") return json(response, 200, await readJson(refreshPath, { schemaVersion: "refresh-receipt-v1", status: "not_run", steps: [] }));
+    if (url.pathname === "/api/workspaces") return json(response, 200, (await readJson(alertsPath, { workspaces: [] })).workspaces ?? []);
+    if (url.pathname === "/api/alerts") {
+      const ledger = await readJson(alertsPath, { alerts: [] });
+      const workspaceId = url.searchParams.get("workspace");
+      return json(response, 200, workspaceId ? ledger.alerts.filter((alert) => alert.workspaceId === workspaceId) : ledger.alerts);
+    }
     if (url.pathname === "/") {
       response.writeHead(302, { Location: "/web/index.html" });
       return response.end();

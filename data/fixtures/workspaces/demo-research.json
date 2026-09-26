@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "workspace-v1",
+  "id": "demo-research",
+  "name": "Demo research workspace",
+  "watchlists": [
+    {
+      "id": "ai-work-control-watch",
+      "name": "AI work and enterprise control",
+      "sourceIds": ["trend-hunting-ai-control", "cultural-ai-capability-dependence", "annual-ai-cultural-disintermediation", "ibis-ai-workflow-compression", "inc5000-coreweave-ai-infrastructure", "atlas-ai-work-evidence-thread", "atlas-c3-ai-report-window"],
+      "repositoryIds": [],
+      "alertOn": ["new", "changed", "missing"]
+    }
+  ]
+}
