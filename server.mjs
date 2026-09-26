@@ -262,6 +262,9 @@ function buildPilotMetrics({ workspaceId, auditEntries, alerts, outcomes, briefi
   const medianCorrectionResponseMs = correctionResponseTimes.length ? correctionResponseTimes[Math.floor(correctionResponseTimes.length / 2)] : null;
   const deliveryReviewTimes = deliveries.map((delivery) => delivery.review && Number.isFinite(Date.parse(delivery.generatedAt)) && Number.isFinite(Date.parse(delivery.review.reviewedAt)) ? Math.max(0, Date.parse(delivery.review.reviewedAt) - Date.parse(delivery.generatedAt)) : null).filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
   const medianDeliveryReviewMs = deliveryReviewTimes.length ? deliveryReviewTimes[Math.floor(deliveryReviewTimes.length / 2)] : null;
+  const answerTimes = deliveries.map((delivery) => delivery.review?.answerTimeMinutes).filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
+  const medianAnswerTimeMinutes = answerTimes.length ? answerTimes[Math.floor(answerTimes.length / 2)] : null;
+  const reviewedDeliveries = deliveries.filter((delivery) => delivery.review);
   const knownOutcomes = outcomes.filter((outcome) => ["held", "changed", "wrong"].includes(outcome.outcomeState));
   const publishedBriefings = auditEntries.filter((entry) => entry.action === "publish_briefing").length;
   const reusedBriefingIds = new Set(outcomes.filter((outcome) => outcome.decisionState === "used").map((outcome) => outcome.briefingId).filter(Boolean));
@@ -279,6 +282,10 @@ function buildPilotMetrics({ workspaceId, auditEntries, alerts, outcomes, briefi
       medianAlertResponseMs: median,
       medianCorrectionResponseMs,
       medianDeliveryReviewMs,
+      medianAnswerTimeMinutes,
+      answerTimeObservations: answerTimes.length,
+      missedImportantChanges: reviewedDeliveries.filter((delivery) => delivery.review.missedChangeState === "yes").length,
+      missedChangeObservations: reviewedDeliveries.filter((delivery) => ["yes", "none", "unknown"].includes(delivery.review.missedChangeState)).length,
       sourceTraceInspections: auditEntries.filter((entry) => ["inspect_evidence", "inspect_insight"].includes(entry.action)).length,
       briefingsPublished: publishedBriefings,
       briefingsExported: auditEntries.filter((entry) => entry.action === "export_briefing").length,
@@ -544,6 +551,8 @@ function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions,
   const usefulnessValues = reviewed.map((delivery) => delivery.review.usefulness);
   const impactValues = reviewed.map((delivery) => delivery.review.decisionImpact);
   const correctionValues = reviewed.map((delivery) => delivery.review.correctionType ?? "none");
+  const answerTimes = reviewed.map((delivery) => delivery.review.answerTimeMinutes).filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
+  const missedChangeValues = reviewed.map((delivery) => delivery.review.missedChangeState).filter(Boolean);
   const insightOutcomeRecords = outcomes.filter((outcome) => outcome.insightProvenance?.length);
   const insightReceiptUsage = new Map();
   for (const outcome of insightOutcomeRecords) {
@@ -579,11 +588,13 @@ function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions,
     checkpoint: { state: reviewed.length >= 3 ? "enough_observations_for_checkpoint" : "more_observations_needed", reviewedDeliveriesRequired: 3, explanation: reviewed.length >= 3 ? "The workspace has at least three reviewed deliveries; a human checkpoint can use this report." : "Use this report as a learning log, but collect at least three reviewed deliveries before making a commercial decision." },
     usefulness: { useful: count(usefulnessValues, "useful"), notUseful: count(usefulnessValues, "not_useful"), unclear: count(usefulnessValues, "unclear"), rate: reviewed.length ? count(usefulnessValues, "useful") / reviewed.length : null },
     corrections: { total: correctionValues.filter((value) => value !== "none").length, inaccurate: count(correctionValues, "inaccurate"), missingContext: count(correctionValues, "missing_context"), unclear: count(correctionValues, "unclear"), wrongScope: count(correctionValues, "wrong_scope") },
+    answerTime: { observations: answerTimes.length, medianMinutes: answerTimes.length ? answerTimes[Math.floor(answerTimes.length / 2)] : null },
+    missedChanges: { observations: missedChangeValues.length, reported: count(missedChangeValues, "yes"), noneReported: count(missedChangeValues, "none"), unknown: count(missedChangeValues, "unknown") },
     decisionImpact: { changedDecision: count(impactValues, "changed_decision"), informedDecision: count(impactValues, "informed_decision"), noChange: count(impactValues, "no_change"), notApplicable: count(impactValues, "not_applicable") },
     insightFeedback,
     measures,
     openIssues,
-    recentNotes: reviewed.slice().sort((a, b) => String(b.review.reviewedAt).localeCompare(String(a.review.reviewedAt))).slice(0, 5).map((delivery) => ({ deliveryId: delivery.id, usefulness: delivery.review.usefulness, correctionType: delivery.review.correctionType ?? "none", correctionNote: delivery.review.correctionNote ?? null, note: delivery.review.note, reviewedAt: delivery.review.reviewedAt })),
+    recentNotes: reviewed.slice().sort((a, b) => String(b.review.reviewedAt).localeCompare(String(a.review.reviewedAt))).slice(0, 5).map((delivery) => ({ deliveryId: delivery.id, usefulness: delivery.review.usefulness, correctionType: delivery.review.correctionType ?? "none", correctionNote: delivery.review.correctionNote ?? null, missedChangeState: delivery.review.missedChangeState ?? "unknown", missedChangeNote: delivery.review.missedChangeNote ?? null, answerTimeMinutes: delivery.review.answerTimeMinutes ?? null, note: delivery.review.note, reviewedAt: delivery.review.reviewedAt })),
     latestDecision: decisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)))[0] ?? null,
     decisionHistory: decisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt))).map((decision) => ({ decision: decision.decision, note: decision.note, nextStep: decision.nextStep, decidedAt: decision.decidedAt })),
     deliveryHistory: deliveries.slice().sort((a, b) => String(b.generatedAt).localeCompare(String(a.generatedAt))).map((delivery) => ({ id: delivery.id, generatedAt: delivery.generatedAt, status: delivery.status, refreshRunId: delivery.refreshRunId, headline: delivery.headline, usefulness: delivery.review?.usefulness ?? "not reviewed", decisionImpact: delivery.review?.decisionImpact ?? "not reviewed", reviewedAt: delivery.review?.reviewedAt ?? null })) ,
@@ -1455,18 +1466,25 @@ const server = createServer(async (request, response) => {
       const note = String(body.note ?? "").trim().slice(0, 2000);
       const correctionType = String(body.correctionType ?? "none");
       const correctionNote = String(body.correctionNote ?? "").trim().slice(0, 2000);
+      const missedChangeState = String(body.missedChangeState ?? "unknown");
+      const missedChangeNote = String(body.missedChangeNote ?? "").trim().slice(0, 2000);
+      const answerTimeMinutes = body.answerTimeMinutes === "" || body.answerTimeMinutes === null || body.answerTimeMinutes === undefined ? null : Number(body.answerTimeMinutes);
       const allowedUsefulness = ["useful", "not_useful", "unclear"];
       const allowedImpact = ["changed_decision", "informed_decision", "no_change", "not_applicable"];
       const allowedCorrections = ["none", "inaccurate", "missing_context", "unclear", "wrong_scope"];
+      const allowedMissedChangeStates = ["yes", "none", "unknown"];
       if (!allowedUsefulness.includes(usefulness)) return json(response, 400, { error: "Usefulness must be useful, not_useful, or unclear." });
       if (!allowedImpact.includes(decisionImpact)) return json(response, 400, { error: "Decision impact is invalid." });
       if (!allowedCorrections.includes(correctionType)) return json(response, 400, { error: "Correction type is invalid." });
       if (correctionType !== "none" && !correctionNote) return json(response, 400, { error: "A correction note is required when reporting a delivery problem." });
+      if (!allowedMissedChangeStates.includes(missedChangeState)) return json(response, 400, { error: "Missed-change state must be yes, none, or unknown." });
+      if (missedChangeState === "yes" && !missedChangeNote) return json(response, 400, { error: "A note is required when reporting a missed important change." });
+      if (answerTimeMinutes !== null && (!Number.isFinite(answerTimeMinutes) || answerTimeMinutes < 0 || answerTimeMinutes > 100000)) return json(response, 400, { error: "Answer time must be between 0 and 100000 minutes." });
       if (!note) return json(response, 400, { error: "A review note is required." });
       const assessments = Array.isArray(body.measureAssessments) ? body.measureAssessments.map((assessment) => ({ name: String(assessment.name ?? "").trim().slice(0, 200), state: String(assessment.state ?? "unknown"), note: String(assessment.note ?? "").trim().slice(0, 500) })).filter((assessment) => assessment.name) : [];
       if (assessments.some((assessment) => !["met", "partially_met", "not_met", "unknown"].includes(assessment.state))) return json(response, 400, { error: "Each measure assessment must be met, partially_met, not_met, or unknown." });
       const now = new Date().toISOString();
-      const review = { id: `pilot-delivery-review-${randomUUID()}`, deliveryId, workspaceId: workspace.id, reviewedBy: member.id, reviewedRole: member.role, usefulness, decisionImpact, correctionType, correctionNote: correctionType === "none" ? null : correctionNote, note, measureAssessments: assessments, reviewedAt: now };
+      const review = { id: `pilot-delivery-review-${randomUUID()}`, deliveryId, workspaceId: workspace.id, reviewedBy: member.id, reviewedRole: member.role, usefulness, decisionImpact, correctionType, correctionNote: correctionType === "none" ? null : correctionNote, missedChangeState, missedChangeNote: missedChangeState === "yes" ? missedChangeNote : null, answerTimeMinutes, note, measureAssessments: assessments, reviewedAt: now };
       const reviewedDelivery = { ...delivery, status: "reviewed", review };
       store.commitRecord({ kind: "pilot_delivery", record: reviewedDelivery, audit: { requestId, action: "review_pilot_delivery", targetId: deliveryId, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: usefulness, occurredAt: now }, operation: { key: idempotencyKey, action: "review_pilot_delivery", status: 200, body: reviewedDelivery, completedAt: now } });
       store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "pilot_delivery_review", targetId: deliveryId, workspaceId: workspace.id, reviewer: member.id, reviewerRole: member.role, outcome: usefulness, decisionImpact, occurredAt: now, deliveryReviewId: review.id }]);

@@ -110,6 +110,7 @@ The goal is complete only when all of the following are true:
 - at least one briefing changes a real research, strategy, product, or risk
   decision;
 - false alerts and corrections are measured;
+- partner-reported time to answer and missed important changes are recorded;
 - the product has a repeatable paid offer, onboarding process, and support
   process.
 

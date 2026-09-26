@@ -335,7 +335,7 @@ Test whether the system changes real research work.
 - observe how users verify, share, challenge, and reuse insights;
 - record corrections and missed important changes;
 - measure time to answer, source-trace use, briefing reuse, false alerts,
-  correction time, and decision usefulness.
+  missed important changes, correction time, and decision usefulness.
 
 ### Gate
 

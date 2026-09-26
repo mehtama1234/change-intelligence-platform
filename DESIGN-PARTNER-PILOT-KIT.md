@@ -103,6 +103,8 @@ The scorecard reports recorded activity, not business causation:
 | False alerts | Alerts the partner marked as noise | The quality of every alert not reviewed |
 | Alert correction response | Time from an alert to a correction disposition | The time needed to fix the underlying research |
 | Delivery review time | Time from handoff generation to partner review | The time to make a broader business decision |
+| Time to answer | Partner-reported time spent answering the agreed question after a handoff | That the answer was correct or caused a decision |
+| Missed important changes | A partner report that the delivery failed to include an important change | The quality of changes the partner did not notice or report |
 | Useful deliveries | Deliveries marked useful | General product-market fit |
 | Decision impact | Deliveries marked as informing or changing a decision | A causal business result |
 | Later result | Whether the partner later marked the reading held, changed, wrong, or unknown | A measured outcome outside the workspace |
