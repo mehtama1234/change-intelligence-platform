@@ -237,8 +237,9 @@ const server = createServer(async (request, response) => {
       const ledger = await readJson(briefingsPath, { schemaVersion: "workspace-briefing-ledger-v1", briefings: [] });
       const briefing = ledger.briefings.find((candidate) => candidate.id === briefingId && candidate.workspaceId === workspace.id);
       if (!briefing) return json(response, 404, { error: "Briefing not found in this workspace." });
+      if (briefing.state === "stale" && body.confirmUpdatedEvidence !== true) return json(response, 409, { error: "This briefing is stale. Inspect the updated evidence and confirm it before republishing." });
       const now = new Date().toISOString();
-      const publication = { id: `publication-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, briefingId, workspaceId: workspace.id, evidenceDigest: briefing.evidenceDigest, publishedBy: member.id, publishedRole: member.role, publishedAt: now, note: String(body.note ?? "").slice(0, 2000) };
+      const publication = { id: `publication-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, briefingId, workspaceId: workspace.id, evidenceDigest: briefing.evidenceDigest, publishedBy: member.id, publishedRole: member.role, publishedAt: now, note: String(body.note ?? "").slice(0, 2000), ...(briefing.state === "stale" ? { reReviewedUpdatedEvidence: true, previousEvidenceDigest: briefing.previousEvidenceDigest ?? null } : {}) };
       briefing.state = "published";
       briefing.publication = "published";
       briefing.publicationId = publication.id;

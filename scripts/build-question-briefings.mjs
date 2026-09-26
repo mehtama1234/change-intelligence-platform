@@ -34,13 +34,15 @@ const briefings = questions.questions.filter((question) => question.state === "a
   const evidenceDigest = createHash("sha256").update(JSON.stringify(evidence.map((item) => [item.recordId, item.sourceDigest]))).digest("hex");
   const publication = publicationByBriefing.get(`briefing-${question.id}`);
   const currentPublication = publication?.evidenceDigest === evidenceDigest ? publication : undefined;
+  const stalePublication = publication && !currentPublication;
   return {
     id: `briefing-${question.id}`,
     workspaceId: question.workspaceId,
     questionId: question.id,
     title: question.question,
-    state: currentPublication ? "published" : publication ? "stale" : "draft",
-    publication: currentPublication ? "published" : publication ? "needs_republish" : "not_published",
+    state: currentPublication ? "published" : stalePublication ? "stale" : "draft",
+    publication: currentPublication ? "published" : stalePublication ? "needs_republish" : "not_published",
+    ...(stalePublication ? { staleReason: "The evidence digest changed after the last publication. Inspect the updated evidence before republishing.", previousEvidenceDigest: publication.evidenceDigest } : {}),
     ...(currentPublication ? { publishedBy: currentPublication.publishedBy, publishedAt: currentPublication.publishedAt, publicationId: currentPublication.id } : {}),
     evidenceDigest,
     generatedAt: new Date().toISOString(),

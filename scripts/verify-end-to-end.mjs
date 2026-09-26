@@ -31,12 +31,14 @@ assert(evaluations.evaluations.every((evaluation) => evaluation.state === "evide
 assert(briefings.briefings.every((briefing) => ["draft", "published", "stale"].includes(briefing.state)), "briefings must have an explicit publication state");
 assert(insightCandidates.candidates.length === packet.insights.length, "each insight must produce one candidate");
 assert(insightEvaluation.status === "pass" && insightEvaluation.evaluations.length === packet.insights.length, "insight quality evaluation must pass for every insight");
-assert(insightCandidates.candidates.every((candidate) => ["needs_researcher_review", "accepted_for_publication", "published", "deferred", "rejected", "correction_required"].includes(candidate.status)), "insight candidates must have an explicit review state");
+assert(insightCandidates.candidates.every((candidate) => ["needs_researcher_review", "accepted_for_publication", "published", "stale", "deferred", "rejected", "correction_required"].includes(candidate.status)), "insight candidates must have an explicit review state");
+assert(insightCandidates.candidates.every((candidate) => candidate.status !== "stale" || (candidate.staleReason && candidate.previousEvidenceDigest)), "stale insights need an explanation and prior digest");
 assert(insightCandidates.candidates.every((candidate) => candidate.status !== "published" || (candidate.publication === "published" && candidate.publicationId)), "published insights need a publication receipt");
 for (const candidate of insightCandidates.candidates) for (const evidence of candidate.evidence) assert(records.get(evidence.recordId)?.sourceDigest === evidence.sourceDigest, `${candidate.id}: insight evidence digest does not match packet`);
 for (const briefing of briefings.briefings) {
   for (const evidence of briefing.evidence) assert(records.get(evidence.recordId)?.sourceDigest === evidence.sourceDigest, `${briefing.id}: evidence digest does not match packet`);
   if (briefing.state === "published") assert(briefing.publication === "published" && briefing.publicationId, `${briefing.id}: published briefing lacks publication receipt`);
+  if (briefing.state === "stale") assert(briefing.staleReason && briefing.previousEvidenceDigest, `${briefing.id}: stale briefing needs an explanation and prior digest`);
 }
 assert(alerts.workspaces.some((workspace) => workspace.id === "demo-research"), "workspace alert ledger must contain demo workspace");
 assert(packet.operations?.workspaceAlerts, "packet must expose workspace alert read model");

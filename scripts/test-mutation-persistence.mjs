@@ -43,7 +43,12 @@ try {
   if (acknowledgedResponse.status !== 200) throw new Error(`Alert acknowledgement failed: ${acknowledgedResponse.status}`);
   const briefings = JSON.parse(await readFile(resolve(runtimeDir, "workspace-briefings.json"), "utf8"));
   const briefing = briefings.briefings[0];
-  const briefingResponse = await fetch(`${base}/api/briefings/${encodeURIComponent(briefing.id)}/publish`, { method: "POST", headers: write(`briefing-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", note: "Durability test" }) });
+  briefing.state = "stale";
+  briefing.previousEvidenceDigest = "previous-durability-digest";
+  await writeFile(resolve(runtimeDir, "workspace-briefings.json"), `${JSON.stringify(briefings, null, 2)}\n`);
+  const staleBriefingResponse = await fetch(`${base}/api/briefings/${encodeURIComponent(briefing.id)}/publish`, { method: "POST", headers: write(`briefing-stale-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", note: "Durability test" }) });
+  if (staleBriefingResponse.status !== 409) throw new Error(`Stale briefing was published without re-review confirmation: ${staleBriefingResponse.status}`);
+  const briefingResponse = await fetch(`${base}/api/briefings/${encodeURIComponent(briefing.id)}/publish`, { method: "POST", headers: write(`briefing-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", confirmUpdatedEvidence: true, note: "Durability test" }) });
   if (briefingResponse.status !== 200) throw new Error(`Briefing publication failed: ${briefingResponse.status}`);
   const exportResponse = await fetch(`${base}/api/briefings/${encodeURIComponent(briefing.id)}/export?workspace=demo-research`, { headers: auth });
   const exported = await exportResponse.json();

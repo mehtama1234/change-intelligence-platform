@@ -30,14 +30,16 @@ const candidates = packet.insights.map((insight) => {
   const currentDecision = decision?.evidenceDigest === evidenceDigest ? decision : undefined;
   const publication = latestPublication.get(candidateKey);
   const currentPublication = publication?.evidenceDigest === evidenceDigest && currentDecision?.decision === "accept" ? publication : undefined;
-  const resultingState = currentPublication ? "published" : currentDecision ? ({ accept: "accepted_for_publication", defer: "deferred", reject: "rejected", correct: "correction_required" }[currentDecision.decision] ?? "needs_researcher_review") : "needs_researcher_review";
+  const stalePublication = publication && !currentPublication;
+  const resultingState = currentPublication ? "published" : stalePublication ? "stale" : currentDecision ? ({ accept: "accepted_for_publication", defer: "deferred", reject: "rejected", correct: "correction_required" }[currentDecision.decision] ?? "needs_researcher_review") : "needs_researcher_review";
   return {
     id: `candidate-${insight.id}-${evidenceDigest.slice(0, 12)}`,
     insightId: insight.id,
     title: insight.title,
     plainLanguageSummary: insight.plainLanguageSummary,
     status: resultingState,
-    publication: currentPublication ? "published" : "not_published",
+    publication: currentPublication ? "published" : stalePublication ? "needs_republish" : "not_published",
+    ...(stalePublication ? { staleReason: "The evidence digest changed after the last publication. Re-review the changed evidence before publishing again.", previousEvidenceDigest: publication.evidenceDigest } : {}),
     generatedAt: new Date().toISOString(),
     candidateKey,
     evidenceDigest,
