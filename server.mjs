@@ -180,6 +180,7 @@ function buildPilotMetrics({ workspaceId, auditEntries, alerts, outcomes, briefi
       briefingsExported: auditEntries.filter((entry) => entry.action === "export_briefing").length,
       decisionFeedbackRecords: outcomes.length,
       decisionsUsingBriefings: outcomes.filter((outcome) => outcome.decisionState === "used").length,
+      deliveryReviews: auditEntries.filter((entry) => entry.action === "review_pilot_delivery").length,
       knownDecisionResults: knownOutcomes.length,
       readingsHeld: outcomes.filter((outcome) => outcome.outcomeState === "held").length,
       readingsChanged: outcomes.filter((outcome) => outcome.outcomeState === "changed").length,
@@ -554,6 +555,40 @@ const server = createServer(async (request, response) => {
       store.commitRecord({ kind: "pilot_profile", record: profile, audit: { requestId, action: "configure_pilot", targetId: profile.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "configured", occurredAt: now }, operation: { key: idempotencyKey, action: "configure_pilot", status: 200, body: profile, completedAt: now } });
       await writeFile(pilotProfilesPath, `${JSON.stringify(store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles"), null, 2)}\n`);
       return json(response, 200, profile);
+    }
+    if (request.method === "POST" && url.pathname.startsWith("/api/pilot-deliveries/") && url.pathname.endsWith("/review")) {
+      const deliveryId = decodeURIComponent(url.pathname.slice("/api/pilot-deliveries/".length, -"/review".length));
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const delivery = store.findRecord("pilot_delivery", deliveryId);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!delivery || delivery.workspaceId !== workspace.id) return json(response, 404, { error: "Pilot delivery not found in this workspace." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot review pilot deliveries." });
+      const usefulness = String(body.usefulness ?? "");
+      const decisionImpact = String(body.decisionImpact ?? "");
+      const note = String(body.note ?? "").trim().slice(0, 2000);
+      const allowedUsefulness = ["useful", "not_useful", "unclear"];
+      const allowedImpact = ["changed_decision", "informed_decision", "no_change", "not_applicable"];
+      if (!allowedUsefulness.includes(usefulness)) return json(response, 400, { error: "Usefulness must be useful, not_useful, or unclear." });
+      if (!allowedImpact.includes(decisionImpact)) return json(response, 400, { error: "Decision impact is invalid." });
+      if (!note) return json(response, 400, { error: "A review note is required." });
+      const assessments = Array.isArray(body.measureAssessments) ? body.measureAssessments.map((assessment) => ({ name: String(assessment.name ?? "").trim().slice(0, 200), state: String(assessment.state ?? "unknown"), note: String(assessment.note ?? "").trim().slice(0, 500) })).filter((assessment) => assessment.name) : [];
+      if (assessments.some((assessment) => !["met", "partially_met", "not_met", "unknown"].includes(assessment.state))) return json(response, 400, { error: "Each measure assessment must be met, partially_met, not_met, or unknown." });
+      const now = new Date().toISOString();
+      const review = { id: `pilot-delivery-review-${randomUUID()}`, deliveryId, workspaceId: workspace.id, reviewedBy: member.id, reviewedRole: member.role, usefulness, decisionImpact, note, measureAssessments: assessments, reviewedAt: now };
+      const reviewedDelivery = { ...delivery, status: "reviewed", review };
+      store.commitRecord({ kind: "pilot_delivery", record: reviewedDelivery, audit: { requestId, action: "review_pilot_delivery", targetId: deliveryId, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: usefulness, occurredAt: now }, operation: { key: idempotencyKey, action: "review_pilot_delivery", status: 200, body: reviewedDelivery, completedAt: now } });
+      store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "pilot_delivery_review", targetId: deliveryId, workspaceId: workspace.id, reviewer: member.id, reviewerRole: member.role, outcome: usefulness, decisionImpact, occurredAt: now, deliveryReviewId: review.id }]);
+      await writeReviewEvents();
+      await writeFile(pilotDeliveriesPath, `${JSON.stringify(store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries"), null, 2)}\n`);
+      return json(response, 200, reviewedDelivery);
     }
     if (request.method === "GET" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/export")) {
       const briefingId = decodeURIComponent(url.pathname.slice("/api/briefings/".length, -"/export".length));

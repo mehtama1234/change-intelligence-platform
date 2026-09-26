@@ -1,9 +1,12 @@
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
+const exec = promisify(execFile);
 const sourceRuntime = resolve(root, "data/processed/runs/ai-work-control");
 const port = 8795;
 const base = `http://127.0.0.1:${port}`;
@@ -43,6 +46,13 @@ try {
   if (watchlistResponse.status !== 201) throw new Error(`Watchlist creation failed: ${watchlistResponse.status}`);
   const profileResponse = await fetch(`${base}/api/workspace-pilot`, { method: "POST", headers: write(`pilot-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", decisionQuestion: "Which control changes should this team act on next?", decisionContext: "Pilot setup durability test.", cadence: "monthly", successMeasures: ["Time to answer the question", "Useful alerts reviewed"], nextReviewAt: "2026-10-31" }) });
   if (profileResponse.status !== 200) throw new Error(`Pilot profile creation failed: ${profileResponse.status}`);
+  await exec(process.execPath, [resolve(root, "scripts/build-pilot-deliveries.mjs")], { cwd: root, env: { ...environment, REFRESH_RUN_ID: "mutation-delivery" } });
+  await exec(process.execPath, [resolve(root, "scripts/sync-runtime-store.mjs")], { cwd: root, env: environment });
+  const deliveries = await (await fetch(`${base}/api/pilot-deliveries?workspace=demo-research`, { headers: auth })).json();
+  const delivery = deliveries.deliveries[0];
+  if (!delivery) throw new Error("Pilot delivery was not generated.");
+  const deliveryReviewResponse = await fetch(`${base}/api/pilot-deliveries/${encodeURIComponent(delivery.id)}/review`, { method: "POST", headers: write(`delivery-review-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", usefulness: "useful", decisionImpact: "informed_decision", measureAssessments: [{ name: "Time to answer the question", state: "partially_met" }, { name: "Useful alerts reviewed", state: "met" }], note: "The delivery gave the team a clear next check." }) });
+  if (deliveryReviewResponse.status !== 200) throw new Error(`Pilot delivery review failed: ${deliveryReviewResponse.status}`);
   const acknowledgedResponse = await fetch(`${base}/api/alerts/${encodeURIComponent(alert.id)}/acknowledge`, { method: "POST", headers: write(`alert-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", note: "Durability test" }) });
   if (acknowledgedResponse.status !== 200) throw new Error(`Alert acknowledgement failed: ${acknowledgedResponse.status}`);
   const resolvedResponse = await fetch(`${base}/api/alerts/${encodeURIComponent(alert.id)}/resolve`, { method: "POST", headers: write(`resolve-alert-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", disposition: "useful", note: "Durability test" }) });
@@ -73,7 +83,7 @@ try {
   if (restoredAlerts.find((item) => item.id === alert.id)?.acknowledgmentNote !== "Durability test") throw new Error("Alert acknowledgement did not survive restart.");
   const audit = await (await fetch(`${base}/api/audit?workspace=demo-research`, { headers: auth })).json();
   const actions = new Set(audit.map((entry) => entry.action));
-  if (!["acknowledge_alert", "resolve_alert", "create_watchlist", "configure_pilot", "publish_briefing", "export_briefing", "record_decision_outcome", "decide_insight", "review_source"].every((action) => actions.has(action))) throw new Error("Mutation and export audit records did not survive restart.");
+  if (!["acknowledge_alert", "resolve_alert", "create_watchlist", "configure_pilot", "review_pilot_delivery", "publish_briefing", "export_briefing", "record_decision_outcome", "decide_insight", "review_source"].every((action) => actions.has(action))) throw new Error("Mutation and export audit records did not survive restart.");
   const history = await (await fetch(`${base}/api/evidence-history`, { headers: auth })).json();
   if (!history.decisionHistory.some((decision) => decision.candidateId === "review-test-candidate")) throw new Error("Source review decision did not survive restart.");
   const traceEvidence = await fetch(`${base}/api/evidence/trend-hunting-ai-control?workspace=demo-research`, { headers: auth });
@@ -87,10 +97,12 @@ try {
   if (!watchlists.some((watchlist) => watchlist.name === "Durability watchlist")) throw new Error("Watchlist did not survive restart.");
   const pilotProfile = await (await fetch(`${base}/api/workspace-pilot?workspace=demo-research`, { headers: auth })).json();
   if (pilotProfile.profile?.decisionQuestion !== "Which control changes should this team act on next?" || pilotProfile.profile?.cadence !== "monthly") throw new Error("Pilot profile did not survive restart.");
+  const restoredDeliveries = await (await fetch(`${base}/api/pilot-deliveries?workspace=demo-research`, { headers: auth })).json();
+  if (restoredDeliveries.deliveries.find((item) => item.id === delivery.id)?.review?.usefulness !== "useful") throw new Error("Pilot delivery review did not survive restart.");
   const outcomes = await (await fetch(`${base}/api/decision-outcomes?workspace=demo-research`, { headers: auth })).json();
   if (!outcomes.some((outcome) => outcome.briefingId === briefing.id && outcome.outcomeState === "held")) throw new Error("Decision outcome did not survive restart.");
   const timeline = await (await fetch(`${base}/api/timeline`, { headers: auth })).json();
-  if (!timeline.events.some((event) => event.eventType === "source_review") || !timeline.events.some((event) => event.eventType === "briefing_republish") || !timeline.events.some((event) => event.eventType === "decision_outcome") || !timeline.events.some((event) => event.eventType === "alert_resolution")) throw new Error("Review, decision, and alert timeline events did not survive restart.");
+  if (!timeline.events.some((event) => event.eventType === "source_review") || !timeline.events.some((event) => event.eventType === "briefing_republish") || !timeline.events.some((event) => event.eventType === "decision_outcome") || !timeline.events.some((event) => event.eventType === "alert_resolution") || !timeline.events.some((event) => event.eventType === "pilot_delivery_review")) throw new Error("Review, decision, alert, and pilot delivery timeline events did not survive restart.");
   console.log("Mutation persistence test passed: alert, briefing, insight, source-review, and timeline state survived restart.");
 } finally {
   if (child && child.exitCode === null) await stop(child);
