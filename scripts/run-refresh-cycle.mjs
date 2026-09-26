@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const exec = promisify(execFile);
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
-const runDir = resolve(root, "data/processed/runs/ai-work-control");
+const runDir = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control");
 const lockPath = resolve(runDir, "refresh.lock");
 const receiptPath = resolve(runDir, "latest-refresh.json");
 const historyPath = resolve(runDir, "refresh-history.json");

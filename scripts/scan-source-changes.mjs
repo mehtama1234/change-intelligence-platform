@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const registryPath = resolve(root, "data/source-registry.json");
 const mapPath = resolve(root, "data/source-maps/ai-work-control.sources.json");
-const runDir = resolve(root, "data/processed/runs/ai-work-control");
+const runDir = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control");
 const latestPath = resolve(runDir, "latest-source-scan.json");
 const historyPath = resolve(runDir, "source-scan-history.json");
 const registry = JSON.parse(await readFile(registryPath, "utf8"));
