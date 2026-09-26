@@ -6,6 +6,8 @@
     { "id": "single-source-story", "mutation": "single_repository", "expectedError": "at least two records" },
     { "id": "no-alternative", "mutation": "missing_alternative", "expectedError": "missing strongest alternative" },
     { "id": "no-next-test", "mutation": "missing_next_test", "expectedError": "missing next test" },
-    { "id": "no-falsifier", "mutation": "missing_falsifier", "expectedError": "missing falsifiers" }
+    { "id": "no-falsifier", "mutation": "missing_falsifier", "expectedError": "missing falsifiers" },
+    { "id": "citation-digest-mismatch", "mutation": "candidate_digest", "expectedError": "candidate evidence digest mismatch" },
+    { "id": "published-without-receipt", "mutation": "candidate_receipt", "expectedError": "published candidate lacks a publication receipt" }
   ]
 }
