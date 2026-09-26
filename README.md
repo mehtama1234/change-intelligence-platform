@@ -26,6 +26,8 @@ evidence proves, and what remains open.
 3. [System architecture](SYSTEM-ARCHITECTURE.md)
 4. [Commercial offering](COMMERCIAL-OFFERING.md)
 5. [Delivery roadmap](DELIVERY-ROADMAP.md)
+6. [Meaty end-to-end goal](MEATY-END-TO-END-GOAL.md)
+7. [SDLC delivery plan](SDLC-DELIVERY-PLAN.md)
 
 ## North-star question
 
