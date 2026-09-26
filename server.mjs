@@ -272,8 +272,13 @@ function buildChangeIntelligenceFeed({ packet, scan, briefings = [], candidates 
   const scopedSourceIds = new Set(visibleWatchlists.flatMap((watchlist) => watchlist.sourceIds ?? []));
   const scopedRepositoryIds = new Set(visibleWatchlists.flatMap((watchlist) => watchlist.repositoryIds ?? []));
   const hasWatchlistScope = visibleWatchlists.length > 0;
+  const sourceMatchesWatchlist = (source, watchlist) => {
+    const identityMatches = (watchlist.sourceIds ?? []).includes(source.id) || (watchlist.repositoryIds ?? []).includes(source.repository);
+    const allowedStates = watchlist.alertOn?.length ? watchlist.alertOn : ["changed", "missing"];
+    return identityMatches && allowedStates.includes(source.status);
+  };
   const items = (scan.sources ?? [])
-    .filter((source) => source.status !== "unchanged" && (!hasWatchlistScope || scopedSourceIds.has(source.id) || scopedRepositoryIds.has(source.repository)))
+    .filter((source) => source.status !== "unchanged" && (!hasWatchlistScope || visibleWatchlists.some((watchlist) => sourceMatchesWatchlist(source, watchlist))))
     .map((source) => {
       const record = recordsById.get(source.id) ?? recordsByPath.get(source.path);
       const linkedInsights = record ? (packet.insights ?? []).filter((insight) => (insight.recordIds ?? []).includes(record.id)).map((insight) => {

@@ -121,6 +121,9 @@ packet and atlas generation consume that ledger when it is available.
 32. **Workspace context isolation** — an explicit workspace request scopes
     watchlists and linked briefings even in demo mode; a workspace cannot shape
     another workspace's customer change feed through shared runtime records.
+33. **Watchlist event-state filtering** — the customer feed honors each
+    watchlist's requested `new`, `changed`, and `missing` states rather than
+    treating every source membership as an alert.
 
 ## Background jobs
 
