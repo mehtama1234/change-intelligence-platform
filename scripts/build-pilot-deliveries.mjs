@@ -6,6 +6,7 @@ const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const runtimeDir = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control");
 const profilesPath = resolve(runtimeDir, process.env.PILOT_PROFILES_PATH ?? "workspace-pilot-profiles.json");
 const outputPath = resolve(runtimeDir, process.env.PILOT_DELIVERIES_PATH ?? "workspace-pilot-deliveries.json");
+const notificationsPath = resolve(runtimeDir, process.env.WORKSPACE_NOTIFICATIONS_PATH ?? "workspace-delivery-notifications.json");
 const runId = process.env.REFRESH_RUN_ID ?? `manual-${new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 17)}`;
 
 async function readJson(path, fallback) {
@@ -19,6 +20,10 @@ const profiles = (await readJson(profilesPath, { profiles: [] })).profiles ?? []
 const existing = await readJson(outputPath, { schemaVersion: "workspace-pilot-delivery-ledger-v1", deliveries: [] });
 const deliveries = [...(existing.deliveries ?? [])];
 const existingIds = new Set(deliveries.map((delivery) => delivery.id));
+const notificationLedger = await readJson(notificationsPath, { schemaVersion: "workspace-delivery-notification-ledger-v1", notifications: [] });
+const notifications = [...(notificationLedger.notifications ?? [])];
+const existingNotificationIds = new Set(notifications.map((notification) => notification.id));
+const preferences = (await readJson(resolve(runtimeDir, "workspace-notification-preferences.json"), { preferences: [] })).preferences ?? [];
 const alerts = (await readJson(resolve(runtimeDir, "workspace-alerts.json"), { alerts: [] })).alerts ?? [];
 const outcomes = (await readJson(resolve(runtimeDir, "decision-outcomes.json"), { outcomes: [] })).outcomes ?? [];
 const audit = (await readJson(resolve(runtimeDir, "audit-log.json"), { entries: [] })).entries ?? [];
@@ -62,7 +67,12 @@ for (const profile of profiles) {
     limitation: "This delivery is a reviewable evidence handoff. It is not a recommendation, a causal result, or proof that the pilot created business value."
   };
   if (!existingIds.has(delivery.id)) { deliveries.push(delivery); created += 1; }
+  if (!existingNotificationIds.has(`workspace-delivery-notification-${delivery.id}`)) {
+    const preference = preferences.find((candidate) => candidate.workspaceId === profile.workspaceId);
+    notifications.push({ id: `workspace-delivery-notification-${delivery.id}`, workspaceId: profile.workspaceId, deliveryId: delivery.id, type: "pilot_delivery", channel: "in_app", status: preference?.deliveryUpdates === false ? "suppressed" : "pending", subject: `New ${profile.cadence} intelligence handoff`, body: delivery.headline, createdAt: now, deliveredAt: null, suppressedAt: preference?.deliveryUpdates === false ? now : null });
+  }
 }
 await mkdir(resolve(outputPath, ".."), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify({ schemaVersion: "workspace-pilot-delivery-ledger-v1", updatedAt: now, deliveries: deliveries.slice(-200) }, null, 2)}\n`);
-console.log(JSON.stringify({ profiles: profiles.length, deliveriesCreated: created, outputPath }, null, 2));
+await writeFile(notificationsPath, `${JSON.stringify({ schemaVersion: "workspace-delivery-notification-ledger-v1", updatedAt: now, notifications: notifications.slice(-500) }, null, 2)}\n`);
+console.log(JSON.stringify({ profiles: profiles.length, deliveriesCreated: created, notificationsCreated: notifications.length - existingNotificationIds.size, outputPath, notificationsPath }, null, 2));

@@ -46,7 +46,7 @@ try {
   if (watchlistResponse.status !== 201) throw new Error(`Watchlist creation failed: ${watchlistResponse.status}`);
   const comparisonResponse = await fetch(`${base}/api/comparison-views`, { method: "POST", headers: write(`comparison-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", name: "AI platform comparison", kind: "companies", entityIds: ["company:nvidia", "company:microsoft"] }) });
   if (comparisonResponse.status !== 201) throw new Error(`Comparison view creation failed: ${comparisonResponse.status}`);
-  const preferenceResponse = await fetch(`${base}/api/notification-preferences`, { method: "POST", headers: write(`notification-preference-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", comparisonAlerts: false, sourceAlerts: true }) });
+  const preferenceResponse = await fetch(`${base}/api/notification-preferences`, { method: "POST", headers: write(`notification-preference-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", comparisonAlerts: false, sourceAlerts: true, deliveryUpdates: false }) });
   if (preferenceResponse.status !== 200) throw new Error(`Notification preference update failed: ${preferenceResponse.status}`);
   const profileResponse = await fetch(`${base}/api/workspace-pilot`, { method: "POST", headers: write(`pilot-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", decisionQuestion: "Which control changes should this team act on next?", decisionContext: "Pilot setup durability test.", cadence: "monthly", successMeasures: ["Time to answer the question", "Useful alerts reviewed"], nextReviewAt: "2026-10-31" }) });
   if (profileResponse.status !== 200) throw new Error(`Pilot profile creation failed: ${profileResponse.status}`);
@@ -106,10 +106,13 @@ try {
   if (comparisonViewsResponse.status !== 200 || !comparisonViews.some((view) => view.name === "AI platform comparison" && view.entityIds.length === 2 && ["current", "changed"].includes(view.freshness.status))) throw new Error("Comparison view did not survive restart or refresh status was missing.");
   const preferencesResponse = await fetch(`${base}/api/notification-preferences?workspace=demo-research`, { headers: auth });
   const preferences = await preferencesResponse.json();
-  if (preferencesResponse.status !== 200 || preferences.schemaVersion !== "workspace-notification-preference-read-model-v1" || preferences.preferences.comparisonAlerts !== false) throw new Error("Notification preferences did not survive restart.");
+  if (preferencesResponse.status !== 200 || preferences.schemaVersion !== "workspace-notification-preference-read-model-v1" || preferences.preferences.comparisonAlerts !== false || preferences.preferences.deliveryUpdates !== false) throw new Error("Notification preferences did not survive restart.");
   const notificationHistoryResponse = await fetch(`${base}/api/workspace-notifications?workspace=demo-research`, { headers: auth });
   const notificationHistory = await notificationHistoryResponse.json();
   if (notificationHistoryResponse.status !== 200 || notificationHistory.schemaVersion !== "workspace-notification-read-model-v1" || !Array.isArray(notificationHistory.alerts) || notificationHistory.preferences.comparisonAlerts !== false) throw new Error("Workspace notification history read model failed after restart.");
+  const deliveryNotificationResponse = await fetch(`${base}/api/workspace-delivery-notifications?workspace=demo-research`, { headers: auth });
+  const deliveryNotifications = await deliveryNotificationResponse.json();
+  if (deliveryNotificationResponse.status !== 200 || deliveryNotifications.schemaVersion !== "workspace-delivery-notification-read-model-v1" || !deliveryNotifications.notifications.some((notification) => notification.deliveryId === delivery.id && notification.status === "suppressed")) throw new Error("Customer delivery notification did not survive restart or respect the workspace preference.");
   const pilotProfile = await (await fetch(`${base}/api/workspace-pilot?workspace=demo-research`, { headers: auth })).json();
   if (pilotProfile.profile?.decisionQuestion !== "Which control changes should this team act on next?" || pilotProfile.profile?.cadence !== "monthly") throw new Error("Pilot profile did not survive restart.");
   const restoredDeliveries = await (await fetch(`${base}/api/pilot-deliveries?workspace=demo-research`, { headers: auth })).json();

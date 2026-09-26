@@ -70,6 +70,12 @@ aid. It exposes its recommendation, evidence basis, and human-checkpoint flag;
 it cannot create an `expand`, `continue`, `improve`, or `stop` decision by itself.
 Readiness snapshots are recorded per workspace and the history read model shows
 only that workspace’s counts and recommendation changes.
+Customer refresh-handoff notifications are also workspace-scoped. The
+`/api/workspace-delivery-notifications` read model exposes only the notification
+state, bounded subject/body, delivery identity, and timestamps for the caller’s
+workspace. A suppression preference changes state to `suppressed` while keeping
+the historical record; it does not expose another workspace’s delivery or
+source content.
 
 Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map

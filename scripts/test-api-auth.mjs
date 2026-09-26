@@ -71,6 +71,8 @@ try {
   if (outsiderPreferences.status !== 403) throw new Error(`Expected non-member notification preference read to return 403, received ${outsiderPreferences.status}`);
   const outsiderNotifications = await fetch(`${base}/api/workspace-notifications?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderNotifications.status !== 403) throw new Error(`Expected non-member notification history read to return 403, received ${outsiderNotifications.status}`);
+  const outsiderDeliveryNotifications = await fetch(`${base}/api/workspace-delivery-notifications?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderDeliveryNotifications.status !== 403) throw new Error(`Expected non-member delivery notification read to return 403, received ${outsiderDeliveryNotifications.status}`);
   const outsiderOperator = await fetch(`${base}/api/operator/pilot-overview`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderOperator.status !== 403) throw new Error(`Expected non-operator overview read to return 403, received ${outsiderOperator.status}`);
   const outsiderPortfolio = await fetch(`${base}/api/operator/portfolio-readiness`, { headers: { Authorization: "Bearer outsider-token" } });

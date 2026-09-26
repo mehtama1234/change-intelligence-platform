@@ -53,9 +53,12 @@ packet and atlas generation consume that ledger when it is available.
 14. **Notification delivery worker** — optionally sends outbox envelopes to an
     explicitly configured webhook, records bounded retries, and moves exhausted
     failures to a dead-letter state.
-15. **Delivery history** — stores one non-content attempt record per delivery
+15. **Customer delivery outbox** — records one refresh-handoff notification per
+    workspace delivery, keeps it idempotent across reruns, and preserves the
+    customer's choice to receive or suppress it without deleting history.
+16. **Delivery history** — stores one non-content attempt record per delivery
     try so operators can see reliability by recipient and destination.
-16. **Pilot readiness history** — records the commercial decision aid after each
+17. **Pilot readiness history** — records the commercial decision aid after each
     refresh, preserving the evidence that led to each recommendation.
 
 ## Background jobs
@@ -72,6 +75,11 @@ After the research steps complete, a configured pilot workspace receives a
 delivery snapshot. It records what the refresh produced and what the partner
 should review. It does not claim that free-text success measures were met
 without a human assessment.
+
+The customer delivery outbox creates one in-app handoff notification for each
+new delivery. Re-running a refresh does not create a duplicate. Suppressing
+handoff notifications changes delivery state to `suppressed`; it does not erase
+the delivery or its history.
 
 The operator policy evaluator runs before the runtime-store synchronization. It
 is safe to rerun: a resolved warning is left alone, an already escalated

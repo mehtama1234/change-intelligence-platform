@@ -29,6 +29,7 @@ const decisionOutcomesPath = resolve(runtimeDir, "decision-outcomes.json");
 const watchlistsPath = resolve(runtimeDir, "workspace-watchlists.json");
 const comparisonViewsPath = resolve(runtimeDir, "workspace-comparison-views.json");
 const notificationPreferencesPath = resolve(runtimeDir, "workspace-notification-preferences.json");
+const deliveryNotificationsPath = resolve(runtimeDir, "workspace-delivery-notifications.json");
 const pilotProfilesPath = resolve(runtimeDir, "workspace-pilot-profiles.json");
 const pilotDeliveriesPath = resolve(runtimeDir, "workspace-pilot-deliveries.json");
 const pilotDecisionsPath = resolve(runtimeDir, "workspace-pilot-decisions.json");
@@ -55,7 +56,7 @@ const maxFalseAlertRate = Number(process.env.OPERATOR_MAX_FALSE_ALERT_RATE ?? 0.
 const maxFailedRefreshes = Number(process.env.OPERATOR_MAX_FAILED_REFRESHES ?? 0);
 const maxDelayedDeliveries = Number(process.env.OPERATOR_MAX_DELAYED_DELIVERIES ?? 0);
 const operatorWarningAckSlaMs = Number(process.env.OPERATOR_WARNING_ACK_SLA_MS ?? 4 * 60 * 60 * 1000);
-const defaultNotificationPreferences = { comparisonAlerts: true, sourceAlerts: true };
+const defaultNotificationPreferences = { comparisonAlerts: true, sourceAlerts: true, deliveryUpdates: true };
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 await mkdir(runtimeDir, { recursive: true });
 const store = createRuntimeStore(runtimeDir);
@@ -72,6 +73,7 @@ await importRuntimeLedgers(store, {
   watchlists: watchlistsPath,
   comparisonViews: comparisonViewsPath,
   notificationPreferences: notificationPreferencesPath,
+  deliveryNotifications: deliveryNotificationsPath,
   pilotProfiles: pilotProfilesPath,
   pilotDeliveries: pilotDeliveriesPath,
   pilotDecisions: pilotDecisionsPath,
@@ -772,7 +774,7 @@ const server = createServer(async (request, response) => {
       if (!workspace) return json(response, 404, { error: "Workspace not found." });
       if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot change notification preferences." });
       const now = new Date().toISOString();
-      const preferences = { id: `notification-preference-${workspace.id}`, workspaceId: workspace.id, comparisonAlerts: body.comparisonAlerts !== false, sourceAlerts: body.sourceAlerts !== false, delivery: "in_app", updatedBy: member.id, updatedRole: member.role, updatedAt: now };
+      const preferences = { id: `notification-preference-${workspace.id}`, workspaceId: workspace.id, comparisonAlerts: body.comparisonAlerts !== false, sourceAlerts: body.sourceAlerts !== false, deliveryUpdates: body.deliveryUpdates !== false, delivery: "in_app", updatedBy: member.id, updatedRole: member.role, updatedAt: now };
       store.commitRecord({ kind: "notification_preference", record: preferences, audit: { requestId, action: "update_notification_preferences", targetId: preferences.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "updated", occurredAt: now }, operation: { key: idempotencyKey, action: "update_notification_preferences", status: 200, body: preferences, completedAt: now } });
       await writeFile(notificationPreferencesPath, `${JSON.stringify(store.recordsLedger("notification_preference", "workspace-notification-preference-ledger-v1", "preferences"), null, 2)}\n`);
       return json(response, 200, preferences);
@@ -1328,6 +1330,13 @@ const server = createServer(async (request, response) => {
       const preferences = store.recordsLedger("notification_preference", "workspace-notification-preference-ledger-v1", "preferences").preferences.find((candidate) => !access.workspaceIds || access.workspaceIds.includes(candidate.workspaceId)) ?? defaultNotificationPreferences;
       const alerts = store.alertsLedger().alerts.filter((alert) => (!access.workspaceIds || access.workspaceIds.includes(alert.workspaceId)) && ["comparison_refresh", "comparison_incompatible"].includes(alert.kind)).map((alert) => ({ id: alert.id, workspaceId: alert.workspaceId, comparisonViewId: alert.comparisonViewId, name: alert.watchlistName, kind: alert.kind, severity: alert.severity, reason: alert.reason, state: alert.state, createdAt: alert.createdAt, lastSeenAt: alert.lastSeenAt, notificationState: preferences.comparisonAlerts === false ? "suppressed" : "in_app" }));
       return json(response, 200, { schemaVersion: "workspace-notification-read-model-v1", preferences: { ...defaultNotificationPreferences, ...preferences }, alerts });
+    }
+    if (url.pathname === "/api/workspace-delivery-notifications") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      const notifications = store.recordsLedger("delivery_notification", "workspace-delivery-notification-ledger-v1", "notifications").notifications;
+      const visible = notifications.filter((notification) => !access.workspaceIds || access.workspaceIds.includes(notification.workspaceId)).map(({ body, ...notification }) => notification);
+      return json(response, 200, { schemaVersion: "workspace-delivery-notification-read-model-v1", workspaceId: access.workspaceId, notifications: visible.slice().sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))) });
     }
     if (url.pathname === "/api/alerts") {
       const workspaceId = url.searchParams.get("workspace");
