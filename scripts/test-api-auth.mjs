@@ -51,6 +51,11 @@ try {
   if (memberDeliveryHealth.status !== 200 || memberDeliveryHealthBody.schemaVersion !== "workspace-delivery-health-v1" || memberDeliveryHealthBody.workspaceId !== "demo-research" || JSON.stringify(memberDeliveryHealthBody).includes("private-event")) throw new Error("Workspace delivery health read model failed or leaked private content.");
   const outsiderDeliveryHealth = await fetch(`${base}/api/workspace-delivery-health?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderDeliveryHealth.status !== 403) throw new Error(`Expected non-member delivery health read to return 403, received ${outsiderDeliveryHealth.status}`);
+  const memberServiceReport = await fetch(`${base}/api/workspace-service-report?workspace=demo-research`, { headers: authHeaders });
+  const memberServiceReportBody = await memberServiceReport.json();
+  if (memberServiceReport.status !== 200 || memberServiceReportBody.schemaVersion !== "workspace-service-level-report-v1" || memberServiceReportBody.workspaceId !== "demo-research" || !memberServiceReportBody.serviceLevel || JSON.stringify(memberServiceReportBody).includes("private-event")) throw new Error("Workspace service-level report failed or leaked private content.");
+  const outsiderServiceReport = await fetch(`${base}/api/workspace-service-report?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderServiceReport.status !== 403) throw new Error(`Expected non-member service report read to return 403, received ${outsiderServiceReport.status}`);
   const outsiderPilot = await fetch(`${base}/api/workspace-pilot?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderPilot.status !== 403) throw new Error(`Expected non-member pilot read to return 403, received ${outsiderPilot.status}`);
   const outsiderDeliveries = await fetch(`${base}/api/pilot-deliveries?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });

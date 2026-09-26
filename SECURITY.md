@@ -59,6 +59,9 @@ Workspace members receive a smaller `/api/workspace-delivery-health` read model
 limited to their workspace. It omits recipients, destination URLs, error text,
 and other workspaces; delivery health describes transport reliability, not the
 truth or usefulness of the intelligence.
+The `/api/workspace-service-report` adds the workspace’s configured cadence,
+expected next delivery, overdue status, and recorded success-measure observations
+under the same membership boundary.
 
 Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map

@@ -287,8 +287,19 @@ function buildOperatorDeliveryHealth({ notifications, attempts }) {
 }
 
 function buildWorkspaceDeliveryHealth({ workspaceId, notifications, attempts }) {
-  const health = buildOperatorDeliveryHealth({ notifications: notifications.filter((notification) => notification.workspaceId === workspaceId), attempts });
+  const scopedNotifications = notifications.filter((notification) => notification.workspaceId === workspaceId);
+  const scopedIds = new Set(scopedNotifications.map((notification) => notification.id));
+  const health = buildOperatorDeliveryHealth({ notifications: scopedNotifications, attempts: attempts.filter((attempt) => scopedIds.has(attempt.notificationId)) });
   return { schemaVersion: "workspace-delivery-health-v1", generatedAt: health.generatedAt, workspaceId, summary: health.summary, limitation: "This reports delivery records for this workspace only. It does not establish that the delivered intelligence was useful or correct." };
+}
+
+function buildWorkspaceServiceReport({ workspaceId, profile, deliveries, learning, deliveryHealth }) {
+  const cadenceMs = { weekly: 7 * 86400000, monthly: 31 * 86400000, quarterly: 93 * 86400000 }[profile?.cadence] ?? null;
+  const latestDeliveryAt = deliveries.map((delivery) => delivery.generatedAt).sort().at(-1) ?? null;
+  const nextExpectedAt = latestDeliveryAt && cadenceMs ? new Date(Date.parse(latestDeliveryAt) + cadenceMs).toISOString() : null;
+  const overdue = Boolean(nextExpectedAt && Date.parse(nextExpectedAt) < Date.now());
+  const status = !profile ? "not_configured" : !deliveries.length ? "awaiting_first_delivery" : deliveryHealth.summary.deadLetters || deliveryHealth.summary.pending || overdue ? "attention" : "on_track";
+  return { schemaVersion: "workspace-service-level-report-v1", generatedAt: new Date().toISOString(), workspaceId, status, serviceLevel: { cadence: profile?.cadence ?? null, nextReviewAt: profile?.nextReviewAt ?? null, latestDeliveryAt, nextExpectedAt, overdue, delivery: deliveryHealth.summary }, observations: { reviewedDeliveries: learning.observation.reviewedDeliveries, usefulnessRate: learning.usefulness.rate, decisionChanges: learning.decisionImpact.changedDecision + learning.decisionImpact.informedDecision, measures: learning.measures }, limitation: "This report describes the configured service cadence, recorded transport, and partner observations. It is not a guarantee of future delivery or a claim that the intelligence caused a business result." };
 }
 
 function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs }) {
@@ -894,6 +905,20 @@ const server = createServer(async (request, response) => {
       const notifications = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;
       const attempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
       return json(response, 200, buildWorkspaceDeliveryHealth({ workspaceId: access.workspaceId, notifications, attempts }));
+    }
+    if (url.pathname === "/api/workspace-service-report") {
+      const workspaceId = url.searchParams.get("workspace");
+      const access = await workspaceAccess(request, workspaceId);
+      if (denyWorkspaceRead(response, access)) return;
+      const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
+      const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries.filter((delivery) => delivery.workspaceId === access.workspaceId);
+      const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions.filter((decision) => decision.workspaceId === access.workspaceId);
+      const notifications = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;
+      const attempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
+      const profile = profiles.find((candidate) => candidate.workspaceId === access.workspaceId) ?? null;
+      const learning = buildPilotLearningReport({ workspaceId: access.workspaceId, profile, deliveries, decisions });
+      const deliveryHealth = buildWorkspaceDeliveryHealth({ workspaceId: access.workspaceId, notifications, attempts });
+      return json(response, 200, buildWorkspaceServiceReport({ workspaceId: access.workspaceId, profile, deliveries, learning, deliveryHealth }));
     }
     if (url.pathname === "/metrics") {
       const readiness = await readinessReport();
