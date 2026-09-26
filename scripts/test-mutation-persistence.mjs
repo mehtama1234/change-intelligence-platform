@@ -67,6 +67,11 @@ try {
   const briefing = briefings.briefings[0];
   briefing.state = "stale";
   briefing.previousEvidenceDigest = "previous-durability-digest";
+  if (briefing.insightProvenance?.some((insight) => insight.state === "stale")) {
+    const staleInsightBriefingResponse = await fetch(`${base}/api/briefings/${encodeURIComponent(briefing.id)}/publish`, { method: "POST", headers: write(`briefing-stale-insight-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", confirmUpdatedEvidence: true, note: "Must re-review linked insight first." }) });
+    if (staleInsightBriefingResponse.status !== 409) throw new Error(`Briefing with stale insight was republished: ${staleInsightBriefingResponse.status}`);
+  }
+  delete briefing.insightProvenance;
   await writeFile(resolve(runtimeDir, "workspace-briefings.json"), `${JSON.stringify(briefings, null, 2)}\n`);
   const staleBriefingResponse = await fetch(`${base}/api/briefings/${encodeURIComponent(briefing.id)}/publish`, { method: "POST", headers: write(`briefing-stale-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", note: "Durability test" }) });
   if (staleBriefingResponse.status !== 409) throw new Error(`Stale briefing was published without re-review confirmation: ${staleBriefingResponse.status}`);

@@ -11,6 +11,8 @@ const alerts = await json("data/processed/runs/ai-work-control/workspace-alerts.
 const evaluations = await json("data/processed/runs/ai-work-control/question-evaluations.json");
 const briefings = await json("data/processed/runs/ai-work-control/workspace-briefings.json");
 const insightCandidates = await json("data/processed/runs/ai-work-control/insight-candidates.json");
+const insightPublications = await json("data/processed/runs/ai-work-control/insight-publications.json");
+const deliveries = await json("data/processed/runs/ai-work-control/workspace-pilot-deliveries.json");
 const insightEvaluation = await json("data/processed/runs/ai-work-control/insight-evaluation.json");
 const atlas = await json("data/processed/ai-work-control.atlas.json");
 const ingestion = await json("data/processed/ai-work-control.ingestion.json");
@@ -44,6 +46,16 @@ for (const briefing of briefings.briefings) {
   for (const evidence of briefing.evidence) assert(records.get(evidence.recordId)?.sourceDigest === evidence.sourceDigest, `${briefing.id}: evidence digest does not match packet`);
   if (briefing.state === "published") assert(briefing.publication === "published" && briefing.publicationId, `${briefing.id}: published briefing lacks publication receipt`);
   if (briefing.state === "stale") assert(briefing.staleReason && briefing.previousEvidenceDigest, `${briefing.id}: stale briefing needs an explanation and prior digest`);
+  for (const insight of briefing.insightProvenance ?? []) {
+    assert(["published", "stale"].includes(insight.state), `${briefing.id}: insight provenance needs an explicit state`);
+    assert(insight.publicationId && insight.publishedBy && insight.publishedAt, `${briefing.id}: insight provenance needs its publication receipt`);
+    assert((insight.sourceRecordIds ?? []).every((id) => records.has(id)), `${briefing.id}: insight provenance references missing source evidence`);
+    assert(insightPublications.publications.some((publication) => publication.id === insight.publicationId), `${briefing.id}: insight provenance receipt is not in the publication ledger`);
+  }
+}
+for (const delivery of deliveries.deliveries ?? []) {
+  if (delivery.status === "held_for_review") assert((delivery.briefings ?? []).some((briefing) => briefing.state === "stale") || (delivery.insightProvenance ?? []).some((insight) => insight.state === "stale") || delivery.refreshStatus === "partial", `${delivery.id}: held delivery needs a stale briefing, stale insight, or partial refresh reason`);
+  for (const insight of delivery.insightProvenance ?? []) assert(insight.publicationId && (insight.sourceRecordIds ?? []).every((id) => records.has(id)), `${delivery.id}: delivery insight provenance is incomplete`);
 }
 assert(alerts.workspaces.some((workspace) => workspace.id === "demo-research"), "workspace alert ledger must contain demo workspace");
 assert(packet.operations?.workspaceAlerts, "packet must expose workspace alert read model");

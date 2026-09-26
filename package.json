@@ -33,6 +33,7 @@
     "test:insight-quality": "node scripts/test-insight-quality.mjs",
     "test:review-flow": "node scripts/test-review-flow.mjs",
     "test:insight-publication": "node scripts/test-insight-publication-workflow.mjs",
+    "test:insight-provenance": "node scripts/test-insight-customer-provenance.mjs",
     "test:source-scan-runtime": "node scripts/test-source-scan-runtime-dir.mjs",
     "test:refresh-runtime": "node scripts/test-refresh-runtime-dir.mjs",
     "validate:deployment": "node scripts/validate-deployment-config.mjs",
@@ -45,7 +46,7 @@
     "dispatch:workspace-notifications": "node scripts/dispatch-workspace-notifications.mjs",
     "test:workspace-delivery": "node scripts/test-workspace-delivery.mjs",
     "test:operator-delivery": "node scripts/test-operator-delivery.mjs",
-    "ci:core": "npm run validate:fixtures && npm run validate:packet && npm run validate:adapters && npm run validate:deployment && npm run validate:frontend && npm run evaluate:insight-quality && npm run test:insight-quality && npm run test:review-flow && npm run test:insight-publication && npm run test:source-scan-runtime && npm run test:refresh-runtime && npm run test:read-model && npm run test:storage && npm run test:api:auth && npm run test:pilot-delivery && npm run test:workspace-delivery",
+    "ci:core": "npm run validate:fixtures && npm run validate:packet && npm run validate:adapters && npm run validate:deployment && npm run validate:frontend && npm run evaluate:insight-quality && npm run test:insight-quality && npm run test:review-flow && npm run test:insight-publication && npm run test:insight-provenance && npm run test:source-scan-runtime && npm run test:refresh-runtime && npm run test:read-model && npm run test:storage && npm run test:api:auth && npm run test:pilot-delivery && npm run test:workspace-delivery",
     "serve": "node server.mjs",
     "refresh": "node scripts/run-refresh-cycle.mjs",
     "scheduler": "node scripts/scheduler.mjs"

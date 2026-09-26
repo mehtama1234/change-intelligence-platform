@@ -37,6 +37,9 @@ for (const profile of profiles) {
   const workspaceAudit = audit.filter((entry) => entry.workspaceId === profile.workspaceId);
   const workspaceBriefings = briefings.filter((briefing) => briefing.workspaceId === profile.workspaceId);
   const openAlerts = workspaceAlerts.filter((alert) => alert.state === "open");
+  const staleBriefings = workspaceBriefings.filter((briefing) => briefing.state === "stale");
+  const linkedInsights = workspaceBriefings.flatMap((briefing) => (briefing.insightProvenance ?? []).map((insight) => ({ ...insight, briefingId: briefing.id, briefingTitle: briefing.title, briefingState: briefing.state })));
+  const heldForReview = refresh.status === "partial" || staleBriefings.length > 0;
   const delivery = {
     id: `delivery-${profile.id}-${runId}`,
     workspaceId: profile.workspaceId,
@@ -44,11 +47,11 @@ for (const profile of profiles) {
     generatedAt: now,
     refreshRunId: runId,
     refreshStatus: refresh.status ?? "not_run",
-    status: refresh.status === "partial" ? "held_for_review" : "prepared",
+    status: heldForReview ? "held_for_review" : "prepared",
     cadence: profile.cadence,
     nextReviewAt: profile.nextReviewAt ?? null,
     decisionQuestion: profile.decisionQuestion,
-    headline: openAlerts.length ? `${openAlerts.length} open change alert${openAlerts.length === 1 ? "" : "s"} require review.` : "No open change alerts require review.",
+    headline: openAlerts.length ? `${openAlerts.length} open change alert${openAlerts.length === 1 ? "" : "s"} require review.` : staleBriefings.length ? `${staleBriefings.length} briefing${staleBriefings.length === 1 ? "" : "s"} include changed insight evidence and require re-review.` : "No open change alerts require review.",
     snapshot: {
       openAlerts: openAlerts.length,
       alertsSeen: workspaceAlerts.length,
@@ -60,8 +63,13 @@ for (const profile of profiles) {
       decisionsRecorded: workspaceOutcomes.length,
       decisionsUsingBriefings: workspaceOutcomes.filter((outcome) => outcome.decisionState === "used").length,
       knownResults: workspaceOutcomes.filter((outcome) => ["held", "changed", "wrong"].includes(outcome.outcomeState)).length,
-      activeBriefings: workspaceBriefings.filter((briefing) => ["draft", "published", "stale"].includes(briefing.state)).length
+      activeBriefings: workspaceBriefings.filter((briefing) => ["draft", "published", "stale"].includes(briefing.state)).length,
+      staleBriefings: staleBriefings.length,
+      linkedInsights: linkedInsights.length,
+      staleLinkedInsights: linkedInsights.filter((insight) => insight.state === "stale").length
     },
+    briefings: workspaceBriefings.map((briefing) => ({ id: briefing.id, title: briefing.title, state: briefing.state, publication: briefing.publication, evidenceDigest: briefing.evidenceDigest, staleReason: briefing.staleReason ?? null, insightProvenance: briefing.insightProvenance ?? [] })),
+    insightProvenance: linkedInsights,
     successMeasures: profile.successMeasures,
     evaluation: { state: "requires_partner_review", reason: "The system records usage and follow-up, but does not turn free-text success measures into a claimed score automatically." },
     limitation: "This delivery is a reviewable evidence handoff. It is not a recommendation, a causal result, or proof that the pilot created business value."

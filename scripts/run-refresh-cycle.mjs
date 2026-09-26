@@ -35,6 +35,8 @@ const childEnv = {
   QUESTION_EVALUATIONS_PATH: resolve(runDir, "question-evaluations.json"),
   BRIEFINGS_PATH: resolve(runDir, "workspace-briefings.json"),
   BRIEFING_PUBLICATIONS_PATH: resolve(runDir, "briefing-publications.json"),
+  INSIGHT_CANDIDATES_PATH: resolve(runDir, "insight-candidates.json"),
+  INSIGHT_PUBLICATIONS_PATH: resolve(runDir, "insight-publications.json"),
   INSIGHT_PACKET_PATH: resolve(runDir, "ai-work-control.packet.json"),
   INSIGHT_OUTPUT_DIR: runDir,
   INSIGHT_CANDIDATE_PATH: resolve(runDir, "insight-candidates.json"),
@@ -94,12 +96,12 @@ try {
   await runStep("materialize-evidence", "materialize-evidence-versions.mjs");
   await runStep("build-packet", "build-ai-work-control-packet.mjs");
   await runStep("build-domain-atlas", "build-domain-atlas.mjs");
-  await runStep("evaluate-questions", "evaluate-questions.mjs");
-  await runStep("build-question-briefings", "build-question-briefings.mjs");
-  await runStep("publish-question-evaluations", "build-ai-work-control-packet.mjs");
   await runStep("generate-insight-candidates", "generate-insight-candidates.mjs");
   await runStep("evaluate-insight-quality", "evaluate-insight-quality.mjs");
   await runStep("publish-insight-candidates", "build-ai-work-control-packet.mjs");
+  await runStep("evaluate-questions", "evaluate-questions.mjs");
+  await runStep("build-question-briefings", "build-question-briefings.mjs");
+  await runStep("publish-question-evaluations", "build-ai-work-control-packet.mjs");
   await runStep("build-pilot-deliveries", "build-pilot-deliveries.mjs");
   await runStep("evaluate-operator-warnings", "evaluate-operator-warnings.mjs");
   await runStep("sync-runtime-store", "sync-runtime-store.mjs");

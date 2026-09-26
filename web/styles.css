@@ -132,4 +132,8 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 22px
 .review-history li { padding-left: .25rem; }
 .review-history span { display: block; color: var(--muted); font-size: .86rem; }
 .success { color: var(--accent) !important; font-weight: 700; }
+.provenance-list { display: grid; gap: .7rem; margin: .8rem 0; }
+.provenance-item { padding: .8rem; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); }
+.provenance-item h5 { margin: 0 0 .35rem; font-size: 1rem; }
+.provenance-item p { margin-bottom: .45rem; }
 @media (max-width: 700px) { .insight-review-grid { grid-template-columns: 1fr; } }
