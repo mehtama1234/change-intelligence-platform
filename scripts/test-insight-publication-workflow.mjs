@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
-const sourceRuntime = resolve(root, "data/processed/runs/ai-work-control");
+const sourceRuntime = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control");
 const runtimeDir = `/tmp/change-intelligence-publication-${Date.now()}`;
 const port = 8796;
 const base = `http://127.0.0.1:${port}`;

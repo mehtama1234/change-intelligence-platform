@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const exec = promisify(execFile);
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
-const sourceRuntime = resolve(root, "data/processed/runs/ai-work-control");
+const sourceRuntime = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control");
 const runDir = await mkdtemp(resolve(tmpdir(), "change-intelligence-provenance-"));
 const packetPath = resolve(runDir, "packet.json");
 const questionsPath = resolve(runDir, "workspace-questions.json");

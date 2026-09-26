@@ -6,7 +6,7 @@ import { createRuntimeStore, importRuntimeLedgers } from "../storage.mjs";
 import { backupRuntime } from "../runtime-backup.mjs";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
-const sourceRuntime = resolve(root, "data/processed/runs/ai-work-control");
+const sourceRuntime = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control");
 const baseTemp = `/tmp/change-intelligence-readiness-${Date.now()}`;
 const runtimeDir = resolve(baseTemp, "runtime");
 const backupDir = resolve(baseTemp, "backup");

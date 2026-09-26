@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const exec = promisify(execFile);
-const sourceRuntime = resolve(root, "data/processed/runs/ai-work-control");
+const sourceRuntime = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control");
 const port = 8795;
 const base = `http://127.0.0.1:${port}`;
 const runtimeDir = `/tmp/change-intelligence-mutations-${Date.now()}`;
