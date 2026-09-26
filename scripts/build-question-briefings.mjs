@@ -37,7 +37,10 @@ function insightProvenanceForQuestion(workspaceId, matchedRecordIds) {
     if (!candidate || !insight) return [];
     const insightRecordIds = new Set((candidate.evidence ?? []).map((item) => item.recordId));
     if (!([...insightRecordIds].some((recordId) => matched.has(recordId)))) return [];
-    const currentPublication = candidate.status === "published" && publication.evidenceDigest === candidate.evidenceDigest;
+    const evidenceChanged = publication.evidenceDigest !== candidate.evidenceDigest;
+    const claimChanged = candidate.origin ? publication.claimDigest !== candidate.claimDigest : Boolean(candidate.claimDigest && publication.claimDigest && publication.claimDigest !== candidate.claimDigest);
+    const currentPublication = candidate.status === "published" && !evidenceChanged && !claimChanged;
+    const changeTypes = [...(evidenceChanged ? ["source evidence"] : []), ...(claimChanged ? ["insight wording"] : [])];
     return [{
       insightId: insight.id,
       candidateKey,
@@ -50,13 +53,15 @@ function insightProvenanceForQuestion(workspaceId, matchedRecordIds) {
       publishedAt: publication.publishedAt,
       publicationEvidenceDigest: publication.evidenceDigest,
       currentEvidenceDigest: candidate.evidenceDigest,
+      publicationClaimDigest: publication.claimDigest ?? null,
+      currentClaimDigest: candidate.claimDigest ?? null,
       sourceRecordIds: (candidate.evidence ?? []).map((item) => item.recordId),
       sourceEvidence: (candidate.evidence ?? []).map((item) => ({ recordId: item.recordId, sourceRepository: item.sourceRepository, sourceRef: item.sourceRef, sourceDigest: item.sourceDigest })),
       ...(insight.origin ? { origin: insight.origin, promotionId: insight.promotionId ?? null } : {}),
       strongestAlternative: candidate.strongestAlternative,
       whatWouldChangeOurMind: candidate.whatWouldChangeOurMind ?? [],
       nextTest: candidate.nextTest,
-      ...(currentPublication ? {} : { staleReason: "The insight evidence changed after this publication. Inspect and republish the insight before treating it as current." })
+      ...(currentPublication ? {} : { changeTypes, staleReason: changeTypes.length ? `The ${changeTypes.join(" and ")} changed after this publication.` : "The linked insight is not currently published.", customerActions: ["Do not treat the prior insight as current decision evidence.", "Open the updated evidence and briefing before relying on the reading.", "Ask the research owner to re-review and republish the insight and briefing before acting on it."] })
     }];
   });
 }
@@ -74,7 +79,7 @@ const briefings = questions.questions.filter((question) => question.state === "a
     ...(record.researchReview ? { researchReview: record.researchReview } : {})
   }));
   const insightProvenance = insightProvenanceForQuestion(question.workspaceId, evaluation?.matchedRecordIds);
-  const briefingDigestInput = insightProvenance.length ? { evidence: evidence.map((item) => [item.recordId, item.sourceDigest]), insights: insightProvenance.map((item) => [item.candidateKey, item.publicationId, item.publicationEvidenceDigest, item.currentEvidenceDigest, item.state]) } : evidence.map((item) => [item.recordId, item.sourceDigest]);
+  const briefingDigestInput = insightProvenance.length ? { evidence: evidence.map((item) => [item.recordId, item.sourceDigest]), insights: insightProvenance.map((item) => [item.candidateKey, item.publicationId, item.publicationEvidenceDigest, item.currentEvidenceDigest, item.publicationClaimDigest, item.currentClaimDigest, item.state]) } : evidence.map((item) => [item.recordId, item.sourceDigest]);
   const briefingEvidenceDigest = createHash("sha256").update(JSON.stringify(briefingDigestInput)).digest("hex");
   const publication = publicationByBriefing.get(`briefing-${question.id}`);
   const currentPublication = publication?.evidenceDigest === briefingEvidenceDigest ? publication : undefined;
@@ -86,12 +91,13 @@ const briefings = questions.questions.filter((question) => question.state === "a
     title: question.question,
     state: currentPublication ? "published" : stalePublication ? "stale" : "draft",
     publication: currentPublication ? "published" : stalePublication ? "needs_republish" : "not_published",
-    ...(stalePublication ? { staleReason: "The source evidence or a linked insight publication changed after the last publication. Inspect the updated provenance before republishing.", previousEvidenceDigest: publication.evidenceDigest } : {}),
+    ...(stalePublication ? { staleReason: "The source evidence or a linked insight publication changed after the last publication. Inspect the updated provenance before republishing.", previousEvidenceDigest: publication.evidenceDigest, customerActions: ["Do not rely on this briefing as current decision evidence.", "Open the changed evidence and linked insight history.", "Ask the research owner to re-review and republish this briefing before using it."] } : {}),
     ...(currentPublication ? { publishedBy: currentPublication.publishedBy, publishedAt: currentPublication.publishedAt, publicationId: currentPublication.id } : {}),
     evidenceDigest: briefingEvidenceDigest,
     generatedAt: new Date().toISOString(),
     evidence,
     insightProvenance,
+    insightActions: insightProvenance.filter((insight) => insight.state === "stale").flatMap((insight) => insight.customerActions ?? []),
     reading: evidence.length ? `The system found ${evidence.length} related source record${evidence.length === 1 ? "" : "s"}. A researcher must inspect them before making a conclusion.` : "The current packet contains no matching source records.",
     boundary: evaluation?.limitation ?? "No evaluation has run yet.",
     nextTest: insightProvenance.map((item) => item.nextTest).filter(Boolean).join(" ") || (packet.insights[0]?.nextTest ?? "Define the next test before publication.")

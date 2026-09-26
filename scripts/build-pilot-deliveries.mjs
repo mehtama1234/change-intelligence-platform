@@ -43,6 +43,7 @@ for (const profile of profiles) {
   const recoveredAvailabilityAlerts = workspaceAlerts.filter((alert) => alert.kind === "source_availability" && alert.state === "resolved" && alert.resolutionDisposition === "source_recovered");
   const staleBriefings = workspaceBriefings.filter((briefing) => briefing.state === "stale");
   const linkedInsights = workspaceBriefings.flatMap((briefing) => (briefing.insightProvenance ?? []).map((insight) => ({ ...insight, briefingId: briefing.id, briefingTitle: briefing.title, briefingState: briefing.state })));
+  const staleInsightActions = [...new Set(linkedInsights.filter((insight) => insight.state === "stale").flatMap((insight) => insight.customerActions ?? []))];
   const heldForReview = refresh.status === "partial" || staleBriefings.length > 0 || openAvailabilityAlerts.length > 0;
   const delivery = {
     id: `delivery-${profile.id}-${runId}`,
@@ -56,6 +57,7 @@ for (const profile of profiles) {
     nextReviewAt: profile.nextReviewAt ?? null,
     decisionQuestion: profile.decisionQuestion,
     headline: openAvailabilityAlerts.length ? `${openAvailabilityAlerts.length} source availability alert${openAvailabilityAlerts.length === 1 ? "" : "s"} require review before use.` : openAlerts.length ? `${openAlerts.length} open change alert${openAlerts.length === 1 ? "" : "s"} require review.` : staleBriefings.length ? `${staleBriefings.length} briefing${staleBriefings.length === 1 ? "" : "s"} include changed insight evidence and require re-review.` : "No open change alerts require review.",
+    insightActions: staleInsightActions,
     snapshot: {
       openAlerts: openAlerts.length,
       alertsSeen: workspaceAlerts.length,
@@ -70,12 +72,13 @@ for (const profile of profiles) {
       activeBriefings: workspaceBriefings.filter((briefing) => ["draft", "published", "stale"].includes(briefing.state)).length,
       staleBriefings: staleBriefings.length,
       linkedInsights: linkedInsights.length,
-      staleLinkedInsights: linkedInsights.filter((insight) => insight.state === "stale").length
+      staleLinkedInsights: linkedInsights.filter((insight) => insight.state === "stale").length,
+      staleInsightActions
       ,openAvailabilityAlerts: openAvailabilityAlerts.length
       ,unavailableSources: sourceAvailability.counts?.unavailable ?? 0
       ,unavailableSourceIds: openAvailabilityAlerts.map((alert) => alert.sourceId)
     },
-    briefings: workspaceBriefings.map((briefing) => ({ id: briefing.id, title: briefing.title, state: briefing.state, publication: briefing.publication, evidenceDigest: briefing.evidenceDigest, staleReason: briefing.staleReason ?? null, insightProvenance: briefing.insightProvenance ?? [] })),
+    briefings: workspaceBriefings.map((briefing) => ({ id: briefing.id, title: briefing.title, state: briefing.state, publication: briefing.publication, evidenceDigest: briefing.evidenceDigest, staleReason: briefing.staleReason ?? null, customerActions: briefing.customerActions ?? [], insightActions: briefing.insightActions ?? [], insightProvenance: briefing.insightProvenance ?? [] })),
     insightProvenance: linkedInsights,
     impact: { state: openAvailabilityAlerts.length ? "held_for_source_availability" : recoveredAvailabilityAlerts.length ? "source_availability_recovered" : "no_open_source_availability_issue", unavailableSources: openAvailabilityAlerts.map((alert) => ({ sourceId: alert.sourceId, repository: alert.repository, sourcePath: alert.sourcePath, reason: alert.reason, recommendedAction: alert.recommendedAction ?? "Check the source connection, then run another availability check." })), recoveredSources: recoveredAvailabilityAlerts.map((alert) => ({ sourceId: alert.sourceId, recoveredAt: alert.resolvedAt, explanation: "The source became available again; this delivery uses the next available refresh." })), nextActions: availabilityActions },
     successMeasures: profile.successMeasures,
@@ -88,7 +91,7 @@ for (const profile of profiles) {
     const briefingStates = workspaceBriefings.map((briefing) => ({ id: briefing.id, state: briefing.state, publication: briefing.publication ?? "not_published" }));
     const staleInsightTitles = linkedInsights.filter((insight) => insight.state === "stale").map((insight) => insight.title);
     const unavailableSourceIds = openAvailabilityAlerts.map((alert) => alert.sourceId);
-    const body = `${delivery.headline}${unavailableSourceIds.length ? ` Unavailable source${unavailableSourceIds.length === 1 ? "" : "s"}: ${unavailableSourceIds.join(", ")}.` : ""}${linkedInsights.length ? ` ${linkedInsights.length} bounded insight${linkedInsights.length === 1 ? " is" : "s are"} linked with publication receipts.` : ""}${staleInsightTitles.length ? ` ${staleInsightTitles.length} linked insight${staleInsightTitles.length === 1 ? " needs" : "s need"} re-review before use.` : ""}`;
+    const body = `${delivery.headline}${unavailableSourceIds.length ? ` Unavailable source${unavailableSourceIds.length === 1 ? "" : "s"}: ${unavailableSourceIds.join(", ")}.` : ""}${linkedInsights.length ? ` ${linkedInsights.length} bounded insight${linkedInsights.length === 1 ? " is" : "s are"} linked with publication receipts.` : ""}${staleInsightTitles.length ? ` ${staleInsightTitles.length} linked insight${staleInsightTitles.length === 1 ? " needs" : "s need"} re-review before use.` : ""}${staleInsightActions.length ? ` Customer actions: ${staleInsightActions.join(" ")}` : ""}`;
     notifications.push({ id: `workspace-delivery-notification-${delivery.id}`, workspaceId: profile.workspaceId, deliveryId: delivery.id, type: "pilot_delivery", channel: preference?.delivery ?? "in_app", destinationId: preference?.destinationId ?? null, status: preference?.deliveryUpdates === false ? "suppressed" : "pending", subject: `New ${profile.cadence} intelligence handoff`, body, deliveryStatus: delivery.status, briefingStates, insightPublicationIds: linkedInsights.map((insight) => insight.publicationId), staleInsightTitles, unavailableSourceIds, createdAt: now, deliveredAt: null, suppressedAt: preference?.deliveryUpdates === false ? now : null });
   }
 }

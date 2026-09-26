@@ -96,6 +96,10 @@ packet and atlas generation consume that ledger when it is available.
     and published evidence/claim digests, explains whether the source or the
     wording changed, lists review and revision events, and names briefings that
     use the insight and whether each briefing is stale.
+26. **Customer stale-action contract** — a changed linked insight gives the
+    briefing and delivery a plain-language change type, a hold/review state,
+    and explicit actions: do not rely on the old reading, inspect the changed
+    evidence, and wait for re-review and republishing before acting on it.
 
 ## Background jobs
 
