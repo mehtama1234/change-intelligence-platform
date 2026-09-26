@@ -15,7 +15,10 @@ try {
     briefingPublications: resolve(runtimeDir, "briefing-publications.json"),
     insightDecisions: resolve(runtimeDir, "insight-decisions.json"),
     insightPublications: resolve(runtimeDir, "insight-publications.json"),
-    workspaceDir: resolve(root, "data/fixtures/workspaces")
+    workspaceDir: resolve(root, "data/fixtures/workspaces"),
+    sourceScan: resolve(runtimeDir, "latest-source-scan.json"),
+    evidenceLedger: resolve(runtimeDir, "versioned-evidence-ledger.json"),
+    reviewDecisions: resolve(runtimeDir, "review-decisions.json")
   });
   console.log(`Synchronized runtime store: ${store.databasePath}`);
 } finally {

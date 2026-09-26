@@ -22,6 +22,9 @@ const insightCandidatesPath = resolve(runtimeDir, "insight-candidates.json");
 const insightPublicationsPath = resolve(runtimeDir, "insight-publications.json");
 const auditPath = resolve(runtimeDir, "audit-log.json");
 const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
+const sourceScanPath = resolve(runtimeDir, "latest-source-scan.json");
+const evidenceLedgerPath = resolve(runtimeDir, "versioned-evidence-ledger.json");
+const reviewDecisionsPath = resolve(runtimeDir, "review-decisions.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const authMode = process.env.AUTH_MODE ?? "demo";
 const tokenActors = authMode === "token" ? JSON.parse(process.env.AUTH_TOKENS_JSON ?? "{}") : {};
@@ -37,7 +40,10 @@ await importRuntimeLedgers(store, {
   briefingPublications: briefingPublicationsPath,
   insightDecisions: insightDecisionsPath,
   insightPublications: insightPublicationsPath,
-  workspaceDir
+  workspaceDir,
+  sourceScan: sourceScanPath,
+  evidenceLedger: evidenceLedgerPath,
+  reviewDecisions: reviewDecisionsPath
 });
 
 const json = (response, status, body) => {
@@ -300,7 +306,12 @@ const server = createServer(async (request, response) => {
       });
     }
     if (url.pathname === "/api/review-work") return json(response, 200, await readJson(reviewPath, { schemaVersion: "source-review-work-v1", reviewRequired: 0, candidates: [] }));
-    if (url.pathname === "/api/evidence-history") return json(response, 200, await readJson(historyPath, { schemaVersion: "versioned-evidence-ledger-v1", records: [], decisionHistory: [] }));
+    if (url.pathname === "/api/evidence-history") {
+      const records = store.recordsLedger("evidence_version", "versioned-evidence-ledger-v1", "records").records;
+      const decisionHistory = store.recordsLedger("review_decision", "review-decision-ledger-v1", "decisions").decisions;
+      const sourceSnapshots = store.recordsLedger("source_scan", "source-snapshot-ledger-v1", "sources").sources;
+      return json(response, 200, { schemaVersion: "versioned-evidence-ledger-v1", activeResearchRecordCount: records.length, decisionCount: decisionHistory.length, records, decisionHistory, sourceSnapshots });
+    }
     if (url.pathname === "/api/refresh") return json(response, 200, await readJson(refreshPath, { schemaVersion: "refresh-receipt-v1", status: "not_run", steps: [] }));
     if (url.pathname === "/api/workspaces") {
       const access = await workspaceAccess(request);

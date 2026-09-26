@@ -10,7 +10,10 @@ const runtimeFiles = [
   "workspace-alerts.json",
   "briefing-publications.json",
   "insight-decisions.json",
-  "insight-publications.json"
+  "insight-publications.json",
+  "latest-source-scan.json",
+  "versioned-evidence-ledger.json",
+  "review-decisions.json"
 ];
 
 async function digest(path) {

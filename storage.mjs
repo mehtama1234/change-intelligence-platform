@@ -99,7 +99,7 @@ export function createRuntimeStore(runtimeDir) {
     return { ...operation, body: parseJson(bodyJson, {}) };
   }
 
-  const importLegacy = db.transaction(({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications }) => {
+  const importLegacy = db.transaction(({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, sourceScan, evidenceLedger, reviewDecisions }) => {
     const shouldImportQuestions = db.prepare("SELECT COUNT(*) AS count FROM questions").get().count === 0;
     const shouldImportAudit = db.prepare("SELECT COUNT(*) AS count FROM audit_entries").get().count === 0;
     const shouldImportOperations = db.prepare("SELECT COUNT(*) AS count FROM idempotency_operations").get().count === 0;
@@ -123,15 +123,18 @@ export function createRuntimeStore(runtimeDir) {
       bodyJson: JSON.stringify(operation.body ?? {}),
       completedAt: operation.completedAt
     });
-    const importRecords = (kind, records) => {
+    const importRecords = (kind, records, idField = "id") => {
       const count = db.prepare("SELECT COUNT(*) AS count FROM runtime_records WHERE record_kind = ?").get(kind).count;
       if (count > 0) return;
-      for (const record of records ?? []) upsertRecord.run({ kind, id: record.id, workspaceId: record.workspaceId ?? null, bodyJson: JSON.stringify(record), updatedAt: record.updatedAt ?? record.publishedAt ?? record.decidedAt ?? new Date().toISOString() });
+      for (const record of records ?? []) upsertRecord.run({ kind, id: record[idField], workspaceId: record.workspaceId ?? null, bodyJson: JSON.stringify(record), updatedAt: record.updatedAt ?? record.checkedAt ?? record.acceptedAt ?? record.decidedAt ?? new Date().toISOString() });
     };
     importRecords("alert", alerts?.alerts);
     importRecords("briefing_publication", briefingPublications?.publications);
     importRecords("insight_decision", insightDecisions?.decisions);
     importRecords("insight_publication", insightPublications?.publications);
+    importRecords("source_scan", sourceScan?.sources);
+    importRecords("evidence_version", evidenceLedger?.records, "versionId");
+    importRecords("review_decision", reviewDecisions?.decisions);
   });
 
   return {
@@ -142,7 +145,7 @@ export function createRuntimeStore(runtimeDir) {
     alertsLedger(workspaces = []) { return { schemaVersion: "workspace-alert-ledger-v1", workspaces, alerts: recordRows.all("alert").map((row) => parseJson(row.bodyJson, {})) }; },
     recordsLedger(kind, schemaVersion, property) { return { schemaVersion, [property]: recordRows.all(kind).map((row) => parseJson(row.bodyJson, {})) }; },
     findRecord(kind, id) { return parseJson(recordRow.get(kind, id)?.bodyJson, undefined); },
-    syncRecords(kind, records) { db.transaction(() => { for (const record of records ?? []) upsertRecord.run({ kind, id: record.id, workspaceId: record.workspaceId ?? null, bodyJson: JSON.stringify(record), updatedAt: record.updatedAt ?? record.generatedAt ?? record.publishedAt ?? record.decidedAt ?? new Date().toISOString() }); })(); },
+    syncRecords(kind, records, idField = "id") { db.transaction(() => { for (const record of records ?? []) upsertRecord.run({ kind, id: record[idField], workspaceId: record.workspaceId ?? null, bodyJson: JSON.stringify(record), updatedAt: record.updatedAt ?? record.generatedAt ?? record.checkedAt ?? record.publishedAt ?? record.acceptedAt ?? record.decidedAt ?? new Date().toISOString() }); })(); },
     commitRecord({ kind, record, audit, operation }) {
       db.transaction(() => {
         upsertRecord.run({ kind, id: record.id, workspaceId: record.workspaceId ?? null, bodyJson: JSON.stringify(record), updatedAt: record.updatedAt ?? record.acknowledgedAt ?? record.publishedAt ?? record.decidedAt ?? new Date().toISOString() });
@@ -178,19 +181,23 @@ export function createRuntimeStore(runtimeDir) {
 
 export async function importRuntimeLedgers(store, paths) {
   const read = async (path, fallback) => {
+    if (!path) return fallback;
     try { return parseJson(await readFile(path, "utf8"), fallback); } catch (error) {
       if (error.code === "ENOENT") return fallback;
       throw error;
     }
   };
-  const [questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications] = await Promise.all([
+  const [questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, sourceScan, evidenceLedger, reviewDecisions] = await Promise.all([
     read(paths.questions, { questions: [] }),
     read(paths.audit, { entries: [] }),
     read(paths.operations, { operations: [] }),
     read(paths.alerts, { alerts: [] }),
     read(paths.briefingPublications, { publications: [] }),
     read(paths.insightDecisions, { decisions: [] }),
-    read(paths.insightPublications, { publications: [] })
+    read(paths.insightPublications, { publications: [] }),
+    read(paths.sourceScan, { sources: [] }),
+    read(paths.evidenceLedger, { records: [] }),
+    read(paths.reviewDecisions, { decisions: [] })
   ]);
   let workspaces = alerts.workspaces ?? [];
   if (!workspaces.length && paths.workspaceDir) {
@@ -200,11 +207,14 @@ export async function importRuntimeLedgers(store, paths) {
       return { id: workspace.id, name: workspace.name };
     }));
   }
-  store.importLegacy({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications });
+  store.importLegacy({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, sourceScan, evidenceLedger, reviewDecisions });
   store.syncRecords("alert", alerts.alerts);
   store.syncRecords("briefing_publication", briefingPublications.publications);
   store.syncRecords("insight_decision", insightDecisions.decisions);
   store.syncRecords("insight_publication", insightPublications.publications);
+  store.syncRecords("source_scan", sourceScan.sources);
+  store.syncRecords("evidence_version", evidenceLedger.records, "versionId");
+  store.syncRecords("review_decision", reviewDecisions.decisions);
   await mkdir(resolve(paths.runtimeDir), { recursive: true });
   await writeFile(paths.questions, `${JSON.stringify(store.questionsLedger(), null, 2)}\n`);
   await writeFile(paths.audit, `${JSON.stringify(store.auditLedger(), null, 2)}\n`);
