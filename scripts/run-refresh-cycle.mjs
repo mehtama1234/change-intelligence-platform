@@ -11,7 +11,26 @@ const runDir = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed/run
 const lockPath = resolve(runDir, "refresh.lock");
 const receiptPath = resolve(runDir, "latest-refresh.json");
 const historyPath = resolve(runDir, "refresh-history.json");
-const runId = `refresh-${new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 14)}`;
+const childEnv = {
+  ...process.env,
+  RUNTIME_DATA_DIR: runDir,
+  PACKET_PATH: resolve(runDir, "ai-work-control.packet.json"),
+  PACKET_OUTPUT_PATH: resolve(runDir, "ai-work-control.packet.json"),
+  SOURCE_SCAN_PATH: resolve(runDir, "latest-source-scan.json"),
+  ALERT_OUTPUT_DIR: runDir,
+  REVIEW_OUTPUT_DIR: runDir,
+  EVIDENCE_OUTPUT_DIR: runDir,
+  QUESTIONS_PATH: resolve(runDir, "workspace-questions.json"),
+  QUESTION_OUTPUT_DIR: runDir,
+  QUESTION_EVALUATIONS_PATH: resolve(runDir, "question-evaluations.json"),
+  BRIEFINGS_PATH: resolve(runDir, "workspace-briefings.json"),
+  BRIEFING_PUBLICATIONS_PATH: resolve(runDir, "briefing-publications.json"),
+  INSIGHT_PACKET_PATH: resolve(runDir, "ai-work-control.packet.json"),
+  INSIGHT_OUTPUT_DIR: runDir,
+  INSIGHT_CANDIDATE_PATH: resolve(runDir, "insight-candidates.json"),
+  INSIGHT_EVALUATION_PATH: resolve(runDir, "insight-evaluation.json")
+};
+const runId = `refresh-${new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 17)}`;
 const steps = [];
 let lock;
 
@@ -24,7 +43,7 @@ async function runStep(name, script, optional = false) {
     try {
       const result = await exec(process.execPath, [resolve(root, "scripts", script)], {
         cwd: root,
-        env: process.env,
+        env: childEnv,
         maxBuffer: 10 * 1024 * 1024
       });
       steps.push({ name, status: "complete", attempts: attempt, startedAt, endedAt: new Date().toISOString(), durationMs: Date.now() - startedEpoch, output: result.stdout.trim().slice(-2000) });
@@ -41,11 +60,16 @@ async function runStep(name, script, optional = false) {
 try {
   await mkdir(runDir, { recursive: true });
   lock = await open(lockPath, "wx");
-  await runStep("capture-sec-filings", "acquire-sec-filing-window.mjs", true);
-  if (existsSync(resolve(root, "data/raw/ai-work-control/c3-ai/manifest.json"))) {
-    await runStep("extract-sec-xbrl", "extract-sec-xbrl-window.mjs", true);
+  if (process.env.REFRESH_SKIP_SEC === "1") {
+    steps.push({ name: "capture-sec-filings", status: "skipped", reason: "SEC capture skipped by configuration." });
+    steps.push({ name: "extract-sec-xbrl", status: "skipped", reason: "SEC extraction skipped by configuration." });
   } else {
-    steps.push({ name: "extract-sec-xbrl", status: "skipped", reason: "No SEC capture manifest exists." });
+    await runStep("capture-sec-filings", "acquire-sec-filing-window.mjs", true);
+    if (existsSync(resolve(root, "data/raw/ai-work-control/c3-ai/manifest.json"))) {
+      await runStep("extract-sec-xbrl", "extract-sec-xbrl-window.mjs", true);
+    } else {
+      steps.push({ name: "extract-sec-xbrl", status: "skipped", reason: "No SEC capture manifest exists." });
+    }
   }
   await runStep("validate-source-adapters", "validate-source-adapters.mjs");
   await runStep("scan-repositories", "scan-source-changes.mjs");

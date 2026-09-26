@@ -63,7 +63,7 @@ const reviewQueue = sources.filter((source) => source.needsReview).map((source) 
 }));
 const receipt = {
   schemaVersion: "source-scan-receipt-v1",
-  runId: `scan-${new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 14)}`,
+  runId: `scan-${new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 17)}`,
   generatedAt: new Date().toISOString(),
   domain: map.domain,
   repositories: registry.repositories.map((repository) => repository.id),

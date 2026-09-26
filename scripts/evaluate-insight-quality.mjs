@@ -6,8 +6,9 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const packetPath = resolve(root, process.env.INSIGHT_PACKET_PATH ?? "data/processed/ai-work-control.packet.json");
-const candidatePath = resolve(root, process.env.INSIGHT_CANDIDATE_PATH ?? "data/processed/runs/ai-work-control/insight-candidates.json");
-const outputPath = resolve(root, process.env.INSIGHT_EVALUATION_PATH ?? "data/processed/runs/ai-work-control/insight-evaluation.json");
+const runtimeDir = process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control";
+const candidatePath = resolve(root, process.env.INSIGHT_CANDIDATE_PATH ?? `${runtimeDir}/insight-candidates.json`);
+const outputPath = resolve(root, process.env.INSIGHT_EVALUATION_PATH ?? `${runtimeDir}/insight-evaluation.json`);
 const packet = JSON.parse(await readFile(packetPath, "utf8"));
 const candidates = existsSync(candidatePath) ? JSON.parse(await readFile(candidatePath, "utf8")) : { candidates: [] };
 const records = new Map((packet.records ?? []).map((record) => [record.id, record]));

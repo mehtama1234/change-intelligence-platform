@@ -8,7 +8,7 @@ import { createRuntimeStore, importRuntimeLedgers } from "./storage.mjs";
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)));
 const port = Number(process.env.PORT ?? 8780);
 const runtimeDir = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control");
-const packetPath = resolve(root, "data/processed/ai-work-control.packet.json");
+const packetPath = resolve(root, process.env.PACKET_PATH ?? "data/processed/ai-work-control.packet.json");
 const reviewPath = resolve(runtimeDir, "latest-review-work.json");
 const historyPath = resolve(runtimeDir, "versioned-evidence-ledger.json");
 const refreshPath = resolve(runtimeDir, "latest-refresh.json");

@@ -6,8 +6,9 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const workspaceDir = resolve(root, process.env.WORKSPACE_CONFIG_DIR ?? "data/fixtures/workspaces");
-const scanPath = resolve(root, process.env.SOURCE_SCAN_PATH ?? "data/processed/runs/ai-work-control/latest-source-scan.json");
-const outputDir = resolve(root, process.env.ALERT_OUTPUT_DIR ?? "data/processed/runs/ai-work-control");
+const runtimeDir = process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control";
+const scanPath = resolve(root, process.env.SOURCE_SCAN_PATH ?? `${runtimeDir}/latest-source-scan.json`);
+const outputDir = resolve(root, process.env.ALERT_OUTPUT_DIR ?? runtimeDir);
 const outputPath = resolve(outputDir, process.env.ALERT_OUTPUT_NAME ?? "workspace-alerts.json");
 const scan = JSON.parse(await readFile(scanPath, "utf8"));
 const files = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));

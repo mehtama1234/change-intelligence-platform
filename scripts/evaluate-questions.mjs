@@ -4,9 +4,10 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
-const packetPath = resolve(root, "data/processed/ai-work-control.packet.json");
-const questionsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-questions.json");
-const outputDir = resolve(root, "data/processed/runs/ai-work-control");
+const runtimeDir = process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control";
+const packetPath = resolve(root, process.env.PACKET_PATH ?? "data/processed/ai-work-control.packet.json");
+const questionsPath = resolve(root, process.env.QUESTIONS_PATH ?? `${runtimeDir}/workspace-questions.json`);
+const outputDir = resolve(root, process.env.QUESTION_OUTPUT_DIR ?? runtimeDir);
 const outputPath = resolve(outputDir, "question-evaluations.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const packet = JSON.parse(await readFile(packetPath, "utf8"));

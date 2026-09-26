@@ -4,9 +4,10 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
-const reviewPath = resolve(root, process.env.REVIEW_WORK_PATH ?? "data/processed/runs/ai-work-control/latest-review-work.json");
-const decisionsPath = resolve(root, process.env.REVIEW_DECISIONS_PATH ?? "data/processed/runs/ai-work-control/review-decisions.json");
-const outputDir = resolve(root, process.env.EVIDENCE_OUTPUT_DIR ?? "data/processed/runs/ai-work-control");
+const runtimeDir = process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control";
+const reviewPath = resolve(root, process.env.REVIEW_WORK_PATH ?? `${runtimeDir}/latest-review-work.json`);
+const decisionsPath = resolve(root, process.env.REVIEW_DECISIONS_PATH ?? `${runtimeDir}/review-decisions.json`);
+const outputDir = resolve(root, process.env.EVIDENCE_OUTPUT_DIR ?? runtimeDir);
 const outputName = process.env.EVIDENCE_OUTPUT_NAME ?? "versioned-evidence-ledger.json";
 const reviewWork = JSON.parse(await readFile(reviewPath, "utf8"));
 const decisionLedger = existsSync(decisionsPath) ? JSON.parse(await readFile(decisionsPath, "utf8")) : { decisions: [] };
