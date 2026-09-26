@@ -4,20 +4,141 @@
   "sourceSnapshotDate": "2026-09-25",
   "operations": {
     "latestSourceScan": {
-      "generatedAt": "2026-09-26T05:47:16.640Z",
-      "runId": "scan-20260926054716",
+      "generatedAt": "2026-09-26T06:57:58.202Z",
+      "runId": "scan-20260926065758202",
       "counts": {
         "new": 0,
         "changed": 0,
-        "unchanged": 7,
+        "unchanged": 11,
         "missing": 0
       },
       "reviewRequired": 0,
       "reviewQueue": [],
       "reviewWork": {
-        "readyForResearcher": 0,
+        "readyForResearcher": 4,
         "blocked": 0,
-        "candidates": [],
+        "candidates": [
+          {
+            "id": "review-atlas-nvidia-ai-platform-window-new",
+            "sourceId": "atlas-nvidia-ai-platform-window",
+            "repository": "company-atlas-lab",
+            "state": "ready_for_researcher",
+            "action": "reacquire_and_reextract",
+            "reason": "No prior capture exists for this source.",
+            "sourcePath": "company-industry-analysis/companies/nvidia/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+            "sourceRole": "company_report",
+            "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
+            "title": "NVIDIA's filings show platform growth without a measured deployment outcome",
+            "observation": "The NVIDIA bridge records an annual base and three subsequent quarters covering company revenue, data-center activity, supply, capacity, and export-control disclosures.",
+            "theme": "ai-work-control",
+            "mechanism": "Infrastructure revenue can rise before a customer workload, worker result, or public benefit is measured.",
+            "affectedGroups": [
+              "AI companies",
+              "enterprise users",
+              "infrastructure workers",
+              "capital providers"
+            ],
+            "claimState": "reported",
+            "asOf": "2026-09-25",
+            "sourceDigest": "75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0",
+            "sourceBytes": 2602,
+            "sourceExcerpt": "# NVIDIA — FY2026 three-quarter accounting bridge ## Purpose and period control The FY2026 quarterly sequence covers periods ended April 27, July 27 and October 26, 2025. It updates reported company revenue, Data Center revenue, margins and stated drivers. Those measures are not a customer workload, AI-result, deployment-return or social-outcome record. | Reporting window | Direct records | Bounded use | Not established | |---|---|---|---| | FY2025 | [Annual report](https://www.sec.gov/Archives/edgar/data/1045810/000104581025000023/",
+            "limits": [
+              "The bridge does not establish customer workload value, switching cost, deployment return, worker outcome, or downstream public benefit."
+            ],
+            "publication": "not_published"
+          },
+          {
+            "id": "review-atlas-microsoft-cloud-window-new",
+            "sourceId": "atlas-microsoft-cloud-window",
+            "repository": "company-atlas-lab",
+            "state": "ready_for_researcher",
+            "action": "reacquire_and_reextract",
+            "reason": "No prior capture exists for this source.",
+            "sourcePath": "company-industry-analysis/companies/microsoft/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+            "sourceRole": "company_report",
+            "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
+            "title": "Microsoft's cloud growth does not identify the workload result",
+            "observation": "The Microsoft bridge records three quarters of reported revenue growth, Microsoft Cloud revenue, and commercial remaining performance obligations after the FY2025 annual report.",
+            "theme": "ai-work-control",
+            "mechanism": "Cloud scale and contracted obligations can expand while price, use, capacity, reliability, and user benefit remain unresolved.",
+            "affectedGroups": [
+              "enterprise users",
+              "software workers",
+              "cloud infrastructure workers",
+              "capital providers"
+            ],
+            "claimState": "reported",
+            "asOf": "2026-09-25",
+            "sourceDigest": "0c783b9df6776a6e99d2f0a641039dbf9ed0de6e38f7e52a823466e5b65dae5e",
+            "sourceBytes": 2632,
+            "sourceExcerpt": "ords the disclosed company series while preventing it from becoming a causal cloud, AI, customer, energy, workforce or social-outcome narrative. | Quarter | Total revenue change | Microsoft Cloud revenue | Commercial remaining performance obligation | Bounded reading | |---|---:|---:|---:|---| | Q1 FY2026 | +18% | $49.1bn, +26% | $392bn, +51% | Reported growth and management segment commentary; no price/use/mix/capacity decomposition. | | Q2 FY2026 | +17% | $51.5bn, +26% | $625bn, +110% | Reported growth and management segment commentary; no price/use/mix/capacity decomposition. | | Q3 FY2026 | +18% | $54.5bn, +29% | $627bn, +99% | Reported growth and management segment commentary; no price/",
+            "limits": [
+              "The bridge does not isolate AI contribution, workload use, customer value, reliability, affordability, energy effects, or worker outcomes."
+            ],
+            "publication": "not_published"
+          },
+          {
+            "id": "review-atlas-oracle-cloud-window-new",
+            "sourceId": "atlas-oracle-cloud-window",
+            "repository": "company-atlas-lab",
+            "state": "ready_for_researcher",
+            "action": "reacquire_and_reextract",
+            "reason": "No prior capture exists for this source.",
+            "sourcePath": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+            "sourceRole": "company_report",
+            "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
+            "title": "Oracle's quarterly revenue movement leaves the operating cause open",
+            "observation": "The Oracle bridge records three reported quarterly revenue changes after the FY2025 annual report while explicitly leaving price, use, customer, capacity, AI demand, and outcome attribution unresolved.",
+            "theme": "ai-work-control",
+            "mechanism": "Reported revenue can move without identifying the workload, capacity, contract, or user change that produced it.",
+            "affectedGroups": [
+              "enterprise users",
+              "cloud infrastructure workers",
+              "customers",
+              "capital providers"
+            ],
+            "claimState": "reported",
+            "asOf": "2026-09-25",
+            "sourceDigest": "781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583",
+            "sourceBytes": 2413,
+            "sourceExcerpt": "# Oracle — FY2026 three-quarter accounting bridge ## Purpose and period control The FY2026 quarterly filings cover periods ended August 31 and November 30, 2025, and February 28, 2026. They provide a reported company revenue series, not a customer workload, cloud-capacity, AI-demand, product-quality or stakeholder-outcome result. | Fiscal quarter | Reported revenue | Comparable prior-year quarter | Reported year-over-year change | Boundary | |---|---:|---:|---:|---| | Q1 FY2026 | $14.926bn | $13.307bn | +$1.619bn / about 12.2% | No price, use, customer, capacity or outcome attribution. | | Q2 FY2026 | $1",
+            "limits": [
+              "The bridge does not establish AI demand, cloud capacity return, customer value, durability, or public and worker outcomes."
+            ],
+            "publication": "not_published"
+          },
+          {
+            "id": "review-atlas-broadcom-ai-infrastructure-window-new",
+            "sourceId": "atlas-broadcom-ai-infrastructure-window",
+            "repository": "company-atlas-lab",
+            "state": "ready_for_researcher",
+            "action": "reacquire_and_reextract",
+            "reason": "No prior capture exists for this source.",
+            "sourcePath": "company-industry-analysis/companies/broadcom/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+            "sourceRole": "company_report",
+            "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
+            "title": "Broadcom's platform records need a separate customer-result test",
+            "observation": "The Broadcom bridge records three subsequent change windows and names unresolved price, unit, mix, integration, customer value, reliability, security, and AI-demand questions.",
+            "theme": "ai-work-control",
+            "mechanism": "A supplier can report commercial movement while the customer workflow, integration cost, and downstream result remain unmeasured.",
+            "affectedGroups": [
+              "enterprise users",
+              "software and hardware workers",
+              "infrastructure operators",
+              "capital providers"
+            ],
+            "claimState": "reported",
+            "asOf": "2026-09-25",
+            "sourceDigest": "78e50dcb48e4452ad98bf8e308e58ce80ffe85344d61d2571bf9244f98b37ad3",
+            "sourceBytes": 1197,
+            "sourceExcerpt": "---| | FY2025 | Annual base for segment, cash, capital, debt, risk and governance extraction | Customer workload demand, product return, software migration or end-user outcome | | Q1 FY2026 | First subsequent change record | Price, unit, product-mix, integration or customer value bridge | | Q2 FY2026 | Second subsequent change record | Segment cost, service, reliability or security result | | Q3 FY2026 | Third subsequent change record | AI-demand durability, customer switching or public outcome | ## Next extraction Reconcile every period to Semiconductor Solutions and Infrastructure Software revenue, direct/channel route, units, price, product mix, acquisition effects, gross profit, operatin",
+            "limits": [
+              "The bridge does not prove AI-demand durability, customer switching cost, deployment reliability, security, worker conditions, or public outcomes."
+            ],
+            "publication": "not_published"
+          }
+        ],
         "versionedEvidence": {
           "activeResearchRecordCount": 0,
           "decisionCount": 0,
@@ -27,7 +148,6 @@
     },
     "workspaceAlerts": {
       "schemaVersion": "workspace-alert-ledger-v1",
-      "generatedAt": "2026-09-26T05:47:17.047Z",
       "workspaces": [
         {
           "id": "demo-research",
@@ -59,12 +179,12 @@
     },
     "questionEvaluations": {
       "schemaVersion": "question-evaluation-ledger-v1",
-      "generatedAt": "2026-09-26T05:47:19.065Z",
+      "generatedAt": "2026-09-26T06:57:36.630Z",
       "evaluations": [
         {
           "questionId": "question-1790396868707-0zillf",
           "workspaceId": "demo-research",
-          "evaluatedAt": "2026-09-26T05:47:19.065Z",
+          "evaluatedAt": "2026-09-26T06:57:36.630Z",
           "state": "evidence_retrieved",
           "matchedRecordIds": [
             "trend-hunting-ai-control",
@@ -133,7 +253,7 @@
     },
     "briefings": {
       "schemaVersion": "workspace-briefing-ledger-v1",
-      "generatedAt": "2026-09-26T05:47:19.542Z",
+      "generatedAt": "2026-09-26T06:57:37.085Z",
       "briefings": [
         {
           "id": "briefing-question-1790396868707-0zillf",
@@ -146,7 +266,7 @@
           "publishedAt": "2026-09-26T04:34:31.213Z",
           "publicationId": "publication-1790397271213-qdiac3",
           "evidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
-          "generatedAt": "2026-09-26T05:47:19.542Z",
+          "generatedAt": "2026-09-26T06:57:37.085Z",
           "evidence": [
             {
               "recordId": "trend-hunting-ai-control",
@@ -234,7 +354,7 @@
     },
     "insightCandidates": {
       "schemaVersion": "insight-candidate-ledger-v1",
-      "generatedAt": "2026-09-26T05:47:20.412Z",
+      "generatedAt": "2026-09-26T06:57:38.428Z",
       "candidates": [
         {
           "id": "candidate-insight-ai-capability-control-gap-001-710b18999d68",
@@ -243,7 +363,7 @@
           "plainLanguageSummary": "The current evidence supports a narrower reading than 'AI makes work more productive': AI can remove visible tasks while decisions, measurement, correction, and dependence remain controlled by an employer, platform, or infrastructure provider.",
           "status": "published",
           "publication": "published",
-          "generatedAt": "2026-09-26T05:47:20.412Z",
+          "generatedAt": "2026-09-26T06:57:38.428Z",
           "candidateKey": "insight-ai-capability-control-gap-001",
           "evidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
           "decisionId": "insight-decision-f1302f01-b437-4f15-bceb-e1c11fbfb195",
@@ -491,21 +611,37 @@
       "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
       "reportWindow": {
         "annualBaseline": "FY2025 10-K",
+        "columns": [
+          "Operating loss",
+          "Net loss"
+        ],
         "quarters": [
           {
             "period": "Q1 ended Jul 31 2025",
             "operatingLoss": -124819,
-            "netLoss": -116769
+            "netLoss": -116769,
+            "values": [
+              "(124,819)",
+              "(116,769)"
+            ]
           },
           {
             "period": "Q2 ended Oct 31 2025",
             "operatingLoss": -112113,
-            "netLoss": -104668
+            "netLoss": -104668,
+            "values": [
+              "(112,113)",
+              "(104,668)"
+            ]
           },
           {
             "period": "Q3 ended Jan 31 2026",
             "operatingLoss": -140408,
-            "netLoss": -133363
+            "netLoss": -133363,
+            "values": [
+              "(140,408)",
+              "(133,363)"
+            ]
           }
         ],
         "metrics": {
@@ -514,7 +650,7 @@
           "operatingLossQ2vsQ1": 12706,
           "operatingLossQ3vsQ2": -28295
         },
-        "reading": "Loss magnitude improved in Q2 and worsened in Q3; this is a reported accounting movement, not a causal explanation or an outcome for workers or customers.",
+        "reading": "This is a reported accounting movement, not a causal explanation or an outcome for workers or customers.",
         "movementSource": "sec_xbrl",
         "sourceRefs": {
           "bridge": "company-industry-analysis/companies/c3-ai/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
@@ -548,6 +684,405 @@
       },
       "limits": [
         "The report window does not identify an organization, model version, affected person, decision, input, output, error, override, appeal, remedy, or later outcome."
+      ]
+    },
+    {
+      "id": "atlas-nvidia-ai-platform-window",
+      "sourceRole": "company_report",
+      "sourceRepository": "company-atlas-lab",
+      "sourceRef": "company-industry-analysis/companies/nvidia/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+      "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
+      "sourceDigest": "75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0",
+      "sourceBytes": 2602,
+      "sourceExcerpt": "# NVIDIA — FY2026 three-quarter accounting bridge ## Purpose and period control The FY2026 quarterly sequence covers periods ended April 27, July 27 and October 26, 2025. It updates reported company revenue, Data Center revenue, margins and stated drivers. Those measures are not a customer workload, AI-result, deployment-return or social-outcome record. | Reporting window | Direct records | Bounded use | Not established | |---|---|---|---| | FY2025 | [Annual report](https://www.sec.gov/Archives/edgar/data/1045810/000104581025000023/nvda-20250126.htm) | Revenue mechanisms, customer/market concentration, deferred revenue, remaining obligations, risk and financial inputs. | Customer outcome, re",
+      "title": "NVIDIA's filings show platform growth without a measured deployment outcome",
+      "observation": "The NVIDIA bridge records an annual base and three subsequent quarters covering company revenue, data-center activity, supply, capacity, and export-control disclosures.",
+      "theme": "ai-work-control",
+      "mechanism": "Infrastructure revenue can rise before a customer workload, worker result, or public benefit is measured.",
+      "affectedGroups": [
+        "AI companies",
+        "enterprise users",
+        "infrastructure workers",
+        "capital providers"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "company": "NVIDIA",
+      "industry": "AI computing infrastructure",
+      "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
+      "reportWindow": {
+        "annualBaseline": "FY2025 10-K",
+        "columns": [
+          "Direct records",
+          "Bounded use",
+          "Not established"
+        ],
+        "quarters": [
+          {
+            "period": "Q1 FY2026",
+            "values": [
+              "[Form 10-Q](https://www.sec.gov/Archives/edgar/data/1045810/000104581025000116/nvda-20250427.htm)",
+              "First-quarter company and Data Center update.",
+              "A causal deployment or AI outcome."
+            ],
+            "operatingLoss": null,
+            "netLoss": null
+          },
+          {
+            "period": "Q2 FY2026",
+            "values": [
+              "[Form 10-Q](https://www.sec.gov/Archives/edgar/data/1045810/000104581025000209/nvda-20250727.htm)",
+              "Second-quarter company and Data Center update.",
+              "A causal deployment or AI outcome."
+            ],
+            "operatingLoss": null,
+            "netLoss": null
+          },
+          {
+            "period": "Q3 FY2026",
+            "values": [
+              "[Form 10-Q](https://www.sec.gov/Archives/edgar/data/1045810/000104581025000230/nvda-20251026.htm)",
+              "Third-quarter company, supply/capacity and export-control update.",
+              "A causal deployment or AI outcome."
+            ],
+            "operatingLoss": null,
+            "netLoss": null
+          }
+        ],
+        "metrics": {
+          "operatingLossMagnitudeChangeQ3vsQ1Pct": null,
+          "netLossMagnitudeChangeQ3vsQ1Pct": null,
+          "operatingLossQ2vsQ1": null,
+          "operatingLossQ3vsQ2": null
+        },
+        "reading": "This is an issuer-reported platform and capacity history, not a customer or worker outcome.",
+        "movementSource": "atlas_bridge",
+        "sourceRefs": {
+          "bridge": "company-industry-analysis/companies/nvidia/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+          "initialRead": "company-industry-analysis/companies/nvidia/INITIAL-EVIDENCE-READ.md",
+          "initialReadDigest": "56074687842722462bb7f3ad730586a20355cca18fd07b7700e997113c3877b1",
+          "directRecords": [
+            {
+              "label": "Annual report",
+              "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000023/nvda-20250126.htm"
+            },
+            {
+              "label": "Form 10-Q",
+              "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000116/nvda-20250427.htm"
+            },
+            {
+              "label": "Form 10-Q",
+              "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000209/nvda-20250727.htm"
+            },
+            {
+              "label": "Form 10-Q",
+              "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000230/nvda-20251026.htm"
+            }
+          ],
+          "directExtract": "data/processed/ai-work-control/c3-ai.xbrl.json",
+          "directExtractStatus": "does_not_match_bridge",
+          "captureManifest": "data/raw/ai-work-control/c3-ai/manifest.json",
+          "captureStatus": "complete",
+          "capturedRecords": 4,
+          "attemptedRecords": 4
+        }
+      },
+      "limits": [
+        "The bridge does not establish customer workload value, switching cost, deployment return, worker outcome, or downstream public benefit."
+      ]
+    },
+    {
+      "id": "atlas-microsoft-cloud-window",
+      "sourceRole": "company_report",
+      "sourceRepository": "company-atlas-lab",
+      "sourceRef": "company-industry-analysis/companies/microsoft/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+      "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
+      "sourceDigest": "0c783b9df6776a6e99d2f0a641039dbf9ed0de6e38f7e52a823466e5b65dae5e",
+      "sourceBytes": 2632,
+      "sourceExcerpt": "ies while preventing it from becoming a causal cloud, AI, customer, energy, workforce or social-outcome narrative. | Quarter | Total revenue change | Microsoft Cloud revenue | Commercial remaining performance obligation | Bounded reading | |---|---:|---:|---:|---| | Q1 FY2026 | +18% | $49.1bn, +26% | $392bn, +51% | Reported growth and management segment commentary; no price/use/mix/capacity decomposition. | | Q2 FY2026 | +17% | $51.5bn, +26% | $625bn, +110% | Reported growth and management segment commentary; no price/use/mix/capacity decomposition. | | Q3 FY2026 | +18% | $54.5bn, +29% | $627bn, +99% | Reported growth and management segment commentary; no price/use/mix/capacity decomposition",
+      "title": "Microsoft's cloud growth does not identify the workload result",
+      "observation": "The Microsoft bridge records three quarters of reported revenue growth, Microsoft Cloud revenue, and commercial remaining performance obligations after the FY2025 annual report.",
+      "theme": "ai-work-control",
+      "mechanism": "Cloud scale and contracted obligations can expand while price, use, capacity, reliability, and user benefit remain unresolved.",
+      "affectedGroups": [
+        "enterprise users",
+        "software workers",
+        "cloud infrastructure workers",
+        "capital providers"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "company": "Microsoft",
+      "industry": "cloud and enterprise software",
+      "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
+      "reportWindow": {
+        "annualBaseline": "FY2025 10-K",
+        "columns": [
+          "Total revenue change",
+          "Microsoft Cloud revenue",
+          "Commercial remaining performance obligation",
+          "Bounded reading"
+        ],
+        "quarters": [
+          {
+            "period": "Q1 FY2026",
+            "values": [
+              "+18%",
+              "$49.1bn, +26%",
+              "$392bn, +51%",
+              "Reported growth and management segment commentary; no price/use/mix/capacity decomposition."
+            ],
+            "operatingLoss": null,
+            "netLoss": null
+          },
+          {
+            "period": "Q2 FY2026",
+            "values": [
+              "+17%",
+              "$51.5bn, +26%",
+              "$625bn, +110%",
+              "Reported growth and management segment commentary; no price/use/mix/capacity decomposition."
+            ],
+            "operatingLoss": null,
+            "netLoss": null
+          },
+          {
+            "period": "Q3 FY2026",
+            "values": [
+              "+18%",
+              "$54.5bn, +29%",
+              "$627bn, +99%",
+              "Reported growth and management segment commentary; no price/use/mix/capacity decomposition."
+            ],
+            "operatingLoss": null,
+            "netLoss": null
+          }
+        ],
+        "metrics": {
+          "operatingLossMagnitudeChangeQ3vsQ1Pct": null,
+          "netLossMagnitudeChangeQ3vsQ1Pct": null,
+          "operatingLossQ2vsQ1": null,
+          "operatingLossQ3vsQ2": null
+        },
+        "reading": "This is reported cloud growth and contract context, not proof of a customer workload result.",
+        "movementSource": "atlas_bridge",
+        "sourceRefs": {
+          "bridge": "company-industry-analysis/companies/microsoft/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+          "initialRead": "company-industry-analysis/companies/microsoft/INITIAL-EVIDENCE-READ.md",
+          "initialReadDigest": "413e8610b7cfd04168263bb9a9e027ae2ef91b2cabfdcd4bbd2d263d861480f8",
+          "directRecords": [
+            {
+              "label": "Q1 FY2026 10-Q",
+              "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312525256321/msft-20250930.htm"
+            },
+            {
+              "label": "Q2 FY2026 10-Q",
+              "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526027207/msft-20251231.htm"
+            },
+            {
+              "label": "Q3 FY2026 10-Q",
+              "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526191507/msft-20260331.htm"
+            }
+          ],
+          "directExtract": "data/processed/ai-work-control/c3-ai.xbrl.json",
+          "directExtractStatus": "does_not_match_bridge",
+          "captureManifest": "data/raw/ai-work-control/c3-ai/manifest.json",
+          "captureStatus": "complete",
+          "capturedRecords": 4,
+          "attemptedRecords": 4
+        }
+      },
+      "limits": [
+        "The bridge does not isolate AI contribution, workload use, customer value, reliability, affordability, energy effects, or worker outcomes."
+      ]
+    },
+    {
+      "id": "atlas-oracle-cloud-window",
+      "sourceRole": "company_report",
+      "sourceRepository": "company-atlas-lab",
+      "sourceRef": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+      "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
+      "sourceDigest": "781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583",
+      "sourceBytes": 2413,
+      "sourceExcerpt": "# Oracle — FY2026 three-quarter accounting bridge ## Purpose and period control The FY2026 quarterly filings cover periods ended August 31 and November 30, 2025, and February 28, 2026. They provide a reported company revenue series, not a customer workload, cloud-capacity, AI-demand, product-quality or stakeholder-outcome result. | Fiscal quarter | Reported revenue | Comparable prior-year quarter | Reported year-over-year change | Boundary | |---|---:|---:|---:|---| | Q1 FY2026 | $14.926bn | $13.307bn | +$1.619bn / about 12.2% | No price, use, customer, capacity or outcome attribution. | | Q2 FY2026 | $16.058bn | $14.059bn | +$1.999bn / about 14.2% | No price, use, customer, capacity or outc",
+      "title": "Oracle's quarterly revenue movement leaves the operating cause open",
+      "observation": "The Oracle bridge records three reported quarterly revenue changes after the FY2025 annual report while explicitly leaving price, use, customer, capacity, AI demand, and outcome attribution unresolved.",
+      "theme": "ai-work-control",
+      "mechanism": "Reported revenue can move without identifying the workload, capacity, contract, or user change that produced it.",
+      "affectedGroups": [
+        "enterprise users",
+        "cloud infrastructure workers",
+        "customers",
+        "capital providers"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "company": "Oracle",
+      "industry": "cloud and enterprise software",
+      "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
+      "reportWindow": {
+        "annualBaseline": "FY2025 10-K",
+        "columns": [
+          "Reported revenue",
+          "Comparable prior-year quarter",
+          "Reported year-over-year change",
+          "Boundary"
+        ],
+        "quarters": [
+          {
+            "period": "Q1 FY2026",
+            "values": [
+              "$14.926bn",
+              "$13.307bn",
+              "+$1.619bn / about 12.2%",
+              "No price, use, customer, capacity or outcome attribution."
+            ],
+            "operatingLoss": null,
+            "netLoss": null
+          },
+          {
+            "period": "Q2 FY2026",
+            "values": [
+              "$16.058bn",
+              "$14.059bn",
+              "+$1.999bn / about 14.2%",
+              "No price, use, customer, capacity or outcome attribution."
+            ],
+            "operatingLoss": null,
+            "netLoss": null
+          },
+          {
+            "period": "Q3 FY2026",
+            "values": [
+              "$17.190bn",
+              "$14.130bn",
+              "+$3.060bn / about 21.7%",
+              "No price, use, customer, capacity or outcome attribution."
+            ],
+            "operatingLoss": null,
+            "netLoss": null
+          }
+        ],
+        "metrics": {
+          "operatingLossMagnitudeChangeQ3vsQ1Pct": null,
+          "netLossMagnitudeChangeQ3vsQ1Pct": null,
+          "operatingLossQ2vsQ1": null,
+          "operatingLossQ3vsQ2": null
+        },
+        "reading": "This is a reported revenue sequence; the operating cause and outcome remain open.",
+        "movementSource": "atlas_bridge",
+        "sourceRefs": {
+          "bridge": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+          "initialRead": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+          "initialReadDigest": "781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583",
+          "directRecords": [
+            {
+              "label": "Q1 FY2026 10-Q",
+              "url": "https://www.sec.gov/Archives/edgar/data/1341439/000119312525200095/orcl-20250831.htm"
+            },
+            {
+              "label": "Q2 FY2026 10-Q",
+              "url": "https://www.sec.gov/Archives/edgar/data/1341439/000119312525315925/orcl-20251130.htm"
+            },
+            {
+              "label": "Q3 FY2026 10-Q",
+              "url": "https://www.sec.gov/Archives/edgar/data/1341439/000119312526101045/orcl-20260228.htm"
+            }
+          ],
+          "directExtract": "data/processed/ai-work-control/c3-ai.xbrl.json",
+          "directExtractStatus": "does_not_match_bridge",
+          "captureManifest": "data/raw/ai-work-control/c3-ai/manifest.json",
+          "captureStatus": "complete",
+          "capturedRecords": 4,
+          "attemptedRecords": 4
+        }
+      },
+      "limits": [
+        "The bridge does not establish AI demand, cloud capacity return, customer value, durability, or public and worker outcomes."
+      ]
+    },
+    {
+      "id": "atlas-broadcom-ai-infrastructure-window",
+      "sourceRole": "company_report",
+      "sourceRepository": "company-atlas-lab",
+      "sourceRef": "company-industry-analysis/companies/broadcom/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+      "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
+      "sourceDigest": "78e50dcb48e4452ad98bf8e308e58ce80ffe85344d61d2571bf9244f98b37ad3",
+      "sourceBytes": 1197,
+      "sourceExcerpt": "r segment, cash, capital, debt, risk and governance extraction | Customer workload demand, product return, software migration or end-user outcome | | Q1 FY2026 | First subsequent change record | Price, unit, product-mix, integration or customer value bridge | | Q2 FY2026 | Second subsequent change record | Segment cost, service, reliability or security result | | Q3 FY2026 | Third subsequent change record | AI-demand durability, customer switching or public outcome | ## Next extraction Reconcile every period to Semiconductor Solutions and Infrastructure Software revenue, direct/channel route, units, price, product mix, acquisition effects, gross profit, operating costs, cash, debt and capita",
+      "title": "Broadcom's platform records need a separate customer-result test",
+      "observation": "The Broadcom bridge records three subsequent change windows and names unresolved price, unit, mix, integration, customer value, reliability, security, and AI-demand questions.",
+      "theme": "ai-work-control",
+      "mechanism": "A supplier can report commercial movement while the customer workflow, integration cost, and downstream result remain unmeasured.",
+      "affectedGroups": [
+        "enterprise users",
+        "software and hardware workers",
+        "infrastructure operators",
+        "capital providers"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "company": "Broadcom",
+      "industry": "semiconductors and infrastructure software",
+      "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
+      "reportWindow": {
+        "annualBaseline": "FY2025 10-K",
+        "columns": [
+          "Proper use",
+          "Not established"
+        ],
+        "quarters": [
+          {
+            "period": "Q1 FY2026",
+            "values": [
+              "First subsequent change record",
+              "Price, unit, product-mix, integration or customer value bridge"
+            ],
+            "operatingLoss": null,
+            "netLoss": null
+          },
+          {
+            "period": "Q2 FY2026",
+            "values": [
+              "Second subsequent change record",
+              "Segment cost, service, reliability or security result"
+            ],
+            "operatingLoss": null,
+            "netLoss": null
+          },
+          {
+            "period": "Q3 FY2026",
+            "values": [
+              "Third subsequent change record",
+              "AI-demand durability, customer switching or public outcome"
+            ],
+            "operatingLoss": null,
+            "netLoss": null
+          }
+        ],
+        "metrics": {
+          "operatingLossMagnitudeChangeQ3vsQ1Pct": null,
+          "netLossMagnitudeChangeQ3vsQ1Pct": null,
+          "operatingLossQ2vsQ1": null,
+          "operatingLossQ3vsQ2": null
+        },
+        "reading": "This is a company-reported platform history; customer value and downstream effects need separate evidence.",
+        "movementSource": "atlas_bridge",
+        "sourceRefs": {
+          "bridge": "company-industry-analysis/companies/broadcom/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+          "initialRead": "company-industry-analysis/companies/broadcom/INITIAL-EVIDENCE-READ.md",
+          "initialReadDigest": "d3b516a3f005e81130c9c318b70c14d246b6554fd6b19bf69e10b9da88d8235c",
+          "directRecords": [],
+          "directExtract": "data/processed/ai-work-control/c3-ai.xbrl.json",
+          "directExtractStatus": "does_not_match_bridge",
+          "captureManifest": "data/raw/ai-work-control/c3-ai/manifest.json",
+          "captureStatus": "complete",
+          "capturedRecords": 4,
+          "attemptedRecords": 4
+        }
+      },
+      "limits": [
+        "The bridge does not prove AI-demand durability, customer switching cost, deployment reliability, security, worker conditions, or public outcomes."
       ]
     }
   ],

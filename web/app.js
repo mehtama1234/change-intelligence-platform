@@ -230,15 +230,19 @@ function render() {
     byId("alerts-items").innerHTML = openAlerts.length ? openAlerts.map((alert) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(alert.severity)}</span><span>${escapeHtml(alert.kind.replaceAll("_", " "))}</span></div><h3>${escapeHtml(alert.watchlistName)}</h3><p>${escapeHtml(alert.reason)}</p><details><summary>Open alert source</summary><dl><dt>Workspace</dt><dd>${escapeHtml(alert.workspaceId)}</dd><dt>Repository</dt><dd>${escapeHtml(alert.repository)}</dd><dt>Source</dt><dd><code>${escapeHtml(alert.sourcePath)}</code></dd></dl></details></article>`).join("") : `<p class="muted">No open watchlist alerts.</p>`;
   }
 
-  const reportRecord = records.find((record) => record.reportWindow);
-  if (reportRecord) {
-    const report = reportRecord.reportWindow;
+  const reportRecords = records.filter((record) => record.reportWindow);
+  if (reportRecords.length) {
     byId("report-history").hidden = false;
-    byId("report-reading").textContent = `${reportRecord.company} · ${report.annualBaseline}. ${report.reading}`;
-    const sourceLabel = report.movementSource === "sec_xbrl" ? "direct SEC filing XBRL" : "Atlas bridge file";
-    const captureLabel = report.sourceRefs.captureStatus === "complete" ? "4/4 filings captured" : `${report.sourceRefs.captureStatus} capture`;
-    byId("report-table").innerHTML = `<table><caption>Issuer-reported losses; values are in $000s; movement read from ${sourceLabel}</caption><thead><tr><th>Period</th><th>Operating loss</th><th>Net loss</th></tr></thead><tbody>${report.quarters.map((quarter) => `<tr><th scope="row">${escapeHtml(quarter.period)}</th><td>${quarter.operatingLoss.toLocaleString()}</td><td>${quarter.netLoss.toLocaleString()}</td></tr>`).join("")}</tbody></table><p class="change-note">Magnitude change Q3 versus Q1: operating loss ${report.metrics.operatingLossMagnitudeChangeQ3vsQ1Pct}% · net loss ${report.metrics.netLossMagnitudeChangeQ3vsQ1Pct}%. Source status: ${sourceLabel}; ${captureLabel}.</p>`;
-    byId("report-links").innerHTML = `<strong>Direct records in the ledger</strong>${report.sourceRefs.directRecords.map((record) => `<a href="${escapeHtml(record.url)}" target="_blank" rel="noreferrer">${escapeHtml(record.label)}</a>`).join("")}`;
+    byId("report-reading").textContent = `${reportRecords.length} public-company histories are available. These are company-reported context, not proof of customer, worker, or public outcomes.`;
+    const renderReport = (record) => {
+      const report = record.reportWindow;
+      const columns = report.columns?.length ? report.columns : ["Operating loss", "Net loss"];
+      const cells = (quarter) => quarter.values?.length ? quarter.values : [quarter.operatingLoss, quarter.netLoss].map((value) => value === null || value === undefined ? "—" : Number(value).toLocaleString());
+      const sourceLabel = report.movementSource === "sec_xbrl" ? "direct SEC filing XBRL" : "Atlas bridge file";
+      return `<article class="record-card"><h3>${escapeHtml(record.company || record.title)} · ${escapeHtml(report.annualBaseline || "annual baseline")}</h3><p>${escapeHtml(report.reading || "Issuer-reported quarterly movement; the downstream outcome remains open.")}</p><table><caption>Quarterly records; movement read from ${escapeHtml(sourceLabel)}</caption><thead><tr><th>Period</th>${columns.map((column) => `<th>${escapeHtml(column)}</th>`).join("")}</tr></thead><tbody>${report.quarters.map((quarter) => `<tr><th scope="row">${escapeHtml(quarter.period)}</th>${cells(quarter).map((value) => `<td>${escapeHtml(value)}</td>`).join("")}</tr>`).join("")}</tbody></table></article>`;
+    };
+    byId("report-table").innerHTML = reportRecords.map(renderReport).join("");
+    byId("report-links").innerHTML = reportRecords.map((record) => `<div><strong>${escapeHtml(record.company || record.title)}</strong>${(record.reportWindow.sourceRefs?.directRecords || []).map((source) => `<a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">${escapeHtml(source.label)}</a>`).join("")}</div>`).join("");
   }
 
   const roles = [...new Set(records.map((record) => record.sourceRole))].sort();

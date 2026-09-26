@@ -58,16 +58,22 @@ function parseAmount(value) {
 }
 
 function parseQuarterBridge(markdown) {
-  return markdown.split("\n")
+  const lines = markdown.split("\n");
+  const firstQuarter = lines.findIndex((line) => /^\|\s*Q\d/.test(line));
+  const headerLine = lines.slice(0, firstQuarter).reverse().find((line) => /^\|/.test(line) && !/^\|\s*:?-+/.test(line));
+  const columns = headerLine ? headerLine.split("|").map((cell) => cell.trim()).filter(Boolean).slice(1) : [];
+  const quarters = lines
     .filter((line) => /^\|\s*Q\d/.test(line))
     .map((line) => {
       const cells = line.split("|").map((cell) => cell.trim()).filter(Boolean);
       return {
         period: cells[0],
+        values: cells.slice(1),
         operatingLoss: parseAmount(cells[1]),
         netLoss: parseAmount(cells[2])
       };
     });
+  return { columns, quarters };
 }
 
 function parseDirectQuarterFacts(extract) {
@@ -97,7 +103,8 @@ async function buildReportWindow(source, sourceLedger) {
   const initialReadPath = resolve(sourceRoot, source.sourceRepository, source.reportWindow.initialReadPath);
   const bridge = await readFile(bridgePath, "utf8");
   const initialRead = await readFile(initialReadPath, "utf8");
-  const quarters = parseQuarterBridge(bridge);
+  const parsedBridge = parseQuarterBridge(bridge);
+  const quarters = parsedBridge.quarters;
   const directRecords = [...sourceLedger.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g)]
     .map((match) => ({ label: match[1], url: match[2] }));
   const captureManifest = existsSync(captureManifestPath)
@@ -109,12 +116,13 @@ async function buildReportWindow(source, sourceLedger) {
   const directQuarters = xbrlExtract ? parseDirectQuarterFacts(xbrlExtract) : [];
   const directMatchesBridge = directQuarters.length === quarters.length && directQuarters.every((direct, index) =>
     direct.operatingLoss === quarters[index].operatingLoss && direct.netLoss === quarters[index].netLoss);
-  const movementQuarters = directMatchesBridge ? directQuarters : quarters;
+  const movementQuarters = directMatchesBridge ? directQuarters.map((quarter, index) => ({ ...quarter, values: quarters[index].values })) : quarters;
   if (movementQuarters.length < 3) throw new Error(`${source.id}: expected at least three quarterly rows`);
   const first = movementQuarters[0];
   const last = movementQuarters.at(-1);
   return {
-    annualBaseline: "FY2025 10-K",
+    annualBaseline: source.reportWindow.annualBaseline ?? "FY2025 10-K",
+    columns: source.reportWindow.columns ?? parsedBridge.columns,
     quarters: movementQuarters,
     metrics: {
       operatingLossMagnitudeChangeQ3vsQ1Pct: percentageChange(first.operatingLoss, last.operatingLoss),
@@ -122,7 +130,7 @@ async function buildReportWindow(source, sourceLedger) {
       operatingLossQ2vsQ1: movementQuarters[1].operatingLoss - first.operatingLoss,
       operatingLossQ3vsQ2: movementQuarters[2].operatingLoss - movementQuarters[1].operatingLoss
     },
-    reading: "Loss magnitude improved in Q2 and worsened in Q3; this is a reported accounting movement, not a causal explanation or an outcome for workers or customers.",
+    reading: source.reportWindow.reading ?? "This is a reported accounting movement, not a causal explanation or an outcome for workers or customers.",
     movementSource: directMatchesBridge ? "sec_xbrl" : "atlas_bridge",
     sourceRefs: {
       bridge: source.reportWindow.bridgePath,
