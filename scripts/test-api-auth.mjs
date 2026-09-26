@@ -106,6 +106,11 @@ try {
   const portfolioResponse = await fetch(`${base}/api/operator/portfolio-readiness`, { headers: { Authorization: "Bearer operator-token" } });
   const portfolioBody = await portfolioResponse.json();
   if (portfolioResponse.status !== 200 || portfolioBody.schemaVersion !== "operator-portfolio-readiness-v1" || !portfolioBody.counts || !Array.isArray(portfolioBody.workspaces) || JSON.stringify(portfolioBody).includes("private-event") || JSON.stringify(portfolioBody).includes("private note")) throw new Error("Operator portfolio readiness contract or privacy boundary failed.");
+  const outsiderKickoff = await fetch(`${base}/api/operator/pilot-kickoff?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderKickoff.status !== 403) throw new Error(`Expected non-operator kickoff export to return 403, received ${outsiderKickoff.status}`);
+  const operatorKickoff = await fetch(`${base}/api/operator/pilot-kickoff?workspace=demo-research`, { headers: { Authorization: "Bearer operator-token" } });
+  const operatorKickoffBody = await operatorKickoff.json();
+  if (operatorKickoff.status !== 200 || operatorKickoffBody.schemaVersion !== "pilot-kickoff-packet-v1" || operatorKickoffBody.workspace?.id !== "demo-research" || !operatorKickoff.headers.get("content-disposition")?.includes("demo-research-pilot-kickoff.json")) throw new Error("Operator pilot kickoff export contract failed.");
   const provisioningKey = "operator-workspace-provisioning";
   const provision = await fetch(`${base}/api/operator/workspaces`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": provisioningKey, "content-type": "application/json" }, body: JSON.stringify({ name: "New partner workspace", ownerId: "new-owner", members: [{ id: "new-researcher", role: "researcher" }] }) });
   const provisionBody = await provision.json();

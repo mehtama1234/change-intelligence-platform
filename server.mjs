@@ -2209,6 +2209,32 @@ const server = createServer(async (request, response) => {
       const snapshots = store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots").snapshots;
       return json(response, 200, buildOperatorPortfolioReadiness({ workspaces, snapshots }));
     }
+    if (url.pathname === "/api/operator/pilot-kickoff") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const workspaceId = url.searchParams.get("workspace");
+      if (!workspaceId) return json(response, 400, { error: "Choose one workspace for the pilot kickoff packet." });
+      const workspace = await workspaceConfig(workspaceId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      const [questionsLedger, watchlistsLedger, pilotProfilesLedger] = await Promise.all([
+        readJson(questionsPath, { questions: [] }),
+        readJson(watchlistsPath, { watchlists: [] }),
+        readJson(pilotProfilesPath, { profiles: [] })
+      ]);
+      const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
+      const privateSources = store.recordsLedger("workspace_source", "workspace-source-ledger-v1", "sources").sources;
+      const packet = buildPilotKickoff({
+        workspace,
+        profile: workspaceRecords(pilotProfilesLedger.profiles, workspace.id)[0] ?? null,
+        questions: workspaceRecords(questionsLedger.questions, workspace.id),
+        watchlists: workspaceRecords(watchlistsLedger.watchlists, workspace.id),
+        deliveries: workspaceRecords(deliveries, workspace.id),
+        sourceCount: workspaceRecords(privateSources, workspace.id).filter((source) => source.reviewState === "accepted").length
+      });
+      await appendAudit({ requestId, action: "operator_export_pilot_kickoff", targetId: workspace.id, workspaceId: workspace.id, actorId: operator.actorId, actorRole: "operator", result: "exported", occurredAt: new Date().toISOString() });
+      response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="${workspace.id}-pilot-kickoff.json"`, "Cache-Control": "no-store" });
+      return response.end(JSON.stringify(packet));
+    }
     if (url.pathname === "/api/operator/pilot-overview") {
       const operator = operatorAccess(request);
       if (operator.error) return json(response, operator.error.status, operator.error.body);
