@@ -11,6 +11,7 @@ const historyPath = resolve(root, "data/processed/runs/ai-work-control/versioned
 const refreshPath = resolve(root, "data/processed/runs/ai-work-control/latest-refresh.json");
 const alertsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-alerts.json");
 const questionsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-questions.json");
+const questionEvaluationsPath = resolve(root, "data/processed/runs/ai-work-control/question-evaluations.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 
@@ -97,6 +98,11 @@ const server = createServer(async (request, response) => {
       const ledger = await readJson(questionsPath, { schemaVersion: "workspace-question-ledger-v1", questions: [] });
       const workspaceId = url.searchParams.get("workspace");
       return json(response, 200, workspaceId ? ledger.questions.filter((question) => question.workspaceId === workspaceId) : ledger.questions);
+    }
+    if (url.pathname === "/api/question-evaluations") {
+      const ledger = await readJson(questionEvaluationsPath, { schemaVersion: "question-evaluation-ledger-v1", evaluations: [] });
+      const workspaceId = url.searchParams.get("workspace");
+      return json(response, 200, workspaceId ? ledger.evaluations.filter((evaluation) => evaluation.workspaceId === workspaceId) : ledger.evaluations);
     }
     if (url.pathname === "/") {
       response.writeHead(302, { Location: "/web/index.html" });

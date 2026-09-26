@@ -4,8 +4,8 @@
   "sourceSnapshotDate": "2026-09-25",
   "operations": {
     "latestSourceScan": {
-      "generatedAt": "2026-09-26T04:06:59.084Z",
-      "runId": "scan-20260926040659",
+      "generatedAt": "2026-09-26T04:30:10.895Z",
+      "runId": "scan-20260926043010",
       "counts": {
         "new": 0,
         "changed": 0,
@@ -27,7 +27,7 @@
     },
     "workspaceAlerts": {
       "schemaVersion": "workspace-alert-ledger-v1",
-      "generatedAt": "2026-09-26T04:25:36.306Z",
+      "generatedAt": "2026-09-26T04:30:11.243Z",
       "workspaces": [
         {
           "id": "demo-research",
@@ -54,6 +54,80 @@
           "acknowledgedRole": "researcher",
           "acknowledgedAt": "2026-09-26T04:25:15.668Z",
           "acknowledgmentNote": "Reviewed and assigned for follow-up."
+        }
+      ]
+    },
+    "questionEvaluations": {
+      "schemaVersion": "question-evaluation-ledger-v1",
+      "generatedAt": "2026-09-26T04:30:13.096Z",
+      "evaluations": [
+        {
+          "questionId": "question-1790396868707-0zillf",
+          "workspaceId": "demo-research",
+          "evaluatedAt": "2026-09-26T04:30:13.096Z",
+          "state": "evidence_retrieved",
+          "matchedRecordIds": [
+            "trend-hunting-ai-control",
+            "cultural-ai-capability-dependence",
+            "annual-ai-cultural-disintermediation",
+            "ibis-ai-workflow-compression",
+            "inc5000-coreweave-ai-infrastructure",
+            "atlas-ai-work-evidence-thread",
+            "atlas-c3-ai-report-window"
+          ],
+          "matches": [
+            {
+              "recordId": "trend-hunting-ai-control",
+              "matchedTerms": [
+                "correction",
+                "work"
+              ],
+              "score": 2
+            },
+            {
+              "recordId": "cultural-ai-capability-dependence",
+              "matchedTerms": [
+                "work"
+              ],
+              "score": 1
+            },
+            {
+              "recordId": "annual-ai-cultural-disintermediation",
+              "matchedTerms": [
+                "work"
+              ],
+              "score": 1
+            },
+            {
+              "recordId": "ibis-ai-workflow-compression",
+              "matchedTerms": [
+                "work"
+              ],
+              "score": 1
+            },
+            {
+              "recordId": "inc5000-coreweave-ai-infrastructure",
+              "matchedTerms": [
+                "work"
+              ],
+              "score": 1
+            },
+            {
+              "recordId": "atlas-ai-work-evidence-thread",
+              "matchedTerms": [
+                "work"
+              ],
+              "score": 1
+            },
+            {
+              "recordId": "atlas-c3-ai-report-window",
+              "matchedTerms": [
+                "work"
+              ],
+              "score": 1
+            }
+          ],
+          "limitation": "Text matches identify evidence to inspect; they do not answer the question or establish causation."
         }
       ]
     }

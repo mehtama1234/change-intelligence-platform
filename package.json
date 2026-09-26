@@ -14,6 +14,7 @@
     "record:review-decision": "node scripts/record-review-decision.mjs",
     "materialize:evidence-versions": "node scripts/materialize-evidence-versions.mjs",
     "evaluate:watchlists": "node scripts/evaluate-watchlists.mjs",
+    "evaluate:questions": "node scripts/evaluate-questions.mjs",
     "serve": "node server.mjs",
     "refresh": "node scripts/run-refresh-cycle.mjs",
     "scheduler": "node scripts/scheduler.mjs"
