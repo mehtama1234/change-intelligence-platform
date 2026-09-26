@@ -229,6 +229,56 @@ const server = createServer(async (request, response) => {
     if (request.method !== "GET") return json(response, 405, { error: "Only GET and alert acknowledgement POST are supported." });
     if (url.pathname === "/api/health") return json(response, 200, { status: "ok", service: "change-intelligence-read-model", authMode, generatedAt: new Date().toISOString() });
     if (url.pathname === "/api/packet") return json(response, 200, await readJson(packetPath, { error: "Packet has not been built." }));
+    if (url.pathname.startsWith("/api/evidence/")) {
+      const recordId = decodeURIComponent(url.pathname.slice("/api/evidence/".length));
+      const packet = await readJson(packetPath, { records: [], insights: [] });
+      const record = packet.records.find((candidate) => candidate.id === recordId);
+      if (!record) return json(response, 404, { error: "Evidence record not found." });
+      const relatedRecords = packet.records.filter((candidate) => (record.relatedRecordIds ?? []).includes(candidate.id));
+      const insightLinks = packet.insights
+        .filter((insight) => insight.recordIds?.includes(record.id))
+        .map((insight) => ({ id: insight.id, title: insight.title, status: insight.status, strongestAlternative: insight.strongestAlternative, nextTest: insight.nextTest }));
+      return json(response, 200, {
+        schemaVersion: "evidence-inspection-v1",
+        record,
+        source: {
+          repository: record.sourceRepository,
+          path: record.sourceRef,
+          locator: record.sourceLocator ?? null,
+          digest: record.sourceDigest ?? null,
+          bytes: record.sourceBytes ?? null,
+          excerpt: record.sourceExcerpt ?? null
+        },
+        relatedRecords,
+        insightLinks,
+        boundaries: {
+          claimState: record.claimState,
+          limits: record.limits ?? [],
+          isCausalClaim: false
+        }
+      });
+    }
+    if (url.pathname.startsWith("/api/insights/")) {
+      const insightId = decodeURIComponent(url.pathname.slice("/api/insights/".length));
+      const packet = await readJson(packetPath, { records: [], insights: [], operations: {} });
+      const insight = packet.insights.find((candidate) => candidate.id === insightId);
+      if (!insight) return json(response, 404, { error: "Insight not found." });
+      const recordsById = new Map(packet.records.map((record) => [record.id, record]));
+      const candidate = packet.operations?.insightCandidates?.candidates?.find((item) => item.candidateKey === insight.id || item.id === insight.id);
+      return json(response, 200, {
+        schemaVersion: "insight-inspection-v1",
+        insight,
+        evidence: (insight.recordIds ?? []).map((recordId) => recordsById.get(recordId)).filter(Boolean),
+        candidate: candidate ?? null,
+        review: candidate ? { status: candidate.status, publication: candidate.publication, evidenceDigest: candidate.evidenceDigest } : null,
+        boundaries: {
+          strongestAlternative: insight.strongestAlternative,
+          whatWouldChangeOurMind: insight.whatWouldChangeOurMind ?? [],
+          nextTest: insight.nextTest,
+          refreshBy: insight.refreshBy
+        }
+      });
+    }
     if (url.pathname === "/api/review-work") return json(response, 200, await readJson(reviewPath, { schemaVersion: "source-review-work-v1", reviewRequired: 0, candidates: [] }));
     if (url.pathname === "/api/evidence-history") return json(response, 200, await readJson(historyPath, { schemaVersion: "versioned-evidence-ledger-v1", records: [], decisionHistory: [] }));
     if (url.pathname === "/api/refresh") return json(response, 200, await readJson(refreshPath, { schemaVersion: "refresh-receipt-v1", status: "not_run", steps: [] }));

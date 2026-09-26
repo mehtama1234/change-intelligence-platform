@@ -6,6 +6,53 @@ const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
 }[char]));
 
+function showInspector(title, summary, content) {
+  byId("evidence-inspector").hidden = false;
+  byId("inspector-title").textContent = title;
+  byId("inspector-summary").textContent = summary;
+  byId("inspector-content").innerHTML = content;
+  byId("evidence-inspector").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function inspectEvidence(recordId) {
+  const response = await fetch(`../api/evidence/${encodeURIComponent(recordId)}`);
+  if (!response.ok) throw new Error("Evidence could not be loaded.");
+  const inspection = await response.json();
+  const { record, source, relatedRecords, insightLinks, boundaries } = inspection;
+  showInspector(record.title, `${record.sourceRepository} · ${record.claimState.replaceAll("_", " ")} · observed ${record.asOf}`, `
+    <article class="inspection-card">
+      <p>${escapeHtml(record.observation)}</p>
+      <h3>Source passage</h3>
+      <blockquote>${escapeHtml(source.excerpt || "No excerpt was captured.")}</blockquote>
+      <dl class="inspection-details">
+        <dt>Source</dt><dd><code>${escapeHtml(source.path)}</code>${source.locator ? ` · ${escapeHtml(source.locator)}` : ""}</dd>
+        <dt>Digest</dt><dd><code>${escapeHtml(source.digest || "not recorded")}</code></dd>
+        <dt>Mechanism</dt><dd>${escapeHtml(record.mechanism || "Not recorded")}</dd>
+        <dt>Affected groups</dt><dd>${escapeHtml((record.affectedGroups || []).join(", ") || "Not recorded")}</dd>
+      </dl>
+      <h3>Limits of this record</h3>
+      <ul>${boundaries.limits.map((limit) => `<li>${escapeHtml(limit)}</li>`).join("")}</ul>
+      ${relatedRecords.length ? `<h3>Related records</h3><div class="inline-links">${relatedRecords.map((related) => `<button class="link-button inspect-record" data-record-id="${escapeHtml(related.id)}">${escapeHtml(related.title)}</button>`).join("")}</div>` : ""}
+      ${insightLinks.length ? `<h3>Insights using this record</h3><div class="inline-links">${insightLinks.map((insight) => `<button class="link-button inspect-insight-link" data-insight-id="${escapeHtml(insight.id)}">${escapeHtml(insight.title)}</button>`).join("")}</div>` : ""}
+    </article>`);
+}
+
+async function inspectInsight(insightId) {
+  const response = await fetch(`../api/insights/${encodeURIComponent(insightId)}`);
+  if (!response.ok) throw new Error("Insight could not be loaded.");
+  const inspection = await response.json();
+  const { insight, evidence, review, boundaries } = inspection;
+  showInspector(insight.title, `${review?.status?.replaceAll("_", " ") || "not yet reviewed"} · refresh by ${insight.refreshBy}`, `
+    <article class="inspection-card">
+      <p>${escapeHtml(insight.plainLanguageSummary)}</p>
+      <h3>Evidence chain</h3>
+      <div class="chain-list">${evidence.map((record) => `<button class="chain-item inspect-record" data-record-id="${escapeHtml(record.id)}"><strong>${escapeHtml(record.title)}</strong><span>${escapeHtml(record.sourceRepository)} · ${escapeHtml(record.claimState.replaceAll("_", " "))}</span></button>`).join("")}</div>
+      <h3>Strongest alternative</h3><p>${escapeHtml(boundaries.strongestAlternative)}</p>
+      <h3>What would change our mind</h3><ul>${boundaries.whatWouldChangeOurMind.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+      <h3>Next test</h3><p>${escapeHtml(boundaries.nextTest)}</p>
+    </article>`);
+}
+
 function render() {
   const { records, insights } = state.packet;
   const insight = insights[0];
@@ -27,6 +74,8 @@ function render() {
       if (response.ok) byId("insight-review-actions").textContent = "Published.";
     });
   }
+
+  byId("inspect-insight").onclick = () => inspectInsight(insight.id).catch((error) => showInspector("Inspection unavailable", error.message, ""));
 
   const sourceScan = state.packet.operations?.latestSourceScan;
   if (sourceScan) {
@@ -66,6 +115,7 @@ function render() {
     <div class="record-meta"><span class="role">${escapeHtml(record.sourceRole.replaceAll("_", " "))}</span><span>${escapeHtml(record.claimState)}</span><span>${escapeHtml(record.asOf)}</span></div>
     <h3>${escapeHtml(record.title)}</h3>
     <p>${escapeHtml(record.observation)}</p>
+    <button class="secondary-button inspect-record" type="button" data-record-id="${escapeHtml(record.id)}">Inspect evidence</button>
     <details><summary>Open source and limits</summary><dl>
       <dt>Repository</dt><dd>${escapeHtml(record.sourceRepository)}</dd>
       <dt>Source</dt><dd><code>${escapeHtml(record.sourceRef)}</code>${record.sourceLocator ? ` · ${escapeHtml(record.sourceLocator)}` : ""}</dd>
@@ -77,6 +127,13 @@ function render() {
     </dl></details>
   </article>`).join("");
 }
+
+document.addEventListener("click", (event) => {
+  const recordButton = event.target.closest(".inspect-record");
+  if (recordButton) inspectEvidence(recordButton.dataset.recordId).catch((error) => showInspector("Inspection unavailable", error.message, ""));
+  const insightButton = event.target.closest(".inspect-insight-link");
+  if (insightButton) inspectInsight(insightButton.dataset.insightId).catch((error) => showInspector("Inspection unavailable", error.message, ""));
+});
 
 byId("role-filter").addEventListener("change", (event) => {
   state.role = event.target.value;
