@@ -27,6 +27,7 @@
     "test:backup": "node scripts/test-runtime-backup.mjs",
     "test:readiness": "node scripts/test-operational-readiness.mjs",
     "test:api:auth": "node scripts/test-api-auth.mjs",
+    "ci:core": "npm run validate:fixtures && npm run validate:packet && npm run test:read-model && npm run test:storage && npm run test:api:auth",
     "serve": "node server.mjs",
     "refresh": "node scripts/run-refresh-cycle.mjs",
     "scheduler": "node scripts/scheduler.mjs"
