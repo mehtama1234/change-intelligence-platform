@@ -54,7 +54,7 @@ try {
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       let result;
       try {
-        const response = await fetch(target, { method: "POST", headers: { "content-type": "application/json", "user-agent": "change-intelligence-operator-delivery/1" }, body: JSON.stringify({ schemaVersion: "operator-notification-v1", notification: { id: original.id, warningId: original.warningId, recipient: original.recipient, subject: original.subject, body: original.body, createdAt: original.createdAt } }), signal: controller.signal });
+        const response = await fetch(target, { method: "POST", headers: { "content-type": "application/json", "user-agent": "change-intelligence-operator-delivery/1" }, body: JSON.stringify({ schemaVersion: "operator-notification-v1", notification: { id: original.id, warningId: original.warningId, workspaceId: original.workspaceId ?? null, recipient: original.recipient, subject: original.subject, body: original.body, createdAt: original.createdAt } }), signal: controller.signal });
         result = response.ok ? { status: "delivered", deliveredAt: new Date().toISOString(), lastError: null } : { status: attempts >= maxAttempts ? "dead_letter" : "pending", lastError: `Webhook returned HTTP ${response.status}` };
       } catch (error) {
         result = { status: attempts >= maxAttempts ? "dead_letter" : "pending", lastError: error.name === "AbortError" ? `Webhook timed out after ${timeoutMs}ms` : String(error.message ?? error).slice(0, 500) };

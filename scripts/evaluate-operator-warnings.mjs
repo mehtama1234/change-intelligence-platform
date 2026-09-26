@@ -35,6 +35,16 @@ const maxFalseAlertRate = Number(process.env.OPERATOR_MAX_FALSE_ALERT_RATE ?? 0.
 const maxFailedRefreshes = Number(process.env.OPERATOR_MAX_FAILED_REFRESHES ?? 0);
 const maxDelayedDeliveries = Number(process.env.OPERATOR_MAX_DELAYED_DELIVERIES ?? 0);
 const actorId = process.env.OPERATOR_SYSTEM_ACTOR ?? "operator-policy";
+let notificationRoutes = {};
+try { notificationRoutes = JSON.parse(process.env.OPERATOR_NOTIFICATION_ROUTES_JSON ?? "{}"); } catch { throw new Error("OPERATOR_NOTIFICATION_ROUTES_JSON must be valid JSON."); }
+const configuredRecipients = (warning) => {
+  const warningRecipients = notificationRoutes.warningIds?.[warning.id];
+  if (Array.isArray(warningRecipients) && warningRecipients.length) return warningRecipients;
+  const workspaceRecipients = [...new Set((warning.workspaceIds ?? []).flatMap((workspaceId) => notificationRoutes.workspaces?.[workspaceId] ?? []))];
+  if (workspaceRecipients.length) return workspaceRecipients;
+  if (Array.isArray(notificationRoutes.default) && notificationRoutes.default.length) return notificationRoutes.default;
+  return [actorId];
+};
 const [refreshHistory, sourceScan, profiles, deliveries] = await Promise.all([
   readJson(resolve(runtimeDir, "refresh-history.json"), { runs: [] }),
   readJson(paths.sourceScan, { sources: [], counts: {} }),
@@ -58,27 +68,30 @@ try {
     const latest = (deliveries.deliveries ?? []).filter((delivery) => delivery.workspaceId === profile.workspaceId).map((delivery) => Date.parse(delivery.generatedAt)).filter(Number.isFinite).sort().at(-1);
     return cadenceMs[profile.cadence] && (!latest || latest + cadenceMs[profile.cadence] < now);
   });
-  if (delayedDeliveries.length > maxDelayedDeliveries) warnings.push({ id: "delivery-delay", severity: "medium", observedAt: nowIso, message: "Configured pilot deliveries are behind their expected cadence." });
+  if (delayedDeliveries.length > maxDelayedDeliveries) warnings.push({ id: "delivery-delay", severity: "medium", workspaceIds: delayedDeliveries.map((profile) => profile.workspaceId), observedAt: nowIso, message: "Configured pilot deliveries are behind their expected cadence." });
 
   const warningEvents = store.recordsLedger("operator_warning", "operator-warning-event-ledger-v1", "events").events;
   const notificationRecords = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;
   const eventById = new Map(warningEvents.map((event) => [event.warningId, event]));
-  const notificationByWarning = new Map(notificationRecords.map((notification) => [notification.warningId, notification]));
+  const notificationByWarning = new Map(notificationRecords.map((notification) => [`${notification.warningId}:${notification.recipient}`, notification]));
   const escalated = [];
   for (const warning of warnings) {
     const observedEpoch = Date.parse(warning.observedAt);
     if (!Number.isFinite(observedEpoch) || observedEpoch + ackSlaMs > now) continue;
     const prior = eventById.get(warning.id);
     if (prior?.state === "resolved" || prior?.escalationState === "escalated") continue;
-    const event = { id: `operator-warning-${warning.id}`, warningId: warning.id, state: "acknowledged", note: `Automatically escalated after the ${ackSlaMs / 3600000}-hour acknowledgment deadline.`, ownerId: prior?.ownerId ?? actorId, escalationState: "escalated", observedAt: warning.observedAt, responseTimeMs: Math.max(0, now - observedEpoch), actedBy: actorId, actedAt: nowIso };
+    const recipients = configuredRecipients(warning);
+    const event = { id: `operator-warning-${warning.id}`, warningId: warning.id, state: "acknowledged", note: `Automatically escalated after the ${ackSlaMs / 3600000}-hour acknowledgment deadline.`, ownerId: prior?.ownerId ?? recipients[0], escalationState: "escalated", observedAt: warning.observedAt, responseTimeMs: Math.max(0, now - observedEpoch), actedBy: actorId, actedAt: nowIso };
     store.syncRecords("operator_warning", [event]);
     store.appendAudit({ requestId: `operator-policy-${process.env.REFRESH_RUN_ID ?? now}`, action: "auto_escalate_operator_warning", targetId: warning.id, workspaceId: null, actorId, actorRole: "system", result: "escalated", occurredAt: nowIso });
     eventById.set(warning.id, event);
-    if (!notificationByWarning.has(warning.id)) {
-      const notification = { id: `operator-notification-${warning.id}`, warningId: warning.id, channel: "operator-outbox", recipient: event.ownerId, status: "pending", subject: `Automatically escalated operator warning: ${warning.id}`, body: event.note, createdBy: actorId, createdAt: nowIso, dispatchedAt: null, dispatchNote: null };
+    for (const recipient of recipients) {
+      const notificationKey = `${warning.id}:${recipient}`;
+      if (notificationByWarning.has(notificationKey)) continue;
+      const notification = { id: `operator-notification-${warning.id}-${recipient}`, warningId: warning.id, workspaceId: warning.workspaceIds?.length === 1 ? warning.workspaceIds[0] : null, channel: "operator-outbox", recipient, status: "pending", subject: `Automatically escalated operator warning: ${warning.id}`, body: event.note, createdBy: actorId, createdAt: nowIso, dispatchedAt: null, dispatchNote: null };
       store.syncRecords("operator_notification", [notification]);
-      store.appendAudit({ requestId: `operator-policy-${process.env.REFRESH_RUN_ID ?? now}`, action: "queue_operator_notification", targetId: notification.id, workspaceId: null, actorId, actorRole: "system", result: "pending", occurredAt: nowIso });
-      notificationByWarning.set(warning.id, notification);
+      store.appendAudit({ requestId: `operator-policy-${process.env.REFRESH_RUN_ID ?? now}`, action: "queue_operator_notification", targetId: notification.id, workspaceId: notification.workspaceId, actorId, actorRole: "system", result: "pending", occurredAt: nowIso });
+      notificationByWarning.set(notificationKey, notification);
     }
     escalated.push(warning.id);
   }
