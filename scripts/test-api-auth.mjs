@@ -56,6 +56,9 @@ try {
   if (memberServiceReport.status !== 200 || memberServiceReportBody.schemaVersion !== "workspace-service-level-report-v1" || memberServiceReportBody.workspaceId !== "demo-research" || !memberServiceReportBody.serviceLevel || JSON.stringify(memberServiceReportBody).includes("private-event")) throw new Error("Workspace service-level report failed or leaked private content.");
   const outsiderServiceReport = await fetch(`${base}/api/workspace-service-report?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderServiceReport.status !== 403) throw new Error(`Expected non-member service report read to return 403, received ${outsiderServiceReport.status}`);
+  const readinessResponse = await fetch(`${base}/api/workspace-commercial-readiness?workspace=demo-research`, { headers: authHeaders });
+  const readinessBody = await readinessResponse.json();
+  if (readinessResponse.status !== 200 || readinessBody.schemaVersion !== "commercial-pilot-readiness-v1" || !["improve", "continue", "expand", "stop"].includes(readinessBody.recommendation) || readinessBody.humanCheckpointRequired !== true) throw new Error("Commercial pilot readiness read model failed.");
   const outsiderPilot = await fetch(`${base}/api/workspace-pilot?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderPilot.status !== 403) throw new Error(`Expected non-member pilot read to return 403, received ${outsiderPilot.status}`);
   const outsiderDeliveries = await fetch(`${base}/api/pilot-deliveries?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });

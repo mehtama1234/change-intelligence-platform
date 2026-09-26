@@ -62,6 +62,9 @@ truth or usefulness of the intelligence.
 The `/api/workspace-service-report` adds the workspace’s configured cadence,
 expected next delivery, overdue status, and recorded success-measure observations
 under the same membership boundary.
+The `/api/workspace-commercial-readiness` response is only a bounded decision
+aid. It exposes its recommendation, evidence basis, and human-checkpoint flag;
+it cannot create an `expand`, `continue`, `improve`, or `stop` decision by itself.
 
 Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map
