@@ -60,6 +60,9 @@ try {
   const profileResponse = await request("/api/workspace-pilot?workspace=demo-research");
   const profileReadModel = await profileResponse.json();
   if (profileResponse.status !== 200 || profileReadModel.schemaVersion !== "workspace-pilot-read-model-v1" || profileReadModel.workspaceId !== "demo-research") throw new Error("Workspace pilot read model contract failed.");
+  const deliveriesResponse = await request("/api/pilot-deliveries?workspace=demo-research");
+  const deliveries = await deliveriesResponse.json();
+  if (deliveriesResponse.status !== 200 || deliveries.schemaVersion !== "workspace-pilot-delivery-read-model-v1" || !Array.isArray(deliveries.deliveries)) throw new Error("Pilot delivery read model contract failed.");
   const evidenceResponse = await request("/api/evidence/trend-hunting-ai-control?workspace=demo-research");
   const evidence = await evidenceResponse.json();
   if (evidenceResponse.status !== 200 || evidence.schemaVersion !== "evidence-inspection-v1" || evidence.record.id !== "trend-hunting-ai-control" || !evidence.source.excerpt || !evidence.insightLinks.length) throw new Error("Evidence inspection contract failed.");

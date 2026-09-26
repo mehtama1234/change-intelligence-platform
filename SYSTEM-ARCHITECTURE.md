@@ -36,6 +36,9 @@ Adapter output is then hashed and stored as a source snapshot before review.
 8. **Review queue** — supports researcher acceptance, correction, rejection, and notes.
 9. **Publication service** — generates HTML, JSON, APIs, alerts, and briefings.
 10. **Refresh service** — rechecks published insights and records what changed.
+11. **Pilot delivery service** — turns each refresh into a dated, reviewable
+    workspace handoff tied to the partner's decision question and success
+    measures.
 
 ## Background jobs
 
@@ -46,6 +49,11 @@ Jobs should run at different speeds:
 - quarterly: company-report ingestion and financial comparison;
 - monthly: cross-source synthesis and contradiction review;
 - on demand: customer watchlists, briefings, and custom research.
+
+After the research steps complete, a configured pilot workspace receives a
+delivery snapshot. It records what the refresh produced and what the partner
+should review. It does not claim that free-text success measures were met
+without a human assessment.
 
 The system should create review work, not silently publish uncertain claims.
 

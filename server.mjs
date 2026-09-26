@@ -24,6 +24,7 @@ const insightPublicationsPath = resolve(runtimeDir, "insight-publications.json")
 const decisionOutcomesPath = resolve(runtimeDir, "decision-outcomes.json");
 const watchlistsPath = resolve(runtimeDir, "workspace-watchlists.json");
 const pilotProfilesPath = resolve(runtimeDir, "workspace-pilot-profiles.json");
+const pilotDeliveriesPath = resolve(runtimeDir, "workspace-pilot-deliveries.json");
 const auditPath = resolve(runtimeDir, "audit-log.json");
 const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
 const sourceScanPath = resolve(runtimeDir, "latest-source-scan.json");
@@ -53,6 +54,7 @@ await importRuntimeLedgers(store, {
   decisionOutcomes: decisionOutcomesPath,
   watchlists: watchlistsPath,
   pilotProfiles: pilotProfilesPath,
+  pilotDeliveries: pilotDeliveriesPath,
   workspaceDir,
   sourceScan: sourceScanPath,
   evidenceLedger: evidenceLedgerPath,
@@ -776,6 +778,13 @@ const server = createServer(async (request, response) => {
       if (denyWorkspaceRead(response, access)) return;
       const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
       return json(response, 200, { schemaVersion: "workspace-pilot-read-model-v1", workspaceId: access.workspaceId, profile: access.workspaceIds ? profiles.find((profile) => access.workspaceIds.includes(profile.workspaceId)) ?? null : profiles });
+    }
+    if (url.pathname === "/api/pilot-deliveries") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
+      const visible = access.workspaceIds ? deliveries.filter((delivery) => access.workspaceIds.includes(delivery.workspaceId)) : deliveries;
+      return json(response, 200, { schemaVersion: "workspace-pilot-delivery-read-model-v1", workspaceId: access.workspaceId, deliveries: visible.slice().sort((a, b) => String(b.generatedAt).localeCompare(String(a.generatedAt))) });
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

@@ -23,6 +23,7 @@ const childEnv = {
   ALERT_OUTPUT_DIR: runDir,
   WATCHLISTS_PATH: resolve(runDir, "workspace-watchlists.json"),
   PILOT_PROFILES_PATH: resolve(runDir, "workspace-pilot-profiles.json"),
+  PILOT_DELIVERIES_PATH: resolve(runDir, "workspace-pilot-deliveries.json"),
   REVIEW_OUTPUT_DIR: runDir,
   EVIDENCE_OUTPUT_DIR: runDir,
   QUESTIONS_PATH: resolve(runDir, "workspace-questions.json"),
@@ -39,6 +40,7 @@ const childEnv = {
   SEC_XBRL_PATH: secXbrlPath
 };
 const runId = `refresh-${new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 17)}`;
+childEnv.REFRESH_RUN_ID = runId;
 const steps = [];
 let lock;
 
@@ -91,6 +93,7 @@ try {
   await runStep("generate-insight-candidates", "generate-insight-candidates.mjs");
   await runStep("evaluate-insight-quality", "evaluate-insight-quality.mjs");
   await runStep("publish-insight-candidates", "build-ai-work-control-packet.mjs");
+  await runStep("build-pilot-deliveries", "build-pilot-deliveries.mjs");
   await runStep("sync-runtime-store", "sync-runtime-store.mjs");
   const failed = steps.filter((step) => step.status === "failed");
   const receipt = {

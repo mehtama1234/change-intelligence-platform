@@ -1,0 +1,22 @@
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const exec = promisify(execFile);
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
+const runtimeDir = `/tmp/change-intelligence-pilot-delivery-${Date.now()}`;
+await mkdir(runtimeDir, { recursive: true });
+const write = async (name, body) => writeFile(resolve(runtimeDir, name), `${JSON.stringify(body, null, 2)}\n`);
+await write("workspace-pilot-profiles.json", { profiles: [{ id: "pilot-demo-research", workspaceId: "demo-research", status: "active", cadence: "monthly", decisionQuestion: "Which control changes should this team act on next?", nextReviewAt: "2026-10-31", successMeasures: ["Useful alerts reviewed"] }] });
+await write("workspace-alerts.json", { alerts: [{ id: "alert-one", workspaceId: "demo-research", state: "open", watchlistName: "AI controls", reason: "A source changed", severity: "medium", createdAt: new Date().toISOString() }] });
+await write("audit-log.json", { entries: [{ action: "export_briefing", workspaceId: "demo-research" }] });
+await write("decision-outcomes.json", { outcomes: [] });
+await write("workspace-briefings.json", { briefings: [] });
+await write("latest-refresh.json", { status: "complete", runId: "refresh-test", endedAt: new Date().toISOString() });
+await exec(process.execPath, [resolve(root, "scripts/build-pilot-deliveries.mjs")], { cwd: root, env: { ...process.env, RUNTIME_DATA_DIR: runtimeDir, REFRESH_RUN_ID: "refresh-test" } });
+const ledger = JSON.parse(await readFile(resolve(runtimeDir, "workspace-pilot-deliveries.json"), "utf8"));
+const delivery = ledger.deliveries[0];
+if (ledger.schemaVersion !== "workspace-pilot-delivery-ledger-v1" || delivery?.workspaceId !== "demo-research" || delivery.status !== "prepared" || delivery.snapshot.openAlerts !== 1 || delivery.evaluation.state !== "requires_partner_review") throw new Error("Pilot delivery did not preserve the refresh snapshot and review boundary.");
+console.log("Pilot delivery test passed: a configured partner receives a reviewable, bounded refresh snapshot.");

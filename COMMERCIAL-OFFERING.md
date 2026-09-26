@@ -43,6 +43,12 @@ review now, which evidence gaps remain, which briefings changed, and what the
 customer should check next. It is a working handoff for the team, not an
 automatic business recommendation.
 
+For a design partner, the workspace also keeps a dated delivery record for
+each refresh. The record carries the partner's decision question, the evidence
+and alert snapshot, the agreed success measures, and the next review date.
+Measures that require human judgment remain marked for partner review instead
+of being converted into a made-up score.
+
 ### Team workspace
 
 Private watchlists, competitors, themes, saved questions, shared briefings,
