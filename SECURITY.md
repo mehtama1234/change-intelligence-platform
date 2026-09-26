@@ -16,6 +16,10 @@ Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map
 before checking the member's workspace role.
 
+Token-authenticated write requests must also send an `Idempotency-Key`. A
+retry with the same key replays the original result instead of creating a
+second question, decision, publication, or acknowledgment.
+
 This token map is a small deployment adapter, not a replacement for an
 identity provider. A production deployment should place a real identity and
 token-validation service in front of the API, keep secrets outside the

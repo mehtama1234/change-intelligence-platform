@@ -92,6 +92,10 @@ const server = createServer(async (request, response) => {
       const body = await requestBody(request);
       const actorId = authenticatedActor(request, body);
       if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
       const workspace = await workspaceConfig(body.workspaceId);
       const member = workspace?.members?.find((candidate) => candidate.id === actorId);
       if (!workspace) return json(response, 404, { error: "Workspace not found." });
@@ -106,6 +110,7 @@ const server = createServer(async (request, response) => {
       alert.acknowledgmentNote = String(body.note ?? "").slice(0, 2000);
       await writeFile(alertsPath, `${JSON.stringify(ledger, null, 2)}\n`);
       await appendAudit({ requestId, action: "acknowledge_alert", targetId: alert.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "acknowledged", occurredAt: alert.acknowledgedAt });
+      await storeOperation({ key: idempotencyKey, action: "acknowledge_alert", status: 200, body: alert, completedAt: alert.acknowledgedAt });
       return json(response, 200, alert);
     }
     if (request.method === "POST" && url.pathname === "/api/questions") {
@@ -137,6 +142,10 @@ const server = createServer(async (request, response) => {
       const body = await requestBody(request);
       const actorId = authenticatedActor(request, body);
       if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
       const workspace = await workspaceConfig(body.workspaceId);
       const member = workspace?.members?.find((candidate) => candidate.id === actorId);
       if (!workspace) return json(response, 404, { error: "Workspace not found." });
@@ -157,13 +166,19 @@ const server = createServer(async (request, response) => {
       await writeFile(briefingsPath, `${JSON.stringify(ledger, null, 2)}\n`);
       await writeFile(briefingPublicationsPath, `${JSON.stringify(publications, null, 2)}\n`);
       await appendAudit({ requestId, action: "publish_briefing", targetId: briefing.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "published", occurredAt: now });
-      return json(response, 200, { ...briefing, publication });
+      const publishedBriefing = { ...briefing, publication };
+      await storeOperation({ key: idempotencyKey, action: "publish_briefing", status: 200, body: publishedBriefing, completedAt: now });
+      return json(response, 200, publishedBriefing);
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/insight-candidates/") && url.pathname.endsWith("/decision")) {
       const candidateId = decodeURIComponent(url.pathname.slice("/api/insight-candidates/".length, -"/decision".length));
       const body = await requestBody(request);
       const actorId = authenticatedActor(request, body);
       if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
       const workspace = await workspaceConfig(body.workspaceId);
       const member = workspace?.members?.find((candidate) => candidate.id === actorId);
       const allowedDecisions = new Set(["accept", "defer", "reject", "correct"]);
@@ -180,6 +195,7 @@ const server = createServer(async (request, response) => {
       ledger.updatedAt = decision.decidedAt;
       await writeFile(insightDecisionsPath, `${JSON.stringify(ledger, null, 2)}\n`);
       await appendAudit({ requestId, action: "decide_insight", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: decision.decision, occurredAt: decision.decidedAt });
+      await storeOperation({ key: idempotencyKey, action: "decide_insight", status: 200, body: decision, completedAt: decision.decidedAt });
       return json(response, 200, decision);
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/insight-candidates/") && url.pathname.endsWith("/publish")) {
@@ -187,6 +203,10 @@ const server = createServer(async (request, response) => {
       const body = await requestBody(request);
       const actorId = authenticatedActor(request, body);
       if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
       const workspace = await workspaceConfig(body.workspaceId);
       const member = workspace?.members?.find((candidate) => candidate.id === actorId);
       if (!workspace) return json(response, 404, { error: "Workspace not found." });
@@ -201,6 +221,7 @@ const server = createServer(async (request, response) => {
       ledger.updatedAt = publication.publishedAt;
       await writeFile(insightPublicationsPath, `${JSON.stringify(ledger, null, 2)}\n`);
       await appendAudit({ requestId, action: "publish_insight", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "published", occurredAt: publication.publishedAt });
+      await storeOperation({ key: idempotencyKey, action: "publish_insight", status: 200, body: publication, completedAt: publication.publishedAt });
       return json(response, 200, publication);
     }
     if (request.method !== "GET") return json(response, 405, { error: "Only GET and alert acknowledgement POST are supported." });
