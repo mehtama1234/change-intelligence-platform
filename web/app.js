@@ -84,6 +84,15 @@ async function loadOperations() {
   byId("operations-history").innerHTML = history.length ? `<table><caption>Recent refresh runs</caption><thead><tr><th>Run</th><th>Status</th><th>Steps</th><th>Ended</th></tr></thead><tbody>${history.slice().reverse().slice(0, 8).map((run) => `<tr><th scope="row"><code>${escapeHtml(run.runId)}</code></th><td>${escapeHtml(run.status)}</td><td>${run.steps.filter((step) => step.status === "complete").length}/${run.steps.length} complete</td><td>${escapeHtml(run.endedAt)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No refresh history recorded yet.</p>`;
 }
 
+async function loadCoverage() {
+  const response = await apiFetch("../api/coverage");
+  if (!response.ok) throw new Error(`Evidence coverage unavailable (${response.status})`);
+  const coverage = await response.json();
+  byId("coverage-summary").textContent = `${coverage.summary.ready} ready · ${coverage.summary.partial} partial · ${coverage.summary.missing} missing. A missing row is a research gap, not proof that the main reading is false.`;
+  byId("coverage-items").innerHTML = coverage.requirements.map((item) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(item.status)}</span><span>${escapeHtml(item.evidence)}/${escapeHtml(item.target)} records</span></div><h3>${escapeHtml(item.label)}</h3><p>${escapeHtml(item.meaning)}</p></article>`).join("");
+  byId("coverage-reports").innerHTML = coverage.reportWindows.length ? `<table><caption>Public-company histories currently available</caption><thead><tr><th>Company</th><th>Annual baseline</th><th>Quarters</th><th>Captured sources</th><th>Status</th></tr></thead><tbody>${coverage.reportWindows.map((report) => `<tr><th scope="row">${escapeHtml(report.company || "Unnamed company")}</th><td>${escapeHtml(report.annualBaseline || "not recorded")}</td><td>${escapeHtml(report.quarterCount)}</td><td>${escapeHtml(report.sourceRefs)}</td><td>${escapeHtml(report.captureStatus)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No annual-plus-quarterly company history is available yet.</p>`;
+}
+
 async function loadEvidenceHistory() {
   const workspace = encodeURIComponent(state.workspaceId);
   const [response, timelineResponse] = await Promise.all([apiFetch(`../api/evidence-history?workspace=${workspace}`), apiFetch(`../api/timeline?workspace=${workspace}`)]);
@@ -334,6 +343,7 @@ byId("token-input").value = state.token;
 loadWorkspaces().catch((error) => { setWorkspaceStatus(error.message); byId("questions-summary").textContent = error.message; });
 loadChanges().catch((error) => { byId("change-feed-summary").textContent = error.message; });
 loadOperations().catch((error) => { byId("operations-summary").textContent = error.message; });
+loadCoverage().catch((error) => { byId("coverage-summary").textContent = error.message; });
 loadEvidenceHistory().catch((error) => { byId("evidence-history-summary").textContent = error.message; });
 
 fetch(fixtureUrl).then((response) => {

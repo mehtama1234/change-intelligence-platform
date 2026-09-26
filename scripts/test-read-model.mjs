@@ -42,6 +42,9 @@ try {
   const changesResponse = await request("/api/changes?includeUnchanged=true");
   const changes = await changesResponse.json();
   if (changesResponse.status !== 200 || changes.schemaVersion !== "source-change-feed-v1" || changes.changes.length !== 7) throw new Error("Source change feed contract failed.");
+  const coverageResponse = await request("/api/coverage");
+  const coverage = await coverageResponse.json();
+  if (coverageResponse.status !== 200 || coverage.schemaVersion !== "coverage-read-model-v1" || coverage.reportWindows.length !== 1 || coverage.requirements.find((item) => item.id === "public-company-history")?.status !== "partial" || coverage.repositories.length !== 6) throw new Error("Evidence coverage contract failed.");
   const timelineResponse = await request("/api/timeline");
   const timeline = await timelineResponse.json();
   if (timelineResponse.status !== 200 || timeline.schemaVersion !== "research-timeline-v1" || timeline.eventCount !== 14) throw new Error("Research timeline contract failed.");

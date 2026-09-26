@@ -29,6 +29,7 @@ const evidenceLedgerPath = resolve(runtimeDir, "versioned-evidence-ledger.json")
 const reviewDecisionsPath = resolve(runtimeDir, "review-decisions.json");
 const reviewEventsPath = resolve(runtimeDir, "review-events.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
+const sourceRegistryPath = resolve(root, "data/source-registry.json");
 const authMode = process.env.AUTH_MODE ?? "demo";
 const tokenActors = authMode === "token" ? JSON.parse(process.env.AUTH_TOKENS_JSON ?? "{}") : {};
 const backupDir = process.env.BACKUP_DIR ? resolve(root, process.env.BACKUP_DIR) : undefined;
@@ -118,6 +119,36 @@ async function readJson(path, fallback) {
     if (error.code === "ENOENT") return fallback;
     throw error;
   }
+}
+
+function buildCoverage(packet, registry) {
+  const records = packet.records ?? [];
+  const countByRole = (roles) => records.filter((record) => roles.includes(record.sourceRole)).length;
+  const reportWindows = records.filter((record) => record.reportWindow).map((record) => ({
+    recordId: record.id,
+    company: record.company ?? null,
+    industry: record.industry ?? null,
+    annualBaseline: record.reportWindow.annualBaseline ?? null,
+    quarterCount: record.reportWindow.quarters?.length ?? 0,
+    captureStatus: record.reportWindow.sourceRefs?.captureStatus ?? "not recorded",
+    movementSource: record.reportWindow.movementSource ?? null,
+    sourceRefs: record.reportWindow.sourceRefs?.directRecords?.length ?? 0
+  }));
+  const requirements = [
+    { id: "early-signal", label: "Early signal", evidence: countByRole(["trend_signal"]), target: 1, meaning: "A visible change or condition to investigate." },
+    { id: "social-and-institutional", label: "People and institutions", evidence: countByRole(["social_cultural", "institutional", "geopolitical"]), target: 1, meaning: "Evidence about lived conditions, institutions, or power." },
+    { id: "industry-mechanism", label: "Industry mechanism", evidence: countByRole(["industry"]), target: 1, meaning: "How the change operates inside an industry." },
+    { id: "private-company", label: "Private-company response", evidence: countByRole(["private_company"]), target: 1, meaning: "A growing private company and the customer problem it serves." },
+    { id: "public-company-history", label: "Public-company annual plus quarterly history", evidence: reportWindows.length, target: 5, meaning: "At least five companies with one annual baseline and three or more quarters." },
+    { id: "independent-outcome", label: "Independent outcome evidence", evidence: records.filter((record) => ["measured", "compared"].includes(record.claimState) && !["company_report", "industry", "private_company"].includes(record.sourceRole)).length, target: 3, meaning: "Evidence that tests what happened in practice, not only what was promised." },
+    { id: "counterexample", label: "Counterexample or weakened case", evidence: records.filter((record) => record.claimState === "disproved_or_weakened").length, target: 1, meaning: "A case that makes the main reading less certain." },
+    { id: "open-question", label: "Open question", evidence: countByRole(["open_question"]), target: 1, meaning: "A concrete question that determines the next research step." }
+  ].map((item) => ({ ...item, status: item.evidence >= item.target ? "ready" : item.evidence > 0 ? "partial" : "missing" }));
+  const repositories = (registry.repositories ?? []).map((source) => {
+    const sourceRecords = records.filter((record) => record.sourceRepository === source.id);
+    return { id: source.id, refresh: source.refresh, purpose: source.purpose, recordCount: sourceRecords.length, latestAsOf: sourceRecords.map((record) => record.asOf).sort().at(-1) ?? null, status: sourceRecords.length ? "present" : "missing" };
+  });
+  return { schemaVersion: "coverage-read-model-v1", domain: packet.domain ?? null, sourceSnapshotDate: packet.sourceSnapshotDate ?? null, repositories, reportWindows, requirements, summary: { ready: requirements.filter((item) => item.status === "ready").length, partial: requirements.filter((item) => item.status === "partial").length, missing: requirements.filter((item) => item.status === "missing").length } };
 }
 
 async function appendAudit(entry) {
@@ -425,6 +456,11 @@ const server = createServer(async (request, response) => {
       const includeUnchanged = url.searchParams.get("includeUnchanged") === "true";
       const changes = (scan.sources ?? []).filter((source) => includeUnchanged || source.status !== "unchanged").map((source) => ({ id: source.id, repository: source.repository, sourcePath: source.path, status: source.status, needsReview: source.needsReview, reason: source.reviewReason, checkedAt: source.checkedAt, previousSha256: source.previousSha256 ?? null, currentSha256: source.sha256 ?? null }));
       return json(response, 200, { schemaVersion: "source-change-feed-v1", runId: scan.runId, generatedAt: scan.generatedAt, counts: scan.counts, changes });
+    }
+    if (url.pathname === "/api/coverage") {
+      const packet = await readJson(packetPath, { domain: null, sourceSnapshotDate: null, records: [] });
+      const registry = await readJson(sourceRegistryPath, { repositories: [] });
+      return json(response, 200, buildCoverage(packet, registry));
     }
     if (url.pathname === "/api/packet") return json(response, 200, publicPacket(await readJson(packetPath, { error: "Packet has not been built." })));
     if (url.pathname.startsWith("/api/evidence/")) {

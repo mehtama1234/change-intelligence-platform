@@ -66,6 +66,13 @@ records, and outcome evidence on separate but comparable time rails.
 Shows the path from signal to mechanism to response to affected group to
 outcome. Each step has its own source and claim limit.
 
+### Evidence coverage
+
+Shows which source families are present, partial, or missing for the current
+theme. It separately counts public-company annual-plus-quarterly histories and
+does not treat a missing outcome record as proof of an outcome. This keeps a
+thin evidence base visible instead of allowing a polished summary to hide it.
+
 ### Briefing studio
 
 Lets a user select evidence, arrange a bounded story, add a question, export
