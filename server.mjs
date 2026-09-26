@@ -19,6 +19,7 @@ const refreshPath = resolve(runtimeDir, "latest-refresh.json");
 const refreshHistoryPath = resolve(runtimeDir, "refresh-history.json");
 const schedulerStatusPath = resolve(runtimeDir, "scheduler-status.json");
 const backupSchedulerStatusPath = resolve(runtimeDir, "backup-scheduler-status.json");
+const notificationSchedulerStatusPath = resolve(runtimeDir, "notification-scheduler-status.json");
 const alertsPath = resolve(runtimeDir, "workspace-alerts.json");
 const questionsPath = resolve(runtimeDir, "workspace-questions.json");
 const questionEvaluationsPath = resolve(runtimeDir, "question-evaluations.json");
@@ -665,7 +666,7 @@ function buildOperatorOnboardingSummary({ workspace, profile, questionCount, wat
   return { workspaceId: workspace.id, status: missing.length ? "needs_setup" : deliveryCount ? "active" : "ready_for_first_delivery", missingSteps: missing, deliveryCount };
 }
 
-function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, onboardingByWorkspace, schedules = new Map(), maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs, remediationSlaMs }) {
+function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, onboardingByWorkspace, schedules = new Map(), schedulerStatuses = {}, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs, remediationSlaMs }) {
   const summaries = workspaces.map((workspace) => {
     const workspaceDeliveries = deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
     const reviewed = workspaceDeliveries.filter((delivery) => delivery.review);
@@ -718,7 +719,7 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
     generatedAt: new Date().toISOString(),
     scope: { workspaceCount: workspaces.length, configuredPilots: profiles.length, deliveries: deliveries.length, reviewedDeliveries: reviewed.length },
     aggregate: { usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, notUsefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "not_useful").length, unclearDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "unclear").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, pilotCheckpoints: decisions.length, checkpointCounts: Object.fromEntries(["improve", "continue", "expand", "stop"].map((decision) => [decision, decisions.filter((item) => item.decision === decision).length])), auditedPilotActions: auditEntries.filter((entry) => ["configure_pilot", "review_pilot_delivery", "decide_pilot"].includes(entry.action)).length, openAlerts: alerts.filter((alert) => alert.state === "open").length, falseAlerts: alerts.filter((alert) => alert.resolutionDisposition === "false_positive").length, alertCorrections: alerts.filter((alert) => alert.resolutionDisposition === "needs_correction").length },
-    operations: { latestRefreshStatus: refreshHistory.at(-1)?.status ?? "not_run", failedRefreshRuns: failedRuns.length, lastRefreshAt: refreshHistory.at(-1)?.endedAt ?? null, sourceCount: sourceScan.sources?.length ?? 0, staleSources, oldestSourceAgeMs: sourceAges.length ? Math.max(...sourceAges.map((source) => source.ageMs)) : null, delayedDeliveries, heldInsightDeliveries: insightHeldDeliveries.length, falseAlertRate },
+    operations: { latestRefreshStatus: refreshHistory.at(-1)?.status ?? "not_run", failedRefreshRuns: failedRuns.length, lastRefreshAt: refreshHistory.at(-1)?.endedAt ?? null, refreshSchedulerStatus: schedulerStatuses.refresh?.status ?? "not_started", backupSchedulerStatus: schedulerStatuses.backup?.status ?? "not_started", notificationSchedulerStatus: schedulerStatuses.notification?.status ?? "not_started", sourceCount: sourceScan.sources?.length ?? 0, staleSources, oldestSourceAgeMs: sourceAges.length ? Math.max(...sourceAges.map((source) => source.ageMs)) : null, delayedDeliveries, heldInsightDeliveries: insightHeldDeliveries.length, falseAlertRate },
     thresholds: { maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs, remediationSlaMs },
     remediation,
     warnings: warningLifecycle,
@@ -1673,10 +1674,11 @@ const server = createServer(async (request, response) => {
       const refresh = await readJson(refreshPath, { status: "not_run", steps: [] });
       const scheduler = await readJson(schedulerStatusPath, { schemaVersion: "refresh-scheduler-status-v1", status: "not_started" });
       const backupScheduler = await readJson(backupSchedulerStatusPath, { schemaVersion: "runtime-backup-scheduler-status-v1", status: "not_started" });
+      const notificationScheduler = await readJson(notificationSchedulerStatusPath, { schemaVersion: "notification-scheduler-status-v1", status: "not_started" });
       const history = await readJson(refreshHistoryPath, { schemaVersion: "refresh-history-v1", runs: [] });
       const sourceScan = await readJson(sourceScanPath, { counts: {}, sources: [] });
       const sourceAvailability = await readJson(sourceAvailabilityPath, { schemaVersion: "source-availability-receipt-v1", counts: {}, repositories: [] });
-      return json(response, 200, { schemaVersion: "operations-read-model-v1", generatedAt: new Date().toISOString(), readiness, refresh, scheduler, backupScheduler, refreshHistory: history.runs ?? [], sourceScan: { counts: sourceScan.counts, sourceCount: sourceScan.sources?.length ?? 0 }, sourceAvailability: { checkedAt: sourceAvailability.checkedAt ?? null, counts: sourceAvailability.counts, repositories: sourceAvailability.repositories ?? [] }, database: store.health() });
+      return json(response, 200, { schemaVersion: "operations-read-model-v1", generatedAt: new Date().toISOString(), readiness, refresh, scheduler, backupScheduler, notificationScheduler, refreshHistory: history.runs ?? [], sourceScan: { counts: sourceScan.counts, sourceCount: sourceScan.sources?.length ?? 0 }, sourceAvailability: { checkedAt: sourceAvailability.checkedAt ?? null, counts: sourceAvailability.counts, repositories: sourceAvailability.repositories ?? [] }, database: store.health() });
     }
     if (url.pathname === "/api/usage") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));
@@ -2165,8 +2167,10 @@ const server = createServer(async (request, response) => {
       const privateSources = store.recordsLedger("workspace_source", "workspace-source-ledger-v1", "sources").sources;
       const onboardingByWorkspace = new Map(workspaces.map((workspace) => [workspace.id, buildOperatorOnboardingSummary({ workspace, profile: profiles.find((profile) => profile.workspaceId === workspace.id), questionCount: questions.filter((question) => question.workspaceId === workspace.id && question.state === "active").length, watchlistCount: watchlists.filter((watchlist) => watchlist.workspaceId === workspace.id).length, acceptedPrivateSourceCount: privateSources.filter((source) => source.workspaceId === workspace.id && source.reviewState === "accepted").length, deliveryCount: deliveries.filter((delivery) => delivery.workspaceId === workspace.id).length })]));
       const scheduler = await readJson(schedulerStatusPath, { status: "not_started" });
+      const backupScheduler = await readJson(backupSchedulerStatusPath, { status: "not_started" });
+      const notificationScheduler = await readJson(notificationSchedulerStatusPath, { status: "not_started" });
       const schedules = new Map(workspaces.map((workspace) => [workspace.id, buildWorkspaceSchedule({ workspaceId: workspace.id, profile: profiles.find((profile) => profile.workspaceId === workspace.id) ?? null, deliveries: deliveries.filter((delivery) => delivery.workspaceId === workspace.id), scheduler })]));
-      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, onboardingByWorkspace, schedules, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs, remediationSlaMs: operatorRemediationSlaMs }));
+      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, onboardingByWorkspace, schedules, schedulerStatuses: { refresh: scheduler, backup: backupScheduler, notification: notificationScheduler }, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs, remediationSlaMs: operatorRemediationSlaMs }));
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

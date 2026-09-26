@@ -50,6 +50,24 @@ services:
       - change-intelligence-runtime:/app/runtime
       - change-intelligence-backups:/app/backups
     restart: unless-stopped
+  change-intelligence-notifications:
+    build: .
+    command: ["node", "scripts/notification-scheduler.mjs"]
+    environment:
+      RUNTIME_DATA_DIR: /app/runtime
+      NOTIFICATION_INTERVAL_MS: ${NOTIFICATION_INTERVAL_MS:-60000}
+      OPERATOR_NOTIFICATION_DELIVERY_MODE: ${OPERATOR_NOTIFICATION_DELIVERY_MODE:-disabled}
+      OPERATOR_NOTIFICATION_WEBHOOK_URL: ${OPERATOR_NOTIFICATION_WEBHOOK_URL:-}
+      OPERATOR_NOTIFICATION_MAX_ATTEMPTS: ${OPERATOR_NOTIFICATION_MAX_ATTEMPTS:-3}
+      OPERATOR_NOTIFICATION_RETRY_DELAY_MS: ${OPERATOR_NOTIFICATION_RETRY_DELAY_MS:-60000}
+      OPERATOR_NOTIFICATION_TIMEOUT_MS: ${OPERATOR_NOTIFICATION_TIMEOUT_MS:-5000}
+      OPERATOR_NOTIFICATION_ROUTES_JSON: '${OPERATOR_NOTIFICATION_ROUTES_JSON:-{}}'
+      WORKSPACE_NOTIFICATION_MAX_ATTEMPTS: ${WORKSPACE_NOTIFICATION_MAX_ATTEMPTS:-3}
+      WORKSPACE_NOTIFICATION_RETRY_DELAY_MS: ${WORKSPACE_NOTIFICATION_RETRY_DELAY_MS:-60000}
+      WORKSPACE_NOTIFICATION_TIMEOUT_MS: ${WORKSPACE_NOTIFICATION_TIMEOUT_MS:-5000}
+    volumes:
+      - change-intelligence-runtime:/app/runtime
+    restart: unless-stopped
 
 volumes:
   change-intelligence-runtime:

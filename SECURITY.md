@@ -187,6 +187,12 @@ included in later backups. Restore into an explicit `RUNTIME_DATA_DIR` with
 `npm run restore:runtime`; the backup tests exercise database, compatibility
 ledger, and scheduler-status recovery before a deployment is trusted.
 
+The Compose deployment also runs a separate notification worker. Refreshes
+create durable notification records, while this worker retries pending
+operator and customer webhooks on `NOTIFICATION_INTERVAL_MS` rather than
+waiting for the next research refresh. Its status receipt is visible in
+`/api/operations` and is included in later backups.
+
 Operational probes are separate: `/api/health` is a liveness check, while
 `/api/readiness` returns `200` only when the database is intact, the latest
 refresh is recent and complete, source data is present, runtime synchronization

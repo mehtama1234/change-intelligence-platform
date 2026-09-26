@@ -34,7 +34,7 @@ try {
   if (healthy.response.status !== 200 || healthy.body.status !== "ready" || healthy.body.checks.backup.status !== "ok") throw new Error(`Expected ready response: ${JSON.stringify(healthy.body)}`);
   const operationsResponse = await fetch(`http://127.0.0.1:${port}/api/operations`);
   const operations = await operationsResponse.json();
-  if (operationsResponse.status !== 200 || operations.schemaVersion !== "operations-read-model-v1" || !operations.database.integrity || !operations.refreshHistory.length || operations.scheduler?.schemaVersion !== "refresh-scheduler-status-v1" || operations.backupScheduler?.schemaVersion !== "runtime-backup-scheduler-status-v1") throw new Error("Operations read model contract failed.");
+  if (operationsResponse.status !== 200 || operations.schemaVersion !== "operations-read-model-v1" || !operations.database.integrity || !operations.refreshHistory.length || operations.scheduler?.schemaVersion !== "refresh-scheduler-status-v1" || operations.backupScheduler?.schemaVersion !== "runtime-backup-scheduler-status-v1" || operations.notificationScheduler?.schemaVersion !== "notification-scheduler-status-v1") throw new Error("Operations read model contract failed.");
   const metricsResponse = await fetch(`http://127.0.0.1:${port}/metrics`);
   const metrics = await metricsResponse.text();
   if (metricsResponse.status !== 200 || !metrics.includes("change_intelligence_ready 1") || !metrics.includes("change_intelligence_refresh_age_seconds")) throw new Error("Metrics contract failed.");

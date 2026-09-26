@@ -24,6 +24,7 @@ await writeFile(resolve(runtimeDir, "workspace-invitations.json"), `${JSON.strin
 await writeFile(resolve(runtimeDir, "workspace-refresh-outcomes.json"), `${JSON.stringify({ schemaVersion: "workspace-refresh-outcome-ledger-v1", outcomes: [{ id: "workspace-refresh-outcome-backup-test", workspaceId: "workspace-backup-test", status: "open", reason: "refresh_failed" }] }, null, 2)}\n`);
 await writeFile(resolve(runtimeDir, "scheduler-status.json"), `${JSON.stringify({ schemaVersion: "refresh-scheduler-status-v1", status: "sleeping", runCount: 4 }, null, 2)}\n`);
 await writeFile(resolve(runtimeDir, "backup-scheduler-status.json"), `${JSON.stringify({ schemaVersion: "runtime-backup-scheduler-status-v1", status: "sleeping", runCount: 4 }, null, 2)}\n`);
+await writeFile(resolve(runtimeDir, "notification-scheduler-status.json"), `${JSON.stringify({ schemaVersion: "notification-scheduler-status-v1", status: "sleeping", runCount: 4 }, null, 2)}\n`);
 await writeFile(resolve(runtimeDir, "refresh-scope.json"), `${JSON.stringify({ schemaVersion: "refresh-scope-v1", dueRepositories: [], deferredRepositories: ["annual-report-research"] }, null, 2)}\n`);
 await writeFile(resolve(runtimeDir, "refresh-scope-state.json"), `${JSON.stringify({ schemaVersion: "refresh-scope-state-v1", lastRunAtByRepository: { "annual-report-research": "2026-09-26T00:00:00.000Z" } }, null, 2)}\n`);
 await writeFile(resolve(runtimeDir, "latest-source-availability.json"), `${JSON.stringify({ schemaVersion: "source-availability-receipt-v1", counts: { available: 1, unavailable: 0 } }, null, 2)}\n`);
@@ -71,6 +72,7 @@ if (!manifest.files.some((file) => file.name === "workspace-invitations.json")) 
 if (!manifest.files.some((file) => file.name === "workspace-refresh-outcomes.json")) throw new Error("Backup omitted workspace refresh outcomes.");
 if (!manifest.files.some((file) => file.name === "scheduler-status.json")) throw new Error("Backup omitted scheduler status.");
 if (!manifest.files.some((file) => file.name === "backup-scheduler-status.json")) throw new Error("Backup omitted backup scheduler status.");
+if (!manifest.files.some((file) => file.name === "notification-scheduler-status.json")) throw new Error("Backup omitted notification scheduler status.");
 if (!manifest.files.some((file) => file.name === "refresh-scope.json") || !manifest.files.some((file) => file.name === "refresh-scope-state.json")) throw new Error("Backup omitted refresh scope state.");
 if (!manifest.files.some((file) => file.name === "latest-source-availability.json") || !manifest.files.some((file) => file.name === "source-availability-history.json")) throw new Error("Backup omitted source availability state.");
 if (!manifest.files.some((file) => file.name === "source-availability-events.json")) throw new Error("Backup omitted source availability events.");
