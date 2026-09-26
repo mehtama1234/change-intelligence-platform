@@ -10,11 +10,15 @@ const questionsPath = resolve(root, process.env.QUESTIONS_PATH ?? `${runtimeDir}
 const outputDir = resolve(root, process.env.QUESTION_OUTPUT_DIR ?? runtimeDir);
 const outputPath = resolve(outputDir, "question-evaluations.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
+const watchlistsPath = resolve(root, process.env.WATCHLISTS_PATH ?? `${runtimeDir}/workspace-watchlists.json`);
 const packet = JSON.parse(await readFile(packetPath, "utf8"));
 const ledger = existsSync(questionsPath) ? JSON.parse(await readFile(questionsPath, "utf8")) : { schemaVersion: "workspace-question-ledger-v1", questions: [] };
 const workspaceFiles = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
 const workspaces = await Promise.all(workspaceFiles.map(async (file) => JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"))));
 const workspaceById = new Map(workspaces.map((workspace) => [workspace.id, workspace]));
+const watchlistLedger = existsSync(watchlistsPath) ? JSON.parse(await readFile(watchlistsPath, "utf8")) : { watchlists: [] };
+const watchlistsByWorkspace = new Map();
+for (const watchlist of watchlistLedger.watchlists ?? []) watchlistsByWorkspace.set(watchlist.workspaceId, [...(watchlistsByWorkspace.get(watchlist.workspaceId) ?? []), watchlist]);
 const now = new Date().toISOString();
 const stopWords = new Set(["what", "will", "does", "how", "can", "the", "and", "for", "with", "that", "this", "from", "change"]);
 
@@ -27,7 +31,7 @@ for (const question of ledger.questions.filter((item) => item.state === "active"
   const workspace = workspaceById.get(question.workspaceId);
   const requestedIds = new Set(question.scope?.sourceIds ?? []);
   for (const watchlistId of question.scope?.watchlistIds ?? []) {
-    const watchlist = workspace?.watchlists?.find((item) => item.id === watchlistId);
+    const watchlist = (watchlistsByWorkspace.get(question.workspaceId) ?? workspace?.watchlists ?? []).find((item) => item.id === watchlistId);
     for (const sourceId of watchlist?.sourceIds ?? []) requestedIds.add(sourceId);
   }
   const words = terms(question.question);

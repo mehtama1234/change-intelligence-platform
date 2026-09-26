@@ -21,6 +21,7 @@ const childEnv = {
   PACKET_OUTPUT_PATH: resolve(runDir, "ai-work-control.packet.json"),
   SOURCE_SCAN_PATH: resolve(runDir, "latest-source-scan.json"),
   ALERT_OUTPUT_DIR: runDir,
+  WATCHLISTS_PATH: resolve(runDir, "workspace-watchlists.json"),
   REVIEW_OUTPUT_DIR: runDir,
   EVIDENCE_OUTPUT_DIR: runDir,
   QUESTIONS_PATH: resolve(runDir, "workspace-questions.json"),

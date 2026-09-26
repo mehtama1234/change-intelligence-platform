@@ -99,7 +99,7 @@ export function createRuntimeStore(runtimeDir) {
     return { ...operation, body: parseJson(bodyJson, {}) };
   }
 
-  const importLegacy = db.transaction(({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, sourceScan, evidenceLedger, reviewDecisions, reviewEvents }) => {
+  const importLegacy = db.transaction(({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, sourceScan, evidenceLedger, reviewDecisions, reviewEvents }) => {
     const shouldImportQuestions = db.prepare("SELECT COUNT(*) AS count FROM questions").get().count === 0;
     const shouldImportAudit = db.prepare("SELECT COUNT(*) AS count FROM audit_entries").get().count === 0;
     const shouldImportOperations = db.prepare("SELECT COUNT(*) AS count FROM idempotency_operations").get().count === 0;
@@ -133,6 +133,7 @@ export function createRuntimeStore(runtimeDir) {
     importRecords("insight_decision", insightDecisions?.decisions);
     importRecords("insight_publication", insightPublications?.publications);
     importRecords("decision_outcome", decisionOutcomes?.outcomes);
+    importRecords("watchlist", watchlists?.watchlists);
     importRecords("source_scan", sourceScan?.sources);
     importRecords("evidence_version", evidenceLedger?.records, "versionId");
     importRecords("review_decision", reviewDecisions?.decisions);
@@ -193,7 +194,7 @@ export async function importRuntimeLedgers(store, paths) {
       throw error;
     }
   };
-  const [questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, sourceScan, evidenceLedger, reviewDecisions, reviewEvents] = await Promise.all([
+  const [questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, sourceScan, evidenceLedger, reviewDecisions, reviewEvents] = await Promise.all([
     read(paths.questions, { questions: [] }),
     read(paths.audit, { entries: [] }),
     read(paths.operations, { operations: [] }),
@@ -202,6 +203,7 @@ export async function importRuntimeLedgers(store, paths) {
     read(paths.insightDecisions, { decisions: [] }),
     read(paths.insightPublications, { publications: [] }),
     read(paths.decisionOutcomes, { outcomes: [] }),
+    read(paths.watchlists, { watchlists: [] }),
     read(paths.sourceScan, { sources: [] }),
     read(paths.evidenceLedger, { records: [] }),
     read(paths.reviewDecisions, { decisions: [] }),
@@ -215,12 +217,17 @@ export async function importRuntimeLedgers(store, paths) {
       return { id: workspace.id, name: workspace.name };
     }));
   }
-  store.importLegacy({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, sourceScan, evidenceLedger, reviewDecisions, reviewEvents });
+  if (!watchlists.watchlists.length && workspaces.length && paths.workspaceDir) {
+    const files = (await readdir(paths.workspaceDir)).filter((file) => file.endsWith(".json"));
+    watchlists.watchlists = (await Promise.all(files.map(async (file) => parseJson(await readFile(resolve(paths.workspaceDir, file), "utf8"), {})))).flatMap((workspace) => (workspace.watchlists ?? []).map((watchlist) => ({ ...watchlist, workspaceId: workspace.id })));
+  }
+  store.importLegacy({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, sourceScan, evidenceLedger, reviewDecisions, reviewEvents });
   store.syncRecords("alert", alerts.alerts);
   store.syncRecords("briefing_publication", briefingPublications.publications);
   store.syncRecords("insight_decision", insightDecisions.decisions);
   store.syncRecords("insight_publication", insightPublications.publications);
   store.syncRecords("decision_outcome", decisionOutcomes.outcomes);
+  store.syncRecords("watchlist", watchlists.watchlists);
   store.syncRecords("source_scan", sourceScan.sources);
   store.syncRecords("evidence_version", evidenceLedger.records, "versionId");
   store.syncRecords("review_decision", reviewDecisions.decisions);
@@ -233,5 +240,6 @@ export async function importRuntimeLedgers(store, paths) {
   await writeFile(paths.insightDecisions, `${JSON.stringify(store.recordsLedger("insight_decision", "insight-decision-ledger-v1", "decisions"), null, 2)}\n`);
   await writeFile(paths.insightPublications, `${JSON.stringify(store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications"), null, 2)}\n`);
   if (paths.decisionOutcomes) await writeFile(paths.decisionOutcomes, `${JSON.stringify(store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes"), null, 2)}\n`);
+  if (paths.watchlists) await writeFile(paths.watchlists, `${JSON.stringify(store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists"), null, 2)}\n`);
   if (paths.reviewEvents) await writeFile(paths.reviewEvents, `${JSON.stringify(store.recordsLedger("review_event", "review-event-ledger-v1", "events"), null, 2)}\n`);
 }

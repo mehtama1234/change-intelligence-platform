@@ -32,7 +32,15 @@ async function loadWorkspaces() {
   if (!workspaces.some((workspace) => workspace.id === state.workspaceId)) state.workspaceId = workspaces[0].id;
   select.value = state.workspaceId;
   setWorkspaceStatus(state.token ? "Connected." : "Demo workspace.");
-  await Promise.all([loadQuestions(), loadAlerts(), loadDecisionOutcomes()]);
+  await Promise.all([loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists()]);
+}
+
+async function loadWatchlists() {
+  const response = await apiFetch(`../api/watchlists?workspace=${encodeURIComponent(state.workspaceId)}`);
+  if (!response.ok) throw new Error(`Watchlists unavailable (${response.status})`);
+  const watchlists = await response.json();
+  byId("watchlists-summary").textContent = `${watchlists.length} watchlist${watchlists.length === 1 ? "" : "s"} in this workspace.`;
+  byId("watchlists-items").innerHTML = watchlists.length ? watchlists.map((watchlist) => `<article class="record-card"><div class="record-meta"><span class="role">monitoring</span><span>${escapeHtml(watchlist.alertOn.join(", "))}</span></div><h3>${escapeHtml(watchlist.name)}</h3><p>${watchlist.sourceIds.length} source${watchlist.sourceIds.length === 1 ? "" : "s"} · created ${escapeHtml(watchlist.createdAt)}</p><details><summary>Open watchlist scope</summary><p>${watchlist.sourceIds.map((sourceId) => `<code>${escapeHtml(sourceId)}</code>`).join(" ")}</p></details></article>`).join("") : `<p class="muted">No custom watchlists yet.</p>`;
 }
 
 async function loadAlerts() {
@@ -266,6 +274,7 @@ function render() {
   options("theme", "themes");
   options("company", "companies");
   options("industry", "industries");
+  byId("watchlist-sources").innerHTML = records.map((record) => `<option value="${escapeHtml(record.id)}">${escapeHtml(record.title)}</option>`).join("");
   const visible = records.filter((record) => (state.role === "all" || record.sourceRole === state.role) && (state.theme === "all" || record.theme === state.theme) && (state.company === "all" || record.company === state.company) && (state.industry === "all" || record.industry === state.industry));
   byId("catalog-summary").textContent = `${visible.length} of ${records.length} evidence records shown across ${new Set(visible.map((record) => record.sourceRepository)).size} repositories.`;
   byId("records").innerHTML = visible.map((record) => `<article class="record-card">
@@ -355,7 +364,16 @@ byId("question-form").addEventListener("submit", async (event) => {
   }
 });
 
-byId("workspace-select").addEventListener("change", async (event) => { state.workspaceId = event.target.value; await Promise.all([loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadEvidenceHistory()]); });
+byId("workspace-select").addEventListener("change", async (event) => { state.workspaceId = event.target.value; await Promise.all([loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists(), loadEvidenceHistory()]); });
+byId("watchlist-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const status = byId("watchlist-status");
+  const selected = [...byId("watchlist-sources").selectedOptions].map((option) => option.value);
+  status.textContent = "Saving…";
+  const response = await apiFetch("../api/watchlists", { method: "POST", body: { name: byId("watchlist-name").value, sourceIds: selected, alertOn: ["new", "changed", "missing"] } });
+  status.textContent = response.ok ? "Watchlist saved." : "Could not save watchlist.";
+  if (response.ok) { byId("watchlist-name").value = ""; await loadWatchlists(); }
+});
 byId("save-token").addEventListener("click", async () => {
   const token = byId("token-input").value.trim();
   if (token) { state.token = token; sessionStorage.setItem("change-intelligence-token", token); } else { state.token = ""; sessionStorage.removeItem("change-intelligence-token"); }

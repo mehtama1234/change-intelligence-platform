@@ -137,6 +137,23 @@
         <div id="alerts-items" class="record-list" aria-live="polite"></div>
       </section>
 
+      <section id="workspace-watchlists" aria-labelledby="watchlists-title">
+        <div class="section-heading">
+          <p class="eyebrow">Customer workspace · monitoring</p>
+          <h2 id="watchlists-title">What should this workspace watch?</h2>
+          <p id="watchlists-summary" class="muted">Loading watchlists…</p>
+        </div>
+        <form id="watchlist-form" class="question-form">
+          <label for="watchlist-name">Create a watchlist</label>
+          <div><input id="watchlist-name" name="name" minlength="3" maxlength="120" placeholder="e.g. AI infrastructure changes" required><button type="submit">Save watchlist</button></div>
+          <label for="watchlist-sources">Sources to monitor</label>
+          <select id="watchlist-sources" name="sourceIds" multiple size="5" aria-describedby="watchlist-help"></select>
+          <p id="watchlist-help" class="muted">Select one or more evidence sources. New or changed source bytes will appear as workspace alerts.</p>
+          <p id="watchlist-status" class="muted" role="status"></p>
+        </form>
+        <div id="watchlists-items" class="record-list" aria-live="polite"></div>
+      </section>
+
       <section id="workspace-questions" aria-labelledby="questions-title">
         <div class="section-heading">
           <p class="eyebrow">Customer workspace · saved questions</p>

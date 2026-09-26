@@ -10,15 +10,19 @@ const runtimeDir = process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-
 const scanPath = resolve(root, process.env.SOURCE_SCAN_PATH ?? `${runtimeDir}/latest-source-scan.json`);
 const outputDir = resolve(root, process.env.ALERT_OUTPUT_DIR ?? runtimeDir);
 const outputPath = resolve(outputDir, process.env.ALERT_OUTPUT_NAME ?? "workspace-alerts.json");
+const watchlistsPath = resolve(root, process.env.WATCHLISTS_PATH ?? `${runtimeDir}/workspace-watchlists.json`);
 const scan = JSON.parse(await readFile(scanPath, "utf8"));
 const files = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
 const workspaces = await Promise.all(files.map(async (file) => JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"))));
+const watchlistLedger = existsSync(watchlistsPath) ? JSON.parse(await readFile(watchlistsPath, "utf8")) : { watchlists: [] };
+const watchlistsByWorkspace = new Map();
+for (const watchlist of watchlistLedger.watchlists ?? []) watchlistsByWorkspace.set(watchlist.workspaceId, [...(watchlistsByWorkspace.get(watchlist.workspaceId) ?? []), watchlist]);
 const existing = existsSync(outputPath) ? JSON.parse(await readFile(outputPath, "utf8")) : { schemaVersion: "workspace-alert-ledger-v1", alerts: [] };
 const existingById = new Map(existing.alerts.map((alert) => [alert.id, alert]));
 let alertsSeenThisRun = 0;
 
 for (const workspace of workspaces) {
-  for (const watchlist of workspace.watchlists) {
+  for (const watchlist of watchlistsByWorkspace.get(workspace.id) ?? workspace.watchlists ?? []) {
     for (const item of scan.reviewQueue) {
       const status = item.status ?? "changed";
       const matches = watchlist.sourceIds.includes(item.sourceId) || watchlist.repositoryIds.includes(item.repository);

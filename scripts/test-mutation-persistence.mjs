@@ -8,7 +8,7 @@ const sourceRuntime = resolve(root, "data/processed/runs/ai-work-control");
 const port = 8795;
 const base = `http://127.0.0.1:${port}`;
 const runtimeDir = `/tmp/change-intelligence-mutations-${Date.now()}`;
-const copiedLedgers = ["workspace-alerts.json", "workspace-briefings.json", "insight-candidates.json", "briefing-publications.json", "insight-decisions.json", "insight-publications.json", "decision-outcomes.json", "review-decisions.json"];
+const copiedLedgers = ["workspace-alerts.json", "workspace-briefings.json", "insight-candidates.json", "briefing-publications.json", "insight-decisions.json", "insight-publications.json", "decision-outcomes.json", "workspace-watchlists.json", "review-decisions.json"];
 await mkdir(runtimeDir, { recursive: true });
 for (const name of copiedLedgers) {
   try { await copyFile(resolve(sourceRuntime, name), resolve(runtimeDir, name)); } catch (error) { if (error.code !== "ENOENT") throw error; }
@@ -39,6 +39,8 @@ try {
   const alerts = await alertsResponse.json();
   const alert = alerts[0];
   if (alertsResponse.status !== 200 || !alert) throw new Error("Mutation test has no seeded alert.");
+  const watchlistResponse = await fetch(`${base}/api/watchlists`, { method: "POST", headers: write(`watchlist-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", name: "Durability watchlist", sourceIds: ["trend-hunting-ai-control"], alertOn: ["changed", "missing"] }) });
+  if (watchlistResponse.status !== 201) throw new Error(`Watchlist creation failed: ${watchlistResponse.status}`);
   const acknowledgedResponse = await fetch(`${base}/api/alerts/${encodeURIComponent(alert.id)}/acknowledge`, { method: "POST", headers: write(`alert-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", note: "Durability test" }) });
   if (acknowledgedResponse.status !== 200) throw new Error(`Alert acknowledgement failed: ${acknowledgedResponse.status}`);
   const briefings = JSON.parse(await readFile(resolve(runtimeDir, "workspace-briefings.json"), "utf8"));
@@ -67,14 +69,16 @@ try {
   if (restoredAlerts.find((item) => item.id === alert.id)?.acknowledgmentNote !== "Durability test") throw new Error("Alert acknowledgement did not survive restart.");
   const audit = await (await fetch(`${base}/api/audit?workspace=demo-research`, { headers: auth })).json();
   const actions = new Set(audit.map((entry) => entry.action));
-  if (!["acknowledge_alert", "publish_briefing", "export_briefing", "record_decision_outcome", "decide_insight", "review_source"].every((action) => actions.has(action))) throw new Error("Mutation and export audit records did not survive restart.");
+  if (!["acknowledge_alert", "create_watchlist", "publish_briefing", "export_briefing", "record_decision_outcome", "decide_insight", "review_source"].every((action) => actions.has(action))) throw new Error("Mutation and export audit records did not survive restart.");
   const history = await (await fetch(`${base}/api/evidence-history`, { headers: auth })).json();
   if (!history.decisionHistory.some((decision) => decision.candidateId === "review-test-candidate")) throw new Error("Source review decision did not survive restart.");
   const traceEvidence = await fetch(`${base}/api/evidence/trend-hunting-ai-control?workspace=demo-research`, { headers: auth });
   const traceInsight = await fetch(`${base}/api/insights/insight-ai-capability-control-gap-001?workspace=demo-research`, { headers: auth });
   if (traceEvidence.status !== 200 || traceInsight.status !== 200) throw new Error("Authenticated source-trace inspections failed.");
   const usage = await (await fetch(`${base}/api/usage?workspace=demo-research`, { headers: auth })).json();
-  if (usage.measures.evidenceInspections < 1 || usage.measures.insightInspections < 1 || usage.measures.briefingsExported < 1 || usage.measures.decisionOutcomesRecorded < 1) throw new Error("Workspace usage did not count source tracing, export, and decision feedback actions.");
+  if (usage.measures.evidenceInspections < 1 || usage.measures.insightInspections < 1 || usage.measures.briefingsExported < 1 || usage.measures.decisionOutcomesRecorded < 1 || usage.measures.watchlistsCreated < 1) throw new Error("Workspace usage did not count source tracing, export, decision feedback, and watchlist actions.");
+  const watchlists = await (await fetch(`${base}/api/watchlists?workspace=demo-research`, { headers: auth })).json();
+  if (!watchlists.some((watchlist) => watchlist.name === "Durability watchlist")) throw new Error("Watchlist did not survive restart.");
   const outcomes = await (await fetch(`${base}/api/decision-outcomes?workspace=demo-research`, { headers: auth })).json();
   if (!outcomes.some((outcome) => outcome.briefingId === briefing.id && outcome.outcomeState === "held")) throw new Error("Decision outcome did not survive restart.");
   const timeline = await (await fetch(`${base}/api/timeline`, { headers: auth })).json();

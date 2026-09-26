@@ -22,6 +22,7 @@ const insightDecisionsPath = resolve(runtimeDir, "insight-decisions.json");
 const insightCandidatesPath = resolve(runtimeDir, "insight-candidates.json");
 const insightPublicationsPath = resolve(runtimeDir, "insight-publications.json");
 const decisionOutcomesPath = resolve(runtimeDir, "decision-outcomes.json");
+const watchlistsPath = resolve(runtimeDir, "workspace-watchlists.json");
 const auditPath = resolve(runtimeDir, "audit-log.json");
 const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
 const sourceScanPath = resolve(runtimeDir, "latest-source-scan.json");
@@ -49,6 +50,7 @@ await importRuntimeLedgers(store, {
   insightDecisions: insightDecisionsPath,
   insightPublications: insightPublicationsPath,
   decisionOutcomes: decisionOutcomesPath,
+  watchlists: watchlistsPath,
   workspaceDir,
   sourceScan: sourceScanPath,
   evidenceLedger: evidenceLedgerPath,
@@ -404,6 +406,33 @@ const server = createServer(async (request, response) => {
       await writeFile(insightPublicationsPath, `${JSON.stringify(store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications"), null, 2)}\n`);
       return json(response, 200, publication);
     }
+    if (request.method === "POST" && url.pathname === "/api/watchlists") {
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot create watchlists." });
+      const name = String(body.name ?? "").trim();
+      const sourceIds = [...new Set((Array.isArray(body.sourceIds) ? body.sourceIds : []).map((value) => String(value).trim()).filter(Boolean))].slice(0, 100);
+      const repositoryIds = [...new Set((Array.isArray(body.repositoryIds) ? body.repositoryIds : []).map((value) => String(value).trim()).filter(Boolean))].slice(0, 20);
+      const alertOn = [...new Set((Array.isArray(body.alertOn) ? body.alertOn : ["new", "changed", "missing"]).map((value) => String(value)))].filter((value) => ["new", "changed", "missing"].includes(value));
+      const packet = await readJson(packetPath, { records: [] });
+      const knownSourceIds = new Set(packet.records.map((record) => record.id));
+      const knownRepositoryIds = new Set(packet.records.map((record) => record.sourceRepository));
+      if (name.length < 3 || name.length > 120) return json(response, 400, { error: "Watchlist name must be between 3 and 120 characters." });
+      if (!sourceIds.some((id) => knownSourceIds.has(id)) && !repositoryIds.some((id) => knownRepositoryIds.has(id))) return json(response, 400, { error: "Choose at least one known source or repository." });
+      const now = new Date().toISOString();
+      const watchlist = { id: `watchlist-${randomUUID()}`, workspaceId: workspace.id, name, sourceIds: sourceIds.filter((id) => knownSourceIds.has(id)), repositoryIds: repositoryIds.filter((id) => knownRepositoryIds.has(id)), alertOn: alertOn.length ? alertOn : ["changed", "missing"], createdBy: member.id, createdAt: now, updatedAt: now };
+      store.commitRecord({ kind: "watchlist", record: watchlist, audit: { requestId, action: "create_watchlist", targetId: watchlist.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "created", occurredAt: now }, operation: { key: idempotencyKey, action: "create_watchlist", status: 201, body: watchlist, completedAt: now } });
+      await writeFile(watchlistsPath, `${JSON.stringify(store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists"), null, 2)}\n`);
+      return json(response, 201, watchlist);
+    }
     if (request.method === "GET" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/export")) {
       const briefingId = decodeURIComponent(url.pathname.slice("/api/briefings/".length, -"/export".length));
       const workspaceId = url.searchParams.get("workspace");
@@ -451,7 +480,7 @@ const server = createServer(async (request, response) => {
       if (denyWorkspaceRead(response, access)) return;
       const entries = store.auditLedger().entries.filter((entry) => !access.workspaceIds || access.workspaceIds.includes(entry.workspaceId));
       const counts = Object.fromEntries([...new Set(entries.map((entry) => entry.action))].map((action) => [action, entries.filter((entry) => entry.action === action).length]));
-      return json(response, 200, { schemaVersion: "workspace-usage-v1", workspaceId: access.workspaceId, activity: { totalAuditEvents: entries.length, actions: counts, lastActivityAt: entries.at(-1)?.occurredAt ?? null }, measures: { questionsSaved: counts.create_question ?? 0, evidenceInspections: counts.inspect_evidence ?? 0, insightInspections: counts.inspect_insight ?? 0, sourceReviews: counts.review_source ?? 0, alertsAcknowledged: counts.acknowledge_alert ?? 0, briefingsPublished: counts.publish_briefing ?? 0, briefingsExported: counts.export_briefing ?? 0, insightsPublished: counts.publish_insight ?? 0, decisionOutcomesRecorded: counts.record_decision_outcome ?? 0 } });
+      return json(response, 200, { schemaVersion: "workspace-usage-v1", workspaceId: access.workspaceId, activity: { totalAuditEvents: entries.length, actions: counts, lastActivityAt: entries.at(-1)?.occurredAt ?? null }, measures: { questionsSaved: counts.create_question ?? 0, evidenceInspections: counts.inspect_evidence ?? 0, insightInspections: counts.inspect_insight ?? 0, sourceReviews: counts.review_source ?? 0, alertsAcknowledged: counts.acknowledge_alert ?? 0, briefingsPublished: counts.publish_briefing ?? 0, briefingsExported: counts.export_briefing ?? 0, insightsPublished: counts.publish_insight ?? 0, decisionOutcomesRecorded: counts.record_decision_outcome ?? 0, watchlistsCreated: counts.create_watchlist ?? 0 } });
     }
     if (url.pathname === "/metrics") {
       const readiness = await readinessReport();
@@ -592,6 +621,12 @@ const server = createServer(async (request, response) => {
         if (!access.workspaceIds || access.workspaceIds.includes(workspace.id)) workspaces.push({ id: workspace.id, name: workspace.name, memberCount: workspace.members?.length ?? 0 });
       }
       return json(response, 200, workspaces);
+    }
+    if (url.pathname === "/api/watchlists") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      const watchlists = store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists").watchlists;
+      return json(response, 200, access.workspaceIds ? watchlists.filter((watchlist) => access.workspaceIds.includes(watchlist.workspaceId)) : watchlists);
     }
     if (url.pathname === "/api/alerts") {
       const workspaceId = url.searchParams.get("workspace");
