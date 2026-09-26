@@ -17,6 +17,8 @@ const required = [
   [compose, "restart: unless-stopped", "restart policy"],
   [scheduler, "process.on(\"SIGTERM\"", "scheduler termination handling"],
   [scheduler, "run-refresh-cycle.mjs", "scheduler refresh invocation"]
+  , [compose, "OPERATOR_NOTIFICATION_DELIVERY_MODE", "notification delivery mode"]
+  , [compose, "OPERATOR_NOTIFICATION_WEBHOOK_URL", "notification webhook configuration"]
 ];
 const missing = required.filter(([text, value]) => !text.includes(value)).map(([, , label]) => label);
 if (missing.length) throw new Error(`Deployment contract failed: ${missing.join(", ")}`);

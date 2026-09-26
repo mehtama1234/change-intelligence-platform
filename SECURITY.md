@@ -38,6 +38,12 @@ and a note, and produces its own audit receipt. The default acknowledgment
 deadline is four hours and is exposed as a timestamp so an operator can judge
 whether the warning is overdue.
 
+Notification delivery is disabled unless `OPERATOR_NOTIFICATION_DELIVERY_MODE`
+is explicitly set to `webhook` and `OPERATOR_NOTIFICATION_WEBHOOK_URL` is
+provided. Delivery uses bounded timeouts and attempts; exhausted failures are
+marked `dead_letter` for operator action. The webhook receives only the
+notification envelope, not customer workspace records or source passages.
+
 Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map
 before checking the member's workspace role.

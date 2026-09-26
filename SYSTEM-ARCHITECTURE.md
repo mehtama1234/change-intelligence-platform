@@ -44,6 +44,9 @@ Adapter output is then hashed and stored as a source snapshot before review.
 13. **Operator policy evaluator** — runs after each refresh, applies warning
     thresholds and acknowledgment deadlines, escalates overdue warnings once,
     and writes private notification-outbox records for dispatch.
+14. **Notification delivery worker** — optionally sends outbox envelopes to an
+    explicitly configured webhook, records bounded retries, and moves exhausted
+    failures to a dead-letter state.
 
 ## Background jobs
 

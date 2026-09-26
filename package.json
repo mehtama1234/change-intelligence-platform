@@ -38,6 +38,8 @@
     "test:pilot-delivery": "node scripts/test-pilot-delivery.mjs",
     "test:operator-escalation": "node scripts/test-operator-escalation.mjs",
     "evaluate:operator-warnings": "node scripts/evaluate-operator-warnings.mjs",
+    "dispatch:operator-notifications": "node scripts/dispatch-operator-notifications.mjs",
+    "test:operator-delivery": "node scripts/test-operator-delivery.mjs",
     "ci:core": "npm run validate:fixtures && npm run validate:packet && npm run validate:adapters && npm run validate:deployment && npm run validate:frontend && npm run evaluate:insight-quality && npm run test:insight-quality && npm run test:review-flow && npm run test:source-scan-runtime && npm run test:refresh-runtime && npm run test:read-model && npm run test:storage && npm run test:api:auth && npm run test:pilot-delivery",
     "serve": "node server.mjs",
     "refresh": "node scripts/run-refresh-cycle.mjs",
