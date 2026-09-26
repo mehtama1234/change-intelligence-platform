@@ -16,6 +16,7 @@
     "evaluate:watchlists": "node scripts/evaluate-watchlists.mjs",
     "evaluate:questions": "node scripts/evaluate-questions.mjs",
     "build:question-briefings": "node scripts/build-question-briefings.mjs",
+    "generate:insight-candidates": "node scripts/generate-insight-candidates.mjs",
     "verify:e2e": "node scripts/verify-end-to-end.mjs",
     "serve": "node server.mjs",
     "refresh": "node scripts/run-refresh-cycle.mjs",

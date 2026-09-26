@@ -4,8 +4,8 @@
   "sourceSnapshotDate": "2026-09-25",
   "operations": {
     "latestSourceScan": {
-      "generatedAt": "2026-09-26T04:35:08.089Z",
-      "runId": "scan-20260926043508",
+      "generatedAt": "2026-09-26T04:37:44.506Z",
+      "runId": "scan-20260926043744",
       "counts": {
         "new": 0,
         "changed": 0,
@@ -27,7 +27,7 @@
     },
     "workspaceAlerts": {
       "schemaVersion": "workspace-alert-ledger-v1",
-      "generatedAt": "2026-09-26T04:35:08.555Z",
+      "generatedAt": "2026-09-26T04:37:44.771Z",
       "workspaces": [
         {
           "id": "demo-research",
@@ -59,12 +59,12 @@
     },
     "questionEvaluations": {
       "schemaVersion": "question-evaluation-ledger-v1",
-      "generatedAt": "2026-09-26T04:35:10.314Z",
+      "generatedAt": "2026-09-26T04:37:46.163Z",
       "evaluations": [
         {
           "questionId": "question-1790396868707-0zillf",
           "workspaceId": "demo-research",
-          "evaluatedAt": "2026-09-26T04:35:10.314Z",
+          "evaluatedAt": "2026-09-26T04:37:46.163Z",
           "state": "evidence_retrieved",
           "matchedRecordIds": [
             "trend-hunting-ai-control",
@@ -133,7 +133,7 @@
     },
     "briefings": {
       "schemaVersion": "workspace-briefing-ledger-v1",
-      "generatedAt": "2026-09-26T04:35:10.664Z",
+      "generatedAt": "2026-09-26T04:37:46.731Z",
       "briefings": [
         {
           "id": "briefing-question-1790396868707-0zillf",
@@ -146,7 +146,7 @@
           "publishedAt": "2026-09-26T04:34:31.213Z",
           "publicationId": "publication-1790397271213-qdiac3",
           "evidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
-          "generatedAt": "2026-09-26T04:35:10.664Z",
+          "generatedAt": "2026-09-26T04:37:46.731Z",
           "evidence": [
             {
               "recordId": "trend-hunting-ai-control",
@@ -229,6 +229,82 @@
           "reading": "The system found 7 related source records. A researcher must inspect them before making a conclusion.",
           "boundary": "Text matches identify evidence to inspect; they do not answer the question or establish causation.",
           "nextTest": "Track one named AI-mediated workflow from company deployment through worker or customer use, correction, appeal, and exit evidence."
+        }
+      ]
+    },
+    "insightCandidates": {
+      "schemaVersion": "insight-candidate-ledger-v1",
+      "generatedAt": "2026-09-26T04:37:47.415Z",
+      "candidates": [
+        {
+          "id": "candidate-insight-ai-capability-control-gap-001-710b18999d68",
+          "insightId": "insight-ai-capability-control-gap-001",
+          "title": "AI can return time without returning control",
+          "plainLanguageSummary": "The current evidence supports a narrower reading than 'AI makes work more productive': AI can remove visible tasks while decisions, measurement, correction, and dependence remain controlled by an employer, platform, or infrastructure provider.",
+          "status": "needs_researcher_review",
+          "publication": "not_published",
+          "generatedAt": "2026-09-26T04:37:47.415Z",
+          "evidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
+          "evidence": [
+            {
+              "recordId": "trend-hunting-ai-control",
+              "sourceRepository": "trend-hunting",
+              "sourceRef": "analysis/DEEP-TRENDS-CROSS-THEME-SYNTHESIS-V2.md",
+              "sourceRole": "trend_signal",
+              "sourceDigest": "67e2e17f48ee21d1f468944b6d1c53e4b6fc20428838ffcbb151937d7662252e"
+            },
+            {
+              "recordId": "cultural-ai-capability-dependence",
+              "sourceRepository": "cultural-geopolitical-theme-mining",
+              "sourceRef": "site/ai-work-control-073.html",
+              "sourceRole": "social_cultural",
+              "sourceDigest": "88ac071286e2f746095504540db23f4164a8c5a3e1c6ee190ebcebf753e4d8fe"
+            },
+            {
+              "recordId": "annual-ai-cultural-disintermediation",
+              "sourceRepository": "annual-report-research",
+              "sourceRef": "site/trends/ai-cultural-disintermediation.html",
+              "sourceRole": "company_report",
+              "sourceDigest": "93d9d56ee7792cdf8c73af339b9e88d5a52544fae201dd800a51ce17622c68a4"
+            },
+            {
+              "recordId": "ibis-ai-workflow-compression",
+              "sourceRepository": "ibis-industries",
+              "sourceRef": "writeups_ai.json",
+              "sourceRole": "industry",
+              "sourceDigest": "0d3dab9e8b23ea41b5ea11c224388642acbe5b5bcb8c27707542321255ad88ce"
+            },
+            {
+              "recordId": "inc5000-coreweave-ai-infrastructure",
+              "sourceRepository": "inc5000-analysis",
+              "sourceRef": "data/processed/featured.json",
+              "sourceRole": "private_company",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
+            },
+            {
+              "recordId": "atlas-ai-work-evidence-thread",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRef": "local-runs/ai-work-culture-insight-thread.json",
+              "sourceRole": "research",
+              "sourceDigest": "49480c7a496f62b39ee0d89f8325fca1ec9204b07c47091d5641bc7ac5f51f97"
+            },
+            {
+              "recordId": "atlas-c3-ai-report-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRef": "company-industry-analysis/companies/c3-ai/SOURCE-LEDGER.md",
+              "sourceRole": "company_report",
+              "sourceDigest": "c0f1424493170ccf3ef4829cd34a6f8d0d7526768c3cf20ed3feffad4faece29"
+            }
+          ],
+          "strongestAlternative": "The apparent control gap may be temporary because early deployments have not yet matured into stable workflow changes.",
+          "whatWouldChangeOurMind": [
+            "A compatible longitudinal study shows durable control, pay, and remedy improvements for affected workers.",
+            "Company and independent records show that workers can understand, correct, and leave AI-mediated decisions without material penalty."
+          ],
+          "nextTest": "Track one named AI-mediated workflow from company deployment through worker or customer use, correction, appeal, and exit evidence.",
+          "limits": [
+            "This candidate was assembled from current evidence references; it is not a new causal finding."
+          ]
         }
       ]
     }

@@ -10,10 +10,11 @@ const refresh = await json("data/processed/runs/ai-work-control/latest-refresh.j
 const alerts = await json("data/processed/runs/ai-work-control/workspace-alerts.json");
 const evaluations = await json("data/processed/runs/ai-work-control/question-evaluations.json");
 const briefings = await json("data/processed/runs/ai-work-control/workspace-briefings.json");
+const insightCandidates = await json("data/processed/runs/ai-work-control/insight-candidates.json");
 const errors = [];
 const assert = (condition, message) => { if (!condition) errors.push(message); };
 const records = new Map(packet.records.map((record) => [record.id, record]));
-const requiredSteps = ["capture-sec-filings", "extract-sec-xbrl", "scan-repositories", "evaluate-watchlists", "process-review-work", "materialize-evidence", "build-packet", "evaluate-questions", "build-question-briefings", "publish-question-evaluations"];
+const requiredSteps = ["capture-sec-filings", "extract-sec-xbrl", "scan-repositories", "evaluate-watchlists", "process-review-work", "materialize-evidence", "build-packet", "evaluate-questions", "build-question-briefings", "publish-question-evaluations", "generate-insight-candidates", "publish-insight-candidates"];
 
 assert(packet.records.length >= 7, "packet should contain the six-repository vertical slice records");
 assert(new Set(packet.records.map((record) => record.sourceRepository)).size === 6, "packet must cover all six research repositories");
@@ -27,6 +28,9 @@ assert(report?.movementSource === "sec_xbrl", "report movement must come from di
 assert(report?.sourceRefs.captureStatus === "complete", "all direct SEC records must be captured");
 assert(evaluations.evaluations.every((evaluation) => evaluation.state === "evidence_retrieved"), "question evaluations must remain evidence retrieval, not answers");
 assert(briefings.briefings.every((briefing) => ["draft", "published", "stale"].includes(briefing.state)), "briefings must have an explicit publication state");
+assert(insightCandidates.candidates.length === packet.insights.length, "each insight must produce one candidate");
+assert(insightCandidates.candidates.every((candidate) => candidate.status === "needs_researcher_review" && candidate.publication === "not_published"), "insight candidates must remain reviewable and unpublished");
+for (const candidate of insightCandidates.candidates) for (const evidence of candidate.evidence) assert(records.get(evidence.recordId)?.sourceDigest === evidence.sourceDigest, `${candidate.id}: insight evidence digest does not match packet`);
 for (const briefing of briefings.briefings) {
   for (const evidence of briefing.evidence) assert(records.get(evidence.recordId)?.sourceDigest === evidence.sourceDigest, `${briefing.id}: evidence digest does not match packet`);
   if (briefing.state === "published") assert(briefing.publication === "published" && briefing.publicationId, `${briefing.id}: published briefing lacks publication receipt`);

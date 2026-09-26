@@ -46,6 +46,8 @@ try {
   await runStep("evaluate-questions", "evaluate-questions.mjs");
   await runStep("build-question-briefings", "build-question-briefings.mjs");
   await runStep("publish-question-evaluations", "build-ai-work-control-packet.mjs");
+  await runStep("generate-insight-candidates", "generate-insight-candidates.mjs");
+  await runStep("publish-insight-candidates", "build-ai-work-control-packet.mjs");
   const failed = steps.filter((step) => step.status === "failed");
   const receipt = {
     schemaVersion: "refresh-receipt-v1",
