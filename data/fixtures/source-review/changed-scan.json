@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "source-scan-receipt-v1",
+  "runId": "scan-fixture-changed",
+  "generatedAt": "2026-09-25T00:00:00.000Z",
+  "domain": "ai-work-control",
+  "reviewRequired": 1,
+  "reviewQueue": [
+    {
+      "id": "review-trend-hunting-ai-control-changed",
+      "sourceId": "trend-hunting-ai-control",
+      "repository": "trend-hunting",
+      "sourcePath": "analysis/DEEP-TRENDS-CROSS-THEME-SYNTHESIS-V2.md",
+      "state": "needs_review",
+      "action": "reacquire_and_reextract",
+      "reason": "Source bytes changed since the last scan; re-extract and review affected claims.",
+      "previousSha256": "previous-fixture-hash",
+      "currentSha256": "current-fixture-hash"
+    }
+  ],
+  "sources": []
+}

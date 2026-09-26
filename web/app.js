@@ -18,9 +18,9 @@ function render() {
   const sourceScan = state.packet.operations?.latestSourceScan;
   if (sourceScan) {
     byId("review-queue").hidden = false;
-    const queue = sourceScan.reviewQueue || [];
+    const queue = sourceScan.reviewWork?.candidates || sourceScan.reviewQueue || [];
     byId("review-summary").textContent = `${sourceScan.reviewRequired} item${sourceScan.reviewRequired === 1 ? "" : "s"} needs review. Last scan: ${sourceScan.generatedAt}.`;
-    byId("review-items").innerHTML = queue.length ? queue.map((item) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(item.state.replaceAll("_", " "))}</span><span>${escapeHtml(item.action.replaceAll("_", " "))}</span></div><h3>${escapeHtml(item.repository)} · ${escapeHtml(item.sourceId)}</h3><p>${escapeHtml(item.reason)}</p><details><summary>Open change details</summary><dl><dt>Source</dt><dd><code>${escapeHtml(item.sourcePath)}</code></dd><dt>Previous hash</dt><dd><code>${escapeHtml(item.previousSha256 || "none")}</code></dd><dt>Current hash</dt><dd><code>${escapeHtml(item.currentSha256 || "missing")}</code></dd></dl></details></article>`).join("") : `<p class="muted">No source changes are waiting for review.</p>`;
+    byId("review-items").innerHTML = queue.length ? queue.map((item) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(item.state.replaceAll("_", " "))}</span><span>${escapeHtml(item.action.replaceAll("_", " "))}</span>${item.publication ? `<span>${escapeHtml(item.publication.replaceAll("_", " "))}</span>` : ""}</div><h3>${escapeHtml(item.repository)} · ${escapeHtml(item.sourceId)}</h3><p>${escapeHtml(item.reason)}</p>${item.observation ? `<p>${escapeHtml(item.observation)}</p>` : ""}<details><summary>Open change details</summary><dl><dt>Source</dt><dd><code>${escapeHtml(item.sourcePath)}</code></dd><dt>Previous hash</dt><dd><code>${escapeHtml(item.previousSha256 || "none")}</code></dd><dt>Current hash</dt><dd><code>${escapeHtml(item.currentSha256 || item.sourceDigest || "missing")}</code></dd></dl></details></article>`).join("") : `<p class="muted">No source changes are waiting for review.</p>`;
   }
 
   const reportRecord = records.find((record) => record.reportWindow);
