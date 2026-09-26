@@ -42,6 +42,9 @@ try {
   const briefing = briefings.briefings[0];
   const briefingResponse = await fetch(`${base}/api/briefings/${encodeURIComponent(briefing.id)}/publish`, { method: "POST", headers: write(`briefing-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", note: "Durability test" }) });
   if (briefingResponse.status !== 200) throw new Error(`Briefing publication failed: ${briefingResponse.status}`);
+  const exportResponse = await fetch(`${base}/api/briefings/${encodeURIComponent(briefing.id)}/export?workspace=demo-research`, { headers: auth });
+  const exported = await exportResponse.json();
+  if (exportResponse.status !== 200 || exported.schemaVersion !== "source-linked-briefing-export-v1" || !exported.evidence.length || !exportResponse.headers.get("content-disposition")) throw new Error("Source-linked briefing export failed.");
   const candidates = JSON.parse(await readFile(resolve(runtimeDir, "insight-candidates.json"), "utf8"));
   const candidate = candidates.candidates[0];
   const decisionResponse = await fetch(`${base}/api/insight-candidates/${encodeURIComponent(candidate.id)}/decision`, { method: "POST", headers: write(`decision-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", decision: "defer", note: "Durability test" }) });

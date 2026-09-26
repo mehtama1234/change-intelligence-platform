@@ -296,6 +296,34 @@ const server = createServer(async (request, response) => {
       await writeFile(insightPublicationsPath, `${JSON.stringify(store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications"), null, 2)}\n`);
       return json(response, 200, publication);
     }
+    if (request.method === "GET" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/export")) {
+      const briefingId = decodeURIComponent(url.pathname.slice("/api/briefings/".length, -"/export".length));
+      const workspaceId = url.searchParams.get("workspace");
+      const access = await workspaceAccess(request, workspaceId);
+      if (denyWorkspaceRead(response, access)) return;
+      const ledger = await readJson(briefingsPath, { briefings: [] });
+      const briefing = ledger.briefings.find((candidate) => candidate.id === briefingId && (!workspaceId || candidate.workspaceId === workspaceId) && (!access.workspaceIds || access.workspaceIds.includes(candidate.workspaceId)));
+      if (!briefing) return json(response, 404, { error: "Briefing not found in this workspace." });
+      const artifact = {
+        schemaVersion: "source-linked-briefing-export-v1",
+        exportedAt: new Date().toISOString(),
+        briefing: {
+          id: briefing.id,
+          workspaceId: briefing.workspaceId,
+          questionId: briefing.questionId,
+          title: briefing.title,
+          state: briefing.state,
+          reading: briefing.reading,
+          boundary: briefing.boundary,
+          nextTest: briefing.nextTest,
+          publication: briefing.publication ?? "not_published",
+          publishedAt: briefing.publishedAt ?? null
+        },
+        evidence: briefing.evidence ?? []
+      };
+      response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="${briefing.id}.json"`, "Cache-Control": "no-store" });
+      return response.end(JSON.stringify(artifact, null, 2));
+    }
     if (request.method !== "GET") return json(response, 405, { error: "This method is not supported for this endpoint." });
     if (url.pathname === "/api/health") return json(response, 200, { status: "ok", service: "change-intelligence-read-model", authMode, database: store.health(), generatedAt: new Date().toISOString() });
     if (url.pathname === "/api/readiness") {
