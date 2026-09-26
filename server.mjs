@@ -262,13 +262,17 @@ function buildWorkspaceUpdate({ workspaceId, workspaceName, refresh, readiness, 
   };
 }
 
-function buildChangeIntelligenceFeed({ packet, scan, briefings = [], candidates = [], workspaceIds = null }) {
+function buildChangeIntelligenceFeed({ packet, scan, briefings = [], candidates = [], watchlists = [], workspaceIds = null }) {
   const recordsById = new Map((packet.records ?? []).map((record) => [record.id, record]));
   const recordsByPath = new Map((packet.records ?? []).map((record) => [record.sourceRef, record]));
   const candidatesByKey = new Map(candidates.map((candidate) => [candidate.candidateKey, candidate]));
   const visibleBriefings = briefings.filter((briefing) => !workspaceIds || workspaceIds.includes(briefing.workspaceId));
+  const visibleWatchlists = watchlists.filter((watchlist) => !workspaceIds || workspaceIds.includes(watchlist.workspaceId));
+  const scopedSourceIds = new Set(visibleWatchlists.flatMap((watchlist) => watchlist.sourceIds ?? []));
+  const scopedRepositoryIds = new Set(visibleWatchlists.flatMap((watchlist) => watchlist.repositoryIds ?? []));
+  const hasWatchlistScope = visibleWatchlists.length > 0;
   const items = (scan.sources ?? [])
-    .filter((source) => source.status !== "unchanged")
+    .filter((source) => source.status !== "unchanged" && (!hasWatchlistScope || scopedSourceIds.has(source.id) || scopedRepositoryIds.has(source.repository)))
     .map((source) => {
       const record = recordsById.get(source.id) ?? recordsByPath.get(source.path);
       const linkedInsights = record ? (packet.insights ?? []).filter((insight) => (insight.recordIds ?? []).includes(record.id)).map((insight) => {
@@ -307,6 +311,7 @@ function buildChangeIntelligenceFeed({ packet, scan, briefings = [], candidates 
     runId: scan.runId ?? null,
     generatedAt: scan.generatedAt ?? null,
     items,
+    scope: { mode: hasWatchlistScope ? "watchlists" : "all_sources", watchlistCount: visibleWatchlists.length, sourceCount: scopedSourceIds.size, repositoryCount: scopedRepositoryIds.size, explanation: hasWatchlistScope ? "Only sources selected by this workspace's watchlists are shown." : "No watchlist is configured, so all changed sources in the current research set are shown until the workspace narrows the scope." },
     summary: { total: items.length, changed: items.filter((item) => item.status === "changed").length, new: items.filter((item) => item.status === "new").length, missing: items.filter((item) => item.status === "missing").length, deferred: items.filter((item) => item.status === "deferred").length, downstreamItemsNeedingReview: items.filter((item) => item.staleDownstreamCount > 0).length },
     limitation: "This feed identifies source and publication work triggered by a refresh. It does not decide whether a change matters in the world; inspect the source, limits, and linked evidence before acting."
   };
@@ -1414,13 +1419,14 @@ const server = createServer(async (request, response) => {
     if (url.pathname === "/api/change-intelligence") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));
       if (denyWorkspaceRead(response, access)) return;
-      const [packet, scan, briefingLedger, candidateLedger] = await Promise.all([
+      const [packet, scan, briefingLedger, candidateLedger, watchlistLedger] = await Promise.all([
         readJson(packetPath, { records: [], insights: [] }),
         readJson(sourceScanPath, { runId: null, generatedAt: null, sources: [] }),
         readJson(briefingsPath, { briefings: [] }),
-        readJson(insightCandidatesPath, { candidates: [] })
+        readJson(insightCandidatesPath, { candidates: [] }),
+        readJson(watchlistsPath, { watchlists: [] })
       ]);
-      return json(response, 200, buildChangeIntelligenceFeed({ packet, scan, briefings: briefingLedger.briefings ?? [], candidates: candidateLedger.candidates ?? [], workspaceIds: access.workspaceIds }));
+      return json(response, 200, buildChangeIntelligenceFeed({ packet, scan, briefings: briefingLedger.briefings ?? [], candidates: candidateLedger.candidates ?? [], watchlists: watchlistLedger.watchlists ?? [], workspaceIds: access.workspaceIds }));
     }
     if (request.method === "GET" && url.pathname.startsWith("/api/change-intelligence/") && url.pathname.endsWith("/diff")) {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

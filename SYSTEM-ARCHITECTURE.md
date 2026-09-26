@@ -114,6 +114,10 @@ packet and atlas generation consume that ledger when it is available.
     signal, mechanism, response, affected-group, observed-result, and
     counterexample stages, marking missing stages as open instead of filling
     them with inference.
+31. **Watchlist-scoped change feed** — a configured workspace sees refresh work
+    for its selected sources or repositories; a workspace without a watchlist
+    receives an explicit all-sources onboarding view rather than an unexplained
+    empty feed.
 
 ## Background jobs
 
