@@ -116,6 +116,11 @@ try {
   const operatorKickoff = await fetch(`${base}/api/operator/pilot-kickoff?workspace=demo-research`, { headers: { Authorization: "Bearer operator-token" } });
   const operatorKickoffBody = await operatorKickoff.json();
   if (operatorKickoff.status !== 200 || operatorKickoffBody.schemaVersion !== "pilot-kickoff-packet-v1" || operatorKickoffBody.workspace?.id !== "demo-research" || !operatorKickoff.headers.get("content-disposition")?.includes("demo-research-pilot-kickoff.json")) throw new Error("Operator pilot kickoff export contract failed.");
+  const outsiderOperatorCloseout = await fetch(`${base}/api/operator/pilot-closeout?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderOperatorCloseout.status !== 403) throw new Error(`Expected non-operator closeout export to return 403, received ${outsiderOperatorCloseout.status}`);
+  const operatorCloseout = await fetch(`${base}/api/operator/pilot-closeout?workspace=demo-research`, { headers: { Authorization: "Bearer operator-token" } });
+  const operatorCloseoutBody = await operatorCloseout.json();
+  if (operatorCloseout.status !== 200 || operatorCloseoutBody.schemaVersion !== "pilot-closeout-packet-v1" || operatorCloseoutBody.workspace?.id !== "demo-research" || !operatorCloseout.headers.get("content-disposition")?.includes("demo-research-pilot-closeout.json") || JSON.stringify(operatorCloseoutBody).includes("private note")) throw new Error("Operator pilot closeout export contract or privacy boundary failed.");
   const provisioningKey = "operator-workspace-provisioning";
   const provision = await fetch(`${base}/api/operator/workspaces`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": provisioningKey, "content-type": "application/json" }, body: JSON.stringify({ name: "New partner workspace", ownerId: "new-owner", members: [{ id: "new-researcher", role: "researcher" }] }) });
   const provisionBody = await provision.json();

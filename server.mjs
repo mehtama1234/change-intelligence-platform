@@ -2299,6 +2299,35 @@ const server = createServer(async (request, response) => {
       response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="${workspace.id}-pilot-kickoff.json"`, "Cache-Control": "no-store" });
       return response.end(JSON.stringify(packet));
     }
+    if (url.pathname === "/api/operator/pilot-closeout") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const workspaceId = url.searchParams.get("workspace");
+      if (!workspaceId) return json(response, 400, { error: "Choose one workspace for the pilot closeout packet." });
+      const workspace = await workspaceConfig(workspaceId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
+      const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
+      const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions.filter((decision) => decision.workspaceId === workspace.id);
+      const outcomes = store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes").outcomes.filter((outcome) => outcome.workspaceId === workspace.id);
+      const alerts = store.alertsLedger().alerts.filter((alert) => alert.workspaceId === workspace.id);
+      const briefingLedger = await readJson(briefingsPath, { briefings: [] });
+      const briefings = briefingLedger.briefings.filter((briefing) => briefing.workspaceId === workspace.id);
+      const entries = store.auditLedger().entries.filter((entry) => entry.workspaceId === workspace.id);
+      const profile = profiles.find((candidate) => candidate.workspaceId === workspace.id) ?? null;
+      const learning = buildPilotLearningReport({ workspaceId: workspace.id, profile, deliveries, decisions, outcomes });
+      const metrics = buildPilotMetrics({ workspaceId: workspace.id, auditEntries: entries, alerts, outcomes, briefings, deliveries });
+      const notifications = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;
+      const attempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
+      const deliveryHealth = buildWorkspaceDeliveryHealth({ workspaceId: workspace.id, notifications, attempts });
+      const serviceReport = buildWorkspaceServiceReport({ workspaceId: workspace.id, profile, deliveries, learning, deliveryHealth });
+      const history = store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots").snapshots;
+      const readiness = buildCommercialPilotReadiness({ workspaceId: workspace.id, profile, learning, serviceReport, history });
+      const packet = buildPilotCloseout({ workspace, profile, learning, readiness, metrics, serviceReport });
+      await appendAudit({ requestId, action: "operator_export_pilot_closeout", targetId: workspace.id, workspaceId: workspace.id, actorId: operator.actorId, actorRole: "operator", result: "exported", occurredAt: new Date().toISOString() });
+      response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="${workspace.id}-pilot-closeout.json"`, "Cache-Control": "no-store" });
+      return response.end(JSON.stringify(packet));
+    }
     if (url.pathname === "/api/operator/pilot-overview") {
       const operator = operatorAccess(request);
       if (operator.error) return json(response, operator.error.status, operator.error.body);
