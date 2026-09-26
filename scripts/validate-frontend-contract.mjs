@@ -21,6 +21,7 @@ const required = [
   [html, 'id="workspace-retention"', "workspace retention control"],
   [html, 'id="workspace-onboarding"', "workspace onboarding panel"],
   [operatorHtml, 'id="operator-workspaces"', "operator workspace queue"],
+  [operatorHtml, 'id="operator-invitations"', "operator invitation outbox"],
   [operatorHtml, 'id="provision-workspace"', "operator workspace provisioning"],
   [operatorHtml, 'id="invite-workspace-member"', "operator member invitation"],
   [operatorHtml, 'id="activate-workspace-member"', "operator member activation"],
@@ -110,6 +111,7 @@ const required = [
   , [operatorApp, "/api/operator/pilot-overview", "operator overview API"]
   , [operatorApp, "/api/operator/warnings/", "operator warning action API"]
   , [operatorApp, "/api/operator/notifications", "operator notification API"]
+  , [operatorApp, "/api/operator/workspace-invitations", "workspace invitation outbox API"]
   , [operatorApp, "/api/operator/notification-routes", "operator routing API"]
   , [operatorApp, "/api/operator/workspaces", "operator workspace provisioning API"]
   , [operatorApp, "/members/", "operator member lifecycle API"]

@@ -131,6 +131,12 @@ provider has confirmed the account. Suspended memberships are also excluded
 from normal workspace access and cannot be reactivated through the ordinary
 activation command.
 
+Invitation records contain only an internal identity ID, workspace, role, and
+state. They do not contain email credentials, invitation links, access tokens,
+or password-reset data. A provider adapter must handle those sensitive values
+outside this service and report confirmation back through the operator
+activation boundary.
+
 Token-authenticated write requests must also send an `Idempotency-Key`. A
 retry with the same key replays the original result instead of creating a
 second question, decision, publication, or acknowledgment.

@@ -100,6 +100,12 @@ The operator can also record an invitation and activate the member after the
 customer's identity system confirms the account. This gives onboarding a
 visible handoff: created, invited, activated, configured, and first delivery.
 
+The invitation outbox makes this handoff observable to the service operator:
+an invitation can be waiting for the identity provider, or it can be closed
+after the customer's account is confirmed. The platform therefore has a clear
+operational boundary instead of pretending that a workspace record alone is
+customer onboarding.
+
 Customers are not paying for more articles. They pay for reduced uncertainty:
 
 - faster orientation;

@@ -54,6 +54,7 @@ const reviewDecisionsPath = resolve(runtimeDir, "review-decisions.json");
 const reviewEventsPath = resolve(runtimeDir, "review-events.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const workspaceRegistryPath = resolve(runtimeDir, "workspace-registry.json");
+const workspaceInvitationsPath = resolve(runtimeDir, "workspace-invitations.json");
 const sourceRegistryPath = resolve(root, "data/source-registry.json");
 const authMode = process.env.AUTH_MODE ?? "demo";
 const tokenActors = authMode === "token" ? JSON.parse(process.env.AUTH_TOKENS_JSON ?? "{}") : {};
@@ -180,6 +181,10 @@ async function persistWorkspaceRegistryEntry(workspace) {
   registry.schemaVersion = "workspace-registry-v1";
   registry.workspaces = [...(registry.workspaces ?? []).filter((candidate) => candidate.id !== workspace.id), workspace];
   await writeFile(workspaceRegistryPath, `${JSON.stringify(registry, null, 2)}\n`);
+}
+
+async function writeWorkspaceInvitations(invitations) {
+  await writeFile(workspaceInvitationsPath, `${JSON.stringify({ schemaVersion: "workspace-invitation-ledger-v1", updatedAt: new Date().toISOString(), invitations }, null, 2)}\n`);
 }
 
 function buildCoverage(packet, registry) {
@@ -1426,6 +1431,9 @@ const server = createServer(async (request, response) => {
       const now = new Date().toISOString();
       const workspace = { schemaVersion: "workspace-v1", id: `workspace-${randomUUID()}`, name, members, watchlists: [], provisionedAt: now, provisionedBy: operator.actorId };
       await persistWorkspaceRegistryEntry(workspace);
+      const invitationLedger = await readJson(workspaceInvitationsPath, { invitations: [] });
+      const invitations = [...(invitationLedger.invitations ?? []), ...members.filter((member) => member.status === "invited").map((member) => ({ id: `invitation-${randomUUID()}`, workspaceId: workspace.id, identityId: member.id, role: member.role, status: "pending", provider: "external_identity_provider", createdAt: now, createdBy: operator.actorId, dispatchedAt: null, activatedAt: null }))];
+      await writeWorkspaceInvitations(invitations);
       const responseBody = { ...workspace, identityProvisioning: "Map these member identity IDs to production identity-provider accounts before inviting the partner." };
       await appendAudit({ requestId, action: "provision_workspace", targetId: workspace.id, workspaceId: workspace.id, actorId: operator.actorId, actorRole: "operator", result: "provisioned", occurredAt: now });
       await storeOperation({ key: idempotencyKey, action: "provision_workspace", status: 201, body: responseBody, completedAt: now });
@@ -1451,6 +1459,9 @@ const server = createServer(async (request, response) => {
       const member = { id: identityId, role, status: "invited", invitedAt: now, invitedBy: operator.actorId };
       const updated = { ...workspace, members: [...(workspace.members ?? []), member] };
       await persistWorkspaceRegistryEntry(updated);
+      const invitationLedger = await readJson(workspaceInvitationsPath, { invitations: [] });
+      const invitation = { id: `invitation-${randomUUID()}`, workspaceId, identityId, role, status: "pending", provider: "external_identity_provider", createdAt: now, createdBy: operator.actorId, dispatchedAt: null, activatedAt: null };
+      await writeWorkspaceInvitations([...(invitationLedger.invitations ?? []), invitation]);
       const responseBody = { workspaceId, member, identityProviderAction: "Invite this identity through the production identity provider, then activate the membership after the account is confirmed." };
       await appendAudit({ requestId, action: "invite_workspace_member", targetId: identityId, workspaceId, actorId: operator.actorId, actorRole: "operator", result: "invited", occurredAt: now });
       await storeOperation({ key: idempotencyKey, action: "invite_workspace_member", status: 201, body: responseBody, completedAt: now });
@@ -1475,6 +1486,9 @@ const server = createServer(async (request, response) => {
       const member = { ...existingMember, status: "active", activatedAt: now, activatedBy: operator.actorId };
       const updated = { ...workspace, members: workspace.members.map((candidate) => candidate.id === identityId ? member : candidate) };
       await persistWorkspaceRegistryEntry(updated);
+      const invitationLedger = await readJson(workspaceInvitationsPath, { invitations: [] });
+      const invitations = (invitationLedger.invitations ?? []).map((invitation) => invitation.workspaceId === workspaceId && invitation.identityId === identityId && invitation.status !== "activated" ? { ...invitation, status: "activated", activatedAt: now, activatedBy: operator.actorId } : invitation);
+      await writeWorkspaceInvitations(invitations);
       const responseBody = { workspaceId, member };
       await appendAudit({ requestId, action: "activate_workspace_member", targetId: identityId, workspaceId, actorId: operator.actorId, actorRole: "operator", result: "active", occurredAt: now });
       await storeOperation({ key: idempotencyKey, action: "activate_workspace_member", status: 200, body: responseBody, completedAt: now });
@@ -1963,6 +1977,12 @@ const server = createServer(async (request, response) => {
       if (operator.error) return json(response, operator.error.status, operator.error.body);
       const attempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
       return json(response, 200, { schemaVersion: "operator-notification-outbox-v1", notifications: store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications.map(({ body, ...notification }) => ({ ...notification, attemptHistory: attempts.filter((attempt) => attempt.notificationId === notification.id) })) });
+    }
+    if (url.pathname === "/api/operator/workspace-invitations") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const ledger = await readJson(workspaceInvitationsPath, { invitations: [] });
+      return json(response, 200, { schemaVersion: "workspace-invitation-read-model-v1", invitations: ledger.invitations ?? [], limitation: "This is a provider-neutral outbox. It records what must be sent or confirmed; it does not contain credentials or send identity-provider messages itself." });
     }
     if (url.pathname === "/api/operator/notification-routes") {
       const operator = operatorAccess(request);

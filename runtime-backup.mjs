@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 
 const runtimeFiles = [
   "workspace-registry.json",
+  "workspace-invitations.json",
   "workspace-questions.json",
   "audit-log.json",
   "idempotency-operations.json",

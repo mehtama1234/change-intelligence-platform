@@ -106,6 +106,8 @@ try {
   const provisionRetry = await fetch(`${base}/api/operator/workspaces`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": provisioningKey, "content-type": "application/json" }, body: JSON.stringify({ name: "Different name", ownerId: "different-owner" }) });
   const provisionRetryBody = await provisionRetry.json();
   if (provisionRetry.status !== 201 || provisionRetryBody.id !== provisionBody.id) throw new Error("Workspace provisioning idempotency did not replay the original result.");
+  const provisionedInvitations = await (await fetch(`${base}/api/operator/workspace-invitations`, { headers: { Authorization: "Bearer operator-token" } })).json();
+  if (provisionedInvitations.schemaVersion !== "workspace-invitation-read-model-v1" || !provisionedInvitations.invitations.some((invitation) => invitation.workspaceId === provisionBody.id && invitation.identityId === "new-researcher" && invitation.status === "pending")) throw new Error("Workspace provisioning did not create a durable invitation outbox item.");
   const newOwnerWorkspaces = await (await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer new-owner-token" } })).json();
   if (newOwnerWorkspaces.length !== 1 || newOwnerWorkspaces[0].id !== provisionBody.id) throw new Error("Provisioned workspace was not visible only to its configured member.");
   const provisionedOnboarding = await fetch(`${base}/api/workspace-onboarding?workspace=${encodeURIComponent(provisionBody.id)}`, { headers: { Authorization: "Bearer new-owner-token" } });
@@ -119,10 +121,14 @@ try {
   if (invitedMemberWorkspaces.length !== 0) throw new Error("An invited member received workspace access before activation.");
   const invite = await fetch(`${base}/api/operator/workspaces/${encodeURIComponent(provisionBody.id)}/members`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": "workspace-member-invite", "content-type": "application/json" }, body: JSON.stringify({ identityId: "another-viewer", role: "viewer" }) });
   if (invite.status !== 201) throw new Error(`Operator member invitation failed: ${invite.status}`);
+  const inviteOutbox = await (await fetch(`${base}/api/operator/workspace-invitations`, { headers: { Authorization: "Bearer operator-token" } })).json();
+  if (!inviteOutbox.invitations.some((invitation) => invitation.identityId === "another-viewer" && invitation.status === "pending")) throw new Error("Member invitation was not added to the outbox.");
   const activated = await fetch(`${base}/api/operator/workspaces/${encodeURIComponent(provisionBody.id)}/members/new-researcher/activate`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": "workspace-member-activate" }, body: "{}" });
   if (activated.status !== 200) throw new Error(`Operator member activation failed: ${activated.status}`);
   const activatedWorkspaces = await (await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer new-researcher-token" } })).json();
   if (activatedWorkspaces.length !== 1 || activatedWorkspaces[0].id !== provisionBody.id) throw new Error("Activated member did not receive workspace access.");
+  const activatedOutbox = await (await fetch(`${base}/api/operator/workspace-invitations`, { headers: { Authorization: "Bearer operator-token" } })).json();
+  if (!activatedOutbox.invitations.some((invitation) => invitation.identityId === "new-researcher" && invitation.status === "activated")) throw new Error("Member activation did not close the invitation outbox item.");
   const routeWrite = await fetch(`${base}/api/operator/notification-routes`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": "operator-route-config", "content-type": "application/json" }, body: JSON.stringify({ default: ["platform-ops"], warningIds: { "refresh-failures": ["refresh-ops"] }, workspaces: { "demo-research": ["tenant-ops"] }, destinations: { "tenant-ops": { id: "tenant-ops-webhook", mode: "webhook", url: "https://tenant.example.test/notify" } } }) });
   if (routeWrite.status !== 200) throw new Error(`Operator route configuration failed: ${routeWrite.status}`);
   const routeRead = await (await fetch(`${base}/api/operator/notification-routes`, { headers: { Authorization: "Bearer operator-token" } })).json();

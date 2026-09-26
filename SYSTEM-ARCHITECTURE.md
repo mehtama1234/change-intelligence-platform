@@ -248,3 +248,9 @@ as `invited` and cannot read or write workspace data. An operator activates it
 only after the external identity provider confirms the account. Active-member
 checks are applied centrally, so every existing workspace command receives the
 same rule.
+
+Invitation requests are kept in a separate runtime outbox. Each record names
+the workspace, identity ID, role, provider boundary, and state (`pending` or
+`activated`). This gives an external identity-provider adapter a durable item
+to consume without putting credentials, reset links, or provider secrets in
+the change-intelligence service.
