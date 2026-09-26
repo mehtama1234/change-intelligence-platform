@@ -18,6 +18,7 @@ const briefingPublicationsPath = resolve(root, "data/processed/runs/ai-work-cont
 const insightDecisionsPath = resolve(root, "data/processed/runs/ai-work-control/insight-decisions.json");
 const insightCandidatesPath = resolve(root, "data/processed/runs/ai-work-control/insight-candidates.json");
 const insightPublicationsPath = resolve(root, "data/processed/runs/ai-work-control/insight-publications.json");
+const auditPath = resolve(root, "data/processed/runs/ai-work-control/audit-log.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const authMode = process.env.AUTH_MODE ?? "demo";
 const tokenActors = authMode === "token" ? JSON.parse(process.env.AUTH_TOKENS_JSON ?? "{}") : {};
@@ -60,9 +61,18 @@ async function readJson(path, fallback) {
   }
 }
 
+async function appendAudit(entry) {
+  const ledger = await readJson(auditPath, { schemaVersion: "audit-log-v1", entries: [] });
+  ledger.entries.push(entry);
+  ledger.updatedAt = entry.occurredAt;
+  await writeFile(auditPath, `${JSON.stringify(ledger, null, 2)}\n`);
+}
+
 const server = createServer(async (request, response) => {
   try {
     const url = new URL(request.url, `http://${request.headers.host ?? "localhost"}`);
+    const requestId = request.headers["x-request-id"] || randomUUID();
+    response.setHeader("X-Request-Id", requestId);
     if (request.method === "POST" && url.pathname.startsWith("/api/alerts/") && url.pathname.endsWith("/acknowledge")) {
       const alertId = decodeURIComponent(url.pathname.slice("/api/alerts/".length, -"/acknowledge".length));
       const body = await requestBody(request);
@@ -81,6 +91,7 @@ const server = createServer(async (request, response) => {
       alert.acknowledgedAt = new Date().toISOString();
       alert.acknowledgmentNote = String(body.note ?? "").slice(0, 2000);
       await writeFile(alertsPath, `${JSON.stringify(ledger, null, 2)}\n`);
+      await appendAudit({ requestId, action: "acknowledge_alert", targetId: alert.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "acknowledged", occurredAt: alert.acknowledgedAt });
       return json(response, 200, alert);
     }
     if (request.method === "POST" && url.pathname === "/api/questions") {
@@ -99,6 +110,7 @@ const server = createServer(async (request, response) => {
       ledger.questions.push(saved);
       ledger.updatedAt = now;
       await writeFile(questionsPath, `${JSON.stringify(ledger, null, 2)}\n`);
+      await appendAudit({ requestId, action: "create_question", targetId: saved.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "created", occurredAt: now });
       return json(response, 201, saved);
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/publish")) {
@@ -125,6 +137,7 @@ const server = createServer(async (request, response) => {
       briefing.publishedAt = now;
       await writeFile(briefingsPath, `${JSON.stringify(ledger, null, 2)}\n`);
       await writeFile(briefingPublicationsPath, `${JSON.stringify(publications, null, 2)}\n`);
+      await appendAudit({ requestId, action: "publish_briefing", targetId: briefing.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "published", occurredAt: now });
       return json(response, 200, { ...briefing, publication });
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/insight-candidates/") && url.pathname.endsWith("/decision")) {
@@ -147,6 +160,7 @@ const server = createServer(async (request, response) => {
       ledger.decisions.push(decision);
       ledger.updatedAt = decision.decidedAt;
       await writeFile(insightDecisionsPath, `${JSON.stringify(ledger, null, 2)}\n`);
+      await appendAudit({ requestId, action: "decide_insight", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: decision.decision, occurredAt: decision.decidedAt });
       return json(response, 200, decision);
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/insight-candidates/") && url.pathname.endsWith("/publish")) {
@@ -167,6 +181,7 @@ const server = createServer(async (request, response) => {
       ledger.publications.push(publication);
       ledger.updatedAt = publication.publishedAt;
       await writeFile(insightPublicationsPath, `${JSON.stringify(ledger, null, 2)}\n`);
+      await appendAudit({ requestId, action: "publish_insight", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "published", occurredAt: publication.publishedAt });
       return json(response, 200, publication);
     }
     if (request.method !== "GET") return json(response, 405, { error: "Only GET and alert acknowledgement POST are supported." });
@@ -195,6 +210,11 @@ const server = createServer(async (request, response) => {
       const ledger = await readJson(briefingsPath, { schemaVersion: "workspace-briefing-ledger-v1", briefings: [] });
       const workspaceId = url.searchParams.get("workspace");
       return json(response, 200, workspaceId ? ledger.briefings.filter((briefing) => briefing.workspaceId === workspaceId) : ledger.briefings);
+    }
+    if (url.pathname === "/api/audit") {
+      const ledger = await readJson(auditPath, { schemaVersion: "audit-log-v1", entries: [] });
+      const workspaceId = url.searchParams.get("workspace");
+      return json(response, 200, workspaceId ? ledger.entries.filter((entry) => entry.workspaceId === workspaceId) : ledger.entries);
     }
     if (url.pathname === "/") {
       response.writeHead(302, { Location: "/web/index.html" });

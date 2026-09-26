@@ -29,6 +29,10 @@ try {
   const authenticated = await fetch(`${base}/api/questions`, { method: "POST", headers: { Authorization: "Bearer research-token", "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", actorId: "demo-viewer", question: "Does token identity control this question?" }) });
   const result = await authenticated.json();
   if (authenticated.status !== 201 || result.createdBy !== "demo-researcher") throw new Error(`Authenticated identity was not applied: ${JSON.stringify(result)}`);
+  if (!authenticated.headers.get("x-request-id")) throw new Error("Write response did not include a request ID.");
+  const auditResponse = await fetch(`${base}/api/audit?workspace=demo-research`);
+  const audit = await auditResponse.json();
+  if (!audit.some((entry) => entry.targetId === result.id && entry.actorId === "demo-researcher")) throw new Error("Question audit receipt was not written.");
   console.log("API authentication smoke test passed: unauthenticated=401, token actor=demo-researcher.");
 } finally {
   child.kill("SIGTERM");
