@@ -49,6 +49,9 @@ warnings, and `default` is the fallback recipient list. A workspace-scoped
 notification carries only its workspace ID and warning summary. Operators can
 manage the same settings through the authenticated `/api/operator/notification-routes`
 command; changes are persisted, idempotent, and audited.
+Each destination has a named ID and validated HTTP(S) URL. Notification records
+store only the destination ID; the delivery worker records every attempt in a
+separate ledger, including success, retry, or dead-letter outcome.
 
 Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map

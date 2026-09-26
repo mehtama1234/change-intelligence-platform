@@ -22,6 +22,7 @@ const paths = {
   operatorWarnings: resolve(runtimeDir, "operator-warning-events.json"),
   operatorNotifications: resolve(runtimeDir, "operator-notification-outbox.json"),
   operatorRoutes: resolve(runtimeDir, "operator-notification-routes.json"),
+  operatorAttempts: resolve(runtimeDir, "operator-notification-attempts.json"),
   sourceScan: resolve(runtimeDir, "latest-source-scan.json"),
   evidenceLedger: resolve(runtimeDir, "versioned-evidence-ledger.json"),
   reviewDecisions: resolve(runtimeDir, "review-decisions.json"),
@@ -91,7 +92,7 @@ try {
     for (const recipient of recipients) {
       const notificationKey = `${warning.id}:${recipient}`;
       if (notificationByWarning.has(notificationKey)) continue;
-      const notification = { id: `operator-notification-${warning.id}-${recipient}`, warningId: warning.id, workspaceId: warning.workspaceIds?.length === 1 ? warning.workspaceIds[0] : null, channel: "operator-outbox", recipient, status: "pending", subject: `Automatically escalated operator warning: ${warning.id}`, body: event.note, createdBy: actorId, createdAt: nowIso, dispatchedAt: null, dispatchNote: null };
+      const notification = { id: `operator-notification-${warning.id}-${recipient}`, warningId: warning.id, workspaceId: warning.workspaceIds?.length === 1 ? warning.workspaceIds[0] : null, channel: "operator-outbox", recipient, destinationId: notificationRoutes.destinations?.[recipient]?.id ?? recipient, status: "pending", subject: `Automatically escalated operator warning: ${warning.id}`, body: event.note, createdBy: actorId, createdAt: nowIso, dispatchedAt: null, dispatchNote: null };
       store.syncRecords("operator_notification", [notification]);
       store.appendAudit({ requestId: `operator-policy-${process.env.REFRESH_RUN_ID ?? now}`, action: "queue_operator_notification", targetId: notification.id, workspaceId: notification.workspaceId, actorId, actorRole: "system", result: "pending", occurredAt: nowIso });
       notificationByWarning.set(notificationKey, notification);

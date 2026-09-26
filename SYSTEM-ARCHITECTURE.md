@@ -47,6 +47,8 @@ Adapter output is then hashed and stored as a source snapshot before review.
 14. **Notification delivery worker** — optionally sends outbox envelopes to an
     explicitly configured webhook, records bounded retries, and moves exhausted
     failures to a dead-letter state.
+15. **Delivery history** — stores one non-content attempt record per delivery
+    try so operators can see reliability by recipient and destination.
 
 ## Background jobs
 

@@ -29,6 +29,7 @@ const pilotDecisionsPath = resolve(runtimeDir, "workspace-pilot-decisions.json")
 const operatorWarningsPath = resolve(runtimeDir, "operator-warning-events.json");
 const operatorNotificationsPath = resolve(runtimeDir, "operator-notification-outbox.json");
 const operatorRoutesPath = resolve(runtimeDir, "operator-notification-routes.json");
+const operatorAttemptsPath = resolve(runtimeDir, "operator-notification-attempts.json");
 const auditPath = resolve(runtimeDir, "audit-log.json");
 const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
 const sourceScanPath = resolve(runtimeDir, "latest-source-scan.json");
@@ -68,6 +69,7 @@ await importRuntimeLedgers(store, {
   operatorWarnings: operatorWarningsPath,
   operatorNotifications: operatorNotificationsPath,
   operatorRoutes: operatorRoutesPath,
+  operatorAttempts: operatorAttemptsPath,
   workspaceDir,
   sourceScan: sourceScanPath,
   evidenceLedger: evidenceLedgerPath,
@@ -745,7 +747,8 @@ const server = createServer(async (request, response) => {
       const event = { id: `operator-warning-${warningId}`, warningId, state, note, ownerId, escalationState, observedAt, responseTimeMs, actedBy: operator.actorId, actedAt: now };
       store.commitRecord({ kind: "operator_warning", record: event, audit: { requestId, action: "change_operator_warning", targetId: warningId, workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: state, occurredAt: now }, operation: { key: idempotencyKey, action: "change_operator_warning", status: 200, body: event, completedAt: now } });
       if (escalationState === "escalated") {
-        const notification = { id: `operator-notification-${warningId}`, warningId, channel: "operator-outbox", recipient: ownerId, status: "pending", subject: `Escalated operator warning: ${warningId}`, body: note, createdBy: operator.actorId, createdAt: now, dispatchedAt: null, dispatchNote: null };
+        const routeSettings = store.findRecord("operator_notification_route", "operator-notification-routes");
+        const notification = { id: `operator-notification-${warningId}`, warningId, channel: "operator-outbox", recipient: ownerId, destinationId: routeSettings?.destinations?.[ownerId]?.id ?? ownerId, status: "pending", subject: `Escalated operator warning: ${warningId}`, body: note, createdBy: operator.actorId, createdAt: now, dispatchedAt: null, dispatchNote: null };
         store.syncRecords("operator_notification", [notification]);
         store.appendAudit({ requestId, action: "queue_operator_notification", targetId: notification.id, workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: "pending", occurredAt: now });
         await writeFile(operatorNotificationsPath, `${JSON.stringify(store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications"), null, 2)}\n`);
@@ -782,7 +785,8 @@ const server = createServer(async (request, response) => {
       const prior = await replayOperation(idempotencyKey);
       if (prior) return json(response, prior.status, prior.body);
       const cleanList = (value) => [...new Set((Array.isArray(value) ? value : []).map((item) => String(item).trim()).filter(Boolean))].slice(0, 100);
-      const routes = { id: "operator-notification-routes", default: cleanList(body.default), warningIds: Object.fromEntries(Object.entries(body.warningIds && typeof body.warningIds === "object" ? body.warningIds : {}).slice(0, 50).map(([warningId, recipients]) => [String(warningId).slice(0, 120), cleanList(recipients)]).filter(([, recipients]) => recipients.length)), workspaces: Object.fromEntries(Object.entries(body.workspaces && typeof body.workspaces === "object" ? body.workspaces : {}).slice(0, 100).map(([workspaceId, recipients]) => [String(workspaceId).slice(0, 120), cleanList(recipients)]).filter(([, recipients]) => recipients.length)), updatedBy: operator.actorId, updatedAt: new Date().toISOString() };
+      const destinations = Object.fromEntries(Object.entries(body.destinations && typeof body.destinations === "object" ? body.destinations : {}).slice(0, 100).map(([recipient, destination]) => { const id = String(destination?.id ?? recipient).slice(0, 120); const mode = String(destination?.mode ?? "webhook"); let url; try { url = new URL(String(destination?.url ?? "")); } catch { return [recipient, null]; } if (mode !== "webhook" || !["http:", "https:"].includes(url.protocol)) return [recipient, null]; return [String(recipient).slice(0, 120), { id, mode, url: url.toString() }]; }).filter(([, destination]) => destination));
+      const routes = { id: "operator-notification-routes", default: cleanList(body.default), warningIds: Object.fromEntries(Object.entries(body.warningIds && typeof body.warningIds === "object" ? body.warningIds : {}).slice(0, 50).map(([warningId, recipients]) => [String(warningId).slice(0, 120), cleanList(recipients)]).filter(([, recipients]) => recipients.length)), workspaces: Object.fromEntries(Object.entries(body.workspaces && typeof body.workspaces === "object" ? body.workspaces : {}).slice(0, 100).map(([workspaceId, recipients]) => [String(workspaceId).slice(0, 120), cleanList(recipients)]).filter(([, recipients]) => recipients.length)), destinations, updatedBy: operator.actorId, updatedAt: new Date().toISOString() };
       if (!routes.default.length && !Object.keys(routes.warningIds).length && !Object.keys(routes.workspaces).length) return json(response, 400, { error: "At least one notification route is required." });
       store.commitRecord({ kind: "operator_notification_route", record: routes, audit: { requestId, action: "configure_operator_notification_routes", targetId: routes.id, workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: "configured", occurredAt: routes.updatedAt }, operation: { key: idempotencyKey, action: "configure_operator_notification_routes", status: 200, body: routes, completedAt: routes.updatedAt } });
       await writeFile(operatorRoutesPath, `${JSON.stringify(store.recordsLedger("operator_notification_route", "operator-notification-route-ledger-v1", "settings"), null, 2)}\n`);
@@ -1032,7 +1036,8 @@ const server = createServer(async (request, response) => {
     if (url.pathname === "/api/operator/notifications") {
       const operator = operatorAccess(request);
       if (operator.error) return json(response, operator.error.status, operator.error.body);
-      return json(response, 200, { schemaVersion: "operator-notification-outbox-v1", notifications: store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications.map(({ body, ...notification }) => notification) });
+      const attempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
+      return json(response, 200, { schemaVersion: "operator-notification-outbox-v1", notifications: store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications.map(({ body, ...notification }) => ({ ...notification, attemptHistory: attempts.filter((attempt) => attempt.notificationId === notification.id) })) });
     }
     if (url.pathname === "/api/operator/notification-routes") {
       const operator = operatorAccess(request);

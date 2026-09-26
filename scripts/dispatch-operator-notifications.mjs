@@ -21,6 +21,8 @@ const paths = {
   pilotDecisions: resolve(runtimeDir, "workspace-pilot-decisions.json"),
   operatorWarnings: resolve(runtimeDir, "operator-warning-events.json"),
   operatorNotifications: resolve(runtimeDir, "operator-notification-outbox.json"),
+  operatorRoutes: resolve(runtimeDir, "operator-notification-routes.json"),
+  operatorAttempts: resolve(runtimeDir, "operator-notification-attempts.json"),
   sourceScan: resolve(runtimeDir, "latest-source-scan.json"),
   evidenceLedger: resolve(runtimeDir, "versioned-evidence-ledger.json"),
   reviewDecisions: resolve(runtimeDir, "review-decisions.json"),
@@ -43,28 +45,33 @@ try {
     console.log(JSON.stringify({ mode, pending: pending.length, delivered: 0, skipped: pending.length }, null, 2));
   } else {
     if (mode !== "webhook") throw new Error(`Unsupported operator notification delivery mode: ${mode}`);
-    let target;
-    try { target = new URL(webhookUrl); } catch { throw new Error("OPERATOR_NOTIFICATION_WEBHOOK_URL must be a valid URL when webhook delivery is enabled."); }
-    if (!['http:', 'https:'].includes(target.protocol)) throw new Error("Operator notification webhook must use http or https.");
+    const routeSettings = store.findRecord("operator_notification_route", "operator-notification-routes") ?? {};
     let delivered = 0;
     let failed = 0;
     for (const original of pending) {
+      const configuredDestination = routeSettings.destinations?.[original.recipient];
+      let target;
+      try { target = new URL(configuredDestination?.url ?? webhookUrl); } catch { target = null; }
       const attempts = Number(original.attempts ?? 0) + 1;
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       let result;
       try {
-        const response = await fetch(target, { method: "POST", headers: { "content-type": "application/json", "user-agent": "change-intelligence-operator-delivery/1" }, body: JSON.stringify({ schemaVersion: "operator-notification-v1", notification: { id: original.id, warningId: original.warningId, workspaceId: original.workspaceId ?? null, recipient: original.recipient, subject: original.subject, body: original.body, createdAt: original.createdAt } }), signal: controller.signal });
+        if (!target || !["http:", "https:"].includes(target.protocol)) throw new Error("No valid webhook destination is configured for this recipient.");
+        const response = await fetch(target, { method: "POST", headers: { "content-type": "application/json", "user-agent": "change-intelligence-operator-delivery/1" }, body: JSON.stringify({ schemaVersion: "operator-notification-v1", notification: { id: original.id, warningId: original.warningId, workspaceId: original.workspaceId ?? null, recipient: original.recipient, destinationId: original.destinationId ?? original.recipient, subject: original.subject, body: original.body, createdAt: original.createdAt } }), signal: controller.signal });
         result = response.ok ? { status: "delivered", deliveredAt: new Date().toISOString(), lastError: null } : { status: attempts >= maxAttempts ? "dead_letter" : "pending", lastError: `Webhook returned HTTP ${response.status}` };
       } catch (error) {
         result = { status: attempts >= maxAttempts ? "dead_letter" : "pending", lastError: error.name === "AbortError" ? `Webhook timed out after ${timeoutMs}ms` : String(error.message ?? error).slice(0, 500) };
       } finally { clearTimeout(timer); }
       const attemptedAt = new Date().toISOString();
-      const notification = { ...original, ...result, attempts, lastAttemptAt: attemptedAt, nextAttemptAt: result.status === "pending" ? new Date(Date.now() + retryDelayMs).toISOString() : null, deliveredBy: result.status === "delivered" ? actorId : null };
+      const destinationId = configuredDestination?.id ?? original.destinationId ?? original.recipient;
+      const notification = { ...original, destinationId, ...result, attempts, lastAttemptAt: attemptedAt, nextAttemptAt: result.status === "pending" ? new Date(Date.now() + retryDelayMs).toISOString() : null, deliveredBy: result.status === "delivered" ? actorId : null };
       store.commitRecord({ kind: "operator_notification", record: notification, audit: { requestId: `operator-delivery-${notification.id}-${attempts}`, action: "deliver_operator_notification", targetId: notification.id, workspaceId: null, actorId, actorRole: "system", result: result.status, occurredAt: attemptedAt }, operation: { key: null } });
+      store.syncRecords("operator_notification_attempt", [{ id: `operator-attempt-${original.id}-${attempts}`, notificationId: original.id, recipient: original.recipient, destinationId, attempt: attempts, status: result.status, attemptedAt, error: result.lastError }]);
       if (result.status === "delivered") delivered += 1; else failed += 1;
     }
     await writeFile(paths.operatorNotifications, `${JSON.stringify(store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications"), null, 2)}\n`);
+    await writeFile(paths.operatorAttempts, `${JSON.stringify(store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts"), null, 2)}\n`);
     console.log(JSON.stringify({ mode, pending: pending.length, delivered, failed }, null, 2));
   }
 } finally {
