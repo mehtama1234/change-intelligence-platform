@@ -30,11 +30,14 @@ try {
     const changed = await post(`/api/operator/partner-pipeline/${encodeURIComponent(lead.id)}/state`, { status, note }, `partner-${status}`);
     if (changed.status !== 200 || (await changed.json()).status !== status) throw new Error(`Partner transition to ${status} failed.`);
   }
+  const workspaceResponse = await post("/api/operator/workspaces", { name: "Northstar Operations pilot", ownerId: "northstar-owner", partnerLeadId: lead.id }, "partner-workspace");
+  const workspaceBody = await workspaceResponse.json();
+  if (!workspaceResponse.ok || workspaceBody.partnerLeadId !== lead.id) throw new Error(`Provisioning did not link the invited partner lead to the new workspace: ${JSON.stringify(workspaceBody)}`);
   const pipelineResponse = await fetch(`${base}/api/operator/partner-pipeline`, { headers });
   const pipeline = await pipelineResponse.json();
-  if (pipelineResponse.status !== 200 || pipeline.schemaVersion !== "partner-pipeline-read-model-v1" || pipeline.counts.invited !== 1 || pipeline.leads[0]?.history?.length !== 4) throw new Error("Partner pipeline read model or history failed.");
+  if (pipelineResponse.status !== 200 || pipeline.schemaVersion !== "partner-pipeline-read-model-v1" || pipeline.counts.onboarding !== 1 || pipeline.leads[0]?.history?.length !== 5 || pipeline.leads[0]?.workspaceId !== workspaceBody.id) throw new Error("Partner pipeline read model or workspace link failed.");
   const ledger = JSON.parse(await readFile(resolve(runtimeDir, "partner-leads.json"), "utf8"));
-  if (ledger.leads[0]?.status !== "invited" || ledger.leads[0]?.history?.length !== 4) throw new Error("Partner lead was not durable.");
+  if (ledger.leads[0]?.status !== "onboarding" || ledger.leads[0]?.history?.length !== 5 || ledger.leads[0]?.workspaceId !== workspaceBody.id) throw new Error("Partner lead workspace link was not durable.");
   const invalid = await post(`/api/operator/partner-pipeline/${encodeURIComponent(lead.id)}/state`, { status: "expanded", note: "Invalid jump." }, "partner-invalid");
   if (invalid.status !== 409) throw new Error(`Invalid partner transition was accepted: ${invalid.status}`);
   console.log("Partner pipeline passed: operator boundary, creation, guarded transitions, read model, and durable history are connected.");

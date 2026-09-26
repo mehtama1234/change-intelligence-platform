@@ -244,3 +244,10 @@ the pipeline record.
 This closes the commercial operating loop without confusing two different
 things: a prospect is a possible relationship, while a workspace contains
 customer evidence and work.
+
+When an operator provisions a workspace for an `invited` lead, the system
+links the two records and moves the lead to `onboarding` in the same durable
+operation. The workspace can then be configured with its decision question,
+source scope, cadence, and success measures. The lead ID is kept visible in
+the operator view so the handoff can be checked without searching private
+customer data.

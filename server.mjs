@@ -1758,8 +1758,13 @@ const server = createServer(async (request, response) => {
       if (prior) return json(response, prior.status, prior.body);
       const name = String(body.name ?? "").trim().slice(0, 120);
       const ownerId = String(body.ownerId ?? "").trim().slice(0, 120);
+      const partnerLeadId = body.partnerLeadId ? String(body.partnerLeadId).trim().slice(0, 180) : null;
       if (name.length < 3) return json(response, 400, { error: "Workspace name must be at least 3 characters." });
       if (ownerId.length < 3) return json(response, 400, { error: "Owner identity ID must be at least 3 characters." });
+      const partnerLead = partnerLeadId ? store.findRecord("partner_lead", partnerLeadId) : null;
+      if (partnerLeadId && !partnerLead) return json(response, 404, { error: "Partner lead not found." });
+      if (partnerLead && !["invited", "onboarding"].includes(partnerLead.status)) return json(response, 409, { error: `A workspace can only be linked when the partner lead is invited or onboarding, not ${partnerLead.status}.` });
+      if (partnerLead?.workspaceId) return json(response, 409, { error: "This partner lead is already linked to a workspace." });
       const requestedMembers = Array.isArray(body.members) ? body.members : [];
       if (requestedMembers.length > 49) return json(response, 400, { error: "A workspace can have at most 50 members at provisioning time." });
       const members = [{ id: ownerId, role: "owner", status: "active" }];
@@ -1776,6 +1781,14 @@ const server = createServer(async (request, response) => {
       const invitations = [...(invitationLedger.invitations ?? []), ...members.filter((member) => member.status === "invited").map((member) => ({ id: `invitation-${randomUUID()}`, workspaceId: workspace.id, identityId: member.id, role: member.role, status: "pending", provider: "external_identity_provider", createdAt: now, createdBy: operator.actorId, dispatchedAt: null, activatedAt: null }))];
       await writeWorkspaceInvitations(invitations);
       const responseBody = { ...workspace, identityProvisioning: "Map these member identity IDs to production identity-provider accounts before inviting the partner." };
+      if (partnerLead) {
+        const leadNow = new Date().toISOString();
+        const linkedLead = { ...partnerLead, status: "onboarding", workspaceId: workspace.id, updatedAt: leadNow, nextAction: "Complete workspace onboarding and configure the first pilot question.", nextActionAt: null, history: [...(partnerLead.history ?? []), { status: "onboarding", note: `Workspace ${workspace.id} was provisioned for this invited partner.`, actorId: operator.actorId, occurredAt: leadNow }] };
+        store.syncRecords("partner_lead", [linkedLead]);
+        await appendAudit({ requestId, action: "link_partner_lead_workspace", targetId: partnerLead.id, workspaceId: workspace.id, actorId: operator.actorId, actorRole: "operator", result: "onboarding", occurredAt: leadNow });
+        await writeFile(partnerLeadsPath, `${JSON.stringify(store.recordsLedger("partner_lead", "partner-lead-ledger-v1", "leads"), null, 2)}\n`);
+        responseBody.partnerLeadId = partnerLead.id;
+      }
       await appendAudit({ requestId, action: "provision_workspace", targetId: workspace.id, workspaceId: workspace.id, actorId: operator.actorId, actorRole: "operator", result: "provisioned", occurredAt: now });
       await storeOperation({ key: idempotencyKey, action: "provision_workspace", status: 201, body: responseBody, completedAt: now });
       return json(response, 201, responseBody);
