@@ -91,7 +91,12 @@ jobs:
       - name: Check container health state
         run: |
           container_id="$(docker compose ps -q change-intelligence)"
-          test "$(docker inspect --format '{{.State.Health.Status}}' "$container_id")" = healthy
+          for attempt in $(seq 1 30); do
+            if test "$(docker inspect --format '{{.State.Health.Status}}' "$container_id")" = healthy; then exit 0; fi
+            sleep 2
+          done
+          docker inspect --format '{{json .State.Health}}' "$container_id"
+          exit 1
       - name: Tear down containers and volumes
         if: always()
         run: docker compose down -v
