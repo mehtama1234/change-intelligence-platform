@@ -59,6 +59,7 @@ const maxFalseAlertRate = Number(process.env.OPERATOR_MAX_FALSE_ALERT_RATE ?? 0.
 const maxFailedRefreshes = Number(process.env.OPERATOR_MAX_FAILED_REFRESHES ?? 0);
 const maxDelayedDeliveries = Number(process.env.OPERATOR_MAX_DELAYED_DELIVERIES ?? 0);
 const operatorWarningAckSlaMs = Number(process.env.OPERATOR_WARNING_ACK_SLA_MS ?? 4 * 60 * 60 * 1000);
+const operatorRemediationSlaMs = Number(process.env.OPERATOR_REMEDIATION_SLA_MS ?? 24 * 60 * 60 * 1000);
 const defaultNotificationPreferences = { comparisonAlerts: true, sourceAlerts: true, deliveryUpdates: true };
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 await mkdir(runtimeDir, { recursive: true });
@@ -382,7 +383,7 @@ function buildOperatorPortfolioReadiness({ workspaces, snapshots }) {
   };
 }
 
-function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs }) {
+function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs, remediationSlaMs }) {
   const summaries = workspaces.map((workspace) => {
     const workspaceDeliveries = deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
     const reviewed = workspaceDeliveries.filter((delivery) => delivery.review);
@@ -421,13 +422,23 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
   });
   const warningById = new Map(warningEvents.map((event) => [event.warningId, event]));
   const warningLifecycle = warnings.map((warning) => ({ ...warning, ackDeadlineAt: Number.isFinite(Date.parse(warning.observedAt)) ? new Date(Date.parse(warning.observedAt) + warningAckSlaMs).toISOString() : null, lifecycle: warningById.get(warning.id)?.state ?? "open", ownerId: warningById.get(warning.id)?.ownerId ?? null, escalationState: warningById.get(warning.id)?.escalationState ?? "normal", lastActionAt: warningById.get(warning.id)?.actedAt ?? null, responseTimeMs: warningById.get(warning.id)?.responseTimeMs ?? null, actionNote: warningById.get(warning.id)?.note ?? null }));
+  const sourceAlerts = alerts.filter((alert) => alert.kind === "source_availability" && alert.state !== "resolved");
+  const remediationQueue = sourceAlerts.map((alert) => {
+    const createdAt = alert.createdAt ?? alert.detectedAt ?? new Date(now).toISOString();
+    const createdMs = Date.parse(createdAt);
+    const dueAt = Number.isFinite(createdMs) ? new Date(createdMs + remediationSlaMs).toISOString() : null;
+    const affectedDeliveries = deliveries.filter((delivery) => delivery.status === "held_for_source_availability" && (delivery.impact?.unavailableSourceIds ?? delivery.snapshot?.unavailableSourceIds ?? []).includes(alert.sourceId));
+    return { id: alert.id, workspaceId: alert.workspaceId, sourceId: alert.sourceId, repository: alert.repository, sourcePath: alert.sourcePath, severity: alert.severity, reason: alert.reason, recommendedAction: alert.recommendedAction ?? null, alertState: alert.state, remediationState: alert.remediationState ?? "not_started", remediationAt: alert.remediationAt ?? null, remediationBy: alert.remediationBy ?? null, createdAt, ageMs: Number.isFinite(createdMs) ? Math.max(0, now - createdMs) : null, dueAt, overdue: Number.isFinite(createdMs) ? now > createdMs + remediationSlaMs : false, heldDeliveries: affectedDeliveries.length, heldDeliveryIds: affectedDeliveries.map((delivery) => delivery.id) };
+  }).sort((a, b) => Number(b.overdue) - Number(a.overdue) || (b.ageMs ?? 0) - (a.ageMs ?? 0));
+  const remediation = { schemaVersion: "operator-remediation-queue-v1", slaMs: remediationSlaMs, summary: { open: remediationQueue.length, started: remediationQueue.filter((item) => item.remediationState === "started").length, completed: remediationQueue.filter((item) => item.remediationState === "completed").length, overdue: remediationQueue.filter((item) => item.overdue).length, heldDeliveries: remediationQueue.reduce((total, item) => total + item.heldDeliveries, 0) }, queue: remediationQueue };
   return {
     schemaVersion: "operator-pilot-overview-v1",
     generatedAt: new Date().toISOString(),
     scope: { workspaceCount: workspaces.length, configuredPilots: profiles.length, deliveries: deliveries.length, reviewedDeliveries: reviewed.length },
     aggregate: { usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, notUsefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "not_useful").length, unclearDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "unclear").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, pilotCheckpoints: decisions.length, checkpointCounts: Object.fromEntries(["improve", "continue", "expand", "stop"].map((decision) => [decision, decisions.filter((item) => item.decision === decision).length])), auditedPilotActions: auditEntries.filter((entry) => ["configure_pilot", "review_pilot_delivery", "decide_pilot"].includes(entry.action)).length, openAlerts: alerts.filter((alert) => alert.state === "open").length, falseAlerts: alerts.filter((alert) => alert.resolutionDisposition === "false_positive").length, alertCorrections: alerts.filter((alert) => alert.resolutionDisposition === "needs_correction").length },
     operations: { latestRefreshStatus: refreshHistory.at(-1)?.status ?? "not_run", failedRefreshRuns: failedRuns.length, lastRefreshAt: refreshHistory.at(-1)?.endedAt ?? null, sourceCount: sourceScan.sources?.length ?? 0, staleSources, oldestSourceAgeMs: sourceAges.length ? Math.max(...sourceAges.map((source) => source.ageMs)) : null, delayedDeliveries, heldInsightDeliveries: insightHeldDeliveries.length, falseAlertRate },
-    thresholds: { maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs },
+    thresholds: { maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs, remediationSlaMs },
+    remediation,
     warnings: warningLifecycle,
     deliveryHealth: buildOperatorDeliveryHealth({ notifications, attempts: notificationAttempts }),
     portfolioReadiness: buildOperatorPortfolioReadiness({ workspaces, snapshots: readinessSnapshots }),
@@ -1428,7 +1439,7 @@ const server = createServer(async (request, response) => {
       const notifications = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;
       const notificationAttempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
       const readinessSnapshots = store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots").snapshots;
-      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs }));
+      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs, remediationSlaMs: operatorRemediationSlaMs }));
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

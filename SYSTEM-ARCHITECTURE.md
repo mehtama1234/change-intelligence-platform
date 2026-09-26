@@ -66,6 +66,11 @@ packet and atlas generation consume that ledger when it is available.
 18. **Source availability monitor** — checks source reachability on every cycle,
     records source-level outage and recovery transitions, and keeps those
     checks separate from full ingestion cadence.
+19. **Operator remediation queue** — exposes open source-availability issues as
+    bounded work items with an owner-visible state, due time, overdue flag, and
+    count of customer deliveries held by that source. It contains operational
+    metadata only; it does not copy customer questions, review notes, or
+    briefing content into the operator view.
 
 ## Background jobs
 

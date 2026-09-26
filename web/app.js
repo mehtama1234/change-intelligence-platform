@@ -181,6 +181,21 @@ async function loadOperations() {
   byId("operations-history").innerHTML = history.length ? `<table><caption>Recent refresh runs</caption><thead><tr><th>Run</th><th>Status</th><th>Steps</th><th>Ended</th></tr></thead><tbody>${history.slice().reverse().slice(0, 8).map((run) => `<tr><th scope="row"><code>${escapeHtml(run.runId)}</code></th><td>${escapeHtml(run.status)}</td><td>${run.steps.filter((step) => step.status === "complete").length}/${run.steps.length} complete</td><td>${escapeHtml(run.endedAt)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No refresh history recorded yet.</p>`;
 }
 
+async function loadOperatorOverview() {
+  const response = await apiFetch("../api/operator/pilot-overview");
+  if (!response.ok) {
+    byId("operator-panel").hidden = true;
+    return;
+  }
+  const overview = await response.json();
+  const remediation = overview.remediation || { summary: {}, queue: [], slaMs: 0 };
+  const summary = remediation.summary;
+  byId("operator-panel").hidden = false;
+  byId("operator-summary").textContent = `${summary.open || 0} open source issue${summary.open === 1 ? "" : "s"} · ${summary.overdue || 0} overdue · ${summary.heldDeliveries || 0} held customer deliver${summary.heldDeliveries === 1 ? "y" : "ies"}. SLA: ${Math.round((remediation.slaMs || 0) / 3600000)} hours.`;
+  byId("operator-remediation-cards").innerHTML = [["Open", summary.open || 0], ["Started", summary.started || 0], ["Completed", summary.completed || 0], ["Overdue", summary.overdue || 0], ["Held deliveries", summary.heldDeliveries || 0]].map(([label, value]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
+  byId("operator-remediation-queue").innerHTML = remediation.queue?.length ? remediation.queue.map((item) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(item.remediationState.replaceAll("_", " "))}</span><span>${item.overdue ? "overdue" : "within SLA"}</span><span>${escapeHtml(item.severity)}</span></div><h3>${escapeHtml(item.repository)} · ${escapeHtml(item.sourcePath)}</h3><p>${escapeHtml(item.reason)}</p><p class="muted">Workspace ${escapeHtml(item.workspaceId)} · ${item.heldDeliveries} held deliver${item.heldDeliveries === 1 ? "y" : "ies"} · due ${escapeHtml(item.dueAt || "not recorded")}</p><p class="muted">Last remediation update: ${escapeHtml(item.remediationAt || "not started")}${item.remediationBy ? ` by ${escapeHtml(item.remediationBy)}` : ""}.</p></article>`).join("") : `<p class="muted">No open source-recovery work.</p>`;
+}
+
 async function loadDecisionOutcomes() {
   const response = await apiFetch(`../api/decision-outcomes?workspace=${encodeURIComponent(state.workspaceId)}`);
   if (!response.ok) throw new Error(`Decision feedback unavailable (${response.status})`);
@@ -604,6 +619,7 @@ byId("token-input").value = state.token;
 loadWorkspaces().catch((error) => { setWorkspaceStatus(error.message); byId("questions-summary").textContent = error.message; });
 loadChanges().catch((error) => { byId("change-feed-summary").textContent = error.message; });
 loadOperations().catch((error) => { byId("operations-summary").textContent = error.message; });
+loadOperatorOverview().catch(() => { byId("operator-panel").hidden = true; });
 loadCoverage().catch((error) => { byId("coverage-summary").textContent = error.message; });
 loadAtlas().catch((error) => { byId("atlas-summary").textContent = error.message; });
 loadEvidenceHistory().catch((error) => { byId("evidence-history-summary").textContent = error.message; });
