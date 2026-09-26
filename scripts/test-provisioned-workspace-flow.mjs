@@ -108,7 +108,7 @@ try {
   server = startServer();
   await waitForHealth(server);
   const briefingHistory = await (await fetch(`${base}/api/briefings/${encodeURIComponent(briefingId)}/history?workspace=${encodeURIComponent(workspaceId)}`, { headers: auth })).json();
-  if (briefingHistory.versions?.length !== 2 || briefingHistory.versions.at(-1)?.reReviewedUpdatedEvidence !== true || briefingHistory.changes?.length !== 1 || briefingHistory.currentPublicationId !== republishedBriefing.publication.id) throw new Error(`Briefing publication history did not preserve the initial and re-reviewed versions: ${JSON.stringify(briefingHistory)}`);
+  if (briefingHistory.versions?.length !== 2 || briefingHistory.versions[0]?.reReviewedUpdatedEvidence === true || briefingHistory.versions.at(-1)?.reReviewedUpdatedEvidence !== true || briefingHistory.changes?.length !== 1 || briefingHistory.currentPublicationId !== republishedBriefing.publication.id) throw new Error(`Briefing publication history did not preserve the initial and re-reviewed versions: ${JSON.stringify(briefingHistory)}`);
   const refreshReceipt = JSON.parse(await readFile(`${runtimeDir}/latest-refresh.json`, "utf8"));
   if (refreshReceipt.status !== "complete" || deliveries.deliveries[0].refreshRunId !== "provisioned-flow-refresh") throw new Error(`The actual refresh cycle did not complete for the provisioned workspace: ${JSON.stringify(refreshReceipt)}`);
   const refreshOutcomes = JSON.parse(await readFile(`${runtimeDir}/workspace-refresh-outcomes.json`, "utf8"));

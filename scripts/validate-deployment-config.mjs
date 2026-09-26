@@ -19,6 +19,8 @@ const required = [
   [compose, "change-intelligence-notifications:", "notification service"],
   [compose, "command: [\"node\", \"scripts/notification-scheduler.mjs\"]", "notification scheduler command"],
   [compose, "NOTIFICATION_INTERVAL_MS", "notification cadence configuration"],
+  [compose, "REQUIRE_WORKER_HEALTH: \"1\"", "production worker readiness"],
+  [compose, "WORKER_STATUS_MAX_AGE_MS", "worker heartbeat age configuration"],
   [compose, "command: [\"node\", \"scripts/scheduler.mjs\"]", "scheduler command"],
   [compose, "change-intelligence-runtime:/app/runtime", "shared runtime volume"],
   [compose, "${RESEARCH_ROOT:?Set RESEARCH_ROOT}:/app/research:ro", "research source mount"],

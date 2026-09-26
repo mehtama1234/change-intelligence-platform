@@ -69,6 +69,8 @@ const maxSourceAgeMs = Number(process.env.MAX_SOURCE_AGE_MS ?? 14 * 24 * 60 * 60
 const maxFalseAlertRate = Number(process.env.OPERATOR_MAX_FALSE_ALERT_RATE ?? 0.4);
 const maxFailedRefreshes = Number(process.env.OPERATOR_MAX_FAILED_REFRESHES ?? 0);
 const maxDelayedDeliveries = Number(process.env.OPERATOR_MAX_DELAYED_DELIVERIES ?? 0);
+const requireWorkerHealth = process.env.REQUIRE_WORKER_HEALTH === "1";
+const maxWorkerStatusAgeMs = Number(process.env.WORKER_STATUS_MAX_AGE_MS ?? 24 * 60 * 60 * 1000);
 const operatorWarningAckSlaMs = Number(process.env.OPERATOR_WARNING_ACK_SLA_MS ?? 4 * 60 * 60 * 1000);
 const operatorRemediationSlaMs = Number(process.env.OPERATOR_REMEDIATION_SLA_MS ?? 24 * 60 * 60 * 1000);
 const defaultNotificationPreferences = { comparisonAlerts: true, sourceAlerts: true, deliveryUpdates: true };
@@ -777,12 +779,24 @@ function ageMs(value, now) {
   return Number.isFinite(timestamp) ? Math.max(0, now - timestamp) : null;
 }
 
+async function workerStatus(path, schemaVersion, now) {
+  const status = await readJson(path, { schemaVersion, status: "not_started", updatedAt: null });
+  const age = ageMs(status.updatedAt, now);
+  const live = ["starting", "running", "sleeping"].includes(status.status) && age !== null && age <= maxWorkerStatusAgeMs;
+  return { schemaVersion: status.schemaVersion ?? schemaVersion, status: status.status ?? "not_started", updatedAt: status.updatedAt ?? null, ageMs: age, live };
+}
+
 async function readinessReport() {
   const now = Date.now();
   const refresh = await readJson(refreshPath, { status: "not_run", steps: [] });
   const sourceScan = await readJson(sourceScanPath, { counts: {}, sources: [] });
   const sourceAvailability = await readJson(sourceAvailabilityPath, { counts: {}, sources: [] });
   const backupManifest = backupDir ? await readJson(resolve(backupDir, "manifest.json"), undefined) : undefined;
+  const workerStatuses = {
+    refresh: await workerStatus(schedulerStatusPath, "refresh-scheduler-status-v1", now),
+    backup: await workerStatus(backupSchedulerStatusPath, "runtime-backup-scheduler-status-v1", now),
+    notification: await workerStatus(notificationSchedulerStatusPath, "notification-scheduler-status-v1", now)
+  };
   const refreshAge = ageMs(refresh.endedAt, now);
   const currentSources = (sourceScan.sources ?? []).filter((source) => source.status !== "deferred");
   const overdueDeferredSources = (sourceScan.sources ?? []).filter((source) => source.status === "deferred" && Date.parse(source.nextDueAt ?? "") <= now).length;
@@ -796,9 +810,10 @@ async function readinessReport() {
     refresh: { status: refresh.status === "complete" && refreshAge !== null && refreshAge <= maxRefreshAgeMs && failedSteps.length === 0 ? "ok" : "failed", runId: refresh.runId ?? null, ageMs: refreshAge, maxAgeMs: maxRefreshAgeMs, failedSteps },
     sourceScan: { status: (sourceAvailability.counts?.unavailable ?? 0) === 0 && sourceScan.counts?.missing === 0 && overdueDeferredSources === 0 && (sourceAge === null || sourceAge <= maxSourceAgeMs) ? "ok" : "failed", ageMs: sourceAge, maxAgeMs: maxSourceAgeMs, missing: sourceScan.counts?.missing ?? null, unavailable: sourceAvailability.counts?.unavailable ?? null, deferred: sourceScan.counts?.deferred ?? 0, overdueDeferredSources, sourceCount: sourceScan.sources?.length ?? 0 },
     runtimeSync: { status: syncStep?.status === "complete" ? "ok" : "failed", attempts: syncStep?.attempts ?? null },
-    backup: backupDir ? { status: backupManifest?.schemaVersion === "runtime-backup-v1" ? "ok" : "failed", createdAt: backupManifest?.createdAt ?? null, ageMs: ageMs(backupManifest?.createdAt, now), directory: backupDir } : { status: "not_configured", createdAt: null, ageMs: null }
+    backup: backupDir ? { status: backupManifest?.schemaVersion === "runtime-backup-v1" ? "ok" : "failed", createdAt: backupManifest?.createdAt ?? null, ageMs: ageMs(backupManifest?.createdAt, now), directory: backupDir } : { status: "not_configured", createdAt: null, ageMs: null },
+    workers: { status: requireWorkerHealth ? Object.values(workerStatuses).every((worker) => worker.live) ? "ok" : "failed" : "not_required", required: requireWorkerHealth, maxAgeMs: maxWorkerStatusAgeMs, ...workerStatuses }
   };
-  const ready = Object.values(checks).every((check) => check.status === "ok");
+  const ready = Object.values(checks).every((check) => ["ok", "not_required"].includes(check.status));
   return { schemaVersion: "operational-readiness-v1", generatedAt: new Date(now).toISOString(), status: ready ? "ready" : "degraded", checks };
 }
 
@@ -945,7 +960,8 @@ const server = createServer(async (request, response) => {
       if (staleInsight) return json(response, 409, { error: `Linked insight publication is stale: ${staleInsight.title}. Re-review and republish the insight before republishing this briefing.` });
       if (briefing.state === "stale" && body.confirmUpdatedEvidence !== true) return json(response, 409, { error: "This briefing is stale. Inspect the updated evidence and confirm it before republishing." });
       const now = new Date().toISOString();
-      const publication = { id: `publication-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, briefingId, workspaceId: workspace.id, evidenceDigest: briefing.evidenceDigest, publishedBy: member.id, publishedRole: member.role, publishedAt: now, note: String(body.note ?? "").slice(0, 2000), ...(briefing.state === "stale" ? { reReviewedUpdatedEvidence: true, previousEvidenceDigest: briefing.previousEvidenceDigest ?? null } : {}) };
+      const publicationOrder = store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications").publications.filter((candidate) => candidate.briefingId === briefingId).length + 1;
+      const publication = { id: `publication-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, briefingId, workspaceId: workspace.id, evidenceDigest: briefing.evidenceDigest, publishedBy: member.id, publishedRole: member.role, publishedAt: now, publicationOrder, note: String(body.note ?? "").slice(0, 2000), ...(briefing.state === "stale" ? { reReviewedUpdatedEvidence: true, previousEvidenceDigest: briefing.previousEvidenceDigest ?? null } : {}) };
       const wasStale = briefing.state === "stale";
       briefing.state = "published";
       briefing.publication = "published";
@@ -1660,8 +1676,10 @@ const server = createServer(async (request, response) => {
       if (!briefing) return json(response, 404, { error: "Briefing not found in this workspace." });
       const publications = store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications").publications.filter((publication) => publication.briefingId === briefing.id && (!access.workspaceIds || access.workspaceIds.includes(publication.workspaceId)));
       const events = store.recordsLedger("review_event", "review-event-ledger-v1", "events").events.filter((event) => event.targetId === briefing.id && event.eventType === "briefing_republish" && (!access.workspaceIds || access.workspaceIds.includes(event.workspaceId)));
-      const latestPublication = publications.slice().sort((a, b) => String(a.publishedAt).localeCompare(String(b.publishedAt))).at(-1);
-      return json(response, 200, { schemaVersion: "briefing-history-v1", briefing: { id: briefing.id, workspaceId: briefing.workspaceId, title: briefing.title, state: briefing.state, publication: briefing.publication ?? "not_published", evidenceDigest: briefing.evidenceDigest ?? null, staleReason: briefing.staleReason ?? null, customerActions: briefing.customerActions ?? [], insightActions: briefing.insightActions ?? [] }, versions: publications.sort((a, b) => String(a.publishedAt).localeCompare(String(b.publishedAt))).map((publication) => ({ id: publication.id, publishedAt: publication.publishedAt, publishedBy: publication.publishedBy, evidenceDigest: publication.evidenceDigest, previousEvidenceDigest: publication.previousEvidenceDigest ?? null, reReviewedUpdatedEvidence: publication.reReviewedUpdatedEvidence ?? false })), changes: events.sort((a, b) => String(a.occurredAt).localeCompare(String(b.occurredAt))).map((event) => ({ id: event.id, occurredAt: event.occurredAt, reviewer: event.reviewer, previousEvidenceDigest: event.previousEvidenceDigest ?? null, currentEvidenceDigest: event.currentEvidenceDigest ?? null, outcome: event.outcome })), currentPublicationId: latestPublication?.id ?? null, limitation: "History records publication and re-review events. It does not prove that the briefing was useful or that a decision based on it was correct." });
+      const publicationOrder = (a, b) => Number(a.publicationOrder ?? 0) - Number(b.publicationOrder ?? 0) || String(a.publishedAt).localeCompare(String(b.publishedAt));
+      const orderedPublications = publications.slice().sort(publicationOrder);
+      const latestPublication = orderedPublications.at(-1);
+      return json(response, 200, { schemaVersion: "briefing-history-v1", briefing: { id: briefing.id, workspaceId: briefing.workspaceId, title: briefing.title, state: briefing.state, publication: briefing.publication ?? "not_published", evidenceDigest: briefing.evidenceDigest ?? null, staleReason: briefing.staleReason ?? null, customerActions: briefing.customerActions ?? [], insightActions: briefing.insightActions ?? [] }, versions: orderedPublications.map((publication) => ({ id: publication.id, publishedAt: publication.publishedAt, publishedBy: publication.publishedBy, evidenceDigest: publication.evidenceDigest, previousEvidenceDigest: publication.previousEvidenceDigest ?? null, reReviewedUpdatedEvidence: publication.reReviewedUpdatedEvidence ?? false })), changes: events.sort((a, b) => String(a.occurredAt).localeCompare(String(b.occurredAt))).map((event) => ({ id: event.id, occurredAt: event.occurredAt, reviewer: event.reviewer, previousEvidenceDigest: event.previousEvidenceDigest ?? null, currentEvidenceDigest: event.currentEvidenceDigest ?? null, outcome: event.outcome })), currentPublicationId: latestPublication?.id ?? null, limitation: "History records publication and re-review events. It does not prove that the briefing was useful or that a decision based on it was correct." });
     }
     if (request.method !== "GET" && !(request.method === "POST" && url.pathname === "/api/workspace-deletion")) return json(response, 405, { error: "This method is not supported for this endpoint." });
     if (url.pathname === "/api/health") return json(response, 200, { status: "ok", service: "change-intelligence-read-model", authMode, database: store.health(), generatedAt: new Date().toISOString() });
@@ -1765,6 +1783,7 @@ const server = createServer(async (request, response) => {
         ["change_intelligence_source_scan_ok", readiness.checks.sourceScan.status === "ok" ? 1 : 0],
         ["change_intelligence_runtime_sync_ok", readiness.checks.runtimeSync.status === "ok" ? 1 : 0],
         ["change_intelligence_backup_ok", readiness.checks.backup.status === "ok" ? 1 : 0],
+        ["change_intelligence_workers_ok", ["ok", "not_required"].includes(readiness.checks.workers.status) ? 1 : 0],
         ["change_intelligence_sources_missing", readiness.checks.sourceScan.missing ?? -1],
         ["change_intelligence_refresh_age_seconds", readiness.checks.refresh.ageMs === null ? -1 : Math.round(readiness.checks.refresh.ageMs / 1000)],
         ["change_intelligence_backup_age_seconds", readiness.checks.backup.ageMs === null ? -1 : Math.round(readiness.checks.backup.ageMs / 1000)]

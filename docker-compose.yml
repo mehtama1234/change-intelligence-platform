@@ -10,6 +10,8 @@ services:
       BACKUP_DIR: /app/backups
       RESEARCH_ROOT: /app/research
       PACKET_PATH: /app/runtime/ai-work-control.packet.json
+      REQUIRE_WORKER_HEALTH: "1"
+      WORKER_STATUS_MAX_AGE_MS: ${WORKER_STATUS_MAX_AGE_MS:-86400000}
     volumes:
       - change-intelligence-runtime:/app/runtime
       - change-intelligence-backups:/app/backups

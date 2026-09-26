@@ -21,7 +21,11 @@ const publications = existsSync(publicationsPath) ? JSON.parse(await readFile(pu
 const insightCandidates = existsSync(insightCandidatesPath) ? JSON.parse(await readFile(insightCandidatesPath, "utf8")) : { candidates: [] };
 const insightPublications = existsSync(insightPublicationsPath) ? JSON.parse(await readFile(insightPublicationsPath, "utf8")) : { publications: [] };
 const workspaceSourceLedger = existsSync(workspaceSourcesPath) ? JSON.parse(await readFile(workspaceSourcesPath, "utf8")) : { sources: [] };
-const publicationByBriefing = new Map(publications.publications.map((publication) => [publication.briefingId, publication]));
+const publicationByBriefing = new Map();
+for (const publication of publications.publications ?? []) {
+  const current = publicationByBriefing.get(publication.briefingId);
+  if (!current || Number(publication.publicationOrder ?? 0) > Number(current.publicationOrder ?? 0) || (Number(publication.publicationOrder ?? 0) === Number(current.publicationOrder ?? 0) && String(publication.publishedAt).localeCompare(String(current.publishedAt)) > 0)) publicationByBriefing.set(publication.briefingId, publication);
+}
 const insightById = new Map(packet.insights.map((insight) => [insight.id, insight]));
 const candidateByKey = new Map((insightCandidates.candidates ?? []).map((candidate) => [candidate.candidateKey, candidate]));
 const insightPublicationsByKey = new Map();

@@ -13,12 +13,15 @@ const backupDir = resolve(baseTemp, "backup");
 const port = 8797;
 await mkdir(runtimeDir, { recursive: true });
 for (const name of ["latest-refresh.json", "latest-source-scan.json", "refresh-history.json"]) await copyFile(resolve(sourceRuntime, name), resolve(runtimeDir, name));
+await writeFile(resolve(runtimeDir, "scheduler-status.json"), `${JSON.stringify({ schemaVersion: "refresh-scheduler-status-v1", status: "sleeping", updatedAt: new Date().toISOString() }, null, 2)}\n`);
+await writeFile(resolve(runtimeDir, "backup-scheduler-status.json"), `${JSON.stringify({ schemaVersion: "runtime-backup-scheduler-status-v1", status: "sleeping", updatedAt: new Date().toISOString() }, null, 2)}\n`);
+await writeFile(resolve(runtimeDir, "notification-scheduler-status.json"), `${JSON.stringify({ schemaVersion: "notification-scheduler-status-v1", status: "sleeping", updatedAt: new Date().toISOString() }, null, 2)}\n`);
 const store = createRuntimeStore(runtimeDir);
 await importRuntimeLedgers(store, { runtimeDir, questions: resolve(runtimeDir, "workspace-questions.json"), audit: resolve(runtimeDir, "audit-log.json"), operations: resolve(runtimeDir, "idempotency-operations.json"), alerts: resolve(runtimeDir, "workspace-alerts.json"), briefingPublications: resolve(runtimeDir, "briefing-publications.json"), insightDecisions: resolve(runtimeDir, "insight-decisions.json"), insightPublications: resolve(runtimeDir, "insight-publications.json"), sourceScan: resolve(runtimeDir, "latest-source-scan.json"), evidenceLedger: resolve(runtimeDir, "versioned-evidence-ledger.json"), reviewDecisions: resolve(runtimeDir, "review-decisions.json") });
 store.close();
 await backupRuntime({ runtimeDir, destination: backupDir });
 
-const child = spawn(process.execPath, [resolve(root, "server.mjs")], { cwd: root, env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, BACKUP_DIR: backupDir, MAX_REFRESH_AGE_MS: String(24 * 60 * 60 * 1000), MAX_SOURCE_AGE_MS: String(24 * 60 * 60 * 1000) }, stdio: ["ignore", "pipe", "pipe"] });
+const child = spawn(process.execPath, [resolve(root, "server.mjs")], { cwd: root, env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, BACKUP_DIR: backupDir, REQUIRE_WORKER_HEALTH: "1", WORKER_STATUS_MAX_AGE_MS: String(24 * 60 * 60 * 1000), MAX_REFRESH_AGE_MS: String(24 * 60 * 60 * 1000), MAX_SOURCE_AGE_MS: String(24 * 60 * 60 * 1000) }, stdio: ["ignore", "pipe", "pipe"] });
 let output = "";
 child.stdout.on("data", (data) => { output += data; });
 child.stderr.on("data", (data) => { output += data; });
@@ -31,13 +34,13 @@ async function readiness() {
 }
 try {
   const healthy = await readiness();
-  if (healthy.response.status !== 200 || healthy.body.status !== "ready" || healthy.body.checks.backup.status !== "ok") throw new Error(`Expected ready response: ${JSON.stringify(healthy.body)}`);
+  if (healthy.response.status !== 200 || healthy.body.status !== "ready" || healthy.body.checks.backup.status !== "ok" || healthy.body.checks.workers.status !== "ok") throw new Error(`Expected ready response: ${JSON.stringify(healthy.body)}`);
   const operationsResponse = await fetch(`http://127.0.0.1:${port}/api/operations`);
   const operations = await operationsResponse.json();
   if (operationsResponse.status !== 200 || operations.schemaVersion !== "operations-read-model-v1" || !operations.database.integrity || !operations.refreshHistory.length || operations.scheduler?.schemaVersion !== "refresh-scheduler-status-v1" || operations.backupScheduler?.schemaVersion !== "runtime-backup-scheduler-status-v1" || operations.notificationScheduler?.schemaVersion !== "notification-scheduler-status-v1") throw new Error("Operations read model contract failed.");
   const metricsResponse = await fetch(`http://127.0.0.1:${port}/metrics`);
   const metrics = await metricsResponse.text();
-  if (metricsResponse.status !== 200 || !metrics.includes("change_intelligence_ready 1") || !metrics.includes("change_intelligence_refresh_age_seconds")) throw new Error("Metrics contract failed.");
+  if (metricsResponse.status !== 200 || !metrics.includes("change_intelligence_ready 1") || !metrics.includes("change_intelligence_workers_ok 1") || !metrics.includes("change_intelligence_refresh_age_seconds")) throw new Error("Metrics contract failed.");
   await writeFile(resolve(runtimeDir, "latest-refresh.json"), `${JSON.stringify({ status: "partial", endedAt: new Date().toISOString(), steps: [] })}\n`);
   const degraded = await readiness();
   if (degraded.response.status !== 503 || degraded.body.status !== "degraded" || degraded.body.checks.refresh.status !== "failed") throw new Error(`Expected degraded response: ${JSON.stringify(degraded.body)}`);
