@@ -41,6 +41,17 @@ label { color: var(--muted); font-size: .9rem; }
 select { margin-left: 6px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); }
 .record-list { display: grid; gap: 12px; }
 .record-card { padding: 22px; }
+.muted { color: var(--muted); }
+.table-wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+table { width: 100%; border-collapse: collapse; min-width: 480px; }
+caption { padding: 16px 18px 4px; text-align: left; color: var(--muted); font-size: .85rem; }
+th, td { padding: 13px 18px; border-bottom: 1px solid var(--line); text-align: right; }
+th:first-child, td:first-child { text-align: left; }
+tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
+.change-note { margin: 12px 0 0; color: var(--muted); font-size: .9rem; }
+.source-links { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 14px; font-size: .9rem; }
+.source-links strong { width: 100%; }
+.source-links a { color: var(--accent); }
 .record-meta { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 12px; color: var(--muted); font-size: .77rem; text-transform: uppercase; letter-spacing: .06em; }
 .role { color: var(--accent); font-weight: 800; }
 details { margin-top: 15px; border-top: 1px solid var(--line); padding-top: 12px; }

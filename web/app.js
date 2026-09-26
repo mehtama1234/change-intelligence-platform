@@ -15,6 +15,15 @@ function render() {
   byId("falsifiers").innerHTML = insight.whatWouldChangeOurMind.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
   byId("as-of").textContent = `Source snapshot ${state.packet.sourceSnapshotDate}`;
 
+  const reportRecord = records.find((record) => record.reportWindow);
+  if (reportRecord) {
+    const report = reportRecord.reportWindow;
+    byId("report-history").hidden = false;
+    byId("report-reading").textContent = `${reportRecord.company} · ${report.annualBaseline}. ${report.reading}`;
+    byId("report-table").innerHTML = `<table><caption>Issuer-reported losses; values are in $000s</caption><thead><tr><th>Period</th><th>Operating loss</th><th>Net loss</th></tr></thead><tbody>${report.quarters.map((quarter) => `<tr><th scope="row">${escapeHtml(quarter.period)}</th><td>${quarter.operatingLoss.toLocaleString()}</td><td>${quarter.netLoss.toLocaleString()}</td></tr>`).join("")}</tbody></table><p class="change-note">Magnitude change Q3 versus Q1: operating loss ${report.metrics.operatingLossMagnitudeChangeQ3vsQ1Pct}% · net loss ${report.metrics.netLossMagnitudeChangeQ3vsQ1Pct}%.</p>`;
+    byId("report-links").innerHTML = `<strong>Direct records in the ledger</strong>${report.sourceRefs.directRecords.map((record) => `<a href="${escapeHtml(record.url)}" target="_blank" rel="noreferrer">${escapeHtml(record.label)}</a>`).join("")}`;
+  }
+
   const roles = [...new Set(records.map((record) => record.sourceRole))].sort();
   byId("role-filter").innerHTML = `<option value="all">All sources</option>${roles.map((role) => `<option value="${escapeHtml(role)}">${escapeHtml(role.replaceAll("_", " "))}</option>`).join("")}`;
   byId("role-filter").value = state.role;

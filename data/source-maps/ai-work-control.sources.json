@@ -115,7 +115,11 @@
       "asOf": "2026-09-25",
       "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
       "limits": ["The report window does not identify an organization, model version, affected person, decision, input, output, error, override, appeal, remedy, or later outcome."],
-      "excerptTerms": ["FY2025 10-K", "FY2026 Q1", "does not independently measure"]
+      "excerptTerms": ["FY2025 10-K", "FY2026 Q1", "does not independently measure"],
+      "reportWindow": {
+        "bridgePath": "company-industry-analysis/companies/c3-ai/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+        "initialReadPath": "company-industry-analysis/companies/c3-ai/INITIAL-EVIDENCE-READ.md"
+      }
     }
   ],
   "insight": {

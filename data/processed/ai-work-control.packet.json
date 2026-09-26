@@ -174,6 +174,56 @@
       "company": "C3.ai",
       "industry": "enterprise AI software",
       "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
+      "reportWindow": {
+        "annualBaseline": "FY2025 10-K",
+        "quarters": [
+          {
+            "period": "Q1, ended Jul. 31, 2025",
+            "operatingLoss": -124819,
+            "netLoss": -116769
+          },
+          {
+            "period": "Q2, ended Oct. 31, 2025",
+            "operatingLoss": -112113,
+            "netLoss": -104668
+          },
+          {
+            "period": "Q3, ended Jan. 31, 2026",
+            "operatingLoss": -140408,
+            "netLoss": -133363
+          }
+        ],
+        "metrics": {
+          "operatingLossMagnitudeChangeQ3vsQ1Pct": 12.5,
+          "netLossMagnitudeChangeQ3vsQ1Pct": 14.2,
+          "operatingLossQ2vsQ1": 12706,
+          "operatingLossQ3vsQ2": -28295
+        },
+        "reading": "Loss magnitude improved in Q2 and worsened in Q3; this is a reported accounting movement, not a causal explanation or an outcome for workers or customers.",
+        "sourceRefs": {
+          "bridge": "company-industry-analysis/companies/c3-ai/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+          "initialRead": "company-industry-analysis/companies/c3-ai/INITIAL-EVIDENCE-READ.md",
+          "initialReadDigest": "173889864c163d8e127ce99399a622eeeceab6874ea5b953f745c7a0469400bc",
+          "directRecords": [
+            {
+              "label": "10-K",
+              "url": "https://www.sec.gov/Archives/edgar/data/1577526/000162828025032604/ai-20250430.htm"
+            },
+            {
+              "label": "10-Q",
+              "url": "https://www.sec.gov/Archives/edgar/data/1577526/000157752625000033/ai-20250731.htm"
+            },
+            {
+              "label": "10-Q",
+              "url": "https://www.sec.gov/Archives/edgar/data/1577526/000157752625000055/ai-20251031.htm"
+            },
+            {
+              "label": "10-Q",
+              "url": "https://www.sec.gov/Archives/edgar/data/1577526/000157752626000024/ai-20260131.htm"
+            }
+          ]
+        }
+      },
       "limits": [
         "The report window does not identify an organization, model version, affected person, decision, input, output, error, override, appeal, remedy, or later outcome."
       ]
