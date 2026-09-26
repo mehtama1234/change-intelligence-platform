@@ -1,0 +1,59 @@
+import { copyFile, mkdir, readFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
+const sourceRuntime = resolve(root, "data/processed/runs/ai-work-control");
+const port = 8795;
+const base = `http://127.0.0.1:${port}`;
+const runtimeDir = `/tmp/change-intelligence-mutations-${Date.now()}`;
+const copiedLedgers = ["workspace-alerts.json", "workspace-briefings.json", "insight-candidates.json", "briefing-publications.json", "insight-decisions.json", "insight-publications.json"];
+await mkdir(runtimeDir, { recursive: true });
+for (const name of copiedLedgers) await copyFile(resolve(sourceRuntime, name), resolve(runtimeDir, name));
+
+const environment = { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher" }) };
+async function start() {
+  const child = spawn(process.execPath, [resolve(root, "server.mjs")], { cwd: root, env: environment, stdio: ["ignore", "pipe", "pipe"] });
+  let output = "";
+  child.stdout.on("data", (data) => { output += data; });
+  child.stderr.on("data", (data) => { output += data; });
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    try { if ((await fetch(`${base}/api/health`)).ok) return child; } catch {}
+    await new Promise((wait) => setTimeout(wait, 100));
+  }
+  child.kill("SIGTERM");
+  throw new Error(`API did not start. ${output}`);
+}
+async function stop(child) {
+  await new Promise((resolveExit) => { child.once("exit", resolveExit); child.kill("SIGTERM"); });
+}
+const auth = { Authorization: "Bearer research-token" };
+const write = (key) => ({ ...auth, "Idempotency-Key": key, "content-type": "application/json" });
+let child = await start();
+try {
+  const alertsResponse = await fetch(`${base}/api/alerts?workspace=demo-research`, { headers: auth });
+  const alerts = await alertsResponse.json();
+  const alert = alerts[0];
+  if (alertsResponse.status !== 200 || !alert) throw new Error("Mutation test has no seeded alert.");
+  const acknowledgedResponse = await fetch(`${base}/api/alerts/${encodeURIComponent(alert.id)}/acknowledge`, { method: "POST", headers: write(`alert-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", note: "Durability test" }) });
+  if (acknowledgedResponse.status !== 200) throw new Error(`Alert acknowledgement failed: ${acknowledgedResponse.status}`);
+  const briefings = JSON.parse(await readFile(resolve(runtimeDir, "workspace-briefings.json"), "utf8"));
+  const briefing = briefings.briefings[0];
+  const briefingResponse = await fetch(`${base}/api/briefings/${encodeURIComponent(briefing.id)}/publish`, { method: "POST", headers: write(`briefing-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", note: "Durability test" }) });
+  if (briefingResponse.status !== 200) throw new Error(`Briefing publication failed: ${briefingResponse.status}`);
+  const candidates = JSON.parse(await readFile(resolve(runtimeDir, "insight-candidates.json"), "utf8"));
+  const candidate = candidates.candidates[0];
+  const decisionResponse = await fetch(`${base}/api/insight-candidates/${encodeURIComponent(candidate.id)}/decision`, { method: "POST", headers: write(`decision-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", decision: "defer", note: "Durability test" }) });
+  if (decisionResponse.status !== 200) throw new Error(`Insight decision failed: ${decisionResponse.status}`);
+  await stop(child);
+  child = await start();
+  const restoredAlerts = await (await fetch(`${base}/api/alerts?workspace=demo-research`, { headers: auth })).json();
+  if (restoredAlerts.find((item) => item.id === alert.id)?.acknowledgmentNote !== "Durability test") throw new Error("Alert acknowledgement did not survive restart.");
+  const audit = await (await fetch(`${base}/api/audit?workspace=demo-research`, { headers: auth })).json();
+  const actions = new Set(audit.map((entry) => entry.action));
+  if (!["acknowledge_alert", "publish_briefing", "decide_insight"].every((action) => actions.has(action))) throw new Error("Mutation audit records did not survive restart.");
+  console.log("Mutation persistence test passed: alert, briefing, and insight mutations survived restart.");
+} finally {
+  if (child && child.exitCode === null) await stop(child);
+}

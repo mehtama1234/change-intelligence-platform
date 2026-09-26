@@ -28,7 +28,16 @@ const tokenActors = authMode === "token" ? JSON.parse(process.env.AUTH_TOKENS_JS
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 await mkdir(runtimeDir, { recursive: true });
 const store = createRuntimeStore(runtimeDir);
-await importRuntimeLedgers(store, { runtimeDir, questions: questionsPath, audit: auditPath, operations: operationsPath });
+await importRuntimeLedgers(store, {
+  runtimeDir,
+  questions: questionsPath,
+  audit: auditPath,
+  operations: operationsPath,
+  alerts: alertsPath,
+  briefingPublications: briefingPublicationsPath,
+  insightDecisions: insightDecisionsPath,
+  insightPublications: insightPublicationsPath
+});
 
 const json = (response, status, body) => {
   response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
@@ -124,17 +133,17 @@ const server = createServer(async (request, response) => {
       const member = workspace?.members?.find((candidate) => candidate.id === actorId);
       if (!workspace) return json(response, 404, { error: "Workspace not found." });
       if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot acknowledge alerts." });
-      const ledger = await readJson(alertsPath, { schemaVersion: "workspace-alert-ledger-v1", alerts: [] });
-      const alert = ledger.alerts.find((candidate) => candidate.id === alertId && candidate.workspaceId === workspace.id);
+      const alert = store.findRecord("alert", alertId);
+      if (alert?.workspaceId !== workspace.id) return json(response, 404, { error: "Alert not found in this workspace." });
       if (!alert) return json(response, 404, { error: "Alert not found in this workspace." });
       alert.state = "acknowledged";
       alert.acknowledgedBy = member.id;
       alert.acknowledgedRole = member.role;
       alert.acknowledgedAt = new Date().toISOString();
       alert.acknowledgmentNote = String(body.note ?? "").slice(0, 2000);
-      await writeFile(alertsPath, `${JSON.stringify(ledger, null, 2)}\n`);
-      await appendAudit({ requestId, action: "acknowledge_alert", targetId: alert.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "acknowledged", occurredAt: alert.acknowledgedAt });
-      await storeOperation({ key: idempotencyKey, action: "acknowledge_alert", status: 200, body: alert, completedAt: alert.acknowledgedAt });
+      const auditEntry = { requestId, action: "acknowledge_alert", targetId: alert.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "acknowledged", occurredAt: alert.acknowledgedAt };
+      store.commitRecord({ kind: "alert", record: alert, audit: auditEntry, operation: { key: idempotencyKey, action: "acknowledge_alert", status: 200, body: alert, completedAt: alert.acknowledgedAt } });
+      await writeFile(alertsPath, `${JSON.stringify(store.alertsLedger(), null, 2)}\n`);
       return json(response, 200, alert);
     }
     if (request.method === "POST" && url.pathname === "/api/questions") {
@@ -176,21 +185,17 @@ const server = createServer(async (request, response) => {
       const ledger = await readJson(briefingsPath, { schemaVersion: "workspace-briefing-ledger-v1", briefings: [] });
       const briefing = ledger.briefings.find((candidate) => candidate.id === briefingId && candidate.workspaceId === workspace.id);
       if (!briefing) return json(response, 404, { error: "Briefing not found in this workspace." });
-      const publications = await readJson(briefingPublicationsPath, { schemaVersion: "briefing-publication-ledger-v1", publications: [] });
       const now = new Date().toISOString();
       const publication = { id: `publication-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, briefingId, workspaceId: workspace.id, evidenceDigest: briefing.evidenceDigest, publishedBy: member.id, publishedRole: member.role, publishedAt: now, note: String(body.note ?? "").slice(0, 2000) };
-      publications.publications.push(publication);
-      publications.updatedAt = now;
       briefing.state = "published";
       briefing.publication = "published";
       briefing.publicationId = publication.id;
       briefing.publishedBy = member.id;
       briefing.publishedAt = now;
       await writeFile(briefingsPath, `${JSON.stringify(ledger, null, 2)}\n`);
-      await writeFile(briefingPublicationsPath, `${JSON.stringify(publications, null, 2)}\n`);
-      await appendAudit({ requestId, action: "publish_briefing", targetId: briefing.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "published", occurredAt: now });
       const publishedBriefing = { ...briefing, publication };
-      await storeOperation({ key: idempotencyKey, action: "publish_briefing", status: 200, body: publishedBriefing, completedAt: now });
+      store.commitRecord({ kind: "briefing_publication", record: publication, audit: { requestId, action: "publish_briefing", targetId: briefing.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "published", occurredAt: now }, operation: { key: idempotencyKey, action: "publish_briefing", status: 200, body: publishedBriefing, completedAt: now } });
+      await writeFile(briefingPublicationsPath, `${JSON.stringify(store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications"), null, 2)}\n`);
       return json(response, 200, publishedBriefing);
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/insight-candidates/") && url.pathname.endsWith("/decision")) {
@@ -212,13 +217,9 @@ const server = createServer(async (request, response) => {
       const candidates = await readJson(insightCandidatesPath, { candidates: [] });
       const candidate = candidates.candidates.find((item) => item.id === candidateId);
       if (!candidate) return json(response, 404, { error: "Insight candidate not found." });
-      const ledger = await readJson(insightDecisionsPath, { schemaVersion: "insight-decision-ledger-v1", decisions: [] });
       const decision = { id: `insight-decision-${randomUUID()}`, candidateKey: candidate.candidateKey, candidateId, evidenceDigest: candidate.evidenceDigest, reviewer: member.id, reviewerRole: member.role, decision: body.decision, note: String(body.note ?? "").slice(0, 2000), decidedAt: new Date().toISOString(), publication: "not_published" };
-      ledger.decisions.push(decision);
-      ledger.updatedAt = decision.decidedAt;
-      await writeFile(insightDecisionsPath, `${JSON.stringify(ledger, null, 2)}\n`);
-      await appendAudit({ requestId, action: "decide_insight", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: decision.decision, occurredAt: decision.decidedAt });
-      await storeOperation({ key: idempotencyKey, action: "decide_insight", status: 200, body: decision, completedAt: decision.decidedAt });
+      store.commitRecord({ kind: "insight_decision", record: decision, audit: { requestId, action: "decide_insight", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: decision.decision, occurredAt: decision.decidedAt }, operation: { key: idempotencyKey, action: "decide_insight", status: 200, body: decision, completedAt: decision.decidedAt } });
+      await writeFile(insightDecisionsPath, `${JSON.stringify(store.recordsLedger("insight_decision", "insight-decision-ledger-v1", "decisions"), null, 2)}\n`);
       return json(response, 200, decision);
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/insight-candidates/") && url.pathname.endsWith("/publish")) {
@@ -238,13 +239,9 @@ const server = createServer(async (request, response) => {
       const candidate = candidates.candidates.find((item) => item.id === candidateId);
       if (!candidate) return json(response, 404, { error: "Insight candidate not found." });
       if (candidate.status !== "accepted_for_publication") return json(response, 409, { error: "Insight must be accepted for publication before publishing." });
-      const ledger = await readJson(insightPublicationsPath, { schemaVersion: "insight-publication-ledger-v1", publications: [] });
       const publication = { id: `insight-publication-${randomUUID()}`, candidateKey: candidate.candidateKey, candidateId, workspaceId: workspace.id, evidenceDigest: candidate.evidenceDigest, publisher: member.id, publisherRole: member.role, publishedAt: new Date().toISOString(), note: String(body.note ?? "").slice(0, 2000) };
-      ledger.publications.push(publication);
-      ledger.updatedAt = publication.publishedAt;
-      await writeFile(insightPublicationsPath, `${JSON.stringify(ledger, null, 2)}\n`);
-      await appendAudit({ requestId, action: "publish_insight", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "published", occurredAt: publication.publishedAt });
-      await storeOperation({ key: idempotencyKey, action: "publish_insight", status: 200, body: publication, completedAt: publication.publishedAt });
+      store.commitRecord({ kind: "insight_publication", record: publication, audit: { requestId, action: "publish_insight", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "published", occurredAt: publication.publishedAt }, operation: { key: idempotencyKey, action: "publish_insight", status: 200, body: publication, completedAt: publication.publishedAt } });
+      await writeFile(insightPublicationsPath, `${JSON.stringify(store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications"), null, 2)}\n`);
       return json(response, 200, publication);
     }
     if (request.method !== "GET") return json(response, 405, { error: "This method is not supported for this endpoint." });
@@ -315,11 +312,11 @@ const server = createServer(async (request, response) => {
       return json(response, 200, workspaces);
     }
     if (url.pathname === "/api/alerts") {
-      const ledger = await readJson(alertsPath, { alerts: [] });
       const workspaceId = url.searchParams.get("workspace");
       const access = await workspaceAccess(request, workspaceId);
       if (denyWorkspaceRead(response, access)) return;
-      return json(response, 200, access.workspaceIds ? ledger.alerts.filter((alert) => access.workspaceIds.includes(alert.workspaceId)) : ledger.alerts);
+      const alerts = store.alertsLedger().alerts;
+      return json(response, 200, access.workspaceIds ? alerts.filter((alert) => access.workspaceIds.includes(alert.workspaceId)) : alerts);
     }
     if (url.pathname === "/api/questions") {
       const workspaceId = url.searchParams.get("workspace");

@@ -48,6 +48,14 @@ export function createRuntimeStore(runtimeDir) {
       body_json TEXT NOT NULL,
       completed_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS runtime_records (
+      record_kind TEXT NOT NULL,
+      record_id TEXT NOT NULL,
+      workspace_id TEXT,
+      body_json TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (record_kind, record_id)
+    );
   `);
   const migration = db.prepare("INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (?, ?)");
   migration.run(schemaVersion, new Date().toISOString());
@@ -57,6 +65,9 @@ export function createRuntimeStore(runtimeDir) {
   const insertAudit = db.prepare(`INSERT INTO audit_entries (request_id, action, target_id, workspace_id, actor_id, actor_role, result, occurred_at) VALUES (@requestId, @action, @targetId, @workspaceId, @actorId, @actorRole, @result, @occurredAt)`);
   const operationRow = db.prepare("SELECT operation_key AS key, action, status, body_json AS bodyJson, completed_at AS completedAt FROM idempotency_operations WHERE operation_key = ?");
   const insertOperation = db.prepare(`INSERT OR IGNORE INTO idempotency_operations (operation_key, action, status, body_json, completed_at) VALUES (@key, @action, @status, @bodyJson, @completedAt)`);
+  const recordRow = db.prepare("SELECT body_json AS bodyJson FROM runtime_records WHERE record_kind = ? AND record_id = ?");
+  const recordRows = db.prepare("SELECT body_json AS bodyJson FROM runtime_records WHERE record_kind = ? ORDER BY updated_at, record_id");
+  const upsertRecord = db.prepare(`INSERT INTO runtime_records (record_kind, record_id, workspace_id, body_json, updated_at) VALUES (@kind, @id, @workspaceId, @bodyJson, @updatedAt) ON CONFLICT(record_kind, record_id) DO UPDATE SET workspace_id = excluded.workspace_id, body_json = excluded.body_json, updated_at = excluded.updated_at`);
 
   function questionFromRow(row) {
     if (!row) return undefined;
@@ -88,7 +99,7 @@ export function createRuntimeStore(runtimeDir) {
     return { ...operation, body: parseJson(bodyJson, {}) };
   }
 
-  const importLegacy = db.transaction(({ questions, audit, operations }) => {
+  const importLegacy = db.transaction(({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications }) => {
     const shouldImportQuestions = db.prepare("SELECT COUNT(*) AS count FROM questions").get().count === 0;
     const shouldImportAudit = db.prepare("SELECT COUNT(*) AS count FROM audit_entries").get().count === 0;
     const shouldImportOperations = db.prepare("SELECT COUNT(*) AS count FROM idempotency_operations").get().count === 0;
@@ -112,6 +123,15 @@ export function createRuntimeStore(runtimeDir) {
       bodyJson: JSON.stringify(operation.body ?? {}),
       completedAt: operation.completedAt
     });
+    const importRecords = (kind, records) => {
+      const count = db.prepare("SELECT COUNT(*) AS count FROM runtime_records WHERE record_kind = ?").get(kind).count;
+      if (count > 0) return;
+      for (const record of records ?? []) upsertRecord.run({ kind, id: record.id, workspaceId: record.workspaceId ?? null, bodyJson: JSON.stringify(record), updatedAt: record.updatedAt ?? record.publishedAt ?? record.decidedAt ?? new Date().toISOString() });
+    };
+    importRecords("alert", alerts?.alerts);
+    importRecords("briefing_publication", briefingPublications?.publications);
+    importRecords("insight_decision", insightDecisions?.decisions);
+    importRecords("insight_publication", insightPublications?.publications);
   });
 
   return {
@@ -119,6 +139,17 @@ export function createRuntimeStore(runtimeDir) {
     importLegacy,
     questionsLedger,
     operationsLedger,
+    alertsLedger() { return { schemaVersion: "workspace-alert-ledger-v1", alerts: recordRows.all("alert").map((row) => parseJson(row.bodyJson, {})) }; },
+    recordsLedger(kind, schemaVersion, property) { return { schemaVersion, [property]: recordRows.all(kind).map((row) => parseJson(row.bodyJson, {})) }; },
+    findRecord(kind, id) { return parseJson(recordRow.get(kind, id)?.bodyJson, undefined); },
+    syncRecords(kind, records) { db.transaction(() => { for (const record of records ?? []) upsertRecord.run({ kind, id: record.id, workspaceId: record.workspaceId ?? null, bodyJson: JSON.stringify(record), updatedAt: record.updatedAt ?? record.generatedAt ?? record.publishedAt ?? record.decidedAt ?? new Date().toISOString() }); })(); },
+    commitRecord({ kind, record, audit, operation }) {
+      db.transaction(() => {
+        upsertRecord.run({ kind, id: record.id, workspaceId: record.workspaceId ?? null, bodyJson: JSON.stringify(record), updatedAt: record.updatedAt ?? record.acknowledgedAt ?? record.publishedAt ?? record.decidedAt ?? new Date().toISOString() });
+        insertAudit.run(audit);
+        if (operation.key) insertOperation.run({ ...operation, bodyJson: JSON.stringify(operation.body ?? {}) });
+      })();
+    },
     auditLedger,
     findOperation(key) { return operationFromRow(operationRow.get(key)); },
     appendAudit(entry) { insertAudit.run(entry); },
@@ -152,13 +183,25 @@ export async function importRuntimeLedgers(store, paths) {
       throw error;
     }
   };
-  const [questions, audit, operations] = await Promise.all([
+  const [questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications] = await Promise.all([
     read(paths.questions, { questions: [] }),
     read(paths.audit, { entries: [] }),
-    read(paths.operations, { operations: [] })
+    read(paths.operations, { operations: [] }),
+    read(paths.alerts, { alerts: [] }),
+    read(paths.briefingPublications, { publications: [] }),
+    read(paths.insightDecisions, { decisions: [] }),
+    read(paths.insightPublications, { publications: [] })
   ]);
-  store.importLegacy({ questions, audit, operations });
+  store.importLegacy({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications });
+  store.syncRecords("alert", alerts.alerts);
+  store.syncRecords("briefing_publication", briefingPublications.publications);
+  store.syncRecords("insight_decision", insightDecisions.decisions);
+  store.syncRecords("insight_publication", insightPublications.publications);
   await mkdir(resolve(paths.runtimeDir), { recursive: true });
   await writeFile(paths.questions, `${JSON.stringify(store.questionsLedger(), null, 2)}\n`);
   await writeFile(paths.audit, `${JSON.stringify(store.auditLedger(), null, 2)}\n`);
+  await writeFile(paths.alerts, `${JSON.stringify(store.alertsLedger(), null, 2)}\n`);
+  await writeFile(paths.briefingPublications, `${JSON.stringify(store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications"), null, 2)}\n`);
+  await writeFile(paths.insightDecisions, `${JSON.stringify(store.recordsLedger("insight_decision", "insight-decision-ledger-v1", "decisions"), null, 2)}\n`);
+  await writeFile(paths.insightPublications, `${JSON.stringify(store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications"), null, 2)}\n`);
 }

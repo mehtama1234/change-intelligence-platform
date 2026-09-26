@@ -26,11 +26,12 @@ Token-authenticated write requests must also send an `Idempotency-Key`. A
 retry with the same key replays the original result instead of creating a
 second question, decision, publication, or acknowledgment.
 
-The server stores questions, audit receipts, and idempotency operations in a
+The server stores questions, alert acknowledgements, publication records,
+insight review decisions, audit receipts, and idempotency operations in a
 SQLite database under `RUNTIME_DATA_DIR` using transactional writes and WAL
-mode. The JSON files beside it are compatibility read views for the current
-refresh tools; production backups must include the SQLite database and its WAL
-files, and restore tests must verify both the database and generated research
+mode. The JSON files beside it are compatibility views for the current refresh
+tools; production backups must include the SQLite database and its WAL files,
+and restore tests must verify both the database and generated research
 artifacts.
 
 This token map is a small deployment adapter, not a replacement for an
