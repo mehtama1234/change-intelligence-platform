@@ -79,6 +79,8 @@ try {
   if (traceEvidence.status !== 200 || traceInsight.status !== 200) throw new Error("Authenticated source-trace inspections failed.");
   const usage = await (await fetch(`${base}/api/usage?workspace=demo-research`, { headers: auth })).json();
   if (usage.measures.evidenceInspections < 1 || usage.measures.insightInspections < 1 || usage.measures.briefingsExported < 1 || usage.measures.decisionOutcomesRecorded < 1 || usage.measures.watchlistsCreated < 1 || usage.measures.alertsResolved < 1) throw new Error("Workspace usage did not count source tracing, export, decision feedback, watchlist, and alert actions.");
+  const pilot = await (await fetch(`${base}/api/pilot-metrics?workspace=demo-research`, { headers: auth })).json();
+  if (pilot.measures.alertsResolved < 1 || pilot.measures.usefulAlerts < 1 || pilot.measures.decisionFeedbackRecords < 1 || pilot.measures.decisionsUsingBriefings < 1 || pilot.measures.readingsHeld < 1) throw new Error("Pilot metrics did not aggregate durable alert and decision outcomes.");
   const watchlists = await (await fetch(`${base}/api/watchlists?workspace=demo-research`, { headers: auth })).json();
   if (!watchlists.some((watchlist) => watchlist.name === "Durability watchlist")) throw new Error("Watchlist did not survive restart.");
   const outcomes = await (await fetch(`${base}/api/decision-outcomes?workspace=demo-research`, { headers: auth })).json();

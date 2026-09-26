@@ -155,6 +155,37 @@ function buildCoverage(packet, registry) {
   return { schemaVersion: "coverage-read-model-v1", domain: packet.domain ?? null, sourceSnapshotDate: packet.sourceSnapshotDate ?? null, repositories, reportWindows, requirements, summary: { ready: requirements.filter((item) => item.status === "ready").length, partial: requirements.filter((item) => item.status === "partial").length, missing: requirements.filter((item) => item.status === "missing").length } };
 }
 
+function buildPilotMetrics({ workspaceId, auditEntries, alerts, outcomes, briefings }) {
+  const resolvedAlerts = alerts.filter((alert) => alert.state === "resolved" || alert.resolutionDisposition);
+  const responseTimes = resolvedAlerts.map((alert) => alert.responseTimeMs).filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
+  const median = responseTimes.length ? responseTimes[Math.floor(responseTimes.length / 2)] : null;
+  const knownOutcomes = outcomes.filter((outcome) => ["held", "changed", "wrong"].includes(outcome.outcomeState));
+  return {
+    schemaVersion: "pilot-metrics-v1",
+    workspaceId,
+    generatedAt: new Date().toISOString(),
+    measures: {
+      sourcesReviewed: auditEntries.filter((entry) => entry.action === "review_source").length,
+      alertsSeen: alerts.length,
+      alertsResolved: resolvedAlerts.length,
+      usefulAlerts: resolvedAlerts.filter((alert) => alert.resolutionDisposition === "useful").length,
+      falseAlerts: resolvedAlerts.filter((alert) => alert.resolutionDisposition === "false_positive").length,
+      alertsNeedingCorrection: resolvedAlerts.filter((alert) => alert.resolutionDisposition === "needs_correction").length,
+      medianAlertResponseMs: median,
+      briefingsPublished: auditEntries.filter((entry) => entry.action === "publish_briefing").length,
+      briefingsExported: auditEntries.filter((entry) => entry.action === "export_briefing").length,
+      decisionFeedbackRecords: outcomes.length,
+      decisionsUsingBriefings: outcomes.filter((outcome) => outcome.decisionState === "used").length,
+      knownDecisionResults: knownOutcomes.length,
+      readingsHeld: outcomes.filter((outcome) => outcome.outcomeState === "held").length,
+      readingsChanged: outcomes.filter((outcome) => outcome.outcomeState === "changed").length,
+      readingsWrong: outcomes.filter((outcome) => outcome.outcomeState === "wrong").length,
+      activeBriefings: briefings.filter((briefing) => ["draft", "published", "stale"].includes(briefing.state)).length
+    },
+    interpretation: "These are workspace activity and follow-up measures. They describe product use and recorded experience; they do not prove alert quality, customer causation, or general market value."
+  };
+}
+
 async function appendAudit(entry) {
   store.appendAudit(entry);
   await writeFile(auditPath, `${JSON.stringify(store.auditLedger(), null, 2)}\n`);
@@ -514,6 +545,16 @@ const server = createServer(async (request, response) => {
       const entries = store.auditLedger().entries.filter((entry) => !access.workspaceIds || access.workspaceIds.includes(entry.workspaceId));
       const counts = Object.fromEntries([...new Set(entries.map((entry) => entry.action))].map((action) => [action, entries.filter((entry) => entry.action === action).length]));
       return json(response, 200, { schemaVersion: "workspace-usage-v1", workspaceId: access.workspaceId, activity: { totalAuditEvents: entries.length, actions: counts, lastActivityAt: entries.at(-1)?.occurredAt ?? null }, measures: { questionsSaved: counts.create_question ?? 0, evidenceInspections: counts.inspect_evidence ?? 0, insightInspections: counts.inspect_insight ?? 0, sourceReviews: counts.review_source ?? 0, alertsAcknowledged: counts.acknowledge_alert ?? 0, alertsResolved: counts.resolve_alert ?? 0, falseAlerts: entries.filter((entry) => entry.action === "resolve_alert" && entry.result === "false_positive").length, briefingsPublished: counts.publish_briefing ?? 0, briefingsExported: counts.export_briefing ?? 0, insightsPublished: counts.publish_insight ?? 0, decisionOutcomesRecorded: counts.record_decision_outcome ?? 0, watchlistsCreated: counts.create_watchlist ?? 0 } });
+    }
+    if (url.pathname === "/api/pilot-metrics") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      const entries = store.auditLedger().entries.filter((entry) => !access.workspaceIds || access.workspaceIds.includes(entry.workspaceId));
+      const alerts = store.alertsLedger().alerts.filter((alert) => !access.workspaceIds || access.workspaceIds.includes(alert.workspaceId));
+      const outcomes = store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes").outcomes.filter((outcome) => !access.workspaceIds || access.workspaceIds.includes(outcome.workspaceId));
+      const briefingLedger = await readJson(briefingsPath, { briefings: [] });
+      const briefings = briefingLedger.briefings.filter((briefing) => !access.workspaceIds || access.workspaceIds.includes(briefing.workspaceId));
+      return json(response, 200, buildPilotMetrics({ workspaceId: access.workspaceId, auditEntries: entries, alerts, outcomes, briefings }));
     }
     if (url.pathname === "/metrics") {
       const readiness = await readinessReport();

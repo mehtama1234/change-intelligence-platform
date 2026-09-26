@@ -88,6 +88,15 @@ one customer's experience is a general outcome.
 Tracks selected companies, industries, themes, policies, and evidence gaps.
 Alerts are triggered by meaningful changes, not just new page counts.
 
+### Pilot scorecard
+
+For each customer workspace, the product records a small operating scorecard:
+how many alerts were reviewed, how many were useful or false, how quickly they
+were answered, how often briefings were exported or used in a decision, and
+what users later recorded about the reading. The scorecard measures the
+customer's recorded experience. It is not a claim that the product caused a
+business result or that one workspace proves general market value.
+
 ## Insight types
 
 The system should produce insights about:

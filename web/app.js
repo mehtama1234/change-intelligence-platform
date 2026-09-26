@@ -72,10 +72,11 @@ async function loadChanges() {
 
 async function loadOperations() {
   const workspace = encodeURIComponent(state.workspaceId);
-  const [response, usageResponse] = await Promise.all([apiFetch("../api/operations"), apiFetch(`../api/usage?workspace=${workspace}`)]);
-  if (!response.ok || !usageResponse.ok) throw new Error(`Operations unavailable (${response.status})`);
+  const [response, usageResponse, metricsResponse] = await Promise.all([apiFetch("../api/operations"), apiFetch(`../api/usage?workspace=${workspace}`), apiFetch(`../api/pilot-metrics?workspace=${workspace}`)]);
+  if (!response.ok || !usageResponse.ok || !metricsResponse.ok) throw new Error(`Operations unavailable (${response.status})`);
   const operations = await response.json();
   const usage = await usageResponse.json();
+  const pilot = await metricsResponse.json();
   const readiness = operations.readiness;
   const refresh = operations.refresh;
   byId("operations-summary").textContent = `Last run ${refresh.runId || "not recorded"} · ${refresh.status} · ${refresh.endedAt || "no completion time"}.`;
@@ -89,6 +90,16 @@ async function loadOperations() {
   const activity = usage.measures;
   const activityCards = [["Questions", activity.questionsSaved], ["Source reviews", activity.sourceReviews], ["Briefing exports", activity.briefingsExported], ["Decision feedback", activity.decisionOutcomesRecorded], ["Alerts resolved", activity.alertsResolved], ["False alerts", activity.falseAlerts], ["Watchlists", activity.watchlistsCreated]];
   byId("operations-cards").innerHTML = [...checks.map(([label, status]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong class="operation-${escapeHtml(status)}">${escapeHtml(status)}</strong></div>`), ...activityCards.map(([label, value]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`)].join("");
+  const measures = pilot.measures;
+  const responseTime = measures.medianAlertResponseMs === null ? "not recorded" : `${Math.round(measures.medianAlertResponseMs / 60000)} min`;
+  byId("pilot-scorecard").innerHTML = `<table><caption>Pilot scorecard · recorded workspace experience</caption><thead><tr><th>Measure</th><th>Value</th><th>What it tells us</th></tr></thead><tbody>
+    <tr><th scope="row">Useful alerts</th><td>${escapeHtml(measures.usefulAlerts)} / ${escapeHtml(measures.alertsResolved)} resolved</td><td>Whether people found reviewed alerts worth acting on.</td></tr>
+    <tr><th scope="row">False alerts</th><td>${escapeHtml(measures.falseAlerts)}</td><td>Signals users marked as noise.</td></tr>
+    <tr><th scope="row">Median alert response</th><td>${escapeHtml(responseTime)}</td><td>How quickly the workspace recorded a response.</td></tr>
+    <tr><th scope="row">Briefings exported</th><td>${escapeHtml(measures.briefingsExported)}</td><td>Briefings taken out of the reader for use elsewhere.</td></tr>
+    <tr><th scope="row">Decision feedback</th><td>${escapeHtml(measures.decisionFeedbackRecords)} recorded · ${escapeHtml(measures.decisionsUsingBriefings)} used</td><td>Whether a briefing entered a real decision.</td></tr>
+    <tr><th scope="row">Later result</th><td>${escapeHtml(measures.knownDecisionResults)} known · ${escapeHtml(measures.readingsHeld)} held · ${escapeHtml(measures.readingsChanged)} changed · ${escapeHtml(measures.readingsWrong)} wrong</td><td>What users later recorded about the reading.</td></tr>
+  </tbody></table><p class="muted">${escapeHtml(pilot.interpretation)}</p>`;
   const history = operations.refreshHistory ?? [];
   byId("operations-history").innerHTML = history.length ? `<table><caption>Recent refresh runs</caption><thead><tr><th>Run</th><th>Status</th><th>Steps</th><th>Ended</th></tr></thead><tbody>${history.slice().reverse().slice(0, 8).map((run) => `<tr><th scope="row"><code>${escapeHtml(run.runId)}</code></th><td>${escapeHtml(run.status)}</td><td>${run.steps.filter((step) => step.status === "complete").length}/${run.steps.length} complete</td><td>${escapeHtml(run.endedAt)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No refresh history recorded yet.</p>`;
 }
