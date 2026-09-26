@@ -48,6 +48,9 @@ try {
   const atlasResponse = await request("/api/atlas");
   const atlas = await atlasResponse.json();
   if (atlasResponse.status !== 200 || atlas.schemaVersion !== "domain-atlas-v1" || !atlas.entities.themes?.length || !atlas.entities.mechanisms?.length || !atlas.edges?.length) throw new Error("Domain atlas read model contract failed.");
+  const ingestionResponse = await request("/api/ingestion");
+  const ingestion = await ingestionResponse.json();
+  if (ingestionResponse.status !== 200 || ingestion.schemaVersion !== "research-ingestion-ledger-v1" || ingestion.repositories.length !== 6 || ingestion.records.length !== packet.records.length) throw new Error("Research ingestion read model contract failed.");
   const timelineResponse = await request("/api/timeline");
   const timeline = await timelineResponse.json();
   if (timelineResponse.status !== 200 || timeline.schemaVersion !== "research-timeline-v1" || timeline.eventCount !== sourceMap.sources.length * 2) throw new Error("Research timeline contract failed.");

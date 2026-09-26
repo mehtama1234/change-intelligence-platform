@@ -172,11 +172,12 @@ async function loadCoverage() {
 }
 
 async function loadAtlas() {
-  const response = await apiFetch("../api/atlas");
-  if (!response.ok) throw new Error(`Domain atlas unavailable (${response.status})`);
+  const [response, ingestionResponse] = await Promise.all([apiFetch("../api/atlas"), apiFetch("../api/ingestion")]);
+  if (!response.ok || !ingestionResponse.ok) throw new Error(`Domain atlas unavailable (${response.status})`);
   const atlas = await response.json();
+  const ingestion = await ingestionResponse.json();
   const groups = [["themes", "Themes"], ["mechanisms", "Mechanisms"], ["companies", "Companies"], ["industries", "Industries"], ["affectedGroups", "Affected groups"], ["repositories", "Repositories"]];
-  byId("atlas-summary").textContent = `${atlas.sourceRecordCount} evidence records · ${atlas.edges.length} source-to-entity links · snapshot ${atlas.sourceSnapshotDate || "not recorded"}. Connections organize the evidence; they do not prove causation.`;
+  byId("atlas-summary").textContent = `${atlas.sourceRecordCount} evidence records · ${atlas.edges.length} source-to-entity links · ${ingestion.repositories.filter((repository) => repository.status === "ingested").length} repositories ingested · snapshot ${atlas.sourceSnapshotDate || "not recorded"}. Connections organize the evidence; they do not prove causation.`;
   byId("atlas-entities").innerHTML = groups.map(([key, label]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong>${escapeHtml(atlas.entities[key]?.length ?? 0)}</strong></div>`).join("");
   const links = (atlas.edges ?? []).slice(0, 12);
   byId("atlas-links").innerHTML = links.length ? `<p class="muted">Examples of normalized links</p><ul>${links.map((edge) => `<li><code>${escapeHtml(edge.from)}</code> → <code>${escapeHtml(edge.to)}</code> · ${escapeHtml(edge.relation.replaceAll("_", " "))}</li>`).join("")}</ul>` : `<p class="muted">No normalized links are available yet.</p>`;

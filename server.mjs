@@ -11,6 +11,8 @@ const runtimeDir = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed
 const packetPath = resolve(root, process.env.PACKET_PATH ?? "data/processed/ai-work-control.packet.json");
 const atlasPath = resolve(runtimeDir, "domain-atlas.json");
 const staticAtlasPath = resolve(root, "data/processed/ai-work-control.atlas.json");
+const ingestionPath = resolve(runtimeDir, "research-ingestion.json");
+const staticIngestionPath = resolve(root, "data/processed/ai-work-control.ingestion.json");
 const reviewPath = resolve(runtimeDir, "latest-review-work.json");
 const historyPath = resolve(runtimeDir, "versioned-evidence-ledger.json");
 const refreshPath = resolve(runtimeDir, "latest-refresh.json");
@@ -1025,6 +1027,9 @@ const server = createServer(async (request, response) => {
     if (url.pathname === "/api/atlas") {
       const atlas = await readJson(atlasPath, await readJson(staticAtlasPath, { schemaVersion: "domain-atlas-v1", entities: {}, edges: [] }));
       return json(response, 200, atlas);
+    }
+    if (url.pathname === "/api/ingestion") {
+      return json(response, 200, await readJson(ingestionPath, await readJson(staticIngestionPath, { schemaVersion: "research-ingestion-ledger-v1", repositories: [], records: [] })));
     }
     if (url.pathname === "/api/packet") return json(response, 200, publicPacket(await readJson(packetPath, { error: "Packet has not been built." })));
     if (url.pathname.startsWith("/api/evidence/")) {

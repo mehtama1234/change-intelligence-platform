@@ -12,6 +12,7 @@ const outputPath = resolve(root, process.env.PACKET_OUTPUT_PATH ?? process.env.P
 const captureManifestPath = resolve(root, process.env.SEC_MANIFEST_PATH ?? "data/raw/ai-work-control/c3-ai/manifest.json");
 const xbrlExtractPath = resolve(root, process.env.SEC_XBRL_PATH ?? "data/processed/ai-work-control/c3-ai.xbrl.json");
 const sourceScanPath = resolve(root, process.env.SOURCE_SCAN_PATH ?? `${runtimeDir}/latest-source-scan.json`);
+const ingestionPath = resolve(root, process.env.INGESTION_OUTPUT_PATH ?? `${runtimeDir}/research-ingestion.json`);
 const reviewWorkPath = resolve(root, process.env.REVIEW_WORK_PATH ?? `${runtimeDir}/latest-review-work.json`);
 const reviewDecisionsPath = resolve(root, process.env.REVIEW_DECISIONS_PATH ?? `${runtimeDir}/review-decisions.json`);
 const evidenceLedgerPath = resolve(root, process.env.EVIDENCE_LEDGER_PATH ?? `${runtimeDir}/versioned-evidence-ledger.json`);
@@ -21,6 +22,7 @@ const briefingsPath = resolve(root, process.env.BRIEFINGS_PATH ?? `${runtimeDir}
 const insightCandidatesPath = resolve(root, process.env.INSIGHT_CANDIDATES_PATH ?? `${runtimeDir}/insight-candidates.json`);
 const map = JSON.parse(await readFile(mapPath, "utf8"));
 const sourceScan = existsSync(sourceScanPath) ? JSON.parse(await readFile(sourceScanPath, "utf8")) : undefined;
+const ingestion = existsSync(ingestionPath) ? JSON.parse(await readFile(ingestionPath, "utf8")) : undefined;
 const reviewWork = existsSync(reviewWorkPath) ? JSON.parse(await readFile(reviewWorkPath, "utf8")) : undefined;
 const reviewDecisions = existsSync(reviewDecisionsPath) ? JSON.parse(await readFile(reviewDecisionsPath, "utf8")) : undefined;
 const evidenceLedger = existsSync(evidenceLedgerPath) ? JSON.parse(await readFile(evidenceLedgerPath, "utf8")) : undefined;
@@ -152,7 +154,7 @@ async function buildReportWindow(source, sourceLedger) {
 }
 
 const records = [];
-for (const source of map.sources) {
+for (const source of ingestion?.records ?? map.sources) {
   const fullPath = resolve(sourceRoot, source.sourceRepository, source.sourcePath);
   const raw = await readFile(fullPath, "utf8");
   const digest = createHash("sha256").update(raw).digest("hex");

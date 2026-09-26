@@ -14,6 +14,8 @@ const runtimeFiles = [
   "latest-source-scan.json",
   "source-scan-history.json",
   "source-capture-ledger.json",
+  "research-ingestion.json",
+  "domain-atlas.json",
   "versioned-evidence-ledger.json",
   "review-decisions.json",
   "review-events.json",

@@ -26,6 +26,9 @@ Adapter output is then hashed and stored as a source snapshot before review.
 For local repository inputs, the refresh also retains the exact source bytes
 under a digest-addressed capture path. A later change or source outage therefore
 does not erase the material needed to replay and audit the prior reading.
+The ingestion step writes a repository-by-repository ledger containing the
+source digest, byte count, capture reference, and normalized research fields;
+packet and atlas generation consume that ledger when it is available.
 
 ## Core services
 

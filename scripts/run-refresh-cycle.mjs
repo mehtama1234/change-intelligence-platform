@@ -85,6 +85,7 @@ try {
   }
   await runStep("validate-source-adapters", "validate-source-adapters.mjs");
   await runStep("scan-repositories", "scan-source-changes.mjs");
+  await runStep("ingest-research-repositories", "ingest-research-repositories.mjs");
   await runStep("evaluate-watchlists", "evaluate-watchlists.mjs");
   await runStep("process-review-work", "process-source-review.mjs");
   await runStep("materialize-evidence", "materialize-evidence-versions.mjs");

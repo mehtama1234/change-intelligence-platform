@@ -1,0 +1,609 @@
+{
+  "schemaVersion": "research-ingestion-ledger-v1",
+  "generatedAt": "2026-09-26T09:18:54.359Z",
+  "domain": "ai-work-control",
+  "sourceSnapshotDate": "2026-09-25",
+  "scanRunId": "scan-20260926091809959",
+  "repositories": [
+    {
+      "id": "trend-hunting",
+      "adapter": "repository-files",
+      "refresh": "weekly",
+      "purpose": "cross-theme signals, outcome bridges, and counterexamples",
+      "recordCount": 3,
+      "status": "ingested"
+    },
+    {
+      "id": "cultural-geopolitical-theme-mining",
+      "adapter": "repository-files",
+      "refresh": "weekly",
+      "purpose": "social, institutional, political, and geopolitical records",
+      "recordCount": 4,
+      "status": "ingested"
+    },
+    {
+      "id": "annual-report-research",
+      "adapter": "repository-files",
+      "refresh": "quarterly",
+      "purpose": "annual reports, filings, company themes, and quarterly movement",
+      "recordCount": 1,
+      "status": "ingested"
+    },
+    {
+      "id": "ibis-industries",
+      "adapter": "repository-files",
+      "refresh": "monthly",
+      "purpose": "industry structure, operators, bottlenecks, and sector economics",
+      "recordCount": 1,
+      "status": "ingested"
+    },
+    {
+      "id": "inc5000-analysis",
+      "adapter": "repository-files",
+      "refresh": "monthly",
+      "purpose": "private-company growth, customer pain, and business models",
+      "recordCount": 1,
+      "status": "ingested"
+    },
+    {
+      "id": "company-atlas-lab",
+      "adapter": "repository-files",
+      "refresh": "weekly",
+      "purpose": "company dossiers, question matrices, cases, and briefings",
+      "recordCount": 6,
+      "status": "ingested"
+    }
+  ],
+  "records": [
+    {
+      "id": "trend-hunting-ai-control",
+      "sourceRole": "trend_signal",
+      "sourceRepository": "trend-hunting",
+      "sourcePath": "analysis/DEEP-TRENDS-CROSS-THEME-SYNTHESIS-V2.md",
+      "sourceLocator": "AI and agency lane",
+      "title": "AI capability is not the same as worker control",
+      "observation": "The synthesis separates access to AI capability from control over tasks, worker welfare, and successful remedy.",
+      "theme": "ai-work-control",
+      "mechanism": "A tool can increase capability while decision rights, measurement, and correction remain with an employer or platform.",
+      "affectedGroups": [
+        "workers",
+        "customers",
+        "employers"
+      ],
+      "claimState": "interpreted",
+      "asOf": "2026-09-22",
+      "limits": [
+        "This is a synthesis boundary, not a pooled causal estimate."
+      ],
+      "excerptTerms": [
+        "control",
+        "worker",
+        "remedy"
+      ],
+      "sourceDigest": "67e2e17f48ee21d1f468944b6d1c53e4b6fc20428838ffcbb151937d7662252e",
+      "sourceBytes": 25306,
+      "capturePath": "raw/source-captures/trend-hunting-ai-control/67e2e17f48ee21d1f468944b6d1c53e4b6fc20428838ffcbb151937d7662252e.source",
+      "ingestedAt": "2026-09-26T09:18:54.157Z"
+    },
+    {
+      "id": "cultural-ai-capability-dependence",
+      "sourceRole": "social_cultural",
+      "sourceRepository": "cultural-geopolitical-theme-mining",
+      "sourcePath": "site/ai-work-control-073.html",
+      "sourceLocator": "AI work-control reader page",
+      "title": "Capability can arrive with dependence",
+      "observation": "The reader frames AI infrastructure as potentially building useful capability and dependence together, while keeping portability, exit, and state-control effects open.",
+      "theme": "ai-work-control",
+      "mechanism": "A service can make work possible while increasing reliance on a provider or system that users cannot easily replace.",
+      "affectedGroups": [
+        "workers",
+        "organizations",
+        "public institutions"
+      ],
+      "claimState": "interpreted",
+      "asOf": "2026-09-25",
+      "limits": [
+        "The page preserves open questions about application migration, outcomes, portability, and exit."
+      ],
+      "excerptTerms": [
+        "capability",
+        "dependency",
+        "control"
+      ],
+      "sourceDigest": "88ac071286e2f746095504540db23f4164a8c5a3e1c6ee190ebcebf753e4d8fe",
+      "sourceBytes": 15639,
+      "capturePath": "raw/source-captures/cultural-ai-capability-dependence/88ac071286e2f746095504540db23f4164a8c5a3e1c6ee190ebcebf753e4d8fe.source",
+      "ingestedAt": "2026-09-26T09:18:54.157Z"
+    },
+    {
+      "id": "annual-ai-cultural-disintermediation",
+      "sourceRole": "company_report",
+      "sourceRepository": "annual-report-research",
+      "sourcePath": "site/trends/ai-cultural-disintermediation.html",
+      "sourceLocator": "AI cultural disintermediation theme page",
+      "title": "AI is changing which work remains scarce",
+      "observation": "The annual-report synthesis tracks AI as a force that can compress routine execution while increasing the value of distribution, judgment, accountability, and scarce expertise.",
+      "theme": "ai-work-control",
+      "mechanism": "When routine work becomes cheap, value and bargaining power can move toward owners of distribution, context, judgment, and workflow control.",
+      "affectedGroups": [
+        "workers",
+        "service firms",
+        "customers",
+        "platform owners"
+      ],
+      "claimState": "interpreted",
+      "asOf": "2026-08-10",
+      "limits": [
+        "This is a cross-company annual-report synthesis, not one company's measured AI outcome."
+      ],
+      "excerptTerms": [
+        "automation",
+        "judgment",
+        "control"
+      ],
+      "sourceDigest": "93d9d56ee7792cdf8c73af339b9e88d5a52544fae201dd800a51ce17622c68a4",
+      "sourceBytes": 28474,
+      "capturePath": "raw/source-captures/annual-ai-cultural-disintermediation/93d9d56ee7792cdf8c73af339b9e88d5a52544fae201dd800a51ce17622c68a4.source",
+      "ingestedAt": "2026-09-26T09:18:54.158Z"
+    },
+    {
+      "id": "ibis-ai-workflow-compression",
+      "sourceRole": "industry",
+      "sourceRepository": "ibis-industries",
+      "sourcePath": "writeups_ai.json",
+      "sourceLocator": "Design & the web: the fork",
+      "title": "AI can make routine execution cheaper while raising the value of strategy",
+      "observation": "The industry writeup describes AI website builders compressing template-based execution and shifting competition toward strategy, brand, personalization, and distribution.",
+      "theme": "ai-work-control",
+      "mechanism": "Automation lowers the price of repeatable execution and can move scarce value toward higher-context work.",
+      "affectedGroups": [
+        "design workers",
+        "agencies",
+        "small businesses",
+        "platforms"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "limits": [
+        "The writeup combines industry estimates and company examples; each underlying measure needs source-level review before a general labor claim."
+      ],
+      "excerptTerms": [
+        "AI builders",
+        "routine",
+        "strategy"
+      ],
+      "sourceDigest": "0d3dab9e8b23ea41b5ea11c224388642acbe5b5bcb8c27707542321255ad88ce",
+      "sourceBytes": 86295,
+      "capturePath": "raw/source-captures/ibis-ai-workflow-compression/0d3dab9e8b23ea41b5ea11c224388642acbe5b5bcb8c27707542321255ad88ce.source",
+      "ingestedAt": "2026-09-26T09:18:54.158Z"
+    },
+    {
+      "id": "inc5000-coreweave-ai-infrastructure",
+      "sourceRole": "private_company",
+      "sourceRepository": "inc5000-analysis",
+      "sourcePath": "data/processed/featured.json",
+      "sourceLocator": "company=CoreWeave",
+      "title": "AI demand creates a fast-growing infrastructure business",
+      "observation": "The Inc. 5000 record describes CoreWeave as a specialized GPU infrastructure provider serving AI labs, startups, and enterprises facing a shortage of compute.",
+      "theme": "ai-work-control",
+      "mechanism": "A physical and financial infrastructure bottleneck can create a specialized layer that captures demand before AI becomes an ordinary workflow.",
+      "affectedGroups": [
+        "AI companies",
+        "enterprise users",
+        "infrastructure workers",
+        "capital providers"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "limits": [
+        "The Inc. record identifies a growth hypothesis and revenue band; it does not prove customer benefit, durable margins, or AI productivity."
+      ],
+      "excerptTerms": [
+        "CoreWeave",
+        "GPU",
+        "AI cloud"
+      ],
+      "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+      "sourceBytes": 207596,
+      "capturePath": "raw/source-captures/inc5000-coreweave-ai-infrastructure/48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a.source",
+      "ingestedAt": "2026-09-26T09:18:54.197Z"
+    },
+    {
+      "id": "atlas-ai-work-evidence-thread",
+      "sourceRole": "research",
+      "sourceRepository": "company-atlas-lab",
+      "sourcePath": "local-runs/ai-work-culture-insight-thread.json",
+      "sourceLocator": "fieldnotes insight thread",
+      "title": "AI work narratives need independent cultural measures",
+      "observation": "The Atlas thread places company-reported AI adoption beside editorial context, consumer measures, independent workplace measures, and an explicit open question about productivity and adoption.",
+      "theme": "ai-work-control",
+      "mechanism": "A company narrative becomes more useful when it is compared with independent measures rather than treated as proof of an outcome.",
+      "affectedGroups": [
+        "workers",
+        "customers",
+        "researchers"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "limits": [
+        "The thread explicitly says its sources do not establish productivity change, adoption scale, or causality."
+      ],
+      "excerptTerms": [
+        "independent",
+        "productivity",
+        "causality"
+      ],
+      "sourceDigest": "49480c7a496f62b39ee0d89f8325fca1ec9204b07c47091d5641bc7ac5f51f97",
+      "sourceBytes": 3171,
+      "capturePath": "raw/source-captures/atlas-ai-work-evidence-thread/49480c7a496f62b39ee0d89f8325fca1ec9204b07c47091d5641bc7ac5f51f97.source",
+      "ingestedAt": "2026-09-26T09:18:54.227Z"
+    },
+    {
+      "id": "atlas-c3-ai-report-window",
+      "sourceRole": "company_report",
+      "sourceRepository": "company-atlas-lab",
+      "sourcePath": "company-industry-analysis/companies/c3-ai/SOURCE-LEDGER.md",
+      "sourceLocator": "FY2025 10-K and FY2026 Q1-Q3 direct SEC records",
+      "title": "C3.ai's report window shows what company records can and cannot prove",
+      "observation": "C3.ai's direct-record ledger covers the FY2025 10-K and three FY2026 10-Qs. It supports reported software, customer, accounting, deployment, risk, and financial facts, but does not independently measure accuracy, productivity, decision quality, privacy, worker conditions, or end-user outcomes.",
+      "company": "C3.ai",
+      "industry": "enterprise AI software",
+      "theme": "ai-work-control",
+      "mechanism": "A company's annual and quarterly reports can show commercial movement and stated deployments while leaving the lived result of an AI workflow unmeasured.",
+      "affectedGroups": [
+        "enterprise customers",
+        "workers",
+        "decision subjects",
+        "investors"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
+      "limits": [
+        "The report window does not identify an organization, model version, affected person, decision, input, output, error, override, appeal, remedy, or later outcome."
+      ],
+      "excerptTerms": [
+        "FY2025 10-K",
+        "FY2026 Q1",
+        "does not independently measure"
+      ],
+      "reportWindow": {
+        "bridgePath": "company-industry-analysis/companies/c3-ai/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+        "initialReadPath": "company-industry-analysis/companies/c3-ai/INITIAL-EVIDENCE-READ.md"
+      },
+      "sourceDigest": "c0f1424493170ccf3ef4829cd34a6f8d0d7526768c3cf20ed3feffad4faece29",
+      "sourceBytes": 1659,
+      "capturePath": "raw/source-captures/atlas-c3-ai-report-window/c0f1424493170ccf3ef4829cd34a6f8d0d7526768c3cf20ed3feffad4faece29.source",
+      "ingestedAt": "2026-09-26T09:18:54.237Z"
+    },
+    {
+      "id": "atlas-nvidia-ai-platform-window",
+      "sourceRole": "company_report",
+      "sourceRepository": "company-atlas-lab",
+      "sourcePath": "company-industry-analysis/companies/nvidia/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+      "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
+      "title": "NVIDIA's filings show platform growth without a measured deployment outcome",
+      "observation": "The NVIDIA bridge records an annual base and three subsequent quarters covering company revenue, data-center activity, supply, capacity, and export-control disclosures.",
+      "company": "NVIDIA",
+      "industry": "AI computing infrastructure",
+      "theme": "ai-work-control",
+      "mechanism": "Infrastructure revenue can rise before a customer workload, worker result, or public benefit is measured.",
+      "affectedGroups": [
+        "AI companies",
+        "enterprise users",
+        "infrastructure workers",
+        "capital providers"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
+      "limits": [
+        "The bridge does not establish customer workload value, switching cost, deployment return, worker outcome, or downstream public benefit."
+      ],
+      "excerptTerms": [
+        "three-quarter",
+        "Data Center",
+        "outcome"
+      ],
+      "reportWindow": {
+        "bridgePath": "company-industry-analysis/companies/nvidia/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+        "initialReadPath": "company-industry-analysis/companies/nvidia/INITIAL-EVIDENCE-READ.md",
+        "annualBaseline": "FY2025 10-K",
+        "columns": [
+          "Direct records",
+          "Bounded use",
+          "Not established"
+        ],
+        "reading": "This is an issuer-reported platform and capacity history, not a customer or worker outcome."
+      },
+      "sourceDigest": "75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0",
+      "sourceBytes": 2602,
+      "capturePath": "raw/source-captures/atlas-nvidia-ai-platform-window/75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0.source",
+      "ingestedAt": "2026-09-26T09:18:54.238Z"
+    },
+    {
+      "id": "atlas-microsoft-cloud-window",
+      "sourceRole": "company_report",
+      "sourceRepository": "company-atlas-lab",
+      "sourcePath": "company-industry-analysis/companies/microsoft/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+      "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
+      "title": "Microsoft's cloud growth does not identify the workload result",
+      "observation": "The Microsoft bridge records three quarters of reported revenue growth, Microsoft Cloud revenue, and commercial remaining performance obligations after the FY2025 annual report.",
+      "company": "Microsoft",
+      "industry": "cloud and enterprise software",
+      "theme": "ai-work-control",
+      "mechanism": "Cloud scale and contracted obligations can expand while price, use, capacity, reliability, and user benefit remain unresolved.",
+      "affectedGroups": [
+        "enterprise users",
+        "software workers",
+        "cloud infrastructure workers",
+        "capital providers"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
+      "limits": [
+        "The bridge does not isolate AI contribution, workload use, customer value, reliability, affordability, energy effects, or worker outcomes."
+      ],
+      "excerptTerms": [
+        "Microsoft Cloud",
+        "quarterly",
+        "cannot establish"
+      ],
+      "reportWindow": {
+        "bridgePath": "company-industry-analysis/companies/microsoft/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+        "initialReadPath": "company-industry-analysis/companies/microsoft/INITIAL-EVIDENCE-READ.md",
+        "annualBaseline": "FY2025 10-K",
+        "reading": "This is reported cloud growth and contract context, not proof of a customer workload result."
+      },
+      "sourceDigest": "0c783b9df6776a6e99d2f0a641039dbf9ed0de6e38f7e52a823466e5b65dae5e",
+      "sourceBytes": 2632,
+      "capturePath": "raw/source-captures/atlas-microsoft-cloud-window/0c783b9df6776a6e99d2f0a641039dbf9ed0de6e38f7e52a823466e5b65dae5e.source",
+      "ingestedAt": "2026-09-26T09:18:54.238Z"
+    },
+    {
+      "id": "atlas-oracle-cloud-window",
+      "sourceRole": "company_report",
+      "sourceRepository": "company-atlas-lab",
+      "sourcePath": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+      "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
+      "title": "Oracle's quarterly revenue movement leaves the operating cause open",
+      "observation": "The Oracle bridge records three reported quarterly revenue changes after the FY2025 annual report while explicitly leaving price, use, customer, capacity, AI demand, and outcome attribution unresolved.",
+      "company": "Oracle",
+      "industry": "cloud and enterprise software",
+      "theme": "ai-work-control",
+      "mechanism": "Reported revenue can move without identifying the workload, capacity, contract, or user change that produced it.",
+      "affectedGroups": [
+        "enterprise users",
+        "cloud infrastructure workers",
+        "customers",
+        "capital providers"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
+      "limits": [
+        "The bridge does not establish AI demand, cloud capacity return, customer value, durability, or public and worker outcomes."
+      ],
+      "excerptTerms": [
+        "quarterly",
+        "revenue",
+        "cannot establish"
+      ],
+      "reportWindow": {
+        "bridgePath": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+        "initialReadPath": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+        "annualBaseline": "FY2025 10-K",
+        "reading": "This is a reported revenue sequence; the operating cause and outcome remain open."
+      },
+      "sourceDigest": "781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583",
+      "sourceBytes": 2413,
+      "capturePath": "raw/source-captures/atlas-oracle-cloud-window/781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583.source",
+      "ingestedAt": "2026-09-26T09:18:54.267Z"
+    },
+    {
+      "id": "atlas-broadcom-ai-infrastructure-window",
+      "sourceRole": "company_report",
+      "sourceRepository": "company-atlas-lab",
+      "sourcePath": "company-industry-analysis/companies/broadcom/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+      "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
+      "title": "Broadcom's platform records need a separate customer-result test",
+      "observation": "The Broadcom bridge records three subsequent change windows and names unresolved price, unit, mix, integration, customer value, reliability, security, and AI-demand questions.",
+      "company": "Broadcom",
+      "industry": "semiconductors and infrastructure software",
+      "theme": "ai-work-control",
+      "mechanism": "A supplier can report commercial movement while the customer workflow, integration cost, and downstream result remain unmeasured.",
+      "affectedGroups": [
+        "enterprise users",
+        "software and hardware workers",
+        "infrastructure operators",
+        "capital providers"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
+      "limits": [
+        "The bridge does not prove AI-demand durability, customer switching cost, deployment reliability, security, worker conditions, or public outcomes."
+      ],
+      "excerptTerms": [
+        "Q1 FY2026",
+        "customer",
+        "AI-demand"
+      ],
+      "reportWindow": {
+        "bridgePath": "company-industry-analysis/companies/broadcom/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+        "initialReadPath": "company-industry-analysis/companies/broadcom/INITIAL-EVIDENCE-READ.md",
+        "annualBaseline": "FY2025 10-K",
+        "columns": [
+          "Proper use",
+          "Not established"
+        ],
+        "reading": "This is a company-reported platform history; customer value and downstream effects need separate evidence."
+      },
+      "sourceDigest": "78e50dcb48e4452ad98bf8e308e58ce80ffe85344d61d2571bf9244f98b37ad3",
+      "sourceBytes": 1197,
+      "capturePath": "raw/source-captures/atlas-broadcom-ai-infrastructure-window/78e50dcb48e4452ad98bf8e308e58ce80ffe85344d61d2571bf9244f98b37ad3.source",
+      "ingestedAt": "2026-09-26T09:18:54.268Z"
+    },
+    {
+      "id": "trend-ai-agency-control-measure",
+      "sourceRole": "research",
+      "sourceRepository": "trend-hunting",
+      "sourcePath": "analysis/AI-AGENCY-TEST-V1.md",
+      "sourceLocator": "AI user control and trust comparison",
+      "title": "Reported AI productivity is more common than reported control",
+      "observation": "A weighted Census HTOPS comparison reports AI use for at least one measured task at 54.948%, while 42.493% of AI users reported greater productivity, 21.736% reported control over when they used AI, and 10.995% reported control over how their data was used.",
+      "theme": "ai-work-control",
+      "mechanism": "Perceived usefulness can spread faster than people’s reported control over the system or their data.",
+      "affectedGroups": [
+        "AI users",
+        "workers",
+        "households"
+      ],
+      "claimState": "measured",
+      "asOf": "2026-09-13",
+      "unit": "AI users and weighted survey respondents",
+      "denominator": "Census HTOPS June 2025 measures; weighted shares",
+      "limits": [
+        "This is a cross-sectional descriptive comparison, not a causal estimate or proof that AI caused a change in autonomy or wellbeing."
+      ],
+      "excerptTerms": [
+        "54.948%",
+        "control",
+        "cross-sectional"
+      ],
+      "sourceDigest": "9aa6fb9e4de05f3c241925da7f2f39426807d5ad943ae116b596843882cc3a86",
+      "sourceBytes": 1999,
+      "capturePath": "raw/source-captures/trend-ai-agency-control-measure/9aa6fb9e4de05f3c241925da7f2f39426807d5ad943ae116b596843882cc3a86.source",
+      "ingestedAt": "2026-09-26T09:18:54.269Z"
+    },
+    {
+      "id": "cultural-nber-ai-task-adoption",
+      "sourceRole": "research",
+      "sourceRepository": "cultural-geopolitical-theme-mining",
+      "sourcePath": "analysis/projects/ai-work-control/nber-w35677-task-level-adoption-layer-v1.md",
+      "sourceLocator": "direct evidence and task-level adoption comparison",
+      "title": "AI exposure does not tell us which workers adopt it",
+      "observation": "The NBER W35677 audit reports generative AI exposure across more than 80% of occupations and over 40% of tasks, while adoption within most occupations remains below half and no task exceeds 70% adoption.",
+      "theme": "ai-work-control",
+      "mechanism": "Technical exposure becomes worker use only through access, training, permission, task fit, privacy, and perceived value.",
+      "affectedGroups": [
+        "workers",
+        "employers",
+        "occupational groups"
+      ],
+      "claimState": "compared",
+      "asOf": "2026-09-13",
+      "unit": "workers, occupations, and tasks",
+      "denominator": "13,920 employed RPS respondents and 55,634 person-task observations",
+      "limits": [
+        "The study does not observe employer decision rights, downstream pay, wellbeing, control, or worker outcomes, and the working paper is not a randomized workplace experiment."
+      ],
+      "excerptTerms": [
+        "widespread",
+        "adoption",
+        "does not observe"
+      ],
+      "sourceDigest": "c2aa137ca1e4fbf4709238b51db322e5ee36326606c2c828a56452953b8a9c92",
+      "sourceBytes": 6106,
+      "capturePath": "raw/source-captures/cultural-nber-ai-task-adoption/c2aa137ca1e4fbf4709238b51db322e5ee36326606c2c828a56452953b8a9c92.source",
+      "ingestedAt": "2026-09-26T09:18:54.296Z"
+    },
+    {
+      "id": "cultural-jrc-algorithmic-management-outcomes",
+      "sourceRole": "research",
+      "sourceRepository": "cultural-geopolitical-theme-mining",
+      "sourcePath": "analysis/projects/ai-work-control/jrc-aim-work-source-record-v1.md",
+      "sourceLocator": "AIM-WORK survey and working-conditions analysis",
+      "title": "Some forms of algorithmic management are associated with less discretion and more stress",
+      "observation": "The JRC AIM-WORK survey and analysis cover 70,316 people across the EU and report associations between algorithmic management practices, lower autonomy, reduced ability to take breaks, greater work intensity, and work-related stress; the size and direction vary by practice.",
+      "theme": "ai-work-control",
+      "mechanism": "Automated direction, monitoring, or pace-setting can change discretion and work intensity even when the specific vendor or system is not identified.",
+      "affectedGroups": [
+        "workers",
+        "managers",
+        "platform workers"
+      ],
+      "claimState": "compared",
+      "asOf": "2026-09-15",
+      "unit": "working-age individual workers across 27 EU Member States",
+      "denominator": "70,316 survey respondents; paid-work routing applies to the main work block",
+      "limits": [
+        "This is weighted cross-sectional survey and association evidence; it does not identify a single cause, vendor, employer, or matched before-and-after workplace."
+      ],
+      "excerptTerms": [
+        "70,316",
+        "lower autonomy",
+        "stress"
+      ],
+      "sourceDigest": "5577ac6f26d1d859a8c9a6f3577c709bebc69ef3dfc1ccef742db3dcec70582e",
+      "sourceBytes": 8365,
+      "capturePath": "raw/source-captures/cultural-jrc-algorithmic-management-outcomes/5577ac6f26d1d859a8c9a6f3577c709bebc69ef3dfc1ccef742db3dcec70582e.source",
+      "ingestedAt": "2026-09-26T09:18:54.308Z"
+    },
+    {
+      "id": "cultural-amazon-bandameeda-remedy",
+      "sourceRole": "research",
+      "sourceRepository": "cultural-geopolitical-theme-mining",
+      "sourcePath": "analysis/projects/ai-work-control/amazon-bandameeda-deactivation-remedy-record-v1.md",
+      "sourceLocator": "adjudicated deactivation, restoration, and lost-remuneration chain",
+      "title": "A complete individual remedy chain can exist without proving system-wide repair",
+      "observation": "In one Amazon Flex case, a worker response and request for human discussion were followed by an adjudicated finding that review and evidence were inadequate, an order to reinstate access, and a separate order for $12,126.31 in lost remuneration.",
+      "theme": "ai-work-control",
+      "mechanism": "A correction route matters only when a response is considered, the decision is revisited, access is restored, and lost income is addressed.",
+      "affectedGroups": [
+        "platform workers",
+        "customers",
+        "platform operators"
+      ],
+      "claimState": "measured",
+      "asOf": "2026-09-15",
+      "unit": "one adjudicated worker case",
+      "denominator": "One Amazon Flex worker with approximately 22,000 deliveries",
+      "limits": [
+        "The orders establish a case-specific remedy, not payment receipt, durable access, recurrence prevention, anti-retaliation, or prevalence across Amazon or platform work."
+      ],
+      "excerptTerms": [
+        "reinstate",
+        "$12,126.31",
+        "Boundary"
+      ],
+      "sourceDigest": "f2b548bf93149ed93ec9bddca9b09511ddb9541d73e3a0d9f9dcf6788cea9c91",
+      "sourceBytes": 7529,
+      "capturePath": "raw/source-captures/cultural-amazon-bandameeda-remedy/f2b548bf93149ed93ec9bddca9b09511ddb9541d73e3a0d9f9dcf6788cea9c91.source",
+      "ingestedAt": "2026-09-26T09:18:54.340Z"
+    },
+    {
+      "id": "trend-uber-kumar-review-counterexample",
+      "sourceRole": "research",
+      "sourceRepository": "trend-hunting",
+      "sourcePath": "analysis/AI-V7-WORKER-COUNTEREXAMPLE-COMPARATOR-V1.md",
+      "sourceLocator": "adjudicated compliant-review dismissal",
+      "title": "Human review can end in a compliant dismissal rather than restoration",
+      "observation": "In a separate Uber Eats case, the Commission found that a human Community Operations member considered the worker’s response and that the deactivation was compliant; the application was dismissed and no reactivation, pay, or compensation was ordered.",
+      "theme": "ai-work-control",
+      "mechanism": "The presence of a human reviewer does not by itself determine whether a worker receives restoration; process, evidence, rule clarity, and the final disposition must be examined together.",
+      "affectedGroups": [
+        "platform workers",
+        "platform operators",
+        "customers"
+      ],
+      "claimState": "disproved_or_weakened",
+      "asOf": "2026-09-17",
+      "unit": "one adjudicated worker case",
+      "denominator": "One Uber Eats worker; 97–98% of Brisbane partners reportedly met the rating threshold in the decision’s context",
+      "limits": [
+        "This counterexample does not prove ratings are accurate, that all workers receive equivalent review, or that unrecorded correction did not occur."
+      ],
+      "excerptTerms": [
+        "counterexample",
+        "human review",
+        "dismissed"
+      ],
+      "sourceDigest": "cd563ab438a730e4220e234c30d260f1238f6627f5693e1bba39aa9eebf85845",
+      "sourceBytes": 2390,
+      "capturePath": "raw/source-captures/trend-uber-kumar-review-counterexample/cd563ab438a730e4220e234c30d260f1238f6627f5693e1bba39aa9eebf85845.source",
+      "ingestedAt": "2026-09-26T09:18:54.355Z"
+    }
+  ]
+}

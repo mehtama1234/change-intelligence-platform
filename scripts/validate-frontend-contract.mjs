@@ -40,6 +40,7 @@ const required = [
   [app, "../api/changes?includeUnchanged=true", "change feed API"],
   [app, "../api/coverage", "evidence coverage API"],
   [app, "../api/atlas", "domain atlas API"],
+  [app, "../api/ingestion", "research ingestion API"],
   [app, "../api/pilot-metrics?workspace=", "pilot metrics API"],
   [app, "../api/workspace-update?workspace=", "workspace update API"],
   [app, "../api/workspace-delivery-health?workspace=", "workspace delivery health API"],
