@@ -31,6 +31,11 @@ evidence proves, and what remains open.
 8. [Security boundary](SECURITY.md)
 9. [Operations runbook](OPERATIONS-RUNBOOK.md)
 
+Every push also runs the core release gate and a Linux container smoke test in
+GitHub Actions. The container job validates Compose interpolation, builds the
+production image, starts the API, checks its health state, and removes its
+temporary volumes.
+
 ## North-star question
 
 > What is changing, why is it changing, which companies and institutions are

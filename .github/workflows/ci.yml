@@ -8,10 +8,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   contract-tests:
     runs-on: ubuntu-latest
@@ -26,15 +22,44 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Install Chromium and Linux dependencies
+        run: npx playwright install --with-deps chromium
       - name: Run clean-checkout contract tests
         run: npm run ci:core
+      - name: Run browser acceptance
+        run: npm run test:frontend-browser
 
   container-build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: contract-tests
+    env:
+      RESEARCH_ROOT: /tmp/change-intelligence-research
+      AUTH_TOKENS_JSON: '{"ci-token":"ci-member"}'
+      OPERATOR_ACTORS_JSON: '["ci-operator"]'
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Build deployment image
-        run: docker build --tag change-intelligence-platform:${{ github.sha }} .
+      - name: Create read-only research mount
+        run: mkdir -p "$RESEARCH_ROOT"
+      - name: Validate Compose interpolation
+        run: docker compose config
+      - name: Build production image
+        run: docker compose build
+      - name: Start API container
+        run: docker compose up -d change-intelligence
+      - name: Check API liveness
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8780/api/health; then exit 0; fi
+            sleep 2
+          done
+          docker compose logs change-intelligence
+          exit 1
+      - name: Check container health state
+        run: |
+          container_id="$(docker compose ps -q change-intelligence)"
+          test "$(docker inspect --format '{{.State.Health.Status}}' "$container_id")" = healthy
+      - name: Tear down containers and volumes
+        if: always()
+        run: docker compose down -v

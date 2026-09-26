@@ -51,7 +51,7 @@ async function waitForServer() {
   throw new Error(`Browser test server did not start: ${serverOutput}`);
 }
 await waitForServer();
-const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH ?? "/home/mehta/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome" });
+const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH ?? chromium.executablePath() });
 try {
   const page = await browser.newPage();
   const browserErrors = [];
