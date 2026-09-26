@@ -56,13 +56,350 @@
         }
       ],
       "reviewWork": {
+        "reviewRequired": 0,
         "readyForResearcher": 0,
         "blocked": 0,
-        "candidates": [],
+        "candidates": [
+          {
+            "id": "review-inc5000-luma-ai-networking-new",
+            "sourceId": "inc5000-luma-ai-networking",
+            "repository": "inc5000-analysis",
+            "state": "accepted_for_research",
+            "action": "reacquire_and_reextract",
+            "reason": "No prior capture exists for this source.",
+            "sourcePath": "data/processed/featured.json",
+            "sourceRole": "private_company",
+            "sourceLocator": "company=Luma Optics",
+            "title": "Luma Optics sells the network layer needed by larger AI systems",
+            "observation": "The Inc. 5000 record describes Luma Optics as a maker of optical transceiver hardware for data centers handling demanding AI workloads.",
+            "theme": "ai-work-control",
+            "mechanism": "As model workloads grow, the bottleneck can move from computing chips to the network that moves data between them, creating a specialized supplier layer.",
+            "affectedGroups": [
+              "AI companies",
+              "data-center workers",
+              "enterprise users",
+              "capital providers"
+            ],
+            "claimState": "reported",
+            "asOf": "2026-09-25",
+            "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+            "sourceBytes": 207596,
+            "sourceExcerpt": "nd routing software; per-ride fees and outcomes-based bonuses from plans.\", \"confidence\": \"high\", \"classified\": true, \"feature_reason\": [ \"big+fast\" ] }, { \"rank\": 47, \"company\": \"Luma Optics\", \"growth_pct\": 5757.0, \"revenue_band\": \"$100M - $250M\", \"rev_lo_musd\": 100, \"rev_hi_musd\": 250, \"rev_mid_musd\": 175, \"pct_secondary\": 160.0, \"founded\": 2006, \"industry_raw\": \"Artificial Intelligence & Data\", \"city\": \"Sebastapol\", \"state\": \"CA\", \"slug\": \"luma-optics\", \"list_year\": 2025, \"description\": \"Crafting optical transceiver hardware to handle the heaviest AI workloads efficiently and reliably.\", \"desc_source\": \"fetched2025\", \"company_age\": 19, \"durability_years\": 1, \"years_present\": [ 2025 ], \"ra",
+            "limits": [
+              "The Inc. record describes the business and growth, but does not prove customer performance, deployment durability, pricing power, or worker outcomes."
+            ],
+            "publication": "not_published"
+          },
+          {
+            "id": "review-inc5000-caylent-ai-delivery-new",
+            "sourceId": "inc5000-caylent-ai-delivery",
+            "repository": "inc5000-analysis",
+            "state": "accepted_for_research",
+            "action": "reacquire_and_reextract",
+            "reason": "No prior capture exists for this source.",
+            "sourcePath": "data/processed/featured.json",
+            "sourceRole": "private_company",
+            "sourceLocator": "company=Caylent",
+            "title": "Caylent sells help turning AI plans into cloud systems",
+            "observation": "The Inc. 5000 record describes Caylent as an AWS-focused services company using an AI-enabled delivery approach to help enterprises deploy ideas.",
+            "theme": "ai-work-control",
+            "mechanism": "When enterprises cannot turn a model or cloud plan into a working system, implementation firms capture value by supplying scarce technical knowledge and execution capacity.",
+            "affectedGroups": [
+              "enterprise users",
+              "software workers",
+              "implementation teams",
+              "customers"
+            ],
+            "claimState": "reported",
+            "asOf": "2026-09-25",
+            "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+            "sourceBytes": 207596,
+            "sourceExcerpt": "via carrier affiliate commissions; network effects scale.\", \"confidence\": \"high\", \"classified\": true, \"feature_reason\": [ \"big+fast\", \"durable 4yr\" ] }, { \"rank\": 352, \"company\": \"Caylent\", \"growth_pct\": 1122.0, \"revenue_band\": \"$100M - $250M\", \"rev_lo_musd\": 100, \"rev_hi_musd\": 250, \"rev_mid_musd\": 175, \"pct_secondary\": 295.0, \"founded\": 2015, \"industry_raw\": \"IT Services\", \"city\": \"Irvine\", \"state\": \"CA\", \"slug\": \"caylent\", \"list_year\": 2025, \"description\": \"An AI-enabled delivery methodology with deep AWS experience, turning customers\\u2019 ideas into impact.\", \"desc_source\": \"api2023\", \"company_age\": 10, \"durability_years\": 2, \"years_present\": [ 2023, 2025 ], \"rank_by_year\": { \"2023\": 93",
+            "limits": [
+              "The Inc. record identifies a service and growth story, but does not establish deployment quality, customer savings, worker workload, or repeatable AI productivity."
+            ],
+            "publication": "not_published"
+          },
+          {
+            "id": "review-inc5000-insurify-ai-decisions-new",
+            "sourceId": "inc5000-insurify-ai-decisions",
+            "repository": "inc5000-analysis",
+            "state": "accepted_for_research",
+            "action": "reacquire_and_reextract",
+            "reason": "No prior capture exists for this source.",
+            "sourcePath": "data/processed/featured.json",
+            "sourceRole": "private_company",
+            "sourceLocator": "company=Insurify",
+            "title": "Insurify applies AI to a consumer insurance choice",
+            "observation": "The Inc. 5000 record describes Insurify as an AI-powered insurance comparison platform that helps shoppers compare policies and quotes.",
+            "theme": "ai-work-control",
+            "mechanism": "A comparison service can reduce search effort for consumers while also shaping which choices, prices, and explanations they see.",
+            "affectedGroups": [
+              "insurance shoppers",
+              "insurers",
+              "customer-support workers",
+              "regulators"
+            ],
+            "claimState": "reported",
+            "asOf": "2026-09-25",
+            "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+            "sourceBytes": 207596,
+            "sourceExcerpt": "nd scale; recurring manufacturing margins from diversified customer base.\", \"confidence\": \"med\", \"classified\": true, \"feature_reason\": [ \"big+fast\" ] }, { \"rank\": 635, \"company\": \"Insurify\", \"growth_pct\": 657.0, \"revenue_band\": \"$250M - $500M\", \"rev_lo_musd\": 250, \"rev_hi_musd\": 500, \"rev_mid_musd\": 375, \"pct_secondary\": 48.0, \"founded\": 2013, \"industry_raw\": \"Insurance\", \"city\": \"Cambridge\", \"state\": \"MA\", \"slug\": \"insurify\", \"list_year\": 2025, \"description\": \"An AI-powered insurance comparison platform that helped 24 million shoppers over the last year.\", \"desc_source\": \"api2024\", \"company_age\": 12, \"durability_years\": 4, \"years_present\": [ 2022, 2023, 2024, 2025 ], \"rank_by_year\": { \"2022",
+            "limits": [
+              "The Inc. record does not show quote accuracy, consumer savings, recommendation bias, coverage quality, or how users can correct an error."
+            ],
+            "publication": "not_published"
+          },
+          {
+            "id": "review-inc5000-veradata-donor-analytics-new",
+            "sourceId": "inc5000-veradata-donor-analytics",
+            "repository": "inc5000-analysis",
+            "state": "accepted_for_research",
+            "action": "reacquire_and_reextract",
+            "reason": "No prior capture exists for this source.",
+            "sourcePath": "data/processed/featured.json",
+            "sourceRole": "private_company",
+            "sourceLocator": "company=VeraData",
+            "title": "VeraData uses AI to help nonprofits decide whom to approach",
+            "observation": "The Inc. 5000 record describes VeraData as an AI and machine-learning company serving philanthropic organizations with donor analysis.",
+            "theme": "ai-work-control",
+            "mechanism": "Prediction tools can make scarce fundraising staff more selective while moving judgment about who receives attention into a data system.",
+            "affectedGroups": [
+              "nonprofit workers",
+              "donors",
+              "charities",
+              "people served by nonprofits"
+            ],
+            "claimState": "reported",
+            "asOf": "2026-09-25",
+            "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+            "sourceBytes": 207596,
+            "sourceExcerpt": "izes data sharing; durability (2/4 years) proves recurring revenue model.\", \"confidence\": \"med\", \"classified\": true, \"feature_reason\": [ \"big+fast\" ] }, { \"rank\": 532, \"company\": \"VeraData\", \"growth_pct\": 756.0, \"revenue_band\": \"$100M - $250M\", \"rev_lo_musd\": 100, \"rev_hi_musd\": 250, \"rev_mid_musd\": 175, \"pct_secondary\": 155.0, \"founded\": 2009, \"industry_raw\": \"Artificial Intelligence & Data\", \"city\": \"Fort Myers\", \"state\": \"FL\", \"slug\": \"veradata\", \"list_year\": 2025, \"description\": \"Harnesses AI, machine learning, and donor science to revolutionize philanthropy.\", \"desc_source\": \"fetched2025\", \"company_age\": 16, \"durability_years\": 1, \"years_present\": [ 2025 ], \"rank_by_year\": { \"2025\": 532",
+            "limits": [
+              "The Inc. record does not measure prediction accuracy, donor treatment, fundraising results, access effects, or how staff challenge a recommendation."
+            ],
+            "publication": "not_published"
+          }
+        ],
+        "decisions": [
+          {
+            "id": "decision-e5608d69-2622-454b-a1b2-7271950319df",
+            "candidateId": "review-inc5000-luma-ai-networking-new",
+            "sourceId": "inc5000-luma-ai-networking",
+            "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+            "reviewer": "codex-researcher",
+            "decision": "accept",
+            "resultingState": "accepted_for_research",
+            "note": "The source is a bounded Inc. 5000 company description; accept for research use while retaining its limits about outcomes and durability.",
+            "decidedAt": "2026-09-26T10:06:49.430Z",
+            "publication": "not_published"
+          },
+          {
+            "id": "decision-08b03b2d-5144-49e2-b9fc-3fbbee750a86",
+            "candidateId": "review-inc5000-caylent-ai-delivery-new",
+            "sourceId": "inc5000-caylent-ai-delivery",
+            "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+            "reviewer": "codex-researcher",
+            "decision": "accept",
+            "resultingState": "accepted_for_research",
+            "note": "The source is a bounded Inc. 5000 company description; accept for research use while retaining its limits about deployment quality and customer results.",
+            "decidedAt": "2026-09-26T10:06:49.813Z",
+            "publication": "not_published"
+          },
+          {
+            "id": "decision-8dfdd78f-a34f-4bcf-9f61-92a5b6011b36",
+            "candidateId": "review-inc5000-insurify-ai-decisions-new",
+            "sourceId": "inc5000-insurify-ai-decisions",
+            "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+            "reviewer": "codex-researcher",
+            "decision": "accept",
+            "resultingState": "accepted_for_research",
+            "note": "The source is a bounded Inc. 5000 company description; accept for research use while retaining its limits about accuracy, bias, savings, and correction.",
+            "decidedAt": "2026-09-26T10:06:50.227Z",
+            "publication": "not_published"
+          },
+          {
+            "id": "decision-8430961a-a93a-4cbf-9619-de028600a1b7",
+            "candidateId": "review-inc5000-veradata-donor-analytics-new",
+            "sourceId": "inc5000-veradata-donor-analytics",
+            "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+            "reviewer": "codex-researcher",
+            "decision": "accept",
+            "resultingState": "accepted_for_research",
+            "note": "The source is a bounded Inc. 5000 company description; accept for research use while retaining its limits about prediction accuracy, access effects, and outcomes.",
+            "decidedAt": "2026-09-26T10:06:50.620Z",
+            "publication": "not_published"
+          }
+        ],
         "versionedEvidence": {
-          "activeResearchRecordCount": 0,
-          "decisionCount": 0,
-          "records": []
+          "activeResearchRecordCount": 4,
+          "decisionCount": 4,
+          "records": [
+            {
+              "versionId": "inc5000-luma-ai-networking-48fc203e7770",
+              "sourceId": "inc5000-luma-ai-networking",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+              "state": "accepted_for_research",
+              "publication": "not_published",
+              "acceptedBy": "codex-researcher",
+              "acceptedAt": "2026-09-26T10:06:49.430Z",
+              "decisionId": "decision-e5608d69-2622-454b-a1b2-7271950319df",
+              "record": {
+                "id": "inc5000-luma-ai-networking",
+                "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+                "sourceBytes": 207596,
+                "sourceExcerpt": "nd routing software; per-ride fees and outcomes-based bonuses from plans.\", \"confidence\": \"high\", \"classified\": true, \"feature_reason\": [ \"big+fast\" ] }, { \"rank\": 47, \"company\": \"Luma Optics\", \"growth_pct\": 5757.0, \"revenue_band\": \"$100M - $250M\", \"rev_lo_musd\": 100, \"rev_hi_musd\": 250, \"rev_mid_musd\": 175, \"pct_secondary\": 160.0, \"founded\": 2006, \"industry_raw\": \"Artificial Intelligence & Data\", \"city\": \"Sebastapol\", \"state\": \"CA\", \"slug\": \"luma-optics\", \"list_year\": 2025, \"description\": \"Crafting optical transceiver hardware to handle the heaviest AI workloads efficiently and reliably.\", \"desc_source\": \"fetched2025\", \"company_age\": 19, \"durability_years\": 1, \"years_present\": [ 2025 ], \"ra",
+                "sourceRole": "private_company",
+                "sourceRepository": "inc5000-analysis",
+                "sourceRef": "data/processed/featured.json",
+                "sourceLocator": "company=Luma Optics",
+                "title": "Luma Optics sells the network layer needed by larger AI systems",
+                "observation": "The Inc. 5000 record describes Luma Optics as a maker of optical transceiver hardware for data centers handling demanding AI workloads.",
+                "theme": "ai-work-control",
+                "mechanism": "As model workloads grow, the bottleneck can move from computing chips to the network that moves data between them, creating a specialized supplier layer.",
+                "affectedGroups": [
+                  "AI companies",
+                  "data-center workers",
+                  "enterprise users",
+                  "capital providers"
+                ],
+                "claimState": "reported",
+                "asOf": "2026-09-25",
+                "limits": [
+                  "The Inc. record describes the business and growth, but does not prove customer performance, deployment durability, pricing power, or worker outcomes."
+                ],
+                "researchReview": {
+                  "state": "accepted_for_research",
+                  "decisionId": "decision-e5608d69-2622-454b-a1b2-7271950319df",
+                  "reviewer": "codex-researcher",
+                  "acceptedAt": "2026-09-26T10:06:49.430Z"
+                }
+              }
+            },
+            {
+              "versionId": "inc5000-caylent-ai-delivery-48fc203e7770",
+              "sourceId": "inc5000-caylent-ai-delivery",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+              "state": "accepted_for_research",
+              "publication": "not_published",
+              "acceptedBy": "codex-researcher",
+              "acceptedAt": "2026-09-26T10:06:49.813Z",
+              "decisionId": "decision-08b03b2d-5144-49e2-b9fc-3fbbee750a86",
+              "record": {
+                "id": "inc5000-caylent-ai-delivery",
+                "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+                "sourceBytes": 207596,
+                "sourceExcerpt": "via carrier affiliate commissions; network effects scale.\", \"confidence\": \"high\", \"classified\": true, \"feature_reason\": [ \"big+fast\", \"durable 4yr\" ] }, { \"rank\": 352, \"company\": \"Caylent\", \"growth_pct\": 1122.0, \"revenue_band\": \"$100M - $250M\", \"rev_lo_musd\": 100, \"rev_hi_musd\": 250, \"rev_mid_musd\": 175, \"pct_secondary\": 295.0, \"founded\": 2015, \"industry_raw\": \"IT Services\", \"city\": \"Irvine\", \"state\": \"CA\", \"slug\": \"caylent\", \"list_year\": 2025, \"description\": \"An AI-enabled delivery methodology with deep AWS experience, turning customers\\u2019 ideas into impact.\", \"desc_source\": \"api2023\", \"company_age\": 10, \"durability_years\": 2, \"years_present\": [ 2023, 2025 ], \"rank_by_year\": { \"2023\": 93",
+                "sourceRole": "private_company",
+                "sourceRepository": "inc5000-analysis",
+                "sourceRef": "data/processed/featured.json",
+                "sourceLocator": "company=Caylent",
+                "title": "Caylent sells help turning AI plans into cloud systems",
+                "observation": "The Inc. 5000 record describes Caylent as an AWS-focused services company using an AI-enabled delivery approach to help enterprises deploy ideas.",
+                "theme": "ai-work-control",
+                "mechanism": "When enterprises cannot turn a model or cloud plan into a working system, implementation firms capture value by supplying scarce technical knowledge and execution capacity.",
+                "affectedGroups": [
+                  "enterprise users",
+                  "software workers",
+                  "implementation teams",
+                  "customers"
+                ],
+                "claimState": "reported",
+                "asOf": "2026-09-25",
+                "limits": [
+                  "The Inc. record identifies a service and growth story, but does not establish deployment quality, customer savings, worker workload, or repeatable AI productivity."
+                ],
+                "researchReview": {
+                  "state": "accepted_for_research",
+                  "decisionId": "decision-08b03b2d-5144-49e2-b9fc-3fbbee750a86",
+                  "reviewer": "codex-researcher",
+                  "acceptedAt": "2026-09-26T10:06:49.813Z"
+                }
+              }
+            },
+            {
+              "versionId": "inc5000-insurify-ai-decisions-48fc203e7770",
+              "sourceId": "inc5000-insurify-ai-decisions",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+              "state": "accepted_for_research",
+              "publication": "not_published",
+              "acceptedBy": "codex-researcher",
+              "acceptedAt": "2026-09-26T10:06:50.227Z",
+              "decisionId": "decision-8dfdd78f-a34f-4bcf-9f61-92a5b6011b36",
+              "record": {
+                "id": "inc5000-insurify-ai-decisions",
+                "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+                "sourceBytes": 207596,
+                "sourceExcerpt": "nd scale; recurring manufacturing margins from diversified customer base.\", \"confidence\": \"med\", \"classified\": true, \"feature_reason\": [ \"big+fast\" ] }, { \"rank\": 635, \"company\": \"Insurify\", \"growth_pct\": 657.0, \"revenue_band\": \"$250M - $500M\", \"rev_lo_musd\": 250, \"rev_hi_musd\": 500, \"rev_mid_musd\": 375, \"pct_secondary\": 48.0, \"founded\": 2013, \"industry_raw\": \"Insurance\", \"city\": \"Cambridge\", \"state\": \"MA\", \"slug\": \"insurify\", \"list_year\": 2025, \"description\": \"An AI-powered insurance comparison platform that helped 24 million shoppers over the last year.\", \"desc_source\": \"api2024\", \"company_age\": 12, \"durability_years\": 4, \"years_present\": [ 2022, 2023, 2024, 2025 ], \"rank_by_year\": { \"2022",
+                "sourceRole": "private_company",
+                "sourceRepository": "inc5000-analysis",
+                "sourceRef": "data/processed/featured.json",
+                "sourceLocator": "company=Insurify",
+                "title": "Insurify applies AI to a consumer insurance choice",
+                "observation": "The Inc. 5000 record describes Insurify as an AI-powered insurance comparison platform that helps shoppers compare policies and quotes.",
+                "theme": "ai-work-control",
+                "mechanism": "A comparison service can reduce search effort for consumers while also shaping which choices, prices, and explanations they see.",
+                "affectedGroups": [
+                  "insurance shoppers",
+                  "insurers",
+                  "customer-support workers",
+                  "regulators"
+                ],
+                "claimState": "reported",
+                "asOf": "2026-09-25",
+                "limits": [
+                  "The Inc. record does not show quote accuracy, consumer savings, recommendation bias, coverage quality, or how users can correct an error."
+                ],
+                "researchReview": {
+                  "state": "accepted_for_research",
+                  "decisionId": "decision-8dfdd78f-a34f-4bcf-9f61-92a5b6011b36",
+                  "reviewer": "codex-researcher",
+                  "acceptedAt": "2026-09-26T10:06:50.227Z"
+                }
+              }
+            },
+            {
+              "versionId": "inc5000-veradata-donor-analytics-48fc203e7770",
+              "sourceId": "inc5000-veradata-donor-analytics",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+              "state": "accepted_for_research",
+              "publication": "not_published",
+              "acceptedBy": "codex-researcher",
+              "acceptedAt": "2026-09-26T10:06:50.620Z",
+              "decisionId": "decision-8430961a-a93a-4cbf-9619-de028600a1b7",
+              "record": {
+                "id": "inc5000-veradata-donor-analytics",
+                "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+                "sourceBytes": 207596,
+                "sourceExcerpt": "izes data sharing; durability (2/4 years) proves recurring revenue model.\", \"confidence\": \"med\", \"classified\": true, \"feature_reason\": [ \"big+fast\" ] }, { \"rank\": 532, \"company\": \"VeraData\", \"growth_pct\": 756.0, \"revenue_band\": \"$100M - $250M\", \"rev_lo_musd\": 100, \"rev_hi_musd\": 250, \"rev_mid_musd\": 175, \"pct_secondary\": 155.0, \"founded\": 2009, \"industry_raw\": \"Artificial Intelligence & Data\", \"city\": \"Fort Myers\", \"state\": \"FL\", \"slug\": \"veradata\", \"list_year\": 2025, \"description\": \"Harnesses AI, machine learning, and donor science to revolutionize philanthropy.\", \"desc_source\": \"fetched2025\", \"company_age\": 16, \"durability_years\": 1, \"years_present\": [ 2025 ], \"rank_by_year\": { \"2025\": 532",
+                "sourceRole": "private_company",
+                "sourceRepository": "inc5000-analysis",
+                "sourceRef": "data/processed/featured.json",
+                "sourceLocator": "company=VeraData",
+                "title": "VeraData uses AI to help nonprofits decide whom to approach",
+                "observation": "The Inc. 5000 record describes VeraData as an AI and machine-learning company serving philanthropic organizations with donor analysis.",
+                "theme": "ai-work-control",
+                "mechanism": "Prediction tools can make scarce fundraising staff more selective while moving judgment about who receives attention into a data system.",
+                "affectedGroups": [
+                  "nonprofit workers",
+                  "donors",
+                  "charities",
+                  "people served by nonprofits"
+                ],
+                "claimState": "reported",
+                "asOf": "2026-09-25",
+                "limits": [
+                  "The Inc. record does not measure prediction accuracy, donor treatment, fundraising results, access effects, or how staff challenge a recommendation."
+                ],
+                "researchReview": {
+                  "state": "accepted_for_research",
+                  "decisionId": "decision-8430961a-a93a-4cbf-9619-de028600a1b7",
+                  "reviewer": "codex-researcher",
+                  "acceptedAt": "2026-09-26T10:06:50.620Z"
+                }
+              }
+            }
+          ]
         }
       }
     },
@@ -566,7 +903,15 @@
       "industry": "AI data-center networking",
       "limits": [
         "The Inc. record describes the business and growth, but does not prove customer performance, deployment durability, pricing power, or worker outcomes."
-      ]
+      ],
+      "researchReview": {
+        "state": "accepted_for_research",
+        "versionId": "inc5000-luma-ai-networking-48fc203e7770",
+        "decisionId": "decision-e5608d69-2622-454b-a1b2-7271950319df",
+        "reviewer": "codex-researcher",
+        "acceptedAt": "2026-09-26T10:06:49.430Z",
+        "sourceReviewRun": "scan-20260926100219763"
+      }
     },
     {
       "id": "inc5000-caylent-ai-delivery",
@@ -593,7 +938,15 @@
       "industry": "cloud and AI implementation services",
       "limits": [
         "The Inc. record identifies a service and growth story, but does not establish deployment quality, customer savings, worker workload, or repeatable AI productivity."
-      ]
+      ],
+      "researchReview": {
+        "state": "accepted_for_research",
+        "versionId": "inc5000-caylent-ai-delivery-48fc203e7770",
+        "decisionId": "decision-08b03b2d-5144-49e2-b9fc-3fbbee750a86",
+        "reviewer": "codex-researcher",
+        "acceptedAt": "2026-09-26T10:06:49.813Z",
+        "sourceReviewRun": "scan-20260926100219763"
+      }
     },
     {
       "id": "inc5000-insurify-ai-decisions",
@@ -620,7 +973,15 @@
       "industry": "AI-enabled insurance comparison",
       "limits": [
         "The Inc. record does not show quote accuracy, consumer savings, recommendation bias, coverage quality, or how users can correct an error."
-      ]
+      ],
+      "researchReview": {
+        "state": "accepted_for_research",
+        "versionId": "inc5000-insurify-ai-decisions-48fc203e7770",
+        "decisionId": "decision-8dfdd78f-a34f-4bcf-9f61-92a5b6011b36",
+        "reviewer": "codex-researcher",
+        "acceptedAt": "2026-09-26T10:06:50.227Z",
+        "sourceReviewRun": "scan-20260926100219763"
+      }
     },
     {
       "id": "inc5000-veradata-donor-analytics",
@@ -647,7 +1008,15 @@
       "industry": "AI-enabled fundraising software",
       "limits": [
         "The Inc. record does not measure prediction accuracy, donor treatment, fundraising results, access effects, or how staff challenge a recommendation."
-      ]
+      ],
+      "researchReview": {
+        "state": "accepted_for_research",
+        "versionId": "inc5000-veradata-donor-analytics-48fc203e7770",
+        "decisionId": "decision-8430961a-a93a-4cbf-9619-de028600a1b7",
+        "reviewer": "codex-researcher",
+        "acceptedAt": "2026-09-26T10:06:50.620Z",
+        "sourceReviewRun": "scan-20260926100219763"
+      }
     },
     {
       "id": "atlas-ai-work-evidence-thread",

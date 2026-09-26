@@ -212,6 +212,7 @@ const packet = {
         reviewQueue: sourceScan.reviewQueue,
         ...(reviewWork ? {
           reviewWork: {
+            reviewRequired: reviewWork.reviewRequired,
             readyForResearcher: reviewWork.readyForResearcher,
             blocked: reviewWork.blocked,
             candidates: reviewWork.candidates,

@@ -11,7 +11,11 @@ const runtimeDir = process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-
 const scanPath = resolve(root, process.env.SOURCE_SCAN_PATH ?? `${runtimeDir}/latest-source-scan.json`);
 const outputDir = resolve(root, process.env.REVIEW_OUTPUT_DIR ?? runtimeDir);
 const outputPath = resolve(outputDir, process.env.REVIEW_OUTPUT_NAME ?? "latest-review-work.json");
+const decisionsPath = resolve(root, process.env.REVIEW_DECISIONS_PATH ?? `${runtimeDir}/review-decisions.json`);
 const scan = JSON.parse(await readFile(scanPath, "utf8"));
+const decisionLedger = existsSync(decisionsPath) ? JSON.parse(await readFile(decisionsPath, "utf8")) : { decisions: [] };
+const decisions = decisionLedger.decisions ?? [];
+const decisionByCandidate = new Map(decisions.map((decision) => [decision.candidateId, decision]));
 const sourceRoot = process.env.RESEARCH_ROOT ?? registry.researchRoot;
 const sourceById = new Map(map.sources.map((source) => [source.id, source]));
 
@@ -51,7 +55,7 @@ for (const item of scan.reviewQueue) {
   }
   const raw = await readFile(path, "utf8");
   const sha256 = createHash("sha256").update(raw).digest("hex");
-  candidates.push({
+  const candidate = {
     id: item.id,
     sourceId: item.sourceId,
     repository: item.repository,
@@ -73,16 +77,23 @@ for (const item of scan.reviewQueue) {
     sourceExcerpt: excerpt(raw, source.excerptTerms),
     limits: source.limits,
     publication: "not_published"
-  });
+  };
+  const decision = decisionByCandidate.get(candidate.id);
+  if (decision) {
+    candidate.state = decision.resultingState;
+    candidate.publication = decision.publication ?? "not_published";
+  }
+  candidates.push(candidate);
 }
 
 const result = {
   schemaVersion: "source-review-work-v1",
   generatedAt: new Date().toISOString(),
   scanRunId: scan.runId,
-  reviewRequired: candidates.length,
-  readyForResearcher: candidates.filter((candidate) => candidate.state === "ready_for_researcher").length,
-  blocked: candidates.filter((candidate) => candidate.state === "blocked").length,
+  reviewRequired: candidates.filter((candidate) => !decisionByCandidate.has(candidate.id)).length,
+  readyForResearcher: candidates.filter((candidate) => candidate.state === "ready_for_researcher" && !decisionByCandidate.has(candidate.id)).length,
+  blocked: candidates.filter((candidate) => candidate.state === "blocked" && !decisionByCandidate.has(candidate.id)).length,
+  decisions,
   candidates
 };
 await mkdir(outputDir, { recursive: true });
