@@ -32,7 +32,7 @@ async function loadWorkspaces() {
   if (!workspaces.some((workspace) => workspace.id === state.workspaceId)) state.workspaceId = workspaces[0].id;
   select.value = state.workspaceId;
   setWorkspaceStatus(state.token ? "Connected." : "Demo workspace.");
-  await Promise.all([loadQuestions(), loadAlerts()]);
+  await Promise.all([loadQuestions(), loadAlerts(), loadDecisionOutcomes()]);
 }
 
 async function loadAlerts() {
@@ -78,10 +78,20 @@ async function loadOperations() {
     ["Backup", readiness.checks.backup.status]
   ];
   const activity = usage.measures;
-  const activityCards = [["Questions", activity.questionsSaved], ["Source reviews", activity.sourceReviews], ["Briefing exports", activity.briefingsExported], ["Alerts acknowledged", activity.alertsAcknowledged]];
+  const activityCards = [["Questions", activity.questionsSaved], ["Source reviews", activity.sourceReviews], ["Briefing exports", activity.briefingsExported], ["Decision feedback", activity.decisionOutcomesRecorded], ["Alerts acknowledged", activity.alertsAcknowledged]];
   byId("operations-cards").innerHTML = [...checks.map(([label, status]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong class="operation-${escapeHtml(status)}">${escapeHtml(status)}</strong></div>`), ...activityCards.map(([label, value]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`)].join("");
   const history = operations.refreshHistory ?? [];
   byId("operations-history").innerHTML = history.length ? `<table><caption>Recent refresh runs</caption><thead><tr><th>Run</th><th>Status</th><th>Steps</th><th>Ended</th></tr></thead><tbody>${history.slice().reverse().slice(0, 8).map((run) => `<tr><th scope="row"><code>${escapeHtml(run.runId)}</code></th><td>${escapeHtml(run.status)}</td><td>${run.steps.filter((step) => step.status === "complete").length}/${run.steps.length} complete</td><td>${escapeHtml(run.endedAt)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No refresh history recorded yet.</p>`;
+}
+
+async function loadDecisionOutcomes() {
+  const response = await apiFetch(`../api/decision-outcomes?workspace=${encodeURIComponent(state.workspaceId)}`);
+  if (!response.ok) throw new Error(`Decision feedback unavailable (${response.status})`);
+  const outcomes = await response.json();
+  const used = outcomes.filter((outcome) => outcome.decisionState === "used").length;
+  const known = outcomes.filter((outcome) => ["held", "changed", "wrong"].includes(outcome.outcomeState)).length;
+  byId("decision-feedback-summary").textContent = `${outcomes.length} feedback record${outcomes.length === 1 ? "" : "s"} · ${used} briefing${used === 1 ? "" : "s"} used in a decision · ${known} later result${known === 1 ? "" : "s"} known. This is workspace experience, not a general causal estimate.`;
+  byId("decision-feedback-items").innerHTML = outcomes.length ? outcomes.slice().reverse().map((outcome) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(outcome.decisionState.replaceAll("_", " "))}</span><span>${escapeHtml(outcome.outcomeState)}</span><span>${escapeHtml(outcome.recordedAt)}</span></div><h3>Briefing ${escapeHtml(outcome.briefingId)}</h3><p>${escapeHtml(outcome.decisionSummary || "No decision note recorded.")}</p>${outcome.outcomeNote ? `<p class="muted">Later: ${escapeHtml(outcome.outcomeNote)}</p>` : ""}</article>`).join("") : `<p class="muted">No decision feedback recorded yet. Publish a briefing, use it in a real decision, and record what happened.</p>`;
 }
 
 async function loadCoverage() {
@@ -345,7 +355,7 @@ byId("question-form").addEventListener("submit", async (event) => {
   }
 });
 
-byId("workspace-select").addEventListener("change", async (event) => { state.workspaceId = event.target.value; await Promise.all([loadQuestions(), loadAlerts(), loadEvidenceHistory()]); });
+byId("workspace-select").addEventListener("change", async (event) => { state.workspaceId = event.target.value; await Promise.all([loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadEvidenceHistory()]); });
 byId("save-token").addEventListener("click", async () => {
   const token = byId("token-input").value.trim();
   if (token) { state.token = token; sessionStorage.setItem("change-intelligence-token", token); } else { state.token = ""; sessionStorage.removeItem("change-intelligence-token"); }
