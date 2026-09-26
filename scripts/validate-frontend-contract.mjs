@@ -156,6 +156,8 @@ const required = [
   , [operatorApp, "/members/", "operator member lifecycle API"]
   , [operatorApp, "deliveryHealth", "operator delivery health read model"]
   , [operatorApp, "portfolioReadiness", "operator portfolio readiness read model"]
+  , [operatorApp, "commercialOfferCounts", "operator commercial offer counts"]
+  , [operatorApp, "commercialOfferStatus", "operator commercial offer status"]
 ];
 const missing = required.filter(([text, value]) => !text.includes(value)).map(([, , label]) => label);
 if (missing.length) throw new Error(`Frontend contract failed: ${missing.join(", ")}`);
