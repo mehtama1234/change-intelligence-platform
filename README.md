@@ -28,6 +28,7 @@ evidence proves, and what remains open.
 5. [Delivery roadmap](DELIVERY-ROADMAP.md)
 6. [Meaty end-to-end goal](MEATY-END-TO-END-GOAL.md)
 7. [SDLC delivery plan](SDLC-DELIVERY-PLAN.md)
+8. [Security boundary](SECURITY.md)
 
 ## North-star question
 
