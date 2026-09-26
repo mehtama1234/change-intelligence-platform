@@ -96,6 +96,10 @@ from a hand-edited demo into a repeatable service operation. Identity mapping
 and invitations remain with the customer's identity system, so workspace
 provisioning does not pretend to solve authentication.
 
+The operator can also record an invitation and activate the member after the
+customer's identity system confirms the account. This gives onboarding a
+visible handoff: created, invited, activated, configured, and first delivery.
+
 Customers are not paying for more articles. They pay for reduced uncertainty:
 
 - faster orientation;

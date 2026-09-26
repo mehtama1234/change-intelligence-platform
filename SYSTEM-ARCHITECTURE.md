@@ -242,3 +242,9 @@ registry is merged with fixture workspaces for reads, included in runtime
 backups, and used by membership checks immediately. It stores identity IDs,
 not passwords or tokens; a production identity provider remains responsible
 for account creation, authentication, and invitations.
+
+Memberships have an explicit lifecycle. A newly invited identity is recorded
+as `invited` and cannot read or write workspace data. An operator activates it
+only after the external identity provider confirms the account. Active-member
+checks are applied centrally, so every existing workspace command receives the
+same rule.

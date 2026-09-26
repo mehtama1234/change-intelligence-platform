@@ -55,6 +55,20 @@ byId("load-overview").addEventListener("click", async () => {
     if (result.ok) { byId("operator-workspace-name").value = ""; byId("operator-workspace-owner").value = ""; }
     if (result.ok) byId("load-overview").click();
   };
+  const manageMember = async (activate) => {
+    const status = byId("operator-member-status");
+    const workspaceId = byId("operator-member-workspace").value.trim();
+    const identityId = byId("operator-member-identity").value.trim();
+    if (!workspaceId || !identityId) { status.textContent = "Workspace ID and member identity ID are required."; return; }
+    const path = activate ? `../api/operator/workspaces/${encodeURIComponent(workspaceId)}/members/${encodeURIComponent(identityId)}/activate` : `../api/operator/workspaces/${encodeURIComponent(workspaceId)}/members`;
+    const body = activate ? {} : { identityId, role: byId("operator-member-role").value };
+    const result = await fetch(path, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Idempotency-Key": crypto.randomUUID?.() || `member-${Date.now()}`, "content-type": "application/json" }, body: JSON.stringify(body) });
+    const responseBody = await result.json().catch(() => ({}));
+    status.textContent = result.ok ? (activate ? "Member activated." : "Invitation recorded.") : (responseBody.error || `Could not update membership (${result.status}).`);
+    if (result.ok) byId("load-overview").click();
+  };
+  byId("invite-workspace-member").onclick = () => manageMember(false);
+  byId("activate-workspace-member").onclick = () => manageMember(true);
   byId("operator-workspaces").innerHTML = `<table><caption>Workspace pilot status · no private notes</caption><thead><tr><th>Workspace</th><th>Onboarding</th><th>Missing setup</th><th>Configured</th><th>Deliveries</th><th>Reviewed</th><th>Useful</th><th>Decision changes</th><th>Delivery timing</th><th>Latest checkpoint</th></tr></thead><tbody>${overview.workspaces.map((workspace) => `<tr><th scope="row">${escapeHtml(workspace.name)}</th><td>${escapeHtml(workspace.onboarding?.status || "not recorded")}</td><td>${escapeHtml(workspace.onboarding?.missingSteps?.join(", ") || "none")}</td><td>${workspace.pilotConfigured ? "yes" : "no"}</td><td>${escapeHtml(workspace.deliveries)}</td><td>${escapeHtml(workspace.reviewedDeliveries)}</td><td>${escapeHtml(workspace.usefulDeliveries)}</td><td>${escapeHtml(workspace.decisionChanges)}</td><td>${workspace.deliveryDelayed ? "delayed" : "on schedule / no data"}</td><td>${escapeHtml(workspace.latestDecision || "none")}</td></tr>`).join("")}</tbody></table>`;
   byId("operator-history").innerHTML = overview.trend.length ? `<table><caption>Refresh history · aggregate operating trend</caption><thead><tr><th>Run</th><th>Status</th><th>Failed steps</th><th>Changed sources</th><th>Missing sources</th><th>Oldest source age</th><th>Alerts useful / false / correction</th><th>Deliveries</th><th>Reviewed</th></tr></thead><tbody>${overview.trend.slice().reverse().map((run) => `<tr><th scope="row"><code>${escapeHtml(run.runId)}</code></th><td>${escapeHtml(run.status)}</td><td>${escapeHtml(run.failedSteps.join(", ") || "none")}</td><td>${escapeHtml(run.changedSources ?? "not recorded")}</td><td>${escapeHtml(run.missingSources ?? "not recorded")}</td><td>${run.oldestSourceAgeMs === null ? "not recorded" : `${Math.round(run.oldestSourceAgeMs / 86400000)} days`}</td><td>${escapeHtml(run.usefulAlerts)} / ${escapeHtml(run.falseAlerts)} / ${escapeHtml(run.correctionAlerts)}</td><td>${escapeHtml(run.deliveriesPrepared)}</td><td>${escapeHtml(run.deliveriesReviewed)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No refresh history is available yet.</p>`;
   byId("operator-limitation").textContent = overview.limitation;

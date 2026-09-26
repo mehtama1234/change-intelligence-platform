@@ -125,6 +125,12 @@ secrets. The identity provider must map those IDs to real accounts before
 access is granted. Provisioned workspaces are included in the runtime backup
 manifest so a restore cannot silently lose tenant boundaries.
 
+Invited memberships are not treated as authenticated access. They remain
+blocked until an operator records activation after the external identity
+provider has confirmed the account. Suspended memberships are also excluded
+from normal workspace access and cannot be reactivated through the ordinary
+activation command.
+
 Token-authenticated write requests must also send an `Idempotency-Key`. A
 retry with the same key replays the original result instead of creating a
 second question, decision, publication, or acknowledgment.

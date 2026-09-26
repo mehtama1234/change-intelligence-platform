@@ -32,6 +32,13 @@
           <label for="operator-workspace-owner">Owner identity ID <input id="operator-workspace-owner" type="text" maxlength="120" autocomplete="off"></label>
           <button id="provision-workspace" type="button">Provision workspace</button>
           <span id="operator-provision-status" class="muted" role="status"></span>
+          <h3>Manage a workspace member</h3>
+          <label for="operator-member-workspace">Workspace ID <input id="operator-member-workspace" type="text" maxlength="160" autocomplete="off"></label>
+          <label for="operator-member-identity">Member identity ID <input id="operator-member-identity" type="text" maxlength="120" autocomplete="off"></label>
+          <label for="operator-member-role">Role <select id="operator-member-role"><option value="viewer">Viewer</option><option value="researcher">Researcher</option></select></label>
+          <button id="invite-workspace-member" type="button">Create invitation</button>
+          <button id="activate-workspace-member" type="button">Activate confirmed member</button>
+          <span id="operator-member-status" class="muted" role="status"></span>
         </section>
         <section class="record-card" aria-labelledby="operator-routing-title">
           <h2 id="operator-routing-title">Notification routing</h2>

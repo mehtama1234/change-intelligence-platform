@@ -136,14 +136,16 @@ async function configuredWorkspaces() {
 }
 
 async function workspaceConfig(id) {
-  return (await configuredWorkspaces()).find((workspace) => workspace.id === id);
+  const workspace = (await configuredWorkspaces()).find((candidate) => candidate.id === id);
+  if (!workspace) return undefined;
+  return { ...workspace, members: (workspace.members ?? []).filter((member) => !["invited", "pending_identity", "suspended"].includes(member.status)) };
 }
 
 async function workspaceAccess(request, requestedWorkspaceId) {
   if (authMode !== "token") return { workspaceId: requestedWorkspaceId ?? null, workspaceIds: null, actorId: authenticatedActor(request, {}) };
   const actorId = authenticatedActor(request, {});
   if (!actorId) return { error: { status: 401, body: { error: "Authentication required." } } };
-  const workspaces = (await configuredWorkspaces()).filter((workspace) => workspace.members?.some((member) => member.id === actorId));
+  const workspaces = (await configuredWorkspaces()).filter((workspace) => workspace.members?.some((member) => member.id === actorId && !["invited", "pending_identity", "suspended"].includes(member.status)));
   if (requestedWorkspaceId) {
     const requested = await workspaceConfig(requestedWorkspaceId);
     if (!requested) return { error: { status: 404, body: { error: "Workspace not found." } } };
@@ -171,6 +173,13 @@ async function readJson(path, fallback) {
     if (error.code === "ENOENT") return fallback;
     throw error;
   }
+}
+
+async function persistWorkspaceRegistryEntry(workspace) {
+  const registry = await readJson(workspaceRegistryPath, { schemaVersion: "workspace-registry-v1", workspaces: [] });
+  registry.schemaVersion = "workspace-registry-v1";
+  registry.workspaces = [...(registry.workspaces ?? []).filter((candidate) => candidate.id !== workspace.id), workspace];
+  await writeFile(workspaceRegistryPath, `${JSON.stringify(registry, null, 2)}\n`);
 }
 
 function buildCoverage(packet, registry) {
@@ -1407,23 +1416,69 @@ const server = createServer(async (request, response) => {
       if (ownerId.length < 3) return json(response, 400, { error: "Owner identity ID must be at least 3 characters." });
       const requestedMembers = Array.isArray(body.members) ? body.members : [];
       if (requestedMembers.length > 49) return json(response, 400, { error: "A workspace can have at most 50 members at provisioning time." });
-      const members = [{ id: ownerId, role: "owner" }];
+      const members = [{ id: ownerId, role: "owner", status: "active" }];
       for (const candidate of requestedMembers) {
         const id = String(candidate?.id ?? "").trim().slice(0, 120);
         const role = String(candidate?.role ?? "viewer");
         if (!id || id === ownerId || !["owner", "researcher", "viewer"].includes(role)) continue;
-        if (!members.some((member) => member.id === id)) members.push({ id, role });
+        if (!members.some((member) => member.id === id)) members.push({ id, role, status: "invited", invitedAt: new Date().toISOString(), invitedBy: operator.actorId });
       }
       const now = new Date().toISOString();
       const workspace = { schemaVersion: "workspace-v1", id: `workspace-${randomUUID()}`, name, members, watchlists: [], provisionedAt: now, provisionedBy: operator.actorId };
-      const registry = await readJson(workspaceRegistryPath, { schemaVersion: "workspace-registry-v1", workspaces: [] });
-      registry.schemaVersion = "workspace-registry-v1";
-      registry.workspaces = [...(registry.workspaces ?? []), workspace];
-      await writeFile(workspaceRegistryPath, `${JSON.stringify(registry, null, 2)}\n`);
+      await persistWorkspaceRegistryEntry(workspace);
       const responseBody = { ...workspace, identityProvisioning: "Map these member identity IDs to production identity-provider accounts before inviting the partner." };
       await appendAudit({ requestId, action: "provision_workspace", targetId: workspace.id, workspaceId: workspace.id, actorId: operator.actorId, actorRole: "operator", result: "provisioned", occurredAt: now });
       await storeOperation({ key: idempotencyKey, action: "provision_workspace", status: 201, body: responseBody, completedAt: now });
       return json(response, 201, responseBody);
+    }
+    if (request.method === "POST" && url.pathname.match(/^\/api\/operator\/workspaces\/[^/]+\/members$/)) {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const workspaceId = decodeURIComponent(url.pathname.split("/")[4]);
+      const body = await requestBody(request);
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (!idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for operator writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = (await configuredWorkspaces()).find((candidate) => candidate.id === workspaceId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      const identityId = String(body.identityId ?? "").trim().slice(0, 120);
+      const role = String(body.role ?? "viewer");
+      if (identityId.length < 3) return json(response, 400, { error: "Member identity ID must be at least 3 characters." });
+      if (!["researcher", "viewer"].includes(role)) return json(response, 400, { error: "Invited member role must be researcher or viewer." });
+      if (workspace.members?.some((member) => member.id === identityId)) return json(response, 409, { error: "This identity is already associated with the workspace." });
+      const now = new Date().toISOString();
+      const member = { id: identityId, role, status: "invited", invitedAt: now, invitedBy: operator.actorId };
+      const updated = { ...workspace, members: [...(workspace.members ?? []), member] };
+      await persistWorkspaceRegistryEntry(updated);
+      const responseBody = { workspaceId, member, identityProviderAction: "Invite this identity through the production identity provider, then activate the membership after the account is confirmed." };
+      await appendAudit({ requestId, action: "invite_workspace_member", targetId: identityId, workspaceId, actorId: operator.actorId, actorRole: "operator", result: "invited", occurredAt: now });
+      await storeOperation({ key: idempotencyKey, action: "invite_workspace_member", status: 201, body: responseBody, completedAt: now });
+      return json(response, 201, responseBody);
+    }
+    if (request.method === "POST" && url.pathname.match(/^\/api\/operator\/workspaces\/[^/]+\/members\/[^/]+\/activate$/)) {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const pathParts = url.pathname.split("/");
+      const workspaceId = decodeURIComponent(pathParts[4]);
+      const identityId = decodeURIComponent(pathParts[6]);
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (!idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for operator writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = (await configuredWorkspaces()).find((candidate) => candidate.id === workspaceId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      const existingMember = workspace.members?.find((member) => member.id === identityId);
+      if (!existingMember) return json(response, 404, { error: "Workspace member invitation not found." });
+      if (existingMember.status === "suspended") return json(response, 409, { error: "Suspended memberships must be restored through an explicit recovery flow." });
+      const now = new Date().toISOString();
+      const member = { ...existingMember, status: "active", activatedAt: now, activatedBy: operator.actorId };
+      const updated = { ...workspace, members: workspace.members.map((candidate) => candidate.id === identityId ? member : candidate) };
+      await persistWorkspaceRegistryEntry(updated);
+      const responseBody = { workspaceId, member };
+      await appendAudit({ requestId, action: "activate_workspace_member", targetId: identityId, workspaceId, actorId: operator.actorId, actorRole: "operator", result: "active", occurredAt: now });
+      await storeOperation({ key: idempotencyKey, action: "activate_workspace_member", status: 200, body: responseBody, completedAt: now });
+      return json(response, 200, responseBody);
     }
     if (request.method === "GET" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/export")) {
       const briefingId = decodeURIComponent(url.pathname.slice("/api/briefings/".length, -"/export".length));

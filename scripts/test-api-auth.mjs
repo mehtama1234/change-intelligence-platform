@@ -15,7 +15,7 @@ await writeFile(`${runtimeDir}/workspace-pilot-deliveries.json`, `${JSON.stringi
 await writeFile(`${runtimeDir}/workspace-alerts.json`, `${JSON.stringify({ schemaVersion: "workspace-alert-ledger-v1", workspaces: [{ id: "demo-research", name: "Demo research workspace" }], alerts: [{ id: "remediation-alert-test", workspaceId: "demo-research", watchlistName: "AI controls", sourceId: "trend-hunting-ai-control", repository: "trend-hunting", sourcePath: "README.md", kind: "source_availability", state: "open", severity: "high", recommendedAction: "Reconnect the source.", createdAt: new Date(impactNow - 120000).toISOString() }] }, null, 2)}\n`);
 const child = spawn(process.execPath, [resolve(root, "server.mjs")], {
   cwd: root,
-  env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher", "outsider-token": "outside-user", "operator-token": "ops-user", "new-owner-token": "new-owner" }), OPERATOR_ACTORS_JSON: JSON.stringify(["ops-user"]), OPERATOR_MAX_FAILED_REFRESHES: "-1" },
+  env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher", "outsider-token": "outside-user", "operator-token": "ops-user", "new-owner-token": "new-owner", "new-researcher-token": "new-researcher" }), OPERATOR_ACTORS_JSON: JSON.stringify(["ops-user"]), OPERATOR_MAX_FAILED_REFRESHES: "-1" },
   stdio: ["ignore", "pipe", "pipe"]
 });
 let output = "";
@@ -115,6 +115,14 @@ try {
   if (outsiderProvisionedOnboarding.status !== 403) throw new Error("Provisioned workspace leaked to an outsider.");
   const persistedRegistry = JSON.parse(await readFile(`${runtimeDir}/workspace-registry.json`, "utf8"));
   if (!persistedRegistry.workspaces?.some((workspace) => workspace.id === provisionBody.id)) throw new Error("Workspace registry did not persist the provisioned workspace.");
+  const invitedMemberWorkspaces = await (await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer new-researcher-token" } })).json();
+  if (invitedMemberWorkspaces.length !== 0) throw new Error("An invited member received workspace access before activation.");
+  const invite = await fetch(`${base}/api/operator/workspaces/${encodeURIComponent(provisionBody.id)}/members`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": "workspace-member-invite", "content-type": "application/json" }, body: JSON.stringify({ identityId: "another-viewer", role: "viewer" }) });
+  if (invite.status !== 201) throw new Error(`Operator member invitation failed: ${invite.status}`);
+  const activated = await fetch(`${base}/api/operator/workspaces/${encodeURIComponent(provisionBody.id)}/members/new-researcher/activate`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": "workspace-member-activate" }, body: "{}" });
+  if (activated.status !== 200) throw new Error(`Operator member activation failed: ${activated.status}`);
+  const activatedWorkspaces = await (await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer new-researcher-token" } })).json();
+  if (activatedWorkspaces.length !== 1 || activatedWorkspaces[0].id !== provisionBody.id) throw new Error("Activated member did not receive workspace access.");
   const routeWrite = await fetch(`${base}/api/operator/notification-routes`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": "operator-route-config", "content-type": "application/json" }, body: JSON.stringify({ default: ["platform-ops"], warningIds: { "refresh-failures": ["refresh-ops"] }, workspaces: { "demo-research": ["tenant-ops"] }, destinations: { "tenant-ops": { id: "tenant-ops-webhook", mode: "webhook", url: "https://tenant.example.test/notify" } } }) });
   if (routeWrite.status !== 200) throw new Error(`Operator route configuration failed: ${routeWrite.status}`);
   const routeRead = await (await fetch(`${base}/api/operator/notification-routes`, { headers: { Authorization: "Bearer operator-token" } })).json();
