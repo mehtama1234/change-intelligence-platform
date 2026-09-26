@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const schemaVersion = 1;
@@ -139,7 +139,7 @@ export function createRuntimeStore(runtimeDir) {
     importLegacy,
     questionsLedger,
     operationsLedger,
-    alertsLedger() { return { schemaVersion: "workspace-alert-ledger-v1", alerts: recordRows.all("alert").map((row) => parseJson(row.bodyJson, {})) }; },
+    alertsLedger(workspaces = []) { return { schemaVersion: "workspace-alert-ledger-v1", workspaces, alerts: recordRows.all("alert").map((row) => parseJson(row.bodyJson, {})) }; },
     recordsLedger(kind, schemaVersion, property) { return { schemaVersion, [property]: recordRows.all(kind).map((row) => parseJson(row.bodyJson, {})) }; },
     findRecord(kind, id) { return parseJson(recordRow.get(kind, id)?.bodyJson, undefined); },
     syncRecords(kind, records) { db.transaction(() => { for (const record of records ?? []) upsertRecord.run({ kind, id: record.id, workspaceId: record.workspaceId ?? null, bodyJson: JSON.stringify(record), updatedAt: record.updatedAt ?? record.generatedAt ?? record.publishedAt ?? record.decidedAt ?? new Date().toISOString() }); })(); },
@@ -192,6 +192,14 @@ export async function importRuntimeLedgers(store, paths) {
     read(paths.insightDecisions, { decisions: [] }),
     read(paths.insightPublications, { publications: [] })
   ]);
+  let workspaces = alerts.workspaces ?? [];
+  if (!workspaces.length && paths.workspaceDir) {
+    const files = (await readdir(paths.workspaceDir)).filter((file) => file.endsWith(".json"));
+    workspaces = await Promise.all(files.map(async (file) => {
+      const workspace = parseJson(await readFile(resolve(paths.workspaceDir, file), "utf8"), {});
+      return { id: workspace.id, name: workspace.name };
+    }));
+  }
   store.importLegacy({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications });
   store.syncRecords("alert", alerts.alerts);
   store.syncRecords("briefing_publication", briefingPublications.publications);
@@ -200,7 +208,7 @@ export async function importRuntimeLedgers(store, paths) {
   await mkdir(resolve(paths.runtimeDir), { recursive: true });
   await writeFile(paths.questions, `${JSON.stringify(store.questionsLedger(), null, 2)}\n`);
   await writeFile(paths.audit, `${JSON.stringify(store.auditLedger(), null, 2)}\n`);
-  await writeFile(paths.alerts, `${JSON.stringify(store.alertsLedger(), null, 2)}\n`);
+  await writeFile(paths.alerts, `${JSON.stringify(store.alertsLedger(workspaces), null, 2)}\n`);
   await writeFile(paths.briefingPublications, `${JSON.stringify(store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications"), null, 2)}\n`);
   await writeFile(paths.insightDecisions, `${JSON.stringify(store.recordsLedger("insight_decision", "insight-decision-ledger-v1", "decisions"), null, 2)}\n`);
   await writeFile(paths.insightPublications, `${JSON.stringify(store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications"), null, 2)}\n`);

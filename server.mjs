@@ -36,7 +36,8 @@ await importRuntimeLedgers(store, {
   alerts: alertsPath,
   briefingPublications: briefingPublicationsPath,
   insightDecisions: insightDecisionsPath,
-  insightPublications: insightPublicationsPath
+  insightPublications: insightPublicationsPath,
+  workspaceDir
 });
 
 const json = (response, status, body) => {
@@ -143,7 +144,8 @@ const server = createServer(async (request, response) => {
       alert.acknowledgmentNote = String(body.note ?? "").slice(0, 2000);
       const auditEntry = { requestId, action: "acknowledge_alert", targetId: alert.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "acknowledged", occurredAt: alert.acknowledgedAt };
       store.commitRecord({ kind: "alert", record: alert, audit: auditEntry, operation: { key: idempotencyKey, action: "acknowledge_alert", status: 200, body: alert, completedAt: alert.acknowledgedAt } });
-      await writeFile(alertsPath, `${JSON.stringify(store.alertsLedger(), null, 2)}\n`);
+      const alertMetadata = await readJson(alertsPath, { workspaces: [] });
+      await writeFile(alertsPath, `${JSON.stringify(store.alertsLedger(alertMetadata.workspaces ?? []), null, 2)}\n`);
       return json(response, 200, alert);
     }
     if (request.method === "POST" && url.pathname === "/api/questions") {
