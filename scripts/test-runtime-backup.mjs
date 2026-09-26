@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +12,9 @@ const runtimeDir = resolve(rootTemp, "runtime");
 const backupDir = resolve(rootTemp, "backup");
 const restoredDir = resolve(rootTemp, "restored");
 await mkdir(runtimeDir, { recursive: true });
+await mkdir(resolve(runtimeDir, "raw/source-captures/test-source"), { recursive: true });
+await writeFile(resolve(runtimeDir, "raw/source-captures/test-source/abc.source"), "immutable captured source\n");
+await writeFile(resolve(runtimeDir, "source-capture-ledger.json"), `${JSON.stringify({ schemaVersion: "source-capture-ledger-v1", captures: [{ id: "test-source", sha256: "abc", capturePath: "raw/source-captures/test-source/abc.source" }] }, null, 2)}\n`);
 for (const name of ["workspace-questions.json", "audit-log.json", "idempotency-operations.json", "workspace-alerts.json", "briefing-publications.json", "insight-decisions.json", "insight-publications.json", "workspace-pilot-profiles.json", "workspace-pilot-deliveries.json", "workspace-pilot-decisions.json", "operator-warning-events.json", "operator-notification-outbox.json", "operator-notification-routes.json", "operator-notification-attempts.json", "pilot-readiness.json", "latest-source-scan.json", "source-scan-history.json", "versioned-evidence-ledger.json", "review-decisions.json", "review-events.json", "refresh-history.json", "insight-evaluation.json"]) {
   if (existsSync(resolve(sourceRuntime, name))) await copyFile(resolve(sourceRuntime, name), resolve(runtimeDir, name));
 }
@@ -41,7 +44,9 @@ await importRuntimeLedgers(store, {
 store.close();
 const manifest = await backupRuntime({ runtimeDir, destination: backupDir });
 if (!manifest.files.some((file) => file.name === "change-intelligence.sqlite")) throw new Error("Backup omitted SQLite database.");
+if (!manifest.files.some((file) => file.name === "raw/source-captures/test-source/abc.source")) throw new Error("Backup omitted immutable source capture.");
 await restoreRuntime({ backup: backupDir, destination: restoredDir });
+if ((await readFile(resolve(restoredDir, "raw/source-captures/test-source/abc.source"), "utf8")) !== "immutable captured source\n") throw new Error("Restore did not recover immutable source capture.");
 const restoredStore = createRuntimeStore(restoredDir);
 await importRuntimeLedgers(restoredStore, {
   runtimeDir: restoredDir,

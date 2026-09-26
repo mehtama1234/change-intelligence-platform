@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
-import { basename, resolve } from "node:path";
+import { resolve } from "node:path";
 
 const runtimeFiles = [
   "workspace-questions.json",
@@ -13,6 +13,7 @@ const runtimeFiles = [
   "insight-publications.json",
   "latest-source-scan.json",
   "source-scan-history.json",
+  "source-capture-ledger.json",
   "versioned-evidence-ledger.json",
   "review-decisions.json",
   "review-events.json",
@@ -30,7 +31,7 @@ async function digest(path) {
 }
 
 async function existing(path) {
-  try { await readFile(path); return true; } catch (error) {
+  try { await stat(path); return true; } catch (error) {
     if (error.code === "ENOENT") return false;
     throw error;
   }
@@ -51,6 +52,24 @@ export async function backupRuntime({ runtimeDir, destination }) {
     await copyFile(source, target);
     files.push({ name, sha256: await digest(target) });
   }
+  const captureRoot = resolve(runtimeDir, "raw/source-captures");
+  if (await existing(captureRoot)) {
+    const pending = [captureRoot];
+    while (pending.length) {
+      const current = pending.pop();
+      for (const entry of await readdir(current, { withFileTypes: true })) {
+        const source = resolve(current, entry.name);
+        if (entry.isDirectory()) pending.push(source);
+        else if (entry.isFile()) {
+          const name = source.slice(runtimeDir.length + 1);
+          const target = resolve(destination, name);
+          await mkdir(resolve(target, ".."), { recursive: true });
+          await copyFile(source, target);
+          files.push({ name, sha256: await digest(target) });
+        }
+      }
+    }
+  }
   const manifest = { schemaVersion: "runtime-backup-v1", createdAt: new Date().toISOString(), files };
   await writeFile(resolve(destination, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   return manifest;
@@ -61,9 +80,10 @@ export async function restoreRuntime({ backup, destination }) {
   if (manifest.schemaVersion !== "runtime-backup-v1" || !Array.isArray(manifest.files)) throw new Error("Invalid runtime backup manifest.");
   await mkdir(destination, { recursive: true });
   for (const entry of manifest.files) {
-    if (entry.name !== basename(entry.name) || entry.name === "." || entry.name === "..") throw new Error(`Unsafe backup file name: ${entry.name}`);
+    if (!entry.name || entry.name.startsWith("/") || entry.name.split(/[\\/]/).includes("..")) throw new Error(`Unsafe backup file name: ${entry.name}`);
     const source = resolve(backup, entry.name);
     const target = resolve(destination, entry.name);
+    await mkdir(resolve(target, ".."), { recursive: true });
     await copyFile(source, target);
     const actual = await digest(target);
     if (actual !== entry.sha256) throw new Error(`Checksum mismatch after restoring ${entry.name}.`);

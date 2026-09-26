@@ -23,6 +23,9 @@ least one source record, every record must carry an identity, source path,
 observation, mechanism, affected groups, claim state, date, and limits, and
 the refresh environment can require every referenced file to be readable.
 Adapter output is then hashed and stored as a source snapshot before review.
+For local repository inputs, the refresh also retains the exact source bytes
+under a digest-addressed capture path. A later change or source outage therefore
+does not erase the material needed to replay and audit the prior reading.
 
 ## Core services
 

@@ -13,5 +13,8 @@ await exec(process.execPath, [resolve(root, "scripts/scan-source-changes.mjs")],
 await exec(process.execPath, [resolve(root, "scripts/scan-source-changes.mjs")], { cwd: root, env });
 const history = JSON.parse(await readFile(resolve(runtimeDir, "source-scan-history.json"), "utf8"));
 const latest = JSON.parse(await readFile(resolve(runtimeDir, "latest-source-scan.json"), "utf8"));
+const captures = JSON.parse(await readFile(resolve(runtimeDir, "source-capture-ledger.json"), "utf8"));
+const firstReadable = latest.sources.find((source) => source.capturePath);
+if (captures.schemaVersion !== "source-capture-ledger-v1" || !captures.captures.length || !firstReadable || !(await readFile(resolve(runtimeDir, firstReadable.capturePath))).length) throw new Error("Source scanner did not preserve an immutable source capture.");
 if (history.runs.length !== 2 || history.runs[0].runId === history.runs[1].runId || latest.runId !== history.runs[1].runId) throw new Error("Source scanner did not honor isolated runtime history.");
 console.log("Source-scan runtime test passed: repeated scans stayed in the configured runtime directory.");
