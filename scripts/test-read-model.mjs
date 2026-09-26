@@ -50,7 +50,7 @@ try {
   if (atlasResponse.status !== 200 || atlas.schemaVersion !== "domain-atlas-v1" || !atlas.entities.themes?.length || !atlas.entities.mechanisms?.length || !atlas.edges?.length) throw new Error("Domain atlas read model contract failed.");
   const entityResponse = await request("/api/atlas/entity?kind=companies&id=company%3Anvidia");
   const entity = await entityResponse.json();
-  if (entityResponse.status !== 200 || entity.schemaVersion !== "atlas-entity-read-model-v1" || entity.entity.label !== "NVIDIA" || !entity.evidence.length || !Array.isArray(entity.related) || !entity.timeline?.reportedMovement?.length || !Array.isArray(entity.timeline.outcomeEvidence) || !entity.timeline.boundary.includes("separate rails")) throw new Error("Atlas entity read model contract failed.");
+  if (entityResponse.status !== 200 || entity.schemaVersion !== "atlas-entity-read-model-v1" || entity.entity.label !== "NVIDIA" || !entity.evidence.length || !Array.isArray(entity.related) || !entity.timeline?.reportedMovement?.length || !entity.timeline.comparisons?.length || !entity.timeline.comparisons[0].columns.length || !entity.timeline.comparisons[0].quarters.length || !Array.isArray(entity.timeline.outcomeEvidence) || !entity.timeline.boundary.includes("separate rails")) throw new Error("Atlas entity read model contract failed.");
   const ingestionResponse = await request("/api/ingestion");
   const ingestion = await ingestionResponse.json();
   if (ingestionResponse.status !== 200 || ingestion.schemaVersion !== "research-ingestion-ledger-v1" || ingestion.repositories.length !== 6 || ingestion.records.length !== packet.records.length) throw new Error("Research ingestion read model contract failed.");
