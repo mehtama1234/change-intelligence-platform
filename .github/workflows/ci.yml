@@ -50,6 +50,8 @@ jobs:
         env:
           REFRESH_SKIP_SEC: "1"
           REFRESH_RETRIES: "0"
+      - name: Initialize API runtime ledgers
+        run: npm run initialize:runtime-ledgers
       - name: Run clean-checkout contract tests
         run: npm run ci:core
         env:

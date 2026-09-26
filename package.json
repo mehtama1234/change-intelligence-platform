@@ -31,6 +31,7 @@
     "verify:e2e": "node scripts/verify-end-to-end.mjs",
     "verify:research-completeness": "node scripts/verify-research-completeness.mjs",
     "prepare:ci-research": "node scripts/prepare-ci-research-snapshot.mjs",
+    "initialize:runtime-ledgers": "node scripts/initialize-runtime-ledgers.mjs",
     "test:read-model": "node scripts/test-read-model.mjs",
     "test:question-matching": "node scripts/test-question-matching.mjs",
     "test:insight-opportunities": "node scripts/test-insight-opportunities.mjs",
