@@ -61,6 +61,11 @@ A strategy or research customer should be able to:
 
 ## Definition of done
 
+The research-completeness gate is executable as `npm run
+verify:research-completeness`. It checks the minimum private-company, public
+report-window, independent-repository, counterexample, and named-workflow
+coverage below against the current packet.
+
 The goal is complete only when all of the following are true:
 
 ### Research completeness
