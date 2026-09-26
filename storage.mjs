@@ -102,7 +102,7 @@ export function createRuntimeStore(runtimeDir) {
     return { ...operation, body: parseJson(bodyJson, {}) };
   }
 
-  const importLegacy = db.transaction(({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, workspaceSources, comparisonViews, notificationPreferences, deliveryNotifications, deliveryNotificationAttempts, pilotProfiles, pilotDeliveries, pilotDecisions, commercialOffers, operatorWarnings, operatorNotifications, operatorRoutes, operatorAttempts, pilotReadiness, sourceScan, evidenceLedger, reviewDecisions, reviewEvents, supportRequests }) => {
+  const importLegacy = db.transaction(({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, workspaceSources, comparisonViews, notificationPreferences, deliveryNotifications, deliveryNotificationAttempts, pilotProfiles, pilotDeliveries, pilotDecisions, commercialOffers, partnerLeads, operatorWarnings, operatorNotifications, operatorRoutes, operatorAttempts, pilotReadiness, sourceScan, evidenceLedger, reviewDecisions, reviewEvents, supportRequests }) => {
     const shouldImportQuestions = db.prepare("SELECT COUNT(*) AS count FROM questions").get().count === 0;
     const shouldImportAudit = db.prepare("SELECT COUNT(*) AS count FROM audit_entries").get().count === 0;
     const shouldImportOperations = db.prepare("SELECT COUNT(*) AS count FROM idempotency_operations").get().count === 0;
@@ -146,6 +146,7 @@ export function createRuntimeStore(runtimeDir) {
     importRecords("pilot_delivery", pilotDeliveries?.deliveries);
     importRecords("pilot_decision", pilotDecisions?.decisions);
     importRecords("commercial_offer", commercialOffers?.offers);
+    importRecords("partner_lead", partnerLeads?.leads);
     importRecords("operator_warning", operatorWarnings?.events);
     importRecords("operator_notification", operatorNotifications?.notifications);
     importRecords("operator_notification_route", operatorRoutes?.settings);
@@ -225,7 +226,7 @@ export async function importRuntimeLedgers(store, paths) {
       throw error;
     }
   };
-  const [questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, workspaceSources, comparisonViews, notificationPreferences, deliveryNotifications, deliveryNotificationAttempts, pilotProfiles, pilotDeliveries, pilotDecisions, commercialOffers, operatorWarnings, operatorNotifications, operatorRoutes, operatorAttempts, pilotReadiness, sourceScan, evidenceLedger, reviewDecisions, reviewEvents, supportRequests] = await Promise.all([
+  const [questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, workspaceSources, comparisonViews, notificationPreferences, deliveryNotifications, deliveryNotificationAttempts, pilotProfiles, pilotDeliveries, pilotDecisions, commercialOffers, partnerLeads, operatorWarnings, operatorNotifications, operatorRoutes, operatorAttempts, pilotReadiness, sourceScan, evidenceLedger, reviewDecisions, reviewEvents, supportRequests] = await Promise.all([
     read(paths.questions, { questions: [] }),
     read(paths.audit, { entries: [] }),
     read(paths.operations, { operations: [] }),
@@ -244,6 +245,7 @@ export async function importRuntimeLedgers(store, paths) {
     read(paths.pilotDeliveries, { deliveries: [] }),
     read(paths.pilotDecisions, { decisions: [] }),
     read(paths.commercialOffers, { offers: [] }),
+    read(paths.partnerLeads, { leads: [] }),
     read(paths.operatorWarnings, { events: [] }),
     read(paths.operatorNotifications, { notifications: [] }),
     read(paths.operatorRoutes, { settings: [] }),
@@ -267,7 +269,7 @@ export async function importRuntimeLedgers(store, paths) {
     const files = (await readdir(paths.workspaceDir)).filter((file) => file.endsWith(".json"));
     watchlists.watchlists = (await Promise.all(files.map(async (file) => parseJson(await readFile(resolve(paths.workspaceDir, file), "utf8"), {})))).flatMap((workspace) => (workspace.watchlists ?? []).map((watchlist) => ({ ...watchlist, workspaceId: workspace.id })));
   }
-  store.importLegacy({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, workspaceSources, comparisonViews, notificationPreferences, deliveryNotifications, deliveryNotificationAttempts, pilotProfiles, pilotDeliveries, pilotDecisions, commercialOffers, operatorWarnings, operatorNotifications, operatorRoutes, operatorAttempts, pilotReadiness, sourceScan, evidenceLedger, reviewDecisions, reviewEvents, supportRequests });
+  store.importLegacy({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, decisionOutcomes, watchlists, workspaceSources, comparisonViews, notificationPreferences, deliveryNotifications, deliveryNotificationAttempts, pilotProfiles, pilotDeliveries, pilotDecisions, commercialOffers, partnerLeads, operatorWarnings, operatorNotifications, operatorRoutes, operatorAttempts, pilotReadiness, sourceScan, evidenceLedger, reviewDecisions, reviewEvents, supportRequests });
   store.syncRecords("alert", alerts.alerts);
   store.syncRecords("briefing_publication", briefingPublications.publications);
   store.syncRecords("insight_decision", insightDecisions.decisions);
@@ -283,6 +285,7 @@ export async function importRuntimeLedgers(store, paths) {
   store.syncRecords("pilot_delivery", pilotDeliveries.deliveries);
   store.syncRecords("pilot_decision", pilotDecisions.decisions);
   store.syncRecords("commercial_offer", commercialOffers.offers);
+  store.syncRecords("partner_lead", partnerLeads.leads);
   store.syncRecords("operator_warning", operatorWarnings.events);
   store.syncRecords("operator_notification", operatorNotifications.notifications);
   store.syncRecords("operator_notification_route", operatorRoutes.settings);
@@ -316,6 +319,7 @@ export async function importRuntimeLedgers(store, paths) {
   if (paths.operatorAttempts) await writeFile(paths.operatorAttempts, `${JSON.stringify(store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts"), null, 2)}\n`);
   if (paths.pilotReadiness) await writeFile(paths.pilotReadiness, `${JSON.stringify(store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots"), null, 2)}\n`);
   if (paths.commercialOffers) await writeFile(paths.commercialOffers, `${JSON.stringify(store.recordsLedger("commercial_offer", "workspace-commercial-offer-ledger-v1", "offers"), null, 2)}\n`);
+  if (paths.partnerLeads) await writeFile(paths.partnerLeads, `${JSON.stringify(store.recordsLedger("partner_lead", "partner-lead-ledger-v1", "leads"), null, 2)}\n`);
   if (paths.reviewEvents) await writeFile(paths.reviewEvents, `${JSON.stringify(store.recordsLedger("review_event", "review-event-ledger-v1", "events"), null, 2)}\n`);
   if (paths.supportRequests) await writeFile(paths.supportRequests, `${JSON.stringify(store.recordsLedger("support_request", "workspace-support-request-ledger-v1", "requests"), null, 2)}\n`);
 }

@@ -29,6 +29,19 @@
         <div id="operator-refresh-failures" class="record-list" aria-live="polite"></div>
         <div id="operator-delivery-health" class="table-wrap" aria-live="polite"></div>
         <div id="operator-portfolio-readiness" class="table-wrap" aria-live="polite"></div>
+        <section class="record-card" aria-labelledby="operator-partner-pipeline-title">
+          <h2 id="operator-partner-pipeline-title">Design-partner pipeline</h2>
+          <p class="muted">Track the commercial path before a customer workspace exists. Keep the decision question and next action concrete; this does not send outreach automatically.</p>
+          <label for="operator-partner-organization">Organization <input id="operator-partner-organization" type="text" maxlength="180" autocomplete="organization"></label>
+          <label for="operator-partner-domain">Domain or market <input id="operator-partner-domain" type="text" maxlength="120" value="ai-work-control" autocomplete="off"></label>
+          <label for="operator-partner-contact">Contact identity <input id="operator-partner-contact" type="text" maxlength="180" autocomplete="off"></label>
+          <label for="operator-partner-question">Decision question <textarea id="operator-partner-question" rows="2" maxlength="1000" placeholder="What important decision should this service help them make better?"></textarea></label>
+          <label for="operator-partner-next-action">Next action <input id="operator-partner-next-action" type="text" maxlength="1000" placeholder="Schedule a 30-minute discovery call"></label>
+          <label for="operator-partner-next-action-at">Next action date <input id="operator-partner-next-action-at" type="datetime-local"></label>
+          <button id="create-partner-lead" type="button">Add prospective partner</button>
+          <span id="operator-partner-status" class="muted" role="status"></span>
+        </section>
+        <div id="operator-partner-pipeline" class="table-wrap" aria-live="polite"></div>
         <section class="record-card" aria-labelledby="operator-provision-title">
           <h2 id="operator-provision-title">Provision partner workspace</h2>
           <p class="muted">Creates the workspace record and its first owner. Production identity accounts still need to be mapped by the identity provider.</p>

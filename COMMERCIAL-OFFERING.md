@@ -222,3 +222,25 @@ This is a commercial handoff record, not a payment processor or invoice. The
 system does not claim that money was collected. It gives the operator and
 partner one durable answer to a practical question: what exactly are we
 agreeing to deliver after the pilot, and what happened to that agreement?
+
+## Before a workspace exists: the design-partner pipeline
+
+The operator also keeps a separate pipeline for prospective partners. This is
+where a possible engagement is recorded before private customer data or a
+workspace exists. Each record names the organization, contact identity, real
+decision question, next action, next-action date, and current stage:
+
+```text
+identified → qualified → contacted → invited → onboarding → pilot → expanded
+```
+
+`paused` and `declined` are explicit outcomes. Every move requires a human
+note, and invalid jumps are rejected. The pipeline is operator-only: it does
+not expose prospect notes to customer workspaces, send outreach, or decide
+whether a lead is qualified by itself. A workspace is provisioned only when
+the human process is ready for onboarding, and its ID can then be attached to
+the pipeline record.
+
+This closes the commercial operating loop without confusing two different
+things: a prospect is a possible relationship, while a workspace contains
+customer evidence and work.

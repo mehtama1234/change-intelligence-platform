@@ -26,6 +26,14 @@ The product must let a customer open any meaningful statement and see the
 evidence behind it, the limits of that evidence, and what could change the
 reading.
 
+The commercial operation must be repeatable too. An operator needs one place
+to carry a qualified design partner from a concrete decision question, through
+human outreach and a scoped pilot, into an isolated workspace and then a
+recurring offer. Prospect notes must stay separate from customer evidence;
+every stage change needs a dated human note; and the system must never claim
+that an invitation, acceptance, or payment happened when it only recorded an
+operator action.
+
 ## The first commercial proof
 
 Choose one high-value domain. The recommended starting domain is **AI, work,

@@ -42,6 +42,7 @@ const pilotDeliveriesPath = resolve(runtimeDir, "workspace-pilot-deliveries.json
 const pilotDecisionsPath = resolve(runtimeDir, "workspace-pilot-decisions.json");
 const pilotReadinessPath = resolve(runtimeDir, "pilot-readiness.json");
 const commercialOffersPath = resolve(runtimeDir, "workspace-commercial-offers.json");
+const partnerLeadsPath = resolve(runtimeDir, "partner-leads.json");
 const operatorWarningsPath = resolve(runtimeDir, "operator-warning-events.json");
 const operatorNotificationsPath = resolve(runtimeDir, "operator-notification-outbox.json");
 const operatorRoutesPath = resolve(runtimeDir, "operator-notification-routes.json");
@@ -100,6 +101,7 @@ await importRuntimeLedgers(store, {
   pilotDeliveries: pilotDeliveriesPath,
   pilotDecisions: pilotDecisionsPath,
   commercialOffers: commercialOffersPath,
+  partnerLeads: partnerLeadsPath,
   operatorWarnings: operatorWarningsPath,
   operatorNotifications: operatorNotificationsPath,
   operatorRoutes: operatorRoutesPath,
@@ -1611,6 +1613,49 @@ const server = createServer(async (request, response) => {
       await writeFile(commercialOffersPath, `${JSON.stringify(store.recordsLedger("commercial_offer", "workspace-commercial-offer-ledger-v1", "offers"), null, 2)}\n`);
       return json(response, 200, updated);
     }
+    if (request.method === "POST" && url.pathname === "/api/operator/partner-pipeline") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const body = await requestBody(request);
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (!idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for operator writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const organizationName = String(body.organizationName ?? "").trim().slice(0, 180);
+      const domain = String(body.domain ?? "ai-work-control").trim().slice(0, 120);
+      const decisionQuestion = String(body.decisionQuestion ?? "").trim().slice(0, 1000);
+      const nextAction = String(body.nextAction ?? "").trim().slice(0, 1000);
+      const nextActionAt = body.nextActionAt ? String(body.nextActionAt).slice(0, 32) : null;
+      const contactIdentity = String(body.contactIdentity ?? "").trim().slice(0, 180) || null;
+      if (!organizationName || decisionQuestion.length < 20 || nextAction.length < 8) return json(response, 400, { error: "A partner lead requires an organization, a real decision question, and a concrete next action." });
+      const now = new Date().toISOString();
+      const record = { id: `partner-lead-${randomUUID()}`, organizationName, domain, contactIdentity, decisionQuestion, status: "identified", nextAction, nextActionAt, workspaceId: null, createdBy: operator.actorId, createdAt: now, updatedAt: now, history: [{ status: "identified", note: "Lead entered into the design-partner pipeline.", actorId: operator.actorId, occurredAt: now }] };
+      store.commitRecord({ kind: "partner_lead", record, audit: { requestId, action: "create_partner_lead", targetId: record.id, workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: "identified", occurredAt: now }, operation: { key: idempotencyKey, action: "create_partner_lead", status: 201, body: record, completedAt: now } });
+      await writeFile(partnerLeadsPath, `${JSON.stringify(store.recordsLedger("partner_lead", "partner-lead-ledger-v1", "leads"), null, 2)}\n`);
+      return json(response, 201, record);
+    }
+    if (request.method === "POST" && url.pathname.startsWith("/api/operator/partner-pipeline/") && url.pathname.endsWith("/state")) {
+      const leadId = decodeURIComponent(url.pathname.slice("/api/operator/partner-pipeline/".length, -"/state".length));
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const body = await requestBody(request);
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (!idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for operator writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const lead = store.findRecord("partner_lead", leadId);
+      if (!lead) return json(response, 404, { error: "Partner lead not found." });
+      const nextStatus = String(body.status ?? "");
+      const transitions = { identified: ["qualified", "paused", "declined"], qualified: ["contacted", "paused", "declined"], contacted: ["invited", "paused", "declined"], invited: ["onboarding", "paused", "declined"], onboarding: ["pilot", "paused", "declined"], pilot: ["expanded", "paused", "declined"], expanded: ["paused"], paused: ["qualified", "contacted", "declined"], declined: [] };
+      if (!transitions[lead.status]?.includes(nextStatus)) return json(response, 409, { error: `Cannot change a partner lead from ${lead.status} to ${nextStatus}.` });
+      const note = String(body.note ?? "").trim().slice(0, 2000);
+      if (!note) return json(response, 400, { error: "A note is required for every partner-pipeline state change." });
+      const now = new Date().toISOString();
+      const updated = { ...lead, status: nextStatus, workspaceId: body.workspaceId ? String(body.workspaceId).slice(0, 160) : lead.workspaceId, updatedAt: now, nextAction: body.nextAction ? String(body.nextAction).trim().slice(0, 1000) : lead.nextAction, nextActionAt: body.nextActionAt ? String(body.nextActionAt).slice(0, 32) : lead.nextActionAt, history: [...(lead.history ?? []), { status: nextStatus, note, actorId: operator.actorId, occurredAt: now }] };
+      store.commitRecord({ kind: "partner_lead", record: updated, audit: { requestId, action: "change_partner_lead", targetId: lead.id, workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: nextStatus, occurredAt: now }, operation: { key: idempotencyKey, action: "change_partner_lead", status: 200, body: updated, completedAt: now } });
+      await writeFile(partnerLeadsPath, `${JSON.stringify(store.recordsLedger("partner_lead", "partner-lead-ledger-v1", "leads"), null, 2)}\n`);
+      return json(response, 200, updated);
+    }
     if (request.method === "POST" && url.pathname.startsWith("/api/operator/warnings/") && url.pathname.endsWith("/state")) {
       const warningId = decodeURIComponent(url.pathname.slice("/api/operator/warnings/".length, -"/state".length));
       const operator = operatorAccess(request);
@@ -2561,6 +2606,15 @@ const server = createServer(async (request, response) => {
       const notificationScheduler = await readJson(notificationSchedulerStatusPath, { status: "not_started" });
       const schedules = new Map(workspaces.map((workspace) => [workspace.id, buildWorkspaceSchedule({ workspaceId: workspace.id, profile: profiles.find((profile) => profile.workspaceId === workspace.id) ?? null, deliveries: deliveries.filter((delivery) => delivery.workspaceId === workspace.id), scheduler })]));
       return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, commercialOffers, outcomes, briefings, supportRequests, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, onboardingByWorkspace, schedules, schedulerStatuses: { refresh: scheduler, backup: backupScheduler, notification: notificationScheduler }, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs, remediationSlaMs: operatorRemediationSlaMs }));
+    }
+    if (url.pathname === "/api/operator/partner-pipeline") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const statuses = ["identified", "qualified", "contacted", "invited", "onboarding", "pilot", "expanded", "paused", "declined"];
+      const leads = store.recordsLedger("partner_lead", "partner-lead-ledger-v1", "leads").leads.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+      const counts = Object.fromEntries(statuses.map((status) => [status, leads.filter((lead) => lead.status === status).length]));
+      await appendAudit({ requestId, action: "read_partner_pipeline", targetId: "partner-pipeline", workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: "read", occurredAt: new Date().toISOString() });
+      return json(response, 200, { schemaVersion: "partner-pipeline-read-model-v1", statuses, counts, leads, limitation: "This pipeline is operator-only. It records commercial follow-up and does not send messages or make an automated qualification decision." });
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));
