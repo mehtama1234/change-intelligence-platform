@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "source-capture-manifest-v1",
+  "sourceId": "atlas-c3-ai-report-window",
+  "generatedAt": "2026-09-26T03:23:58.477Z",
+  "userAgent": "ChangeIntelligenceResearch/0.1 contact: research@example.invalid",
+  "records": [
+    {
+      "label": "10-K",
+      "url": "https://www.sec.gov/Archives/edgar/data/1577526/000162828025032604/ai-20250430.htm",
+      "fileName": "01-10-k-000162828025032604.html",
+      "retrievedAt": "2026-09-26T03:23:22.107Z",
+      "status": "retrieved",
+      "httpStatus": 200,
+      "contentType": "text/html",
+      "bytes": 2284786,
+      "sha256": "9a714bea956866b1d7f1650373d88ccd7f785d294bbc49c3918d3de6249767f0"
+    },
+    {
+      "label": "10-Q",
+      "url": "https://www.sec.gov/Archives/edgar/data/1577526/000157752625000033/ai-20250731.htm",
+      "fileName": "02-10-q-000157752625000033.html",
+      "retrievedAt": "2026-09-26T03:23:42.223Z",
+      "status": "retrieved",
+      "httpStatus": 200,
+      "contentType": "text/html",
+      "bytes": 1443449,
+      "sha256": "bde8068801319a87235467e7449dcfb3ea5716775b275dbed1f6991967c8dbd4"
+    },
+    {
+      "label": "10-Q",
+      "url": "https://www.sec.gov/Archives/edgar/data/1577526/000157752625000055/ai-20251031.htm",
+      "fileName": "03-10-q-000157752625000055.html",
+      "retrievedAt": "2026-09-26T03:23:49.356Z",
+      "status": "retrieved",
+      "httpStatus": 200,
+      "contentType": "text/html",
+      "bytes": 1719217,
+      "sha256": "e749331a09c7f399e844c1bd90d97f59bf348d03fad845080a310194d6f5855a"
+    },
+    {
+      "label": "10-Q",
+      "url": "https://www.sec.gov/Archives/edgar/data/1577526/000157752626000024/ai-20260131.htm",
+      "fileName": "04-10-q-000157752626000024.html",
+      "retrievedAt": "2026-09-26T03:23:55.271Z",
+      "status": "retrieved",
+      "httpStatus": 200,
+      "contentType": "text/html",
+      "bytes": 1744045,
+      "sha256": "7bcb70256a38c713bb4c45e157a99b353d34453b33785c66e97d385aaff929a8"
+    }
+  ]
+}

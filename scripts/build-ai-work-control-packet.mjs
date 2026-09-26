@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,6 +8,8 @@ const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const sourceRoot = process.env.RESEARCH_ROOT ?? "/home/mehta/git-repo";
 const mapPath = resolve(root, "data/source-maps/ai-work-control.sources.json");
 const outputPath = resolve(root, "data/processed/ai-work-control.packet.json");
+const captureManifestPath = resolve(root, "data/raw/ai-work-control/c3-ai/manifest.json");
+const xbrlExtractPath = resolve(root, "data/processed/ai-work-control/c3-ai.xbrl.json");
 const map = JSON.parse(await readFile(mapPath, "utf8"));
 
 function stripMarkup(text) {
@@ -50,6 +53,23 @@ function parseQuarterBridge(markdown) {
     });
 }
 
+function parseDirectQuarterFacts(extract) {
+  const targets = [
+    ["Q1 ended Jul 31 2025", "2025-07-31", "2025-05-01"],
+    ["Q2 ended Oct 31 2025", "2025-10-31", "2025-08-01"],
+    ["Q3 ended Jan 31 2026", "2026-01-31", "2025-11-01"]
+  ];
+  return targets.map(([period, endDate, startDate]) => {
+    const facts = extract.filings.flatMap((filing) => filing.facts)
+      .filter((fact) => fact.period.startDate === startDate && fact.period.endDate === endDate);
+    const fact = (name) => facts.find((item) => item.factName === name)?.value;
+    const operatingLoss = fact("us-gaap:OperatingIncomeLoss");
+    const netLoss = fact("us-gaap:NetIncomeLoss");
+    if (operatingLoss === undefined || netLoss === undefined) return null;
+    return { period, operatingLoss: operatingLoss / 1000, netLoss: netLoss / 1000 };
+  }).filter(Boolean);
+}
+
 function percentageChange(start, end) {
   if (!start || start === 0) return null;
   return Number((((Math.abs(end) - Math.abs(start)) / Math.abs(start)) * 100).toFixed(1));
@@ -61,26 +81,47 @@ async function buildReportWindow(source, sourceLedger) {
   const bridge = await readFile(bridgePath, "utf8");
   const initialRead = await readFile(initialReadPath, "utf8");
   const quarters = parseQuarterBridge(bridge);
-  if (quarters.length < 3) throw new Error(`${source.id}: expected at least three quarterly rows`);
-  const first = quarters[0];
-  const last = quarters.at(-1);
   const directRecords = [...sourceLedger.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g)]
     .map((match) => ({ label: match[1], url: match[2] }));
+  const captureManifest = existsSync(captureManifestPath)
+    ? JSON.parse(await readFile(captureManifestPath, "utf8"))
+    : undefined;
+  const xbrlExtract = existsSync(xbrlExtractPath)
+    ? JSON.parse(await readFile(xbrlExtractPath, "utf8"))
+    : undefined;
+  const directQuarters = xbrlExtract ? parseDirectQuarterFacts(xbrlExtract) : [];
+  const directMatchesBridge = directQuarters.length === quarters.length && directQuarters.every((direct, index) =>
+    direct.operatingLoss === quarters[index].operatingLoss && direct.netLoss === quarters[index].netLoss);
+  const movementQuarters = directMatchesBridge ? directQuarters : quarters;
+  if (movementQuarters.length < 3) throw new Error(`${source.id}: expected at least three quarterly rows`);
+  const first = movementQuarters[0];
+  const last = movementQuarters.at(-1);
   return {
     annualBaseline: "FY2025 10-K",
-    quarters,
+    quarters: movementQuarters,
     metrics: {
       operatingLossMagnitudeChangeQ3vsQ1Pct: percentageChange(first.operatingLoss, last.operatingLoss),
       netLossMagnitudeChangeQ3vsQ1Pct: percentageChange(first.netLoss, last.netLoss),
-      operatingLossQ2vsQ1: quarters[1].operatingLoss - first.operatingLoss,
-      operatingLossQ3vsQ2: quarters[2].operatingLoss - quarters[1].operatingLoss
+      operatingLossQ2vsQ1: movementQuarters[1].operatingLoss - first.operatingLoss,
+      operatingLossQ3vsQ2: movementQuarters[2].operatingLoss - movementQuarters[1].operatingLoss
     },
     reading: "Loss magnitude improved in Q2 and worsened in Q3; this is a reported accounting movement, not a causal explanation or an outcome for workers or customers.",
+    movementSource: directMatchesBridge ? "sec_xbrl" : "atlas_bridge",
     sourceRefs: {
       bridge: source.reportWindow.bridgePath,
       initialRead: source.reportWindow.initialReadPath,
       initialReadDigest: createHash("sha256").update(initialRead).digest("hex"),
-      directRecords
+      directRecords,
+      ...(xbrlExtract ? {
+        directExtract: "data/processed/ai-work-control/c3-ai.xbrl.json",
+        directExtractStatus: directMatchesBridge ? "matches_bridge" : "does_not_match_bridge"
+      } : {}),
+      ...(captureManifest ? {
+        captureManifest: "data/raw/ai-work-control/c3-ai/manifest.json",
+        captureStatus: captureManifest.records.every((record) => record.status === "retrieved") ? "complete" : "incomplete",
+        capturedRecords: captureManifest.records.filter((record) => record.status === "retrieved").length,
+        attemptedRecords: captureManifest.records.length
+      } : { captureStatus: "not_attempted" })
     }
   };
 }

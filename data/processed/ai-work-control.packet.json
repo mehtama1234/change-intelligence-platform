@@ -178,17 +178,17 @@
         "annualBaseline": "FY2025 10-K",
         "quarters": [
           {
-            "period": "Q1, ended Jul. 31, 2025",
+            "period": "Q1 ended Jul 31 2025",
             "operatingLoss": -124819,
             "netLoss": -116769
           },
           {
-            "period": "Q2, ended Oct. 31, 2025",
+            "period": "Q2 ended Oct 31 2025",
             "operatingLoss": -112113,
             "netLoss": -104668
           },
           {
-            "period": "Q3, ended Jan. 31, 2026",
+            "period": "Q3 ended Jan 31 2026",
             "operatingLoss": -140408,
             "netLoss": -133363
           }
@@ -200,6 +200,7 @@
           "operatingLossQ3vsQ2": -28295
         },
         "reading": "Loss magnitude improved in Q2 and worsened in Q3; this is a reported accounting movement, not a causal explanation or an outcome for workers or customers.",
+        "movementSource": "sec_xbrl",
         "sourceRefs": {
           "bridge": "company-industry-analysis/companies/c3-ai/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
           "initialRead": "company-industry-analysis/companies/c3-ai/INITIAL-EVIDENCE-READ.md",
@@ -221,7 +222,13 @@
               "label": "10-Q",
               "url": "https://www.sec.gov/Archives/edgar/data/1577526/000157752626000024/ai-20260131.htm"
             }
-          ]
+          ],
+          "directExtract": "data/processed/ai-work-control/c3-ai.xbrl.json",
+          "directExtractStatus": "matches_bridge",
+          "captureManifest": "data/raw/ai-work-control/c3-ai/manifest.json",
+          "captureStatus": "complete",
+          "capturedRecords": 4,
+          "attemptedRecords": 4
         }
       },
       "limits": [
