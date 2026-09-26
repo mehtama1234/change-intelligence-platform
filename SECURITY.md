@@ -23,6 +23,9 @@ The operator view exposes pilot counts and delivery status only. It does not
 expose customer questions, review notes, source passages, or private workspace
 content.
 
+The operator portfolio readiness view compares only aggregate workspace signals;
+it remains a human decision aid and does not automate expansion or stop decisions.
+
 Operator warning limits are configuration, not hidden product judgments:
 `OPERATOR_MAX_FALSE_ALERT_RATE` defaults to `0.4`, while failed refreshes and
 delayed deliveries default to `0`. Source age uses `MAX_SOURCE_AGE_MS`. The

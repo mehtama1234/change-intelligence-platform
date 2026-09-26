@@ -315,7 +315,38 @@ function buildCommercialPilotReadiness({ workspaceId, profile, learning, service
   return { schemaVersion: "commercial-pilot-readiness-v1", generatedAt: new Date().toISOString(), workspaceId, recommendation, humanCheckpointRequired: true, eligibility: { enoughReviewedDeliveries: reviewed >= 3, usefulRate: usefulnessRate, decisionImpactRecorded: learning.decisionImpact.changedDecision + learning.decisionImpact.informedDecision > 0, failedMeasures: measuresNotMet, serviceStatus: serviceReport.status }, rationale, latestRecordedDecision: learning.latestDecision ? { decision: learning.latestDecision.decision, decidedAt: learning.latestDecision.decidedAt, nextStep: learning.latestDecision.nextStep } : null, history: history.filter((snapshot) => snapshot.workspaceId === workspaceId).sort((a, b) => String(b.observedAt).localeCompare(String(a.observedAt))).slice(0, 30), limitation: "This is a decision aid based on recorded pilot observations. It does not make the commercial decision or prove general market value." };
 }
 
-function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs }) {
+function buildOperatorPortfolioReadiness({ workspaces, snapshots }) {
+  const latestByWorkspace = new Map();
+  for (const snapshot of snapshots) {
+    const current = latestByWorkspace.get(snapshot.workspaceId);
+    if (!current || String(snapshot.observedAt).localeCompare(String(current.observedAt)) > 0) latestByWorkspace.set(snapshot.workspaceId, snapshot);
+  }
+  const rows = workspaces.map((workspace) => {
+    const snapshot = latestByWorkspace.get(workspace.id);
+    return snapshot ? {
+      id: workspace.id,
+      name: workspace.name,
+      recommendation: snapshot.recommendation,
+      serviceStatus: snapshot.serviceStatus,
+      reviewedDeliveries: snapshot.reviewedDeliveries,
+      usefulnessRate: snapshot.usefulnessRate,
+      decisionImpact: snapshot.decisionImpact,
+      failedMeasures: snapshot.failedMeasures,
+      observedAt: snapshot.observedAt
+    } : { id: workspace.id, name: workspace.name, recommendation: "not_available", serviceStatus: "not_available", reviewedDeliveries: 0, usefulnessRate: null, decisionImpact: 0, failedMeasures: 0, observedAt: null };
+  });
+  const labels = ["improve", "continue", "expand", "stop", "not_available"];
+  return {
+    schemaVersion: "operator-portfolio-readiness-v1",
+    generatedAt: new Date().toISOString(),
+    scope: { workspaceCount: workspaces.length, snapshotCount: snapshots.length },
+    counts: Object.fromEntries(labels.map((label) => [label, rows.filter((row) => row.recommendation === label).length])),
+    workspaces: rows,
+    limitation: "This portfolio view contains aggregate readiness signals only. It excludes customer questions, review notes, source details, and private workspace content; readiness remains a human decision."
+  };
+}
+
+function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs }) {
   const summaries = workspaces.map((workspace) => {
     const workspaceDeliveries = deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
     const reviewed = workspaceDeliveries.filter((delivery) => delivery.review);
@@ -361,6 +392,7 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
     thresholds: { maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs },
     warnings: warningLifecycle,
     deliveryHealth: buildOperatorDeliveryHealth({ notifications, attempts: notificationAttempts }),
+    portfolioReadiness: buildOperatorPortfolioReadiness({ workspaces, snapshots: readinessSnapshots }),
     trend,
     workspaces: summaries,
     limitation: "This operator view contains aggregate pilot health only. It intentionally excludes customer questions, review notes, source details, and private workspace content. Counts describe recorded activity, not general product-market fit or causation."
@@ -1131,6 +1163,17 @@ const server = createServer(async (request, response) => {
       const notificationAttempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
       return json(response, 200, buildOperatorDeliveryHealth({ notifications, attempts: notificationAttempts }));
     }
+    if (url.pathname === "/api/operator/portfolio-readiness") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const workspaceFiles = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
+      const workspaces = await Promise.all(workspaceFiles.map(async (file) => {
+        const workspace = JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"));
+        return { id: workspace.id, name: workspace.name };
+      }));
+      const snapshots = store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots").snapshots;
+      return json(response, 200, buildOperatorPortfolioReadiness({ workspaces, snapshots }));
+    }
     if (url.pathname === "/api/operator/pilot-overview") {
       const operator = operatorAccess(request);
       if (operator.error) return json(response, operator.error.status, operator.error.body);
@@ -1149,7 +1192,8 @@ const server = createServer(async (request, response) => {
       const warningEvents = store.recordsLedger("operator_warning", "operator-warning-event-ledger-v1", "events").events;
       const notifications = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;
       const notificationAttempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
-      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs }));
+      const readinessSnapshots = store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots").snapshots;
+      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs }));
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));
