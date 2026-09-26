@@ -56,7 +56,7 @@ try {
   if (outsiderOperator.status !== 403) throw new Error(`Expected non-operator overview read to return 403, received ${outsiderOperator.status}`);
   const operatorOverview = await fetch(`${base}/api/operator/pilot-overview`, { headers: { Authorization: "Bearer operator-token" } });
   const operatorBody = await operatorOverview.json();
-  if (operatorOverview.status !== 200 || operatorBody.schemaVersion !== "operator-pilot-overview-v1" || !Array.isArray(operatorBody.workspaces) || JSON.stringify(operatorBody).includes("private-event")) throw new Error("Operator overview contract or privacy boundary failed.");
+  if (operatorOverview.status !== 200 || operatorBody.schemaVersion !== "operator-pilot-overview-v1" || !Array.isArray(operatorBody.workspaces) || !operatorBody.operations || !Number.isInteger(operatorBody.aggregate.openAlerts) || JSON.stringify(operatorBody).includes("private-event")) throw new Error("Operator overview contract or privacy boundary failed.");
   const outsiderDecision = await fetch(`${base}/api/pilot-report/decision`, { method: "POST", headers: { Authorization: "Bearer outsider-token", "Idempotency-Key": "outsider-pilot-decision", "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", decision: "continue", note: "No", nextStep: "No" }) });
   if (outsiderDecision.status !== 403) throw new Error(`Expected non-member pilot decision write to return 403, received ${outsiderDecision.status}`);
   const memberUsage = await fetch(`${base}/api/usage?workspace=demo-research`, { headers: authHeaders });

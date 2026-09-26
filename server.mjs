@@ -263,19 +263,27 @@ function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions 
   };
 }
 
-function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries }) {
+function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, alerts }) {
   const summaries = workspaces.map((workspace) => {
     const workspaceDeliveries = deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
     const reviewed = workspaceDeliveries.filter((delivery) => delivery.review);
     const workspaceDecisions = decisions.filter((decision) => decision.workspaceId === workspace.id);
-    return { id: workspace.id, name: workspace.name, pilotConfigured: profiles.some((profile) => profile.workspaceId === workspace.id), deliveries: workspaceDeliveries.length, reviewedDeliveries: reviewed.length, usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, latestDeliveryAt: workspaceDeliveries.map((delivery) => delivery.generatedAt).sort().at(-1) ?? null, latestDecision: workspaceDecisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)))[0]?.decision ?? null };
+    const profile = profiles.find((candidate) => candidate.workspaceId === workspace.id);
+    const latestDeliveryAt = workspaceDeliveries.map((delivery) => delivery.generatedAt).sort().at(-1) ?? null;
+    const cadenceMs = { weekly: 7 * 86400000, monthly: 31 * 86400000, quarterly: 93 * 86400000 }[profile?.cadence] ?? null;
+    const deliveryDelayed = Boolean(profile && cadenceMs && (!latestDeliveryAt || Date.parse(latestDeliveryAt) + cadenceMs < Date.now()));
+    return { id: workspace.id, name: workspace.name, pilotConfigured: Boolean(profile), deliveries: workspaceDeliveries.length, reviewedDeliveries: reviewed.length, usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, latestDeliveryAt, deliveryDelayed, latestDecision: workspaceDecisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)))[0]?.decision ?? null };
   });
   const reviewed = deliveries.filter((delivery) => delivery.review);
+  const now = Date.now();
+  const sourceAges = (sourceScan.sources ?? []).map((source) => ({ id: source.id, ageMs: Number.isFinite(Date.parse(source.checkedAt)) ? Math.max(0, now - Date.parse(source.checkedAt)) : null })).filter((source) => source.ageMs !== null);
+  const failedRuns = refreshHistory.filter((run) => run.status !== "complete");
   return {
     schemaVersion: "operator-pilot-overview-v1",
     generatedAt: new Date().toISOString(),
     scope: { workspaceCount: workspaces.length, configuredPilots: profiles.length, deliveries: deliveries.length, reviewedDeliveries: reviewed.length },
-    aggregate: { usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, notUsefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "not_useful").length, unclearDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "unclear").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, pilotCheckpoints: decisions.length, checkpointCounts: Object.fromEntries(["improve", "continue", "expand", "stop"].map((decision) => [decision, decisions.filter((item) => item.decision === decision).length])), auditedPilotActions: auditEntries.filter((entry) => ["configure_pilot", "review_pilot_delivery", "decide_pilot"].includes(entry.action)).length },
+    aggregate: { usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, notUsefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "not_useful").length, unclearDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "unclear").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, pilotCheckpoints: decisions.length, checkpointCounts: Object.fromEntries(["improve", "continue", "expand", "stop"].map((decision) => [decision, decisions.filter((item) => item.decision === decision).length])), auditedPilotActions: auditEntries.filter((entry) => ["configure_pilot", "review_pilot_delivery", "decide_pilot"].includes(entry.action)).length, openAlerts: alerts.filter((alert) => alert.state === "open").length, falseAlerts: alerts.filter((alert) => alert.resolutionDisposition === "false_positive").length, alertCorrections: alerts.filter((alert) => alert.resolutionDisposition === "needs_correction").length },
+    operations: { latestRefreshStatus: refreshHistory.at(-1)?.status ?? "not_run", failedRefreshRuns: failedRuns.length, lastRefreshAt: refreshHistory.at(-1)?.endedAt ?? null, sourceCount: sourceScan.sources?.length ?? 0, staleSources: sourceAges.filter((source) => source.ageMs > 14 * 86400000).length, oldestSourceAgeMs: sourceAges.length ? Math.max(...sourceAges.map((source) => source.ageMs)) : null, delayedDeliveries: summaries.filter((workspace) => workspace.deliveryDelayed).length },
     workspaces: summaries,
     limitation: "This operator view contains aggregate pilot health only. It intentionally excludes customer questions, review notes, source details, and private workspace content. Counts describe recorded activity, not general product-market fit or causation."
   };
@@ -930,7 +938,10 @@ const server = createServer(async (request, response) => {
       const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
       const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
       const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions;
-      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries }));
+      const alerts = store.alertsLedger().alerts;
+      const refreshHistory = (await readJson(refreshHistoryPath, { runs: [] })).runs ?? [];
+      const sourceScan = await readJson(sourceScanPath, { sources: [] });
+      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, alerts }));
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

@@ -39,6 +39,8 @@ Adapter output is then hashed and stored as a source snapshot before review.
 11. **Pilot delivery service** — turns each refresh into a dated, reviewable
     workspace handoff tied to the partner's decision question and success
     measures.
+12. **Operator health read model** — aggregates refresh failures, source age,
+    alert dispositions, and delivery timing without exposing customer content.
 
 ## Background jobs
 
