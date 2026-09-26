@@ -45,6 +45,9 @@ try {
   const timelineResponse = await request("/api/timeline");
   const timeline = await timelineResponse.json();
   if (timelineResponse.status !== 200 || timeline.schemaVersion !== "research-timeline-v1" || timeline.eventCount !== 14) throw new Error("Research timeline contract failed.");
+  const usageResponse = await request("/api/usage?workspace=demo-research");
+  const usage = await usageResponse.json();
+  if (usageResponse.status !== 200 || usage.schemaVersion !== "workspace-usage-v1" || usage.workspaceId !== "demo-research") throw new Error("Workspace usage contract failed.");
   const evidenceResponse = await request("/api/evidence/trend-hunting-ai-control");
   const evidence = await evidenceResponse.json();
   if (evidenceResponse.status !== 200 || evidence.schemaVersion !== "evidence-inspection-v1" || evidence.record.id !== "trend-hunting-ai-control" || !evidence.source.excerpt || !evidence.insightLinks.length) throw new Error("Evidence inspection contract failed.");

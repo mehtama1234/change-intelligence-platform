@@ -351,6 +351,7 @@ const server = createServer(async (request, response) => {
       const ledger = await readJson(briefingsPath, { briefings: [] });
       const briefing = ledger.briefings.find((candidate) => candidate.id === briefingId && (!workspaceId || candidate.workspaceId === workspaceId) && (!access.workspaceIds || access.workspaceIds.includes(candidate.workspaceId)));
       if (!briefing) return json(response, 404, { error: "Briefing not found in this workspace." });
+      await appendAudit({ requestId, action: "export_briefing", targetId: briefing.id, workspaceId: briefing.workspaceId, actorId: access.actorId ?? null, actorRole: null, result: "exported", occurredAt: new Date().toISOString() });
       const artifact = {
         schemaVersion: "source-linked-briefing-export-v1",
         exportedAt: new Date().toISOString(),
@@ -383,6 +384,13 @@ const server = createServer(async (request, response) => {
       const history = await readJson(refreshHistoryPath, { schemaVersion: "refresh-history-v1", runs: [] });
       const sourceScan = await readJson(sourceScanPath, { counts: {}, sources: [] });
       return json(response, 200, { schemaVersion: "operations-read-model-v1", generatedAt: new Date().toISOString(), readiness, refresh, refreshHistory: history.runs ?? [], sourceScan: { counts: sourceScan.counts, sourceCount: sourceScan.sources?.length ?? 0 }, database: store.health() });
+    }
+    if (url.pathname === "/api/usage") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      const entries = store.auditLedger().entries.filter((entry) => !access.workspaceIds || access.workspaceIds.includes(entry.workspaceId));
+      const counts = Object.fromEntries([...new Set(entries.map((entry) => entry.action))].map((action) => [action, entries.filter((entry) => entry.action === action).length]));
+      return json(response, 200, { schemaVersion: "workspace-usage-v1", workspaceId: access.workspaceId, activity: { totalAuditEvents: entries.length, actions: counts, lastActivityAt: entries.at(-1)?.occurredAt ?? null }, measures: { questionsSaved: counts.create_question ?? 0, evidenceInspections: counts.inspect_evidence ?? 0, insightInspections: counts.inspect_insight ?? 0, sourceReviews: counts.review_source ?? 0, alertsAcknowledged: counts.acknowledge_alert ?? 0, briefingsPublished: counts.publish_briefing ?? 0, briefingsExported: counts.export_briefing ?? 0, insightsPublished: counts.publish_insight ?? 0 } });
     }
     if (url.pathname === "/metrics") {
       const readiness = await readinessReport();

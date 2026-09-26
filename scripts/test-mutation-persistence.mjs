@@ -65,7 +65,7 @@ try {
   if (restoredAlerts.find((item) => item.id === alert.id)?.acknowledgmentNote !== "Durability test") throw new Error("Alert acknowledgement did not survive restart.");
   const audit = await (await fetch(`${base}/api/audit?workspace=demo-research`, { headers: auth })).json();
   const actions = new Set(audit.map((entry) => entry.action));
-  if (!["acknowledge_alert", "publish_briefing", "decide_insight", "review_source"].every((action) => actions.has(action))) throw new Error("Mutation audit records did not survive restart.");
+  if (!["acknowledge_alert", "publish_briefing", "export_briefing", "decide_insight", "review_source"].every((action) => actions.has(action))) throw new Error("Mutation and export audit records did not survive restart.");
   const history = await (await fetch(`${base}/api/evidence-history`, { headers: auth })).json();
   if (!history.decisionHistory.some((decision) => decision.candidateId === "review-test-candidate")) throw new Error("Source review decision did not survive restart.");
   const timeline = await (await fetch(`${base}/api/timeline`, { headers: auth })).json();

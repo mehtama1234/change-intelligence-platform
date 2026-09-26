@@ -62,9 +62,11 @@ async function loadChanges() {
 }
 
 async function loadOperations() {
-  const response = await apiFetch("../api/operations");
-  if (!response.ok) throw new Error(`Operations unavailable (${response.status})`);
+  const workspace = encodeURIComponent(state.workspaceId);
+  const [response, usageResponse] = await Promise.all([apiFetch("../api/operations"), apiFetch(`../api/usage?workspace=${workspace}`)]);
+  if (!response.ok || !usageResponse.ok) throw new Error(`Operations unavailable (${response.status})`);
   const operations = await response.json();
+  const usage = await usageResponse.json();
   const readiness = operations.readiness;
   const refresh = operations.refresh;
   byId("operations-summary").textContent = `Last run ${refresh.runId || "not recorded"} · ${refresh.status} · ${refresh.endedAt || "no completion time"}.`;
@@ -75,7 +77,9 @@ async function loadOperations() {
     ["Runtime sync", readiness.checks.runtimeSync.status],
     ["Backup", readiness.checks.backup.status]
   ];
-  byId("operations-cards").innerHTML = checks.map(([label, status]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong class="operation-${escapeHtml(status)}">${escapeHtml(status)}</strong></div>`).join("");
+  const activity = usage.measures;
+  const activityCards = [["Questions", activity.questionsSaved], ["Source reviews", activity.sourceReviews], ["Briefing exports", activity.briefingsExported], ["Alerts acknowledged", activity.alertsAcknowledged]];
+  byId("operations-cards").innerHTML = [...checks.map(([label, status]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong class="operation-${escapeHtml(status)}">${escapeHtml(status)}</strong></div>`), ...activityCards.map(([label, value]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`)].join("");
   const history = operations.refreshHistory ?? [];
   byId("operations-history").innerHTML = history.length ? `<table><caption>Recent refresh runs</caption><thead><tr><th>Run</th><th>Status</th><th>Steps</th><th>Ended</th></tr></thead><tbody>${history.slice().reverse().slice(0, 8).map((run) => `<tr><th scope="row"><code>${escapeHtml(run.runId)}</code></th><td>${escapeHtml(run.status)}</td><td>${run.steps.filter((step) => step.status === "complete").length}/${run.steps.length} complete</td><td>${escapeHtml(run.endedAt)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No refresh history recorded yet.</p>`;
 }

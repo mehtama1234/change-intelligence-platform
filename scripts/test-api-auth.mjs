@@ -40,6 +40,10 @@ try {
   const memberTimeline = await fetch(`${base}/api/timeline?workspace=demo-research`, { headers: authHeaders });
   const memberTimelineBody = await memberTimeline.json();
   if (memberTimeline.status !== 200 || memberTimelineBody.events.some((event) => event.id === "private-event")) throw new Error("Workspace timeline leaked an event from another workspace.");
+  const outsiderUsage = await fetch(`${base}/api/usage?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderUsage.status !== 403) throw new Error(`Expected non-member usage read to return 403, received ${outsiderUsage.status}`);
+  const memberUsage = await fetch(`${base}/api/usage?workspace=demo-research`, { headers: authHeaders });
+  if (memberUsage.status !== 200) throw new Error(`Workspace member usage read failed: ${memberUsage.status}`);
   const outsiderWorkspaces = await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer outsider-token" } });
   const outsiderWorkspaceList = await outsiderWorkspaces.json();
   if (outsiderWorkspaces.status !== 200 || outsiderWorkspaceList.length !== 0) throw new Error("Non-member should see no workspaces.");
