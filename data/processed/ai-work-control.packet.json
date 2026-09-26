@@ -1976,6 +1976,33 @@
       ]
     },
     {
+      "id": "cultural-nber-ai-customer-support-productivity",
+      "sourceRole": "research",
+      "sourceRepository": "cultural-geopolitical-theme-mining",
+      "sourceRef": "analysis/projects/ai-work-control/findings/ai-work-control-015.md",
+      "sourceLocator": "NBER W31161 staggered-access customer-support experiment",
+      "sourceDigest": "830a1e274514e9484a4af605980bdf26bf84a3821be0b27cf3d506ea8e664ade",
+      "sourceBytes": 4956,
+      "sourceExcerpt": " but which workers gain usable capability and who controls the resulting workflow. ## What the sources directly show - In a staggered-access study of 5,179 customer-support agents, generative-AI access increased issues resolved per hour by 14% on average, with a larger improvement for novice and lower-skilled workers and little effect for experienced and highly skilled workers. [NBER W31161](https://www.nber.org/papers/w31161) - In a field experiment across 66 firms and 7,137 knowledge workers, treated users spent less time on email and reduced work outside regular hours, while individual AI provision did not shift the quantity or composition of tasks. [NBER W33795](https://www.nber.org/pape",
+      "title": "AI assistance raised customer-support output, with larger gains for newer workers",
+      "observation": "A staggered-access study of 5,179 customer-support agents found that generative-AI access increased issues resolved per hour by 14% on average, with larger gains for novice and lower-skilled workers and little effect for experienced and highly skilled workers.",
+      "theme": "ai-work-control",
+      "mechanism": "An AI recommendation tool can raise measured output and may help less-experienced workers more, while access, recommendation quality, evaluation, and the use of the extra capacity remain organizational decisions.",
+      "affectedGroups": [
+        "customer-support agents",
+        "novice workers",
+        "lower-skilled workers",
+        "customers",
+        "managers"
+      ],
+      "claimState": "measured",
+      "asOf": "2026-09-13",
+      "limits": [
+        "This is a bounded workplace result from one firm and occupation, not a general productivity effect for all workers.",
+        "The evidence does not establish worker control over access, recommendation correction, pay, promotion, health, household time, or durable skill gains."
+      ]
+    },
+    {
       "id": "cultural-jrc-algorithmic-management-outcomes",
       "sourceRole": "research",
       "sourceRepository": "cultural-geopolitical-theme-mining",
@@ -2182,12 +2209,14 @@
         "trend-ai-agency-control-measure",
         "cultural-nber-ai-task-adoption",
         "cultural-nber-ai-access-time-boundary",
+        "cultural-nber-ai-customer-support-productivity",
         "cultural-jrc-algorithmic-management-outcomes",
         "cultural-named-workplace-system-stage-ledger",
         "cultural-amazon-bandameeda-remedy"
       ],
       "namedWorkflowRecordIds": [
         "cultural-nber-ai-access-time-boundary",
+        "cultural-nber-ai-customer-support-productivity",
         "cultural-named-workplace-system-stage-ledger"
       ],
       "counterexampleRecordIds": [
@@ -2197,6 +2226,8 @@
       "measuredStages": [
         "tool access assignment",
         "worker use",
+        "issues resolved per hour",
+        "uneven gains by experience",
         "email time",
         "after-hours work",
         "task quantity and composition",
@@ -2216,14 +2247,15 @@
       ],
       "canSupport": [
         "Company reports show commercial and operational movement.",
-        "Independent records show measured control, adoption, working-condition, governance, or remedy observations.",
-        "W33795 provides randomized evidence from tool access to short-run worker time patterns.",
+        "Independent records show measured control, adoption, productivity, working-condition, governance, or remedy observations.",
+        "W33795 provides randomized evidence from tool access to short-run worker time patterns, while W31161 provides a bounded output result with larger gains for newer and lower-skilled workers.",
         "The named-system ledger shows that formal governance and reported remedies are distinct from lived outcomes.",
         "The counterexample shows that human review does not guarantee restoration."
       ],
       "cannotSupport": [
-        "W33795 does not connect to one of the five public companies or establish that their reported movement caused the worker result.",
-        "The evidence does not yet follow the same worker and workplace from access through correction, reallocation, and later result."
+        "Neither workplace experiment connects to one of the five public companies or establishes that their reported movement caused the worker result.",
+        "The evidence does not yet follow the same worker and workplace from access through correction, reallocation, evaluation, and later result.",
+        "The W31161 output result is not proof of durable learning, better pay, or better working conditions."
       ],
       "nextTest": "Join the W33795-style access event to a workplace rule and later outcome: tool access → time/task change → manager reallocation or evaluation rule → worker discretion/pace → pay, health, family time, appeal, or exit."
     }

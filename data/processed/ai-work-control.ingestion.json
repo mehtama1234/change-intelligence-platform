@@ -1,6 +1,6 @@
 {
   "schemaVersion": "research-ingestion-ledger-v1",
-  "generatedAt": "2026-09-26T14:44:23.942Z",
+  "generatedAt": "2026-09-26T14:49:01.553Z",
   "domain": "ai-work-control",
   "sourceSnapshotDate": "2026-09-25",
   "scanRunId": "scan-20260926141801481",
@@ -18,7 +18,7 @@
       "adapter": "repository-files",
       "refresh": "weekly",
       "purpose": "social, institutional, political, and geopolitical records",
-      "recordCount": 6,
+      "recordCount": 7,
       "status": "ingested"
     },
     {
@@ -83,7 +83,7 @@
       "sourceDigest": "67e2e17f48ee21d1f468944b6d1c53e4b6fc20428838ffcbb151937d7662252e",
       "sourceBytes": 25306,
       "capturePath": "raw/source-captures/trend-hunting-ai-control/67e2e17f48ee21d1f468944b6d1c53e4b6fc20428838ffcbb151937d7662252e.source",
-      "ingestedAt": "2026-09-26T14:44:23.916Z"
+      "ingestedAt": "2026-09-26T14:49:01.537Z"
     },
     {
       "id": "cultural-ai-capability-dependence",
@@ -113,7 +113,7 @@
       "sourceDigest": "88ac071286e2f746095504540db23f4164a8c5a3e1c6ee190ebcebf753e4d8fe",
       "sourceBytes": 15639,
       "capturePath": "raw/source-captures/cultural-ai-capability-dependence/88ac071286e2f746095504540db23f4164a8c5a3e1c6ee190ebcebf753e4d8fe.source",
-      "ingestedAt": "2026-09-26T14:44:23.917Z"
+      "ingestedAt": "2026-09-26T14:49:01.537Z"
     },
     {
       "id": "annual-ai-cultural-disintermediation",
@@ -144,7 +144,7 @@
       "sourceDigest": "93d9d56ee7792cdf8c73af339b9e88d5a52544fae201dd800a51ce17622c68a4",
       "sourceBytes": 28474,
       "capturePath": "raw/source-captures/annual-ai-cultural-disintermediation/93d9d56ee7792cdf8c73af339b9e88d5a52544fae201dd800a51ce17622c68a4.source",
-      "ingestedAt": "2026-09-26T14:44:23.919Z"
+      "ingestedAt": "2026-09-26T14:49:01.538Z"
     },
     {
       "id": "ibis-ai-workflow-compression",
@@ -175,7 +175,7 @@
       "sourceDigest": "0d3dab9e8b23ea41b5ea11c224388642acbe5b5bcb8c27707542321255ad88ce",
       "sourceBytes": 86295,
       "capturePath": "raw/source-captures/ibis-ai-workflow-compression/0d3dab9e8b23ea41b5ea11c224388642acbe5b5bcb8c27707542321255ad88ce.source",
-      "ingestedAt": "2026-09-26T14:44:23.920Z"
+      "ingestedAt": "2026-09-26T14:49:01.539Z"
     },
     {
       "id": "inc5000-coreweave-ai-infrastructure",
@@ -208,7 +208,7 @@
       "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
       "sourceBytes": 207596,
       "capturePath": "raw/source-captures/inc5000-coreweave-ai-infrastructure/48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a.source",
-      "ingestedAt": "2026-09-26T14:44:23.921Z"
+      "ingestedAt": "2026-09-26T14:49:01.540Z"
     },
     {
       "id": "inc5000-luma-ai-networking",
@@ -241,7 +241,7 @@
       "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
       "sourceBytes": 207596,
       "capturePath": "raw/source-captures/inc5000-luma-ai-networking/48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a.source",
-      "ingestedAt": "2026-09-26T14:44:23.923Z"
+      "ingestedAt": "2026-09-26T14:49:01.541Z"
     },
     {
       "id": "inc5000-caylent-ai-delivery",
@@ -274,7 +274,7 @@
       "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
       "sourceBytes": 207596,
       "capturePath": "raw/source-captures/inc5000-caylent-ai-delivery/48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a.source",
-      "ingestedAt": "2026-09-26T14:44:23.924Z"
+      "ingestedAt": "2026-09-26T14:49:01.543Z"
     },
     {
       "id": "inc5000-insurify-ai-decisions",
@@ -307,7 +307,7 @@
       "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
       "sourceBytes": 207596,
       "capturePath": "raw/source-captures/inc5000-insurify-ai-decisions/48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a.source",
-      "ingestedAt": "2026-09-26T14:44:23.925Z"
+      "ingestedAt": "2026-09-26T14:49:01.544Z"
     },
     {
       "id": "inc5000-veradata-donor-analytics",
@@ -340,7 +340,7 @@
       "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
       "sourceBytes": 207596,
       "capturePath": "raw/source-captures/inc5000-veradata-donor-analytics/48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a.source",
-      "ingestedAt": "2026-09-26T14:44:23.928Z"
+      "ingestedAt": "2026-09-26T14:49:01.545Z"
     },
     {
       "id": "atlas-ai-work-evidence-thread",
@@ -370,7 +370,7 @@
       "sourceDigest": "49480c7a496f62b39ee0d89f8325fca1ec9204b07c47091d5641bc7ac5f51f97",
       "sourceBytes": 3171,
       "capturePath": "raw/source-captures/atlas-ai-work-evidence-thread/49480c7a496f62b39ee0d89f8325fca1ec9204b07c47091d5641bc7ac5f51f97.source",
-      "ingestedAt": "2026-09-26T14:44:23.929Z"
+      "ingestedAt": "2026-09-26T14:49:01.546Z"
     },
     {
       "id": "atlas-c3-ai-report-window",
@@ -410,7 +410,7 @@
       "sourceDigest": "c0f1424493170ccf3ef4829cd34a6f8d0d7526768c3cf20ed3feffad4faece29",
       "sourceBytes": 1659,
       "capturePath": "raw/source-captures/atlas-c3-ai-report-window/c0f1424493170ccf3ef4829cd34a6f8d0d7526768c3cf20ed3feffad4faece29.source",
-      "ingestedAt": "2026-09-26T14:44:23.929Z"
+      "ingestedAt": "2026-09-26T14:49:01.546Z"
     },
     {
       "id": "atlas-nvidia-ai-platform-window",
@@ -456,7 +456,7 @@
       "sourceDigest": "75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0",
       "sourceBytes": 2602,
       "capturePath": "raw/source-captures/atlas-nvidia-ai-platform-window/75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0.source",
-      "ingestedAt": "2026-09-26T14:44:23.930Z"
+      "ingestedAt": "2026-09-26T14:49:01.547Z"
     },
     {
       "id": "atlas-microsoft-cloud-window",
@@ -497,7 +497,7 @@
       "sourceDigest": "0c783b9df6776a6e99d2f0a641039dbf9ed0de6e38f7e52a823466e5b65dae5e",
       "sourceBytes": 2632,
       "capturePath": "raw/source-captures/atlas-microsoft-cloud-window/0c783b9df6776a6e99d2f0a641039dbf9ed0de6e38f7e52a823466e5b65dae5e.source",
-      "ingestedAt": "2026-09-26T14:44:23.930Z"
+      "ingestedAt": "2026-09-26T14:49:01.547Z"
     },
     {
       "id": "atlas-oracle-cloud-window",
@@ -538,7 +538,7 @@
       "sourceDigest": "781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583",
       "sourceBytes": 2413,
       "capturePath": "raw/source-captures/atlas-oracle-cloud-window/781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583.source",
-      "ingestedAt": "2026-09-26T14:44:23.931Z"
+      "ingestedAt": "2026-09-26T14:49:01.548Z"
     },
     {
       "id": "atlas-broadcom-ai-infrastructure-window",
@@ -583,7 +583,7 @@
       "sourceDigest": "78e50dcb48e4452ad98bf8e308e58ce80ffe85344d61d2571bf9244f98b37ad3",
       "sourceBytes": 1197,
       "capturePath": "raw/source-captures/atlas-broadcom-ai-infrastructure-window/78e50dcb48e4452ad98bf8e308e58ce80ffe85344d61d2571bf9244f98b37ad3.source",
-      "ingestedAt": "2026-09-26T14:44:23.931Z"
+      "ingestedAt": "2026-09-26T14:49:01.548Z"
     },
     {
       "id": "trend-ai-agency-control-measure",
@@ -615,7 +615,7 @@
       "sourceDigest": "9aa6fb9e4de05f3c241925da7f2f39426807d5ad943ae116b596843882cc3a86",
       "sourceBytes": 1999,
       "capturePath": "raw/source-captures/trend-ai-agency-control-measure/9aa6fb9e4de05f3c241925da7f2f39426807d5ad943ae116b596843882cc3a86.source",
-      "ingestedAt": "2026-09-26T14:44:23.931Z"
+      "ingestedAt": "2026-09-26T14:49:01.548Z"
     },
     {
       "id": "cultural-nber-ai-task-adoption",
@@ -647,7 +647,7 @@
       "sourceDigest": "c2aa137ca1e4fbf4709238b51db322e5ee36326606c2c828a56452953b8a9c92",
       "sourceBytes": 6106,
       "capturePath": "raw/source-captures/cultural-nber-ai-task-adoption/c2aa137ca1e4fbf4709238b51db322e5ee36326606c2c828a56452953b8a9c92.source",
-      "ingestedAt": "2026-09-26T14:44:23.931Z"
+      "ingestedAt": "2026-09-26T14:49:01.549Z"
     },
     {
       "id": "cultural-nber-ai-access-time-boundary",
@@ -680,7 +680,42 @@
       "sourceDigest": "9b6d2b63c663133a4129b3cb153b3eb6aa1b13dd9dbe911fc8f6e483b96ff10f",
       "sourceBytes": 6781,
       "capturePath": null,
-      "ingestedAt": "2026-09-26T14:44:23.932Z"
+      "ingestedAt": "2026-09-26T14:49:01.549Z"
+    },
+    {
+      "id": "cultural-nber-ai-customer-support-productivity",
+      "sourceRole": "research",
+      "sourceRepository": "cultural-geopolitical-theme-mining",
+      "sourcePath": "analysis/projects/ai-work-control/findings/ai-work-control-015.md",
+      "sourceLocator": "NBER W31161 staggered-access customer-support experiment",
+      "title": "AI assistance raised customer-support output, with larger gains for newer workers",
+      "observation": "A staggered-access study of 5,179 customer-support agents found that generative-AI access increased issues resolved per hour by 14% on average, with larger gains for novice and lower-skilled workers and little effect for experienced and highly skilled workers.",
+      "theme": "ai-work-control",
+      "mechanism": "An AI recommendation tool can raise measured output and may help less-experienced workers more, while access, recommendation quality, evaluation, and the use of the extra capacity remain organizational decisions.",
+      "affectedGroups": [
+        "customer-support agents",
+        "novice workers",
+        "lower-skilled workers",
+        "customers",
+        "managers"
+      ],
+      "claimState": "measured",
+      "asOf": "2026-09-13",
+      "unit": "agent-hour and issues resolved",
+      "denominator": "5,179 customer-support agents in one firm and occupation; staggered access to the AI assistant",
+      "limits": [
+        "This is a bounded workplace result from one firm and occupation, not a general productivity effect for all workers.",
+        "The evidence does not establish worker control over access, recommendation correction, pay, promotion, health, household time, or durable skill gains."
+      ],
+      "excerptTerms": [
+        "5,179",
+        "14%",
+        "novice"
+      ],
+      "sourceDigest": "830a1e274514e9484a4af605980bdf26bf84a3821be0b27cf3d506ea8e664ade",
+      "sourceBytes": 4956,
+      "capturePath": null,
+      "ingestedAt": "2026-09-26T14:49:01.550Z"
     },
     {
       "id": "cultural-jrc-algorithmic-management-outcomes",
@@ -712,7 +747,7 @@
       "sourceDigest": "5577ac6f26d1d859a8c9a6f3577c709bebc69ef3dfc1ccef742db3dcec70582e",
       "sourceBytes": 8365,
       "capturePath": "raw/source-captures/cultural-jrc-algorithmic-management-outcomes/5577ac6f26d1d859a8c9a6f3577c709bebc69ef3dfc1ccef742db3dcec70582e.source",
-      "ingestedAt": "2026-09-26T14:44:23.933Z"
+      "ingestedAt": "2026-09-26T14:49:01.551Z"
     },
     {
       "id": "cultural-named-workplace-system-stage-ledger",
@@ -748,7 +783,7 @@
       "sourceDigest": "c049f8c116bf62caddef4cce87ec71f35f612ef7556b4647ac0e7253482135cc",
       "sourceBytes": 9957,
       "capturePath": null,
-      "ingestedAt": "2026-09-26T14:44:23.934Z"
+      "ingestedAt": "2026-09-26T14:49:01.551Z"
     },
     {
       "id": "cultural-amazon-bandameeda-remedy",
@@ -780,7 +815,7 @@
       "sourceDigest": "f2b548bf93149ed93ec9bddca9b09511ddb9541d73e3a0d9f9dcf6788cea9c91",
       "sourceBytes": 7529,
       "capturePath": "raw/source-captures/cultural-amazon-bandameeda-remedy/f2b548bf93149ed93ec9bddca9b09511ddb9541d73e3a0d9f9dcf6788cea9c91.source",
-      "ingestedAt": "2026-09-26T14:44:23.941Z"
+      "ingestedAt": "2026-09-26T14:49:01.552Z"
     },
     {
       "id": "trend-uber-kumar-review-counterexample",
@@ -812,7 +847,7 @@
       "sourceDigest": "cd563ab438a730e4220e234c30d260f1238f6627f5693e1bba39aa9eebf85845",
       "sourceBytes": 2390,
       "capturePath": "raw/source-captures/trend-uber-kumar-review-counterexample/cd563ab438a730e4220e234c30d260f1238f6627f5693e1bba39aa9eebf85845.source",
-      "ingestedAt": "2026-09-26T14:44:23.941Z"
+      "ingestedAt": "2026-09-26T14:49:01.553Z"
     }
   ]
 }
