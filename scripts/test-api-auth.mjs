@@ -46,6 +46,11 @@ try {
   if (outsiderUpdate.status !== 403) throw new Error(`Expected non-member workspace update read to return 403, received ${outsiderUpdate.status}`);
   const memberUpdate = await fetch(`${base}/api/workspace-update?workspace=demo-research`, { headers: authHeaders });
   if (memberUpdate.status !== 200) throw new Error(`Workspace member update read failed: ${memberUpdate.status}`);
+  const memberDeliveryHealth = await fetch(`${base}/api/workspace-delivery-health?workspace=demo-research`, { headers: authHeaders });
+  const memberDeliveryHealthBody = await memberDeliveryHealth.json();
+  if (memberDeliveryHealth.status !== 200 || memberDeliveryHealthBody.schemaVersion !== "workspace-delivery-health-v1" || memberDeliveryHealthBody.workspaceId !== "demo-research" || JSON.stringify(memberDeliveryHealthBody).includes("private-event")) throw new Error("Workspace delivery health read model failed or leaked private content.");
+  const outsiderDeliveryHealth = await fetch(`${base}/api/workspace-delivery-health?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderDeliveryHealth.status !== 403) throw new Error(`Expected non-member delivery health read to return 403, received ${outsiderDeliveryHealth.status}`);
   const outsiderPilot = await fetch(`${base}/api/workspace-pilot?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderPilot.status !== 403) throw new Error(`Expected non-member pilot read to return 403, received ${outsiderPilot.status}`);
   const outsiderDeliveries = await fetch(`${base}/api/pilot-deliveries?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });

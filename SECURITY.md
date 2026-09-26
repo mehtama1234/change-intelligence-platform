@@ -55,6 +55,10 @@ separate ledger, including success, retry, or dead-letter outcome.
 The operator delivery-health read model exposes counts, success rate, retry
 count, latency, and recipient/workspace breakdowns without exposing message
 bodies.
+Workspace members receive a smaller `/api/workspace-delivery-health` read model
+limited to their workspace. It omits recipients, destination URLs, error text,
+and other workspaces; delivery health describes transport reliability, not the
+truth or usefulness of the intelligence.
 
 Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map

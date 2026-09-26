@@ -286,6 +286,11 @@ function buildOperatorDeliveryHealth({ notifications, attempts }) {
   return { schemaVersion: "operator-delivery-health-v1", generatedAt: new Date().toISOString(), summary: { notifications: notifications.length, attempts: attempts.length, delivered: notifications.filter((notification) => notification.status === "delivered").length, deadLetters: notifications.filter((notification) => notification.status === "dead_letter").length, pending: notifications.filter((notification) => notification.status === "pending").length, retries: attempts.filter((attempt) => attempt.attempt > 1).length, successRate: terminal.length ? notifications.filter((notification) => notification.status === "delivered").length / terminal.length : null, averageLatencyMs: latencies.length ? Math.round(latencies.reduce((sum, value) => sum + value, 0) / latencies.length) : null }, byRecipient: group("recipient"), byWorkspace: group("workspaceId"), recentAttempts: attempts.slice().sort((a, b) => String(b.attemptedAt).localeCompare(String(a.attemptedAt))).slice(0, 30).map(({ error, ...attempt }) => ({ ...attempt, error: error ?? null })) };
 }
 
+function buildWorkspaceDeliveryHealth({ workspaceId, notifications, attempts }) {
+  const health = buildOperatorDeliveryHealth({ notifications: notifications.filter((notification) => notification.workspaceId === workspaceId), attempts });
+  return { schemaVersion: "workspace-delivery-health-v1", generatedAt: health.generatedAt, workspaceId, summary: health.summary, limitation: "This reports delivery records for this workspace only. It does not establish that the delivered intelligence was useful or correct." };
+}
+
 function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs }) {
   const summaries = workspaces.map((workspace) => {
     const workspaceDeliveries = deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
@@ -881,6 +886,14 @@ const server = createServer(async (request, response) => {
       const readiness = await readinessReport();
       const metrics = buildPilotMetrics({ workspaceId: access.workspaceId, auditEntries: entries, alerts, outcomes, briefings });
       return json(response, 200, buildWorkspaceUpdate({ workspaceId: access.workspaceId, workspaceName: workspace?.name ?? access.workspaceId ?? "All workspaces", refresh, readiness, coverage, metrics, alerts, questions, briefings }));
+    }
+    if (url.pathname === "/api/workspace-delivery-health") {
+      const workspaceId = url.searchParams.get("workspace");
+      const access = await workspaceAccess(request, workspaceId);
+      if (denyWorkspaceRead(response, access)) return;
+      const notifications = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;
+      const attempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
+      return json(response, 200, buildWorkspaceDeliveryHealth({ workspaceId: access.workspaceId, notifications, attempts }));
     }
     if (url.pathname === "/metrics") {
       const readiness = await readinessReport();
