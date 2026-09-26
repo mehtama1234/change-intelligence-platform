@@ -11,6 +11,9 @@ const runDir = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed/run
 const lockPath = resolve(runDir, "refresh.lock");
 const receiptPath = resolve(runDir, "latest-refresh.json");
 const historyPath = resolve(runDir, "refresh-history.json");
+const secCaptureDir = resolve(runDir, "raw/ai-work-control/c3-ai");
+const secManifestPath = resolve(secCaptureDir, "manifest.json");
+const secXbrlPath = resolve(runDir, "c3-ai.xbrl.json");
 const childEnv = {
   ...process.env,
   RUNTIME_DATA_DIR: runDir,
@@ -28,7 +31,10 @@ const childEnv = {
   INSIGHT_PACKET_PATH: resolve(runDir, "ai-work-control.packet.json"),
   INSIGHT_OUTPUT_DIR: runDir,
   INSIGHT_CANDIDATE_PATH: resolve(runDir, "insight-candidates.json"),
-  INSIGHT_EVALUATION_PATH: resolve(runDir, "insight-evaluation.json")
+  INSIGHT_EVALUATION_PATH: resolve(runDir, "insight-evaluation.json"),
+  SEC_CAPTURE_DIR: secCaptureDir,
+  SEC_MANIFEST_PATH: secManifestPath,
+  SEC_XBRL_PATH: secXbrlPath
 };
 const runId = `refresh-${new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 17)}`;
 const steps = [];
@@ -65,7 +71,7 @@ try {
     steps.push({ name: "extract-sec-xbrl", status: "skipped", reason: "SEC extraction skipped by configuration." });
   } else {
     await runStep("capture-sec-filings", "acquire-sec-filing-window.mjs", true);
-    if (existsSync(resolve(root, "data/raw/ai-work-control/c3-ai/manifest.json"))) {
+    if (existsSync(secManifestPath)) {
       await runStep("extract-sec-xbrl", "extract-sec-xbrl-window.mjs", true);
     } else {
       steps.push({ name: "extract-sec-xbrl", status: "skipped", reason: "No SEC capture manifest exists." });

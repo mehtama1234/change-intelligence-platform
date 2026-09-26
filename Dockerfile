@@ -5,6 +5,8 @@ ENV NODE_ENV=production
 ENV PORT=8780
 ENV RUNTIME_DATA_DIR=/app/runtime
 ENV BACKUP_DIR=/app/backups
+ENV RESEARCH_ROOT=/app/research
+ENV PACKET_PATH=/app/runtime/ai-work-control.packet.json
 
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev

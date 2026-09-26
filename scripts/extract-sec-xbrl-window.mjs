@@ -3,9 +3,9 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
-const rawDir = resolve(root, "data/raw/ai-work-control/c3-ai");
+const rawDir = resolve(root, process.env.SEC_CAPTURE_DIR ?? "data/raw/ai-work-control/c3-ai");
 const manifestPath = resolve(rawDir, "manifest.json");
-const outputPath = resolve(root, "data/processed/ai-work-control/c3-ai.xbrl.json");
+const outputPath = resolve(root, process.env.SEC_XBRL_PATH ?? "data/processed/ai-work-control/c3-ai.xbrl.json");
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 
 function contexts(html) {

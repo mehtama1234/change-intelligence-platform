@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const sourceRoot = process.env.RESEARCH_ROOT ?? "/home/mehta/git-repo";
 const mapPath = resolve(root, "data/source-maps/ai-work-control.sources.json");
-const outputDir = resolve(root, "data/raw/ai-work-control/c3-ai");
+const outputDir = resolve(root, process.env.SEC_CAPTURE_DIR ?? "data/raw/ai-work-control/c3-ai");
 const manifestPath = resolve(outputDir, "manifest.json");
 const map = JSON.parse(await readFile(mapPath, "utf8"));
 const source = map.sources.find((item) => item.id === "atlas-c3-ai-report-window");
