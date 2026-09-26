@@ -98,6 +98,7 @@ try {
   await runStep("evaluate-operator-warnings", "evaluate-operator-warnings.mjs");
   await runStep("sync-runtime-store", "sync-runtime-store.mjs");
   await runStep("dispatch-operator-notifications", "dispatch-operator-notifications.mjs", true);
+  await runStep("record-pilot-readiness", "record-pilot-readiness.mjs");
   const failed = steps.filter((step) => step.status === "failed");
   const receipt = {
     schemaVersion: "refresh-receipt-v1",

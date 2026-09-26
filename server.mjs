@@ -302,7 +302,7 @@ function buildWorkspaceServiceReport({ workspaceId, profile, deliveries, learnin
   return { schemaVersion: "workspace-service-level-report-v1", generatedAt: new Date().toISOString(), workspaceId, status, serviceLevel: { cadence: profile?.cadence ?? null, nextReviewAt: profile?.nextReviewAt ?? null, latestDeliveryAt, nextExpectedAt, overdue, delivery: deliveryHealth.summary }, observations: { reviewedDeliveries: learning.observation.reviewedDeliveries, usefulnessRate: learning.usefulness.rate, decisionChanges: learning.decisionImpact.changedDecision + learning.decisionImpact.informedDecision, measures: learning.measures }, limitation: "This report describes the configured service cadence, recorded transport, and partner observations. It is not a guarantee of future delivery or a claim that the intelligence caused a business result." };
 }
 
-function buildCommercialPilotReadiness({ workspaceId, profile, learning, serviceReport }) {
+function buildCommercialPilotReadiness({ workspaceId, profile, learning, serviceReport, history }) {
   const reviewed = learning.observation.reviewedDeliveries;
   const measuresNotMet = learning.measures.filter((measure) => measure.states.notMet).length;
   const usefulnessRate = learning.usefulness.rate;
@@ -312,7 +312,7 @@ function buildCommercialPilotReadiness({ workspaceId, profile, learning, service
   else if (serviceReport.status === "attention") { recommendation = "improve"; rationale = "Resolve delivery reliability or cadence issues before expansion."; }
   else if (reviewed >= 3 && usefulnessRate === 0) { recommendation = "stop"; rationale = "At least three reviewed deliveries were recorded and none was marked useful."; }
   else if (reviewed >= 3 && usefulnessRate >= 0.67 && learning.decisionImpact.changedDecision + learning.decisionImpact.informedDecision > 0 && !measuresNotMet) { recommendation = "expand"; rationale = "The pilot has repeated useful observations, recorded decision impact, and no failed success measure."; }
-  return { schemaVersion: "commercial-pilot-readiness-v1", generatedAt: new Date().toISOString(), workspaceId, recommendation, humanCheckpointRequired: true, eligibility: { enoughReviewedDeliveries: reviewed >= 3, usefulRate: usefulnessRate, decisionImpactRecorded: learning.decisionImpact.changedDecision + learning.decisionImpact.informedDecision > 0, failedMeasures: measuresNotMet, serviceStatus: serviceReport.status }, rationale, latestRecordedDecision: learning.latestDecision ? { decision: learning.latestDecision.decision, decidedAt: learning.latestDecision.decidedAt, nextStep: learning.latestDecision.nextStep } : null, limitation: "This is a decision aid based on recorded pilot observations. It does not make the commercial decision or prove general market value." };
+  return { schemaVersion: "commercial-pilot-readiness-v1", generatedAt: new Date().toISOString(), workspaceId, recommendation, humanCheckpointRequired: true, eligibility: { enoughReviewedDeliveries: reviewed >= 3, usefulRate: usefulnessRate, decisionImpactRecorded: learning.decisionImpact.changedDecision + learning.decisionImpact.informedDecision > 0, failedMeasures: measuresNotMet, serviceStatus: serviceReport.status }, rationale, latestRecordedDecision: learning.latestDecision ? { decision: learning.latestDecision.decision, decidedAt: learning.latestDecision.decidedAt, nextStep: learning.latestDecision.nextStep } : null, history: history.filter((snapshot) => snapshot.workspaceId === workspaceId).sort((a, b) => String(b.observedAt).localeCompare(String(a.observedAt))).slice(0, 30), limitation: "This is a decision aid based on recorded pilot observations. It does not make the commercial decision or prove general market value." };
 }
 
 function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs }) {
@@ -946,7 +946,8 @@ const server = createServer(async (request, response) => {
       const learning = buildPilotLearningReport({ workspaceId: access.workspaceId, profile, deliveries, decisions });
       const deliveryHealth = buildWorkspaceDeliveryHealth({ workspaceId: access.workspaceId, notifications, attempts });
       const serviceReport = buildWorkspaceServiceReport({ workspaceId: access.workspaceId, profile, deliveries, learning, deliveryHealth });
-      return json(response, 200, buildCommercialPilotReadiness({ workspaceId: access.workspaceId, profile, learning, serviceReport }));
+      const history = store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots").snapshots;
+      return json(response, 200, buildCommercialPilotReadiness({ workspaceId: access.workspaceId, profile, learning, serviceReport, history }));
     }
     if (url.pathname === "/metrics") {
       const readiness = await readinessReport();

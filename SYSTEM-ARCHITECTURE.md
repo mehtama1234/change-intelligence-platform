@@ -49,6 +49,8 @@ Adapter output is then hashed and stored as a source snapshot before review.
     failures to a dead-letter state.
 15. **Delivery history** — stores one non-content attempt record per delivery
     try so operators can see reliability by recipient and destination.
+16. **Pilot readiness history** — records the commercial decision aid after each
+    refresh, preserving the evidence that led to each recommendation.
 
 ## Background jobs
 

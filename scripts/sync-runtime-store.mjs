@@ -22,6 +22,7 @@ try {
     operatorNotifications: resolve(runtimeDir, "operator-notification-outbox.json"),
     operatorRoutes: resolve(runtimeDir, "operator-notification-routes.json"),
     operatorAttempts: resolve(runtimeDir, "operator-notification-attempts.json"),
+    pilotReadiness: resolve(runtimeDir, "pilot-readiness.json"),
     workspaceDir: resolve(root, "data/fixtures/workspaces"),
     sourceScan: resolve(runtimeDir, "latest-source-scan.json"),
     evidenceLedger: resolve(runtimeDir, "versioned-evidence-ledger.json"),

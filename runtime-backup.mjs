@@ -20,6 +20,7 @@ const runtimeFiles = [
   "operator-notification-outbox.json",
   "operator-notification-routes.json",
   "operator-notification-attempts.json",
+  "pilot-readiness.json",
   "refresh-history.json",
   "insight-evaluation.json"
 ];

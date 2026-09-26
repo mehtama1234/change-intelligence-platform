@@ -12,7 +12,7 @@ const runtimeDir = resolve(rootTemp, "runtime");
 const backupDir = resolve(rootTemp, "backup");
 const restoredDir = resolve(rootTemp, "restored");
 await mkdir(runtimeDir, { recursive: true });
-for (const name of ["workspace-questions.json", "audit-log.json", "idempotency-operations.json", "workspace-alerts.json", "briefing-publications.json", "insight-decisions.json", "insight-publications.json", "workspace-pilot-profiles.json", "workspace-pilot-deliveries.json", "workspace-pilot-decisions.json", "operator-warning-events.json", "operator-notification-outbox.json", "operator-notification-routes.json", "operator-notification-attempts.json", "latest-source-scan.json", "source-scan-history.json", "versioned-evidence-ledger.json", "review-decisions.json", "review-events.json", "refresh-history.json", "insight-evaluation.json"]) {
+for (const name of ["workspace-questions.json", "audit-log.json", "idempotency-operations.json", "workspace-alerts.json", "briefing-publications.json", "insight-decisions.json", "insight-publications.json", "workspace-pilot-profiles.json", "workspace-pilot-deliveries.json", "workspace-pilot-decisions.json", "operator-warning-events.json", "operator-notification-outbox.json", "operator-notification-routes.json", "operator-notification-attempts.json", "pilot-readiness.json", "latest-source-scan.json", "source-scan-history.json", "versioned-evidence-ledger.json", "review-decisions.json", "review-events.json", "refresh-history.json", "insight-evaluation.json"]) {
   if (existsSync(resolve(sourceRuntime, name))) await copyFile(resolve(sourceRuntime, name), resolve(runtimeDir, name));
 }
 const store = createRuntimeStore(runtimeDir);
@@ -32,6 +32,7 @@ await importRuntimeLedgers(store, {
   ,operatorNotifications: resolve(runtimeDir, "operator-notification-outbox.json")
   ,operatorRoutes: resolve(runtimeDir, "operator-notification-routes.json")
   ,operatorAttempts: resolve(runtimeDir, "operator-notification-attempts.json")
+  ,pilotReadiness: resolve(runtimeDir, "pilot-readiness.json")
   ,sourceScan: resolve(runtimeDir, "latest-source-scan.json")
   ,evidenceLedger: resolve(runtimeDir, "versioned-evidence-ledger.json")
   ,reviewDecisions: resolve(runtimeDir, "review-decisions.json")
@@ -58,6 +59,7 @@ await importRuntimeLedgers(restoredStore, {
   ,operatorNotifications: resolve(restoredDir, "operator-notification-outbox.json")
   ,operatorRoutes: resolve(restoredDir, "operator-notification-routes.json")
   ,operatorAttempts: resolve(restoredDir, "operator-notification-attempts.json")
+  ,pilotReadiness: resolve(restoredDir, "pilot-readiness.json")
   ,sourceScan: resolve(restoredDir, "latest-source-scan.json")
   ,evidenceLedger: resolve(restoredDir, "versioned-evidence-ledger.json")
   ,reviewDecisions: resolve(restoredDir, "review-decisions.json")

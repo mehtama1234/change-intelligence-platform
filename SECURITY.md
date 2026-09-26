@@ -65,6 +65,8 @@ under the same membership boundary.
 The `/api/workspace-commercial-readiness` response is only a bounded decision
 aid. It exposes its recommendation, evidence basis, and human-checkpoint flag;
 it cannot create an `expand`, `continue`, `improve`, or `stop` decision by itself.
+Readiness snapshots are recorded per workspace and the history read model shows
+only that workspace’s counts and recommendation changes.
 
 Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map
