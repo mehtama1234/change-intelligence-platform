@@ -26,6 +26,7 @@ const childEnv = {
   PILOT_PROFILES_PATH: resolve(runDir, "workspace-pilot-profiles.json"),
   PILOT_DELIVERIES_PATH: resolve(runDir, "workspace-pilot-deliveries.json"),
   WORKSPACE_NOTIFICATIONS_PATH: resolve(runDir, "workspace-delivery-notifications.json"),
+  WORKSPACE_NOTIFICATION_ATTEMPTS_PATH: resolve(runDir, "workspace-delivery-notification-attempts.json"),
   PILOT_DECISIONS_PATH: resolve(runDir, "workspace-pilot-decisions.json"),
   REVIEW_OUTPUT_DIR: runDir,
   EVIDENCE_OUTPUT_DIR: runDir,
@@ -103,6 +104,7 @@ try {
   await runStep("evaluate-operator-warnings", "evaluate-operator-warnings.mjs");
   await runStep("sync-runtime-store", "sync-runtime-store.mjs");
   await runStep("dispatch-operator-notifications", "dispatch-operator-notifications.mjs", true);
+  await runStep("dispatch-workspace-notifications", "dispatch-workspace-notifications.mjs", true);
   await runStep("record-pilot-readiness", "record-pilot-readiness.mjs");
   const failed = steps.filter((step) => step.status === "failed");
   const receipt = {

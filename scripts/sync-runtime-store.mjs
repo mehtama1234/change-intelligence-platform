@@ -17,6 +17,7 @@ try {
     insightPublications: resolve(runtimeDir, "insight-publications.json"),
     notificationPreferences: resolve(runtimeDir, "workspace-notification-preferences.json"),
     deliveryNotifications: resolve(runtimeDir, "workspace-delivery-notifications.json"),
+    deliveryNotificationAttempts: resolve(runtimeDir, "workspace-delivery-notification-attempts.json"),
     pilotProfiles: resolve(runtimeDir, "workspace-pilot-profiles.json"),
     pilotDeliveries: resolve(runtimeDir, "workspace-pilot-deliveries.json"),
     pilotDecisions: resolve(runtimeDir, "workspace-pilot-decisions.json"),

@@ -30,6 +30,7 @@ const watchlistsPath = resolve(runtimeDir, "workspace-watchlists.json");
 const comparisonViewsPath = resolve(runtimeDir, "workspace-comparison-views.json");
 const notificationPreferencesPath = resolve(runtimeDir, "workspace-notification-preferences.json");
 const deliveryNotificationsPath = resolve(runtimeDir, "workspace-delivery-notifications.json");
+const deliveryNotificationAttemptsPath = resolve(runtimeDir, "workspace-delivery-notification-attempts.json");
 const pilotProfilesPath = resolve(runtimeDir, "workspace-pilot-profiles.json");
 const pilotDeliveriesPath = resolve(runtimeDir, "workspace-pilot-deliveries.json");
 const pilotDecisionsPath = resolve(runtimeDir, "workspace-pilot-decisions.json");
@@ -74,6 +75,7 @@ await importRuntimeLedgers(store, {
   comparisonViews: comparisonViewsPath,
   notificationPreferences: notificationPreferencesPath,
   deliveryNotifications: deliveryNotificationsPath,
+  deliveryNotificationAttempts: deliveryNotificationAttemptsPath,
   pilotProfiles: pilotProfilesPath,
   pilotDeliveries: pilotDeliveriesPath,
   pilotDecisions: pilotDecisionsPath,
@@ -774,7 +776,12 @@ const server = createServer(async (request, response) => {
       if (!workspace) return json(response, 404, { error: "Workspace not found." });
       if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot change notification preferences." });
       const now = new Date().toISOString();
-      const preferences = { id: `notification-preference-${workspace.id}`, workspaceId: workspace.id, comparisonAlerts: body.comparisonAlerts !== false, sourceAlerts: body.sourceAlerts !== false, deliveryUpdates: body.deliveryUpdates !== false, delivery: "in_app", updatedBy: member.id, updatedRole: member.role, updatedAt: now };
+      const delivery = String(body.delivery ?? "in_app");
+      let webhookUrl = null;
+      if (delivery === "webhook") {
+        try { const parsed = new URL(String(body.webhookUrl ?? "")); if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("invalid protocol"); webhookUrl = parsed.toString(); } catch { return json(response, 400, { error: "Webhook delivery requires a valid HTTP(S) URL." }); }
+      } else if (delivery !== "in_app") return json(response, 400, { error: "Delivery must be in_app or webhook." });
+      const preferences = { id: `notification-preference-${workspace.id}`, workspaceId: workspace.id, comparisonAlerts: body.comparisonAlerts !== false, sourceAlerts: body.sourceAlerts !== false, deliveryUpdates: body.deliveryUpdates !== false, delivery, destinationId: delivery === "webhook" ? String(body.destinationId ?? `workspace-${workspace.id}`).slice(0, 120) : null, webhookUrl, updatedBy: member.id, updatedRole: member.role, updatedAt: now };
       store.commitRecord({ kind: "notification_preference", record: preferences, audit: { requestId, action: "update_notification_preferences", targetId: preferences.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "updated", occurredAt: now }, operation: { key: idempotencyKey, action: "update_notification_preferences", status: 200, body: preferences, completedAt: now } });
       await writeFile(notificationPreferencesPath, `${JSON.stringify(store.recordsLedger("notification_preference", "workspace-notification-preference-ledger-v1", "preferences"), null, 2)}\n`);
       return json(response, 200, preferences);
@@ -1322,7 +1329,8 @@ const server = createServer(async (request, response) => {
       if (denyWorkspaceRead(response, access)) return;
       const preferences = store.recordsLedger("notification_preference", "workspace-notification-preference-ledger-v1", "preferences").preferences;
       const preference = preferences.find((candidate) => !access.workspaceIds || access.workspaceIds.includes(candidate.workspaceId)) ?? { ...defaultNotificationPreferences, delivery: "in_app", workspaceId: access.workspaceId ?? null };
-      return json(response, 200, { schemaVersion: "workspace-notification-preference-read-model-v1", preferences: { ...defaultNotificationPreferences, ...preference } });
+      const { webhookUrl, ...safePreference } = { ...defaultNotificationPreferences, ...preference };
+      return json(response, 200, { schemaVersion: "workspace-notification-preference-read-model-v1", preferences: safePreference });
     }
     if (url.pathname === "/api/workspace-notifications") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

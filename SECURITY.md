@@ -76,6 +76,12 @@ state, bounded subject/body, delivery identity, and timestamps for the caller’
 workspace. A suppression preference changes state to `suppressed` while keeping
 the historical record; it does not expose another workspace’s delivery or
 source content.
+An owner or researcher may choose `in_app` or configure an HTTP(S) webhook
+through the authenticated notification-preference command. The read model never
+returns the configured webhook URL. Webhook delivery sends only the bounded
+handoff envelope, uses a timeout and maximum-attempt limit, and records attempts
+under the workspace boundary; exhausted failures become `dead_letter` for
+follow-up rather than being silently discarded.
 
 Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map

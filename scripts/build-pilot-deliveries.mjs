@@ -69,7 +69,7 @@ for (const profile of profiles) {
   if (!existingIds.has(delivery.id)) { deliveries.push(delivery); created += 1; }
   if (!existingNotificationIds.has(`workspace-delivery-notification-${delivery.id}`)) {
     const preference = preferences.find((candidate) => candidate.workspaceId === profile.workspaceId);
-    notifications.push({ id: `workspace-delivery-notification-${delivery.id}`, workspaceId: profile.workspaceId, deliveryId: delivery.id, type: "pilot_delivery", channel: "in_app", status: preference?.deliveryUpdates === false ? "suppressed" : "pending", subject: `New ${profile.cadence} intelligence handoff`, body: delivery.headline, createdAt: now, deliveredAt: null, suppressedAt: preference?.deliveryUpdates === false ? now : null });
+    notifications.push({ id: `workspace-delivery-notification-${delivery.id}`, workspaceId: profile.workspaceId, deliveryId: delivery.id, type: "pilot_delivery", channel: preference?.delivery ?? "in_app", destinationId: preference?.destinationId ?? null, status: preference?.deliveryUpdates === false ? "suppressed" : "pending", subject: `New ${profile.cadence} intelligence handoff`, body: delivery.headline, createdAt: now, deliveredAt: null, suppressedAt: preference?.deliveryUpdates === false ? now : null });
   }
 }
 await mkdir(resolve(outputPath, ".."), { recursive: true });

@@ -19,6 +19,7 @@ const runtimeFiles = [
   "workspace-comparison-views.json",
   "workspace-notification-preferences.json",
   "workspace-delivery-notifications.json",
+  "workspace-delivery-notification-attempts.json",
   "versioned-evidence-ledger.json",
   "review-decisions.json",
   "review-events.json",
