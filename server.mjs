@@ -1650,6 +1650,14 @@ const server = createServer(async (request, response) => {
       if (!transitions[lead.status]?.includes(nextStatus)) return json(response, 409, { error: `Cannot change a partner lead from ${lead.status} to ${nextStatus}.` });
       const note = String(body.note ?? "").trim().slice(0, 2000);
       if (!note) return json(response, 400, { error: "A note is required for every partner-pipeline state change." });
+      if (nextStatus === "pilot") {
+        if (!lead.workspaceId) return json(response, 409, { error: "Link a workspace before starting a partner pilot." });
+        const workspace = await workspaceConfig(lead.workspaceId);
+        if (!workspace) return json(response, 404, { error: "The partner workspace linked to this lead was not found." });
+        const profile = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles.find((candidate) => candidate.workspaceId === workspace.id) ?? null;
+        const onboarding = buildOperatorOnboardingSummary({ workspace, profile, questionCount: store.questionsLedger().questions.filter((question) => question.workspaceId === workspace.id && question.state === "active").length, watchlistCount: store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists").watchlists.filter((watchlist) => watchlist.workspaceId === workspace.id).length, acceptedPrivateSourceCount: store.recordsLedger("workspace_source", "workspace-source-ledger-v1", "sources").sources.filter((source) => source.workspaceId === workspace.id && source.reviewState === "accepted").length, deliveryCount: store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries.filter((delivery) => delivery.workspaceId === workspace.id).length });
+        if (onboarding.missingSteps.length) return json(response, 409, { error: "Complete partner workspace onboarding before starting the pilot.", missingSetup: onboarding.missingSteps });
+      }
       const now = new Date().toISOString();
       const updated = { ...lead, status: nextStatus, workspaceId: body.workspaceId ? String(body.workspaceId).slice(0, 160) : lead.workspaceId, updatedAt: now, nextAction: body.nextAction ? String(body.nextAction).trim().slice(0, 1000) : lead.nextAction, nextActionAt: body.nextActionAt ? String(body.nextActionAt).slice(0, 32) : lead.nextActionAt, history: [...(lead.history ?? []), { status: nextStatus, note, actorId: operator.actorId, occurredAt: now }] };
       store.commitRecord({ kind: "partner_lead", record: updated, audit: { requestId, action: "change_partner_lead", targetId: lead.id, workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: nextStatus, occurredAt: now }, operation: { key: idempotencyKey, action: "change_partner_lead", status: 200, body: updated, completedAt: now } });
@@ -2629,6 +2637,9 @@ const server = createServer(async (request, response) => {
       const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
       const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions;
       const offers = store.recordsLedger("commercial_offer", "workspace-commercial-offer-ledger-v1", "offers").offers;
+      const questions = store.questionsLedger().questions;
+      const watchlists = store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists").watchlists;
+      const privateSources = store.recordsLedger("workspace_source", "workspace-source-ledger-v1", "sources").sources;
       const leads = store.recordsLedger("partner_lead", "partner-lead-ledger-v1", "leads").leads.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).map((lead) => {
         const workspace = workspaces.find((candidate) => candidate.id === lead.workspaceId);
         if (!workspace) return { ...lead, workspaceSummary: null };
@@ -2636,7 +2647,9 @@ const server = createServer(async (request, response) => {
         const reviewedDeliveries = workspaceDeliveries.filter((delivery) => delivery.review);
         const workspaceDecisions = decisions.filter((decision) => decision.workspaceId === workspace.id).sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)));
         const workspaceOffers = offers.filter((offer) => offer.workspaceId === workspace.id).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
-        return { ...lead, workspaceSummary: { id: workspace.id, name: workspace.name, pilotConfigured: profiles.some((profile) => profile.workspaceId === workspace.id), deliveries: workspaceDeliveries.length, reviewedDeliveries: reviewedDeliveries.length, usefulDeliveries: reviewedDeliveries.filter((delivery) => delivery.review.usefulness === "useful").length, decisionImpact: reviewedDeliveries.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, latestDecision: workspaceDecisions[0]?.decision ?? null, commercialOfferStatus: workspaceOffers[0]?.status ?? "not_proposed" } };
+        const profile = profiles.find((candidate) => candidate.workspaceId === workspace.id) ?? null;
+        const onboarding = buildOperatorOnboardingSummary({ workspace, profile, questionCount: questions.filter((question) => question.workspaceId === workspace.id && question.state === "active").length, watchlistCount: watchlists.filter((watchlist) => watchlist.workspaceId === workspace.id).length, acceptedPrivateSourceCount: privateSources.filter((source) => source.workspaceId === workspace.id && source.reviewState === "accepted").length, deliveryCount: workspaceDeliveries.length });
+        return { ...lead, workspaceSummary: { id: workspace.id, name: workspace.name, pilotConfigured: Boolean(profile), deliveries: workspaceDeliveries.length, reviewedDeliveries: reviewedDeliveries.length, usefulDeliveries: reviewedDeliveries.filter((delivery) => delivery.review.usefulness === "useful").length, decisionImpact: reviewedDeliveries.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, latestDecision: workspaceDecisions[0]?.decision ?? null, commercialOfferStatus: workspaceOffers[0]?.status ?? "not_proposed", onboardingStatus: onboarding.status, missingSetup: onboarding.missingSteps, readyForPilot: onboarding.missingSteps.length === 0 } };
       });
       const counts = Object.fromEntries(statuses.map((status) => [status, leads.filter((lead) => lead.status === status).length]));
       await appendAudit({ requestId, action: "read_partner_pipeline", targetId: "partner-pipeline", workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: "read", occurredAt: new Date().toISOString() });

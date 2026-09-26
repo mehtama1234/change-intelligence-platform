@@ -253,4 +253,7 @@ the operator view so the handoff can be checked without searching private
 customer data. The same view shows only bounded workspace signals—whether the
 pilot is configured, how many deliveries were reviewed, whether a decision
 impact was recorded, and the current offer state—never customer questions or
-review notes.
+review notes. The operator cannot move a linked lead into `pilot` until the
+workspace has a decision question, source scope, success measures, cadence,
+and saved question. That gate prevents a named partner from being counted as
+an active pilot before the service can produce a meaningful handoff.
