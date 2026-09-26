@@ -529,7 +529,15 @@ async function loadQuestions() {
   document.querySelectorAll(".publish-briefing").forEach((button) => button.addEventListener("click", async () => {
     button.disabled = true;
     const response = await apiFetch(`../api/briefings/${encodeURIComponent(button.dataset.briefingId)}/publish`, { method: "POST", body: { confirmUpdatedEvidence: button.dataset.stale === "true", note: button.dataset.stale === "true" ? "Reviewed updated evidence before republishing." : "Published after review." } });
-    if (!response.ok) button.disabled = false;
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      const status = document.createElement("p");
+      status.className = "error briefing-publication-error";
+      status.textContent = body.error || `Could not publish briefing (${response.status}).`;
+      button.closest(".record-card")?.append(status);
+      button.disabled = false;
+      return;
+    }
     await loadQuestions();
   }));
   document.querySelectorAll(".decision-outcome-form").forEach((form) => form.addEventListener("submit", async (event) => {

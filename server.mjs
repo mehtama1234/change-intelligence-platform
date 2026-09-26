@@ -991,7 +991,8 @@ const server = createServer(async (request, response) => {
           boundary: briefing.boundary,
           nextTest: briefing.nextTest,
           publication: briefing.publication ?? "not_published",
-          publishedAt: briefing.publishedAt ?? null
+          publishedAt: briefing.publishedAt ?? null,
+          insightProvenance: briefing.insightProvenance ?? []
         },
         evidence: briefing.evidence ?? []
       };
