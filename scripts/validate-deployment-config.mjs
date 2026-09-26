@@ -7,6 +7,7 @@ const dockerfile = await readFile(resolve(root, "Dockerfile"), "utf8");
 const compose = await readFile(resolve(root, "docker-compose.yml"), "utf8");
 const scheduler = await readFile(resolve(root, "scripts/scheduler.mjs"), "utf8");
 const refreshCycle = await readFile(resolve(root, "scripts/run-refresh-cycle.mjs"), "utf8");
+const topologyTest = await readFile(resolve(root, "scripts/test-production-topology.mjs"), "utf8");
 const required = [
   [dockerfile, "ENV RUNTIME_DATA_DIR=/app/runtime", "Dockerfile runtime path"],
   [dockerfile, "ENV PACKET_PATH=/app/runtime/ai-work-control.packet.json", "Dockerfile packet path"],
@@ -33,6 +34,8 @@ const required = [
   , [refreshCycle, "check-source-availability.mjs", "source availability invocation"]
   , [compose, "OPERATOR_NOTIFICATION_DELIVERY_MODE", "notification delivery mode"]
   , [compose, "OPERATOR_NOTIFICATION_WEBHOOK_URL", "notification webhook configuration"]
+  , [topologyTest, "REQUIRE_WORKER_HEALTH", "topology worker health assertion"]
+  , [topologyTest, "change-intelligence-production-topology", "topology isolated runtime test"]
 ];
 const missing = required.filter(([text, value]) => !text.includes(value)).map(([, , label]) => label);
 if (missing.length) throw new Error(`Deployment contract failed: ${missing.join(", ")}`);
