@@ -16,6 +16,7 @@ const reviewDecisionsPath = resolve(root, "data/processed/runs/ai-work-control/r
 const evidenceLedgerPath = resolve(root, "data/processed/runs/ai-work-control/versioned-evidence-ledger.json");
 const alertsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-alerts.json");
 const questionEvaluationsPath = resolve(root, "data/processed/runs/ai-work-control/question-evaluations.json");
+const briefingsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-briefings.json");
 const map = JSON.parse(await readFile(mapPath, "utf8"));
 const sourceScan = existsSync(sourceScanPath) ? JSON.parse(await readFile(sourceScanPath, "utf8")) : undefined;
 const reviewWork = existsSync(reviewWorkPath) ? JSON.parse(await readFile(reviewWorkPath, "utf8")) : undefined;
@@ -23,6 +24,7 @@ const reviewDecisions = existsSync(reviewDecisionsPath) ? JSON.parse(await readF
 const evidenceLedger = existsSync(evidenceLedgerPath) ? JSON.parse(await readFile(evidenceLedgerPath, "utf8")) : undefined;
 const alerts = existsSync(alertsPath) ? JSON.parse(await readFile(alertsPath, "utf8")) : undefined;
 const questionEvaluations = existsSync(questionEvaluationsPath) ? JSON.parse(await readFile(questionEvaluationsPath, "utf8")) : undefined;
+const briefings = existsSync(briefingsPath) ? JSON.parse(await readFile(briefingsPath, "utf8")) : undefined;
 
 function stripMarkup(text) {
   return text
@@ -196,6 +198,7 @@ const packet = {
       },
       ...(alerts ? { workspaceAlerts: alerts } : {})
       ,...(questionEvaluations ? { questionEvaluations } : {})
+      ,...(briefings ? { briefings } : {})
     }
   } : {}),
   records,

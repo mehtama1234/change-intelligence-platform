@@ -12,6 +12,7 @@ const refreshPath = resolve(root, "data/processed/runs/ai-work-control/latest-re
 const alertsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-alerts.json");
 const questionsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-questions.json");
 const questionEvaluationsPath = resolve(root, "data/processed/runs/ai-work-control/question-evaluations.json");
+const briefingsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-briefings.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 
@@ -103,6 +104,11 @@ const server = createServer(async (request, response) => {
       const ledger = await readJson(questionEvaluationsPath, { schemaVersion: "question-evaluation-ledger-v1", evaluations: [] });
       const workspaceId = url.searchParams.get("workspace");
       return json(response, 200, workspaceId ? ledger.evaluations.filter((evaluation) => evaluation.workspaceId === workspaceId) : ledger.evaluations);
+    }
+    if (url.pathname === "/api/briefings") {
+      const ledger = await readJson(briefingsPath, { schemaVersion: "workspace-briefing-ledger-v1", briefings: [] });
+      const workspaceId = url.searchParams.get("workspace");
+      return json(response, 200, workspaceId ? ledger.briefings.filter((briefing) => briefing.workspaceId === workspaceId) : ledger.briefings);
     }
     if (url.pathname === "/") {
       response.writeHead(302, { Location: "/web/index.html" });

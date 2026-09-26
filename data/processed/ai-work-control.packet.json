@@ -4,8 +4,8 @@
   "sourceSnapshotDate": "2026-09-25",
   "operations": {
     "latestSourceScan": {
-      "generatedAt": "2026-09-26T04:30:10.895Z",
-      "runId": "scan-20260926043010",
+      "generatedAt": "2026-09-26T04:32:25.815Z",
+      "runId": "scan-20260926043225",
       "counts": {
         "new": 0,
         "changed": 0,
@@ -27,7 +27,7 @@
     },
     "workspaceAlerts": {
       "schemaVersion": "workspace-alert-ledger-v1",
-      "generatedAt": "2026-09-26T04:30:11.243Z",
+      "generatedAt": "2026-09-26T04:32:28.248Z",
       "workspaces": [
         {
           "id": "demo-research",
@@ -59,12 +59,12 @@
     },
     "questionEvaluations": {
       "schemaVersion": "question-evaluation-ledger-v1",
-      "generatedAt": "2026-09-26T04:30:13.096Z",
+      "generatedAt": "2026-09-26T04:32:33.003Z",
       "evaluations": [
         {
           "questionId": "question-1790396868707-0zillf",
           "workspaceId": "demo-research",
-          "evaluatedAt": "2026-09-26T04:30:13.096Z",
+          "evaluatedAt": "2026-09-26T04:32:33.003Z",
           "state": "evidence_retrieved",
           "matchedRecordIds": [
             "trend-hunting-ai-control",
@@ -128,6 +128,96 @@
             }
           ],
           "limitation": "Text matches identify evidence to inspect; they do not answer the question or establish causation."
+        }
+      ]
+    },
+    "briefings": {
+      "schemaVersion": "workspace-briefing-ledger-v1",
+      "generatedAt": "2026-09-26T04:32:34.140Z",
+      "briefings": [
+        {
+          "id": "briefing-question-1790396868707-0zillf",
+          "workspaceId": "demo-research",
+          "questionId": "question-1790396868707-0zillf",
+          "title": "Will AI change correction work?",
+          "state": "draft",
+          "publication": "not_published",
+          "generatedAt": "2026-09-26T04:32:34.140Z",
+          "evidence": [
+            {
+              "recordId": "trend-hunting-ai-control",
+              "title": "AI capability is not the same as worker control",
+              "sourceRepository": "trend-hunting",
+              "sourceRef": "analysis/DEEP-TRENDS-CROSS-THEME-SYNTHESIS-V2.md",
+              "observation": "The synthesis separates access to AI capability from control over tasks, worker welfare, and successful remedy.",
+              "limits": [
+                "This is a synthesis boundary, not a pooled causal estimate."
+              ]
+            },
+            {
+              "recordId": "cultural-ai-capability-dependence",
+              "title": "Capability can arrive with dependence",
+              "sourceRepository": "cultural-geopolitical-theme-mining",
+              "sourceRef": "site/ai-work-control-073.html",
+              "observation": "The reader frames AI infrastructure as potentially building useful capability and dependence together, while keeping portability, exit, and state-control effects open.",
+              "limits": [
+                "The page preserves open questions about application migration, outcomes, portability, and exit."
+              ]
+            },
+            {
+              "recordId": "annual-ai-cultural-disintermediation",
+              "title": "AI is changing which work remains scarce",
+              "sourceRepository": "annual-report-research",
+              "sourceRef": "site/trends/ai-cultural-disintermediation.html",
+              "observation": "The annual-report synthesis tracks AI as a force that can compress routine execution while increasing the value of distribution, judgment, accountability, and scarce expertise.",
+              "limits": [
+                "This is a cross-company annual-report synthesis, not one company's measured AI outcome."
+              ]
+            },
+            {
+              "recordId": "ibis-ai-workflow-compression",
+              "title": "AI can make routine execution cheaper while raising the value of strategy",
+              "sourceRepository": "ibis-industries",
+              "sourceRef": "writeups_ai.json",
+              "observation": "The industry writeup describes AI website builders compressing template-based execution and shifting competition toward strategy, brand, personalization, and distribution.",
+              "limits": [
+                "The writeup combines industry estimates and company examples; each underlying measure needs source-level review before a general labor claim."
+              ]
+            },
+            {
+              "recordId": "inc5000-coreweave-ai-infrastructure",
+              "title": "AI demand creates a fast-growing infrastructure business",
+              "sourceRepository": "inc5000-analysis",
+              "sourceRef": "data/processed/featured.json",
+              "observation": "The Inc. 5000 record describes CoreWeave as a specialized GPU infrastructure provider serving AI labs, startups, and enterprises facing a shortage of compute.",
+              "limits": [
+                "The Inc. record identifies a growth hypothesis and revenue band; it does not prove customer benefit, durable margins, or AI productivity."
+              ]
+            },
+            {
+              "recordId": "atlas-ai-work-evidence-thread",
+              "title": "AI work narratives need independent cultural measures",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRef": "local-runs/ai-work-culture-insight-thread.json",
+              "observation": "The Atlas thread places company-reported AI adoption beside editorial context, consumer measures, independent workplace measures, and an explicit open question about productivity and adoption.",
+              "limits": [
+                "The thread explicitly says its sources do not establish productivity change, adoption scale, or causality."
+              ]
+            },
+            {
+              "recordId": "atlas-c3-ai-report-window",
+              "title": "C3.ai's report window shows what company records can and cannot prove",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRef": "company-industry-analysis/companies/c3-ai/SOURCE-LEDGER.md",
+              "observation": "C3.ai's direct-record ledger covers the FY2025 10-K and three FY2026 10-Qs. It supports reported software, customer, accounting, deployment, risk, and financial facts, but does not independently measure accuracy, productivity, decision quality, privacy, worker conditions, or end-user outcomes.",
+              "limits": [
+                "The report window does not identify an organization, model version, affected person, decision, input, output, error, override, appeal, remedy, or later outcome."
+              ]
+            }
+          ],
+          "reading": "The system found 7 related source records. A researcher must inspect them before making a conclusion.",
+          "boundary": "Text matches identify evidence to inspect; they do not answer the question or establish causation.",
+          "nextTest": "Track one named AI-mediated workflow from company deployment through worker or customer use, correction, appeal, and exit evidence."
         }
       ]
     }

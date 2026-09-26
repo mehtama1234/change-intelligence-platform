@@ -71,13 +71,15 @@ byId("role-filter").addEventListener("change", (event) => {
 });
 
 async function loadQuestions() {
-  const [response, evaluationsResponse] = await Promise.all([fetch("../api/questions?workspace=demo-research"), fetch("../api/question-evaluations?workspace=demo-research")]);
-  if (!response.ok || !evaluationsResponse.ok) throw new Error(`Questions unavailable (${response.status})`);
+  const [response, evaluationsResponse, briefingsResponse] = await Promise.all([fetch("../api/questions?workspace=demo-research"), fetch("../api/question-evaluations?workspace=demo-research"), fetch("../api/briefings?workspace=demo-research")]);
+  if (!response.ok || !evaluationsResponse.ok || !briefingsResponse.ok) throw new Error(`Questions unavailable (${response.status})`);
   const questions = await response.json();
   const evaluations = await evaluationsResponse.json();
+  const briefings = await briefingsResponse.json();
   const evaluationByQuestion = new Map(evaluations.map((evaluation) => [evaluation.questionId, evaluation]));
+  const briefingByQuestion = new Map(briefings.map((briefing) => [briefing.questionId, briefing]));
   byId("questions-summary").textContent = `${questions.length} saved question${questions.length === 1 ? "" : "s"}.`;
-  byId("questions-items").innerHTML = questions.length ? questions.map((question) => { const evaluation = evaluationByQuestion.get(question.id); return `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(question.state)}</span><span>${escapeHtml(question.createdBy)}</span>${evaluation ? `<span>${escapeHtml(evaluation.state.replaceAll("_", " "))}</span>` : ""}</div><h3>${escapeHtml(question.question)}</h3><p class="muted">Saved ${escapeHtml(question.createdAt)} · Last evaluated: ${escapeHtml(question.lastEvaluatedAt || "not yet")} · Evidence matches: ${evaluation?.matchedRecordIds.length ?? 0}</p>${evaluation ? `<details><summary>Open evaluation boundary</summary><p>${escapeHtml(evaluation.limitation)}</p><p>Matching records: ${escapeHtml(evaluation.matchedRecordIds.join(", ") || "none")}</p></details>` : ""}</article>`; }).join("") : `<p class="muted">No saved questions yet.</p>`;
+  byId("questions-items").innerHTML = questions.length ? questions.map((question) => { const evaluation = evaluationByQuestion.get(question.id); const briefing = briefingByQuestion.get(question.id); return `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(question.state)}</span><span>${escapeHtml(question.createdBy)}</span>${evaluation ? `<span>${escapeHtml(evaluation.state.replaceAll("_", " "))}</span>` : ""}${briefing ? `<span>${escapeHtml(briefing.state)}</span>` : ""}</div><h3>${escapeHtml(question.question)}</h3><p class="muted">Saved ${escapeHtml(question.createdAt)} · Last evaluated: ${escapeHtml(question.lastEvaluatedAt || "not yet")} · Evidence matches: ${evaluation?.matchedRecordIds.length ?? 0}</p>${evaluation ? `<details><summary>Open evaluation boundary</summary><p>${escapeHtml(evaluation.limitation)}</p><p>Matching records: ${escapeHtml(evaluation.matchedRecordIds.join(", ") || "none")}</p>${briefing ? `<p>Briefing: ${escapeHtml(briefing.reading)}</p><p>Next test: ${escapeHtml(briefing.nextTest)}</p>` : ""}</details>` : ""}</article>`; }).join("") : `<p class="muted">No saved questions yet.</p>`;
 }
 
 byId("question-form").addEventListener("submit", async (event) => {

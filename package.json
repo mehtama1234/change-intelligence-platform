@@ -15,6 +15,7 @@
     "materialize:evidence-versions": "node scripts/materialize-evidence-versions.mjs",
     "evaluate:watchlists": "node scripts/evaluate-watchlists.mjs",
     "evaluate:questions": "node scripts/evaluate-questions.mjs",
+    "build:question-briefings": "node scripts/build-question-briefings.mjs",
     "serve": "node server.mjs",
     "refresh": "node scripts/run-refresh-cycle.mjs",
     "scheduler": "node scripts/scheduler.mjs"

@@ -44,6 +44,7 @@ try {
   await runStep("materialize-evidence", "materialize-evidence-versions.mjs");
   await runStep("build-packet", "build-ai-work-control-packet.mjs");
   await runStep("evaluate-questions", "evaluate-questions.mjs");
+  await runStep("build-question-briefings", "build-question-briefings.mjs");
   await runStep("publish-question-evaluations", "build-ai-work-control-packet.mjs");
   const failed = steps.filter((step) => step.status === "failed");
   const receipt = {
