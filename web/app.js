@@ -1,4 +1,4 @@
-const fixtureUrl = "../data/processed/ai-work-control.packet.json";
+const fixtureUrl = "../api/packet";
 const state = { packet: null, role: "all" };
 
 const byId = (id) => document.getElementById(id);

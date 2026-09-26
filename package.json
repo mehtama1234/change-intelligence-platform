@@ -12,6 +12,7 @@
     "scan:sources:ai-work-control": "node scripts/scan-source-changes.mjs",
     "process:source-review": "node scripts/process-source-review.mjs",
     "record:review-decision": "node scripts/record-review-decision.mjs",
-    "materialize:evidence-versions": "node scripts/materialize-evidence-versions.mjs"
+    "materialize:evidence-versions": "node scripts/materialize-evidence-versions.mjs",
+    "serve": "node server.mjs"
   }
 }
