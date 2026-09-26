@@ -87,6 +87,10 @@ does not prove that an insight is correct or useful.
 Review the customer support queue at least once per business day. Acknowledge
 urgent requests first, record what was checked in the operator note, and move
 each request through `acknowledged`, `in_progress`, `resolved`, or `closed`.
+The default response windows are four hours for urgent requests, one day for
+normal requests, and three days for low-priority requests. Treat the recorded
+deadline as an operating target, not a promise when an external source or
+customer dependency is blocking the work.
 Never answer a customer by changing the original request: the service keeps the
 request and appends a status event so the customer can see what happened. A
 resolved support request closes a service task; it does not silently change the

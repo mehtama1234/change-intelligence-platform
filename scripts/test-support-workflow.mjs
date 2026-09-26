@@ -39,6 +39,6 @@ try {
   const updated = await post(`/api/operator/support-requests/${encodeURIComponent(request.id)}/state`, "operator-token", { status: "resolved", note: "The source trace was checked and the handoff was corrected for the next cycle." }, "support-resolve-1");
   if (updated.status !== 200) throw new Error(`Support request resolution failed: ${updated.status}`);
   const resolved = await (await get("/api/support-requests?workspace=demo-research", "pilot-token")).json();
-  if (resolved.requests[0].status !== "resolved" || resolved.requests[0].history.length !== 2 || resolved.requests[0].operatorNote === null) throw new Error("Support resolution was not retained with its history.");
+  if (resolved.requests[0].status !== "resolved" || resolved.requests[0].history.length !== 2 || resolved.requests[0].operatorNote === null || resolved.requests[0].firstResponseAt === null || resolved.requests[0].responseTimeMs === null || resolved.requests[0].resolutionTimeMs === null || resolved.requests[0].dueAt === null) throw new Error("Support resolution was not retained with its SLA history.");
   console.log("Support workflow passed: tenant-safe request creation, operator handling, resolution history, and privacy boundaries are connected.");
 } finally { child.kill("SIGTERM"); }

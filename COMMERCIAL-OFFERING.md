@@ -137,6 +137,11 @@ it without exposing one customer's request to another customer. A support
 resolution is service evidence; it is not proof that the underlying research
 was correct.
 
+Each request also carries an urgency deadline and records first-response and
+resolution time when those events occur. These are service measures: they show
+whether the support operation met its stated response expectation, not whether
+the customer's research question was answered correctly.
+
 ## Trust requirements
 
 Every commercial insight must show:

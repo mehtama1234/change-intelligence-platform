@@ -203,6 +203,9 @@ customer read model exposes only requests visible to that workspace; the
 operator read model exposes the service queue. State changes append history and
 audit entries, so resolving a service issue does not rewrite the original
 customer report.
+Each request records its severity deadline, first-response time, and resolution
+time. The operator overview aggregates overdue requests without copying the
+request text into the cohort read model.
 
 Every published artifact should record source IDs, source versions, generation
 time, code version, reviewer state, and known limitations.

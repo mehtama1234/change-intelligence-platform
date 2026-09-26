@@ -89,6 +89,7 @@ const required = [
   [operatorApp, "missedImportantChanges", "operator missed-change measure"],
   [operatorApp, "openSupportRequests", "operator open-support measure"],
   [operatorApp, "urgentSupportRequests", "operator urgent-support measure"],
+  [operatorApp, "overdueSupportRequests", "operator overdue-support measure"],
   [app, "delete-workspace-data", "workspace deletion control"],
   [app, "/diff?workspace=", "source difference API"],
   [app, "source-diff", "source difference inspector"],
