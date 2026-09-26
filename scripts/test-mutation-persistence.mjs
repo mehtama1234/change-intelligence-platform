@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,9 +8,12 @@ const sourceRuntime = resolve(root, "data/processed/runs/ai-work-control");
 const port = 8795;
 const base = `http://127.0.0.1:${port}`;
 const runtimeDir = `/tmp/change-intelligence-mutations-${Date.now()}`;
-const copiedLedgers = ["workspace-alerts.json", "workspace-briefings.json", "insight-candidates.json", "briefing-publications.json", "insight-decisions.json", "insight-publications.json"];
+const copiedLedgers = ["workspace-alerts.json", "workspace-briefings.json", "insight-candidates.json", "briefing-publications.json", "insight-decisions.json", "insight-publications.json", "review-decisions.json"];
 await mkdir(runtimeDir, { recursive: true });
-for (const name of copiedLedgers) await copyFile(resolve(sourceRuntime, name), resolve(runtimeDir, name));
+for (const name of copiedLedgers) {
+  try { await copyFile(resolve(sourceRuntime, name), resolve(runtimeDir, name)); } catch (error) { if (error.code !== "ENOENT") throw error; }
+}
+await writeFile(resolve(runtimeDir, "latest-review-work.json"), `${JSON.stringify({ schemaVersion: "source-review-work-v1", reviewRequired: 1, readyForResearcher: 1, blocked: 0, candidates: [{ id: "review-test-candidate", sourceId: "trend-hunting-workflow", repository: "trend-hunting", state: "ready_for_researcher", action: "review_changed_source", reason: "Durability test", sourcePath: "README.md", sourceDigest: "test-digest", publication: "not_published" }] }, null, 2)}\n`);
 
 const environment = { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher" }) };
 async function start() {
@@ -49,14 +52,18 @@ try {
   const candidate = candidates.candidates[0];
   const decisionResponse = await fetch(`${base}/api/insight-candidates/${encodeURIComponent(candidate.id)}/decision`, { method: "POST", headers: write(`decision-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", decision: "defer", note: "Durability test" }) });
   if (decisionResponse.status !== 200) throw new Error(`Insight decision failed: ${decisionResponse.status}`);
+  const reviewResponse = await fetch(`${base}/api/source-review/review-test-candidate/decision`, { method: "POST", headers: write(`review-${Date.now()}`), body: JSON.stringify({ workspaceId: "demo-research", decision: "accept", note: "Durability test" }) });
+  if (reviewResponse.status !== 200) throw new Error(`Source review decision failed: ${reviewResponse.status}`);
   await stop(child);
   child = await start();
   const restoredAlerts = await (await fetch(`${base}/api/alerts?workspace=demo-research`, { headers: auth })).json();
   if (restoredAlerts.find((item) => item.id === alert.id)?.acknowledgmentNote !== "Durability test") throw new Error("Alert acknowledgement did not survive restart.");
   const audit = await (await fetch(`${base}/api/audit?workspace=demo-research`, { headers: auth })).json();
   const actions = new Set(audit.map((entry) => entry.action));
-  if (!["acknowledge_alert", "publish_briefing", "decide_insight"].every((action) => actions.has(action))) throw new Error("Mutation audit records did not survive restart.");
-  console.log("Mutation persistence test passed: alert, briefing, and insight mutations survived restart.");
+  if (!["acknowledge_alert", "publish_briefing", "decide_insight", "review_source"].every((action) => actions.has(action))) throw new Error("Mutation audit records did not survive restart.");
+  const history = await (await fetch(`${base}/api/evidence-history`, { headers: auth })).json();
+  if (!history.decisionHistory.some((decision) => decision.candidateId === "review-test-candidate")) throw new Error("Source review decision did not survive restart.");
+  console.log("Mutation persistence test passed: alert, briefing, insight, and source-review mutations survived restart.");
 } finally {
   if (child && child.exitCode === null) await stop(child);
 }

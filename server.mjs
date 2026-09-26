@@ -274,6 +274,31 @@ const server = createServer(async (request, response) => {
       await writeFile(insightDecisionsPath, `${JSON.stringify(store.recordsLedger("insight_decision", "insight-decision-ledger-v1", "decisions"), null, 2)}\n`);
       return json(response, 200, decision);
     }
+    if (request.method === "POST" && url.pathname.startsWith("/api/source-review/") && url.pathname.endsWith("/decision")) {
+      const candidateId = decodeURIComponent(url.pathname.slice("/api/source-review/".length, -"/decision".length));
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      const resultingStates = { accept: "accepted_for_research", reject: "rejected", defer: "deferred", correct: "correction_required" };
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot review sources." });
+      if (!Object.hasOwn(resultingStates, body.decision)) return json(response, 400, { error: "Decision must be accept, defer, reject, or correct." });
+      if (["reject", "correct"].includes(body.decision) && !String(body.note ?? "").trim()) return json(response, 400, { error: "Reject and correction decisions require a note." });
+      const reviewWork = await readJson(reviewPath, { candidates: [] });
+      const candidate = (reviewWork.candidates ?? []).find((item) => item.id === candidateId);
+      if (!candidate) return json(response, 404, { error: "Source-review candidate not found." });
+      const now = new Date().toISOString();
+      const decision = { id: `review-decision-${randomUUID()}`, candidateId: candidate.id, sourceId: candidate.sourceId, sourceDigest: candidate.sourceDigest ?? null, reviewer: member.id, reviewerRole: member.role, decision: body.decision, resultingState: resultingStates[body.decision], note: String(body.note ?? "").slice(0, 2000), decidedAt: now, publication: "not_published" };
+      store.commitRecord({ kind: "review_decision", record: decision, audit: { requestId, action: "review_source", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: decision.resultingState, occurredAt: now }, operation: { key: idempotencyKey, action: "review_source", status: 200, body: decision, completedAt: now } });
+      await writeFile(reviewDecisionsPath, `${JSON.stringify(store.recordsLedger("review_decision", "review-decision-ledger-v1", "decisions"), null, 2)}\n`);
+      return json(response, 200, decision);
+    }
     if (request.method === "POST" && url.pathname.startsWith("/api/insight-candidates/") && url.pathname.endsWith("/publish")) {
       const candidateId = decodeURIComponent(url.pathname.slice("/api/insight-candidates/".length, -"/publish".length));
       const body = await requestBody(request);
