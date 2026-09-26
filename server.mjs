@@ -215,6 +215,9 @@ function buildPilotMetrics({ workspaceId, auditEntries, alerts, outcomes, briefi
       briefingsExported: auditEntries.filter((entry) => entry.action === "export_briefing").length,
       decisionFeedbackRecords: outcomes.length,
       decisionsUsingBriefings: outcomes.filter((outcome) => outcome.decisionState === "used").length,
+      decisionOutcomesWithInsights: outcomes.filter((outcome) => outcome.insightProvenance?.length).length,
+      insightReceiptsUsed: outcomes.filter((outcome) => outcome.decisionState === "used").reduce((total, outcome) => total + (outcome.insightProvenance?.length ?? 0), 0),
+      publishedInsightReceiptsUsed: outcomes.filter((outcome) => outcome.decisionState === "used").reduce((total, outcome) => total + (outcome.insightProvenance ?? []).filter((insight) => insight.state === "published").length, 0),
       deliveryReviews: auditEntries.filter((entry) => entry.action === "review_pilot_delivery").length,
       knownDecisionResults: knownOutcomes.length,
       readingsHeld: outcomes.filter((outcome) => outcome.outcomeState === "held").length,
@@ -253,12 +256,26 @@ function buildWorkspaceUpdate({ workspaceId, workspaceName, refresh, readiness, 
   };
 }
 
-function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions }) {
+function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions, outcomes = [] }) {
   const reviewed = deliveries.filter((delivery) => delivery.review);
   const count = (items, value) => items.filter((item) => item === value).length;
   const usefulnessValues = reviewed.map((delivery) => delivery.review.usefulness);
   const impactValues = reviewed.map((delivery) => delivery.review.decisionImpact);
   const correctionValues = reviewed.map((delivery) => delivery.review.correctionType ?? "none");
+  const insightOutcomeRecords = outcomes.filter((outcome) => outcome.insightProvenance?.length);
+  const insightReceiptUsage = new Map();
+  for (const outcome of insightOutcomeRecords) {
+    for (const insight of outcome.insightProvenance) {
+      const key = insight.publicationId ?? insight.insightId ?? insight.title;
+      if (!key) continue;
+      const current = insightReceiptUsage.get(key) ?? { publicationId: insight.publicationId ?? null, insightId: insight.insightId ?? null, title: insight.title ?? "Untitled insight", outcomes: 0, usedInDecision: 0, publishedReceipts: 0 };
+      current.outcomes += 1;
+      if (outcome.decisionState === "used") current.usedInDecision += 1;
+      if (insight.state === "published") current.publishedReceipts += 1;
+      insightReceiptUsage.set(key, current);
+    }
+  }
+  const insightFeedback = { outcomesWithInsights: insightOutcomeRecords.length, receiptsReferenced: [...insightReceiptUsage.values()].reduce((total, insight) => total + insight.outcomes, 0), publishedReceiptsReferenced: [...insightReceiptUsage.values()].reduce((total, insight) => total + insight.publishedReceipts, 0), byReceipt: [...insightReceiptUsage.values()].sort((a, b) => b.usedInDecision - a.usedInDecision || b.outcomes - a.outcomes || a.title.localeCompare(b.title)) };
   const measureNames = [...new Set([...(profile?.successMeasures ?? []), ...deliveries.flatMap((delivery) => delivery.successMeasures ?? [])])];
   const measures = measureNames.map((name) => {
     const assessments = reviewed.flatMap((delivery) => delivery.review.measureAssessments ?? []).filter((assessment) => assessment.name === name);
@@ -281,6 +298,7 @@ function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions 
     usefulness: { useful: count(usefulnessValues, "useful"), notUseful: count(usefulnessValues, "not_useful"), unclear: count(usefulnessValues, "unclear"), rate: reviewed.length ? count(usefulnessValues, "useful") / reviewed.length : null },
     corrections: { total: correctionValues.filter((value) => value !== "none").length, inaccurate: count(correctionValues, "inaccurate"), missingContext: count(correctionValues, "missing_context"), unclear: count(correctionValues, "unclear"), wrongScope: count(correctionValues, "wrong_scope") },
     decisionImpact: { changedDecision: count(impactValues, "changed_decision"), informedDecision: count(impactValues, "informed_decision"), noChange: count(impactValues, "no_change"), notApplicable: count(impactValues, "not_applicable") },
+    insightFeedback,
     measures,
     openIssues,
     recentNotes: reviewed.slice().sort((a, b) => String(b.review.reviewedAt).localeCompare(String(a.review.reviewedAt))).slice(0, 5).map((delivery) => ({ deliveryId: delivery.id, usefulness: delivery.review.usefulness, correctionType: delivery.review.correctionType ?? "none", correctionNote: delivery.review.correctionNote ?? null, note: delivery.review.note, reviewedAt: delivery.review.reviewedAt })),
@@ -631,10 +649,11 @@ const server = createServer(async (request, response) => {
       if (!["used", "not_used", "deferred"].includes(decisionState)) return json(response, 400, { error: "decisionState must be used, not_used, or deferred." });
       if (!["pending", "held", "changed", "wrong", "unknown"].includes(outcomeState)) return json(response, 400, { error: "outcomeState must be pending, held, changed, wrong, or unknown." });
       const now = new Date().toISOString();
-      const outcome = { id: `decision-outcome-${randomUUID()}`, workspaceId: workspace.id, briefingId: briefing.id, questionId: briefing.questionId ?? null, evidenceDigest: briefing.evidenceDigest ?? null, recordedBy: member.id, recordedRole: member.role, decisionState, outcomeState, decisionSummary: String(body.decisionSummary ?? "").trim().slice(0, 2000), outcomeNote: String(body.outcomeNote ?? "").trim().slice(0, 2000), recordedAt: now, reviewAt: body.reviewAt ? String(body.reviewAt).slice(0, 32) : null };
+      const insightProvenance = (briefing.insightProvenance ?? []).map((insight) => ({ insightId: insight.insightId, title: insight.title, state: insight.state, publicationId: insight.publicationId, publicationEvidenceDigest: insight.publicationEvidenceDigest, sourceRecordIds: insight.sourceRecordIds ?? [] }));
+      const outcome = { id: `decision-outcome-${randomUUID()}`, workspaceId: workspace.id, briefingId: briefing.id, questionId: briefing.questionId ?? null, evidenceDigest: briefing.evidenceDigest ?? null, insightProvenance, recordedBy: member.id, recordedRole: member.role, decisionState, outcomeState, decisionSummary: String(body.decisionSummary ?? "").trim().slice(0, 2000), outcomeNote: String(body.outcomeNote ?? "").trim().slice(0, 2000), recordedAt: now, reviewAt: body.reviewAt ? String(body.reviewAt).slice(0, 32) : null };
       store.commitRecord({ kind: "decision_outcome", record: outcome, audit: { requestId, action: "record_decision_outcome", targetId: briefing.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: outcome.outcomeState, occurredAt: now }, operation: { key: idempotencyKey, action: "record_decision_outcome", status: 201, body: outcome, completedAt: now } });
       await writeFile(decisionOutcomesPath, `${JSON.stringify(store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes"), null, 2)}\n`);
-      store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "decision_outcome", targetId: briefing.id, workspaceId: workspace.id, reviewer: member.id, reviewerRole: member.role, outcome: outcome.outcomeState, decisionState: outcome.decisionState, occurredAt: now, decisionOutcomeId: outcome.id }]);
+      store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "decision_outcome", targetId: briefing.id, workspaceId: workspace.id, reviewer: member.id, reviewerRole: member.role, outcome: outcome.outcomeState, decisionState: outcome.decisionState, insightPublicationIds: insightProvenance.map((insight) => insight.publicationId), occurredAt: now, decisionOutcomeId: outcome.id }]);
       await writeReviewEvents();
       return json(response, 201, outcome);
     }
@@ -1068,7 +1087,8 @@ const server = createServer(async (request, response) => {
       const notifications = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;
       const attempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
       const profile = profiles.find((candidate) => candidate.workspaceId === access.workspaceId) ?? null;
-      const learning = buildPilotLearningReport({ workspaceId: access.workspaceId, profile, deliveries, decisions });
+      const outcomes = store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes").outcomes.filter((outcome) => outcome.workspaceId === access.workspaceId);
+      const learning = buildPilotLearningReport({ workspaceId: access.workspaceId, profile, deliveries, decisions, outcomes });
       const deliveryHealth = buildWorkspaceDeliveryHealth({ workspaceId: access.workspaceId, notifications, attempts });
       return json(response, 200, buildWorkspaceServiceReport({ workspaceId: access.workspaceId, profile, deliveries, learning, deliveryHealth }));
     }
@@ -1082,7 +1102,8 @@ const server = createServer(async (request, response) => {
       const notifications = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;
       const attempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
       const profile = profiles.find((candidate) => candidate.workspaceId === access.workspaceId) ?? null;
-      const learning = buildPilotLearningReport({ workspaceId: access.workspaceId, profile, deliveries, decisions });
+      const outcomes = store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes").outcomes.filter((outcome) => outcome.workspaceId === access.workspaceId);
+      const learning = buildPilotLearningReport({ workspaceId: access.workspaceId, profile, deliveries, decisions, outcomes });
       const deliveryHealth = buildWorkspaceDeliveryHealth({ workspaceId: access.workspaceId, notifications, attempts });
       const serviceReport = buildWorkspaceServiceReport({ workspaceId: access.workspaceId, profile, deliveries, learning, deliveryHealth });
       const history = store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots").snapshots;
@@ -1296,7 +1317,8 @@ const server = createServer(async (request, response) => {
       const profile = profiles.find((candidate) => !access.workspaceIds || access.workspaceIds.includes(candidate.workspaceId));
       const visible = deliveries.filter((delivery) => !access.workspaceIds || access.workspaceIds.includes(delivery.workspaceId));
       const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions.filter((decision) => !access.workspaceIds || access.workspaceIds.includes(decision.workspaceId));
-      return json(response, 200, buildPilotLearningReport({ workspaceId: access.workspaceId, profile, deliveries: visible, decisions }));
+      const outcomes = store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes").outcomes.filter((outcome) => !access.workspaceIds || access.workspaceIds.includes(outcome.workspaceId));
+      return json(response, 200, buildPilotLearningReport({ workspaceId: access.workspaceId, profile, deliveries: visible, decisions, outcomes }));
     }
     if (url.pathname === "/api/operator/notifications") {
       const operator = operatorAccess(request);

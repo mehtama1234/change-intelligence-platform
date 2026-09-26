@@ -70,6 +70,16 @@ try {
   if (exportResponse.status !== 200 || exported.schemaVersion !== "source-linked-briefing-export-v1" || exported.briefing.insightProvenance?.[0]?.state !== "published" || exported.briefing.insightProvenance?.[0]?.publicationId !== (JSON.parse(await readFile(insightPublicationsPath, "utf8")).publications.at(-1)?.id)) throw new Error("Briefing export did not carry current insight provenance.");
   await writeFile(resolve(runDir, "workspace-pilot-profiles.json"), `${JSON.stringify({ profiles: [{ id: "profile-demo", workspaceId: "demo-research", decisionQuestion: "What should change?", cadence: "monthly", nextReviewAt: "2026-10-31", successMeasures: ["Useful evidence"] }] }, null, 2)}\n`);
   for (const [name, value] of [["workspace-pilot-deliveries.json", { deliveries: [] }], ["workspace-delivery-notifications.json", { notifications: [] }], ["workspace-notification-preferences.json", { preferences: [] }], ["workspace-alerts.json", { alerts: [] }], ["decision-outcomes.json", { outcomes: [] }], ["audit-log.json", { entries: [] }], ["latest-refresh.json", { status: "complete", runId: "recovery-refresh" }]]) await writeFile(resolve(runDir, name), `${JSON.stringify(value, null, 2)}\n`);
+  const currentPublicationId = JSON.parse(await readFile(insightPublicationsPath, "utf8")).publications.at(-1)?.id;
+  const outcomeResponse = await fetch(`${base}/api/briefings/${encodeURIComponent(briefing.id)}/outcome`, { method: "POST", headers: writeHeaders("recovery-decision-outcome"), body: JSON.stringify({ workspaceId: "demo-research", decisionState: "used", outcomeState: "held", decisionSummary: "The current receipt informed the partner decision.", outcomeNote: "Recorded for learning-loop verification." }) });
+  const outcome = await outcomeResponse.json();
+  if (outcomeResponse.status !== 201 || outcome.insightProvenance?.[0]?.publicationId !== currentPublicationId) throw new Error("Decision outcome did not retain the current insight publication receipt.");
+  const metricsResponse = await fetch(`${base}/api/pilot-metrics?workspace=demo-research`, { headers: auth });
+  const metrics = await metricsResponse.json();
+  if (metricsResponse.status !== 200 || metrics.measures.publishedInsightReceiptsUsed !== 1) throw new Error("Pilot metrics did not count the published insight receipt used in the decision outcome.");
+  const reportResponse = await fetch(`${base}/api/pilot-report?workspace=demo-research`, { headers: auth });
+  const report = await reportResponse.json();
+  if (reportResponse.status !== 200 || report.insightFeedback?.byReceipt?.[0]?.publicationId !== currentPublicationId) throw new Error("Pilot learning report did not group the decision outcome by insight receipt.");
   await exec(process.execPath, [resolve(root, "scripts/build-pilot-deliveries.mjs")], { cwd: root, env: { ...buildEnv, PILOT_PROFILES_PATH: resolve(runDir, "workspace-pilot-profiles.json"), PILOT_DELIVERIES_PATH: resolve(runDir, "workspace-pilot-deliveries.json"), WORKSPACE_NOTIFICATIONS_PATH: resolve(runDir, "workspace-delivery-notifications.json") } });
   const deliveries = JSON.parse(await readFile(resolve(runDir, "workspace-pilot-deliveries.json"), "utf8"));
   const delivery = deliveries.deliveries[0];
