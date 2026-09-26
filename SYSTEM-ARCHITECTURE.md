@@ -221,3 +221,7 @@ workspace owner or researcher can submit a bounded excerpt and observation;
 the service records a content digest and keeps the item in `pending_review`.
 Only an explicit workspace review changes it to `accepted` or `rejected`, and
 these records are never added to the shared packet automatically.
+After acceptance, the question evaluator adds a source only to questions in
+the same workspace. Briefings carry its digest and mark it private; pending
+and rejected items are excluded. Customer evidence therefore remains useful
+without becoming cross-tenant research truth.

@@ -112,6 +112,9 @@ Private customer-source submissions use the same workspace membership boundary.
 They are stored as private runtime records with a content digest and review
 state; they are excluded from the shared packet until a researcher explicitly
 reviews them. Source excerpts are returned only to members of that workspace.
+Accepted private sources may be used by that workspace's question evaluator
+and briefing builder, but are never copied into the shared packet or used for
+another workspace's retrieval.
 The demo reader keeps a manually entered token only for the current browser
 session; production should replace this with an identity provider and secure
 session cookie.

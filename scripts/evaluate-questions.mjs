@@ -11,12 +11,14 @@ const outputDir = resolve(root, process.env.QUESTION_OUTPUT_DIR ?? runtimeDir);
 const outputPath = resolve(outputDir, "question-evaluations.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const watchlistsPath = resolve(root, process.env.WATCHLISTS_PATH ?? `${runtimeDir}/workspace-watchlists.json`);
+const workspaceSourcesPath = resolve(root, process.env.WORKSPACE_SOURCES_PATH ?? `${runtimeDir}/workspace-sources.json`);
 const packet = JSON.parse(await readFile(packetPath, "utf8"));
 const ledger = existsSync(questionsPath) ? JSON.parse(await readFile(questionsPath, "utf8")) : { schemaVersion: "workspace-question-ledger-v1", questions: [] };
 const workspaceFiles = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
 const workspaces = await Promise.all(workspaceFiles.map(async (file) => JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"))));
 const workspaceById = new Map(workspaces.map((workspace) => [workspace.id, workspace]));
 const watchlistLedger = existsSync(watchlistsPath) ? JSON.parse(await readFile(watchlistsPath, "utf8")) : { watchlists: [] };
+const workspaceSourceLedger = existsSync(workspaceSourcesPath) ? JSON.parse(await readFile(workspaceSourcesPath, "utf8")) : { sources: [] };
 const watchlistsByWorkspace = new Map();
 for (const watchlist of watchlistLedger.watchlists ?? []) watchlistsByWorkspace.set(watchlist.workspaceId, [...(watchlistsByWorkspace.get(watchlist.workspaceId) ?? []), watchlist]);
 const now = new Date().toISOString();
@@ -31,6 +33,10 @@ const conceptGroups = {
   economics: ["revenue", "margin", "growth", "price", "pricing", "cost", "scarcity", "demand"]
 };
 const conceptByTerm = new Map(Object.entries(conceptGroups).flatMap(([concept, words]) => words.map((word) => [word, concept])));
+
+function privateRecord(source) {
+  return { ...source, sourceRole: "workspace_source", sourceRepository: "customer-provided", sourceExcerpt: source.sourceExcerpt, asOf: source.submittedAt, mechanism: null, theme: null, limits: ["This is customer-provided evidence. It remains private to the workspace and has not been independently verified."] };
+}
 
 function terms(question) {
   return question.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((term) => term.length > 2 && !stopWords.has(term));
@@ -50,7 +56,8 @@ for (const question of ledger.questions.filter((item) => item.state === "active"
   }
   const words = terms(question.question);
   const questionConcepts = conceptsFor(words);
-  const candidates = packet.records.filter((record) => !requestedIds.size || requestedIds.has(record.id));
+  const acceptedPrivateSources = (workspaceSourceLedger.sources ?? []).filter((source) => source.workspaceId === question.workspaceId && source.reviewState === "accepted").map(privateRecord);
+  const candidates = [...packet.records, ...acceptedPrivateSources].filter((record) => !requestedIds.size || requestedIds.has(record.id));
   const matches = candidates.map((record) => {
     const textTerms = new Set(terms([record.title, record.observation, record.mechanism, record.theme, record.sourceRepository].join(" ")));
     const textConcepts = new Map([...textTerms].map((word) => [word, conceptByTerm.get(word) ?? word]));
@@ -67,6 +74,7 @@ for (const question of ledger.questions.filter((item) => item.state === "active"
     state: "evidence_retrieved",
     matchedRecordIds: matches.map((match) => match.recordId),
     matches,
+    sourceBoundary: { sharedRecordCount: matches.filter((match) => !acceptedPrivateSources.some((source) => source.id === match.recordId)).length, acceptedPrivateSourceCount: matches.filter((match) => acceptedPrivateSources.some((source) => source.id === match.recordId)).length, excludedPrivateSourceCount: (workspaceSourceLedger.sources ?? []).filter((source) => source.workspaceId === question.workspaceId && source.reviewState !== "accepted").length },
     limitation: "Concept matches identify evidence to inspect; they do not answer the question or establish causation. Broad words such as AI and work are not treated as evidence concepts by themselves."
   });
   question.lastEvaluatedAt = now;

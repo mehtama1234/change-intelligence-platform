@@ -41,6 +41,11 @@ try {
   if (outsiderRead.status !== 403) throw new Error(`Expected outsider source read to return 403, received ${outsiderRead.status}`);
   const researcherRead = await fetch(`${base}/api/workspace-sources?workspace=demo-research`, { headers: researcher });
   if (researcherRead.status !== 200 || (await researcherRead.json()).sources[0].sourceExcerpt !== submittedBody.sourceExcerpt) throw new Error("Workspace member could not read the private source.");
+  const inspection = await fetch(`${base}/api/evidence/${encodeURIComponent(submittedBody.id)}?workspace=demo-research`, { headers: researcher });
+  const inspectionBody = await inspection.json();
+  if (inspection.status !== 200 || inspectionBody.record.sourceRole !== "workspace_source" || inspectionBody.source.digest !== submittedBody.sourceDigest) throw new Error("Private source evidence inspection failed.");
+  const outsiderInspection = await fetch(`${base}/api/evidence/${encodeURIComponent(submittedBody.id)}?workspace=demo-research`, { headers: outsider });
+  if (outsiderInspection.status !== 403) throw new Error(`Expected outsider private evidence inspection to return 403, received ${outsiderInspection.status}`);
   const review = await fetch(`${base}/api/workspace-sources/${encodeURIComponent(submittedBody.id)}/review`, { method: "POST", headers: { ...researcher, "Idempotency-Key": "private-source-review", "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", reviewState: "accepted", reviewNote: "Bounded evidence; keep the outcome limitation visible." }) });
   const reviewBody = await review.json();
   if (review.status !== 200 || reviewBody.reviewState !== "accepted" || reviewBody.claimState !== "reviewed" || reviewBody.reviewedBy !== "demo-researcher") throw new Error(`Private source review failed: ${JSON.stringify(reviewBody)}`);

@@ -1608,7 +1608,9 @@ const server = createServer(async (request, response) => {
       if (denyWorkspaceRead(response, access)) return;
       const recordId = decodeURIComponent(url.pathname.slice("/api/evidence/".length));
       const packet = await readJson(packetPath, { records: [], insights: [] });
-      const record = packet.records.find((candidate) => candidate.id === recordId);
+      const sharedRecord = packet.records.find((candidate) => candidate.id === recordId);
+      const privateRecord = store.findRecord("workspace_source", recordId);
+      const record = sharedRecord ?? (privateRecord && access.workspaceId && privateRecord.workspaceId === access.workspaceId ? { ...privateRecord, sourceRole: "workspace_source", sourceRepository: "customer-provided", asOf: privateRecord.submittedAt, limits: ["This is customer-provided evidence. It remains private to the workspace and has not been independently verified."] } : undefined);
       if (!record) return json(response, 404, { error: "Evidence record not found." });
       if (access.workspaceId) await appendAudit({ requestId, action: "inspect_evidence", targetId: record.id, workspaceId: access.workspaceId, actorId: access.actorId ?? null, actorRole: null, result: "opened", occurredAt: new Date().toISOString() });
       const relatedRecords = packet.records.filter((candidate) => (record.relatedRecordIds ?? []).includes(candidate.id));

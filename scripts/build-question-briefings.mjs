@@ -13,18 +13,21 @@ const outputPath = process.env.BRIEFINGS_PATH ? resolve(process.env.BRIEFINGS_PA
 const publicationsPath = process.env.BRIEFING_PUBLICATIONS_PATH ? resolve(process.env.BRIEFING_PUBLICATIONS_PATH) : resolve(outputDir, "briefing-publications.json");
 const insightCandidatesPath = process.env.INSIGHT_CANDIDATES_PATH ? resolve(process.env.INSIGHT_CANDIDATES_PATH) : resolve(outputDir, "insight-candidates.json");
 const insightPublicationsPath = process.env.INSIGHT_PUBLICATIONS_PATH ? resolve(process.env.INSIGHT_PUBLICATIONS_PATH) : resolve(outputDir, "insight-publications.json");
+const workspaceSourcesPath = resolve(root, process.env.WORKSPACE_SOURCES_PATH ?? `${outputDir}/workspace-sources.json`);
 const packet = JSON.parse(await readFile(packetPath, "utf8"));
 const questions = existsSync(questionsPath) ? JSON.parse(await readFile(questionsPath, "utf8")) : { questions: [] };
 const evaluations = existsSync(evaluationsPath) ? JSON.parse(await readFile(evaluationsPath, "utf8")) : { evaluations: [] };
 const publications = existsSync(publicationsPath) ? JSON.parse(await readFile(publicationsPath, "utf8")) : { publications: [] };
 const insightCandidates = existsSync(insightCandidatesPath) ? JSON.parse(await readFile(insightCandidatesPath, "utf8")) : { candidates: [] };
 const insightPublications = existsSync(insightPublicationsPath) ? JSON.parse(await readFile(insightPublicationsPath, "utf8")) : { publications: [] };
+const workspaceSourceLedger = existsSync(workspaceSourcesPath) ? JSON.parse(await readFile(workspaceSourcesPath, "utf8")) : { sources: [] };
 const publicationByBriefing = new Map(publications.publications.map((publication) => [publication.briefingId, publication]));
 const insightById = new Map(packet.insights.map((insight) => [insight.id, insight]));
 const candidateByKey = new Map((insightCandidates.candidates ?? []).map((candidate) => [candidate.candidateKey, candidate]));
 const insightPublicationsByKey = new Map();
 for (const publication of insightPublications.publications ?? []) insightPublicationsByKey.set(publication.candidateKey, [...(insightPublicationsByKey.get(publication.candidateKey) ?? []), publication]);
 const recordsById = new Map(packet.records.map((record) => [record.id, record]));
+for (const source of workspaceSourceLedger.sources ?? []) if (source.reviewState === "accepted") recordsById.set(source.id, { ...source, sourceRole: "workspace_source", sourceRepository: "customer-provided", sourceExcerpt: source.sourceExcerpt, asOf: source.submittedAt, limits: ["This is customer-provided evidence. It remains private to the workspace and has not been independently verified."] });
 const evaluationByQuestion = new Map(evaluations.evaluations.map((evaluation) => [evaluation.questionId, evaluation]));
 
 function insightProvenanceForQuestion(workspaceId, matchedRecordIds) {
@@ -68,7 +71,7 @@ function insightProvenanceForQuestion(workspaceId, matchedRecordIds) {
 
 const briefings = questions.questions.filter((question) => question.state === "active").map((question) => {
   const evaluation = evaluationByQuestion.get(question.id);
-  const evidence = (evaluation?.matchedRecordIds ?? []).map((id) => recordsById.get(id)).filter(Boolean).map((record) => ({
+  const evidence = (evaluation?.matchedRecordIds ?? []).map((id) => recordsById.get(id)).filter((record) => record && (!record.workspaceId || record.workspaceId === question.workspaceId)).map((record) => ({
     recordId: record.id,
     title: record.title,
     sourceRepository: record.sourceRepository,
@@ -76,6 +79,7 @@ const briefings = questions.questions.filter((question) => question.state === "a
     observation: record.observation,
     limits: record.limits,
     sourceDigest: record.sourceDigest,
+    ...(record.sourceRole === "workspace_source" ? { private: true, reviewState: record.reviewState } : {}),
     ...(record.researchReview ? { researchReview: record.researchReview } : {})
   }));
   const insightProvenance = insightProvenanceForQuestion(question.workspaceId, evaluation?.matchedRecordIds);

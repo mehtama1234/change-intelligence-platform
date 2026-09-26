@@ -12,6 +12,7 @@ try {
     audit: resolve(runtimeDir, "audit-log.json"),
     operations: resolve(runtimeDir, "idempotency-operations.json"),
     alerts: resolve(runtimeDir, "workspace-alerts.json"),
+    workspaceSources: resolve(runtimeDir, "workspace-sources.json"),
     briefingPublications: resolve(runtimeDir, "briefing-publications.json"),
     insightDecisions: resolve(runtimeDir, "insight-decisions.json"),
     insightPublications: resolve(runtimeDir, "insight-publications.json"),
