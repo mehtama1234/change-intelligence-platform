@@ -119,3 +119,7 @@ partner wants to improve, the evidence scope, success measures, delivery
 cadence, saved research question, and first reviewable handoff. The product
 shows which item is missing and the next action. This makes onboarding
 repeatable without pretending that configuration proves commercial value.
+Internal operators can see the same setup state across workspaces, including
+which pilots need configuration and which are ready for a first handoff. The
+operator view contains step names and aggregate counts only; customer content
+stays in the workspace.

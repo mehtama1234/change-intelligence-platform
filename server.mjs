@@ -596,7 +596,19 @@ function buildOperatorPortfolioReadiness({ workspaces, snapshots }) {
   };
 }
 
-function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs, remediationSlaMs }) {
+function buildOperatorOnboardingSummary({ workspace, profile, questionCount, watchlistCount, acceptedPrivateSourceCount, deliveryCount }) {
+  const checks = [
+    ["decision_question", Boolean(profile?.decisionQuestion)],
+    ["source_scope", Boolean(watchlistCount || acceptedPrivateSourceCount)],
+    ["success_measures", Boolean(profile?.successMeasures?.length)],
+    ["delivery_cadence", Boolean(profile?.cadence && profile?.nextReviewAt)],
+    ["saved_question", questionCount > 0]
+  ];
+  const missing = checks.filter(([, ready]) => !ready).map(([id]) => id);
+  return { workspaceId: workspace.id, status: missing.length ? "needs_setup" : deliveryCount ? "active" : "ready_for_first_delivery", missingSteps: missing, deliveryCount };
+}
+
+function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, onboardingByWorkspace, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs, remediationSlaMs }) {
   const summaries = workspaces.map((workspace) => {
     const workspaceDeliveries = deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
     const reviewed = workspaceDeliveries.filter((delivery) => delivery.review);
@@ -605,7 +617,7 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
     const latestDeliveryAt = workspaceDeliveries.map((delivery) => delivery.generatedAt).sort().at(-1) ?? null;
     const cadenceMs = { weekly: 7 * 86400000, monthly: 31 * 86400000, quarterly: 93 * 86400000 }[profile?.cadence] ?? null;
     const deliveryDelayed = Boolean(profile && cadenceMs && (!latestDeliveryAt || Date.parse(latestDeliveryAt) + cadenceMs < Date.now()));
-    return { id: workspace.id, name: workspace.name, pilotConfigured: Boolean(profile), deliveries: workspaceDeliveries.length, reviewedDeliveries: reviewed.length, usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, latestDeliveryAt, deliveryDelayed, latestDecision: workspaceDecisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)))[0]?.decision ?? null };
+    return { id: workspace.id, name: workspace.name, pilotConfigured: Boolean(profile), deliveries: workspaceDeliveries.length, reviewedDeliveries: reviewed.length, usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, latestDeliveryAt, deliveryDelayed, latestDecision: workspaceDecisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)))[0]?.decision ?? null, onboarding: onboardingByWorkspace.get(workspace.id) ?? { workspaceId: workspace.id, status: "needs_setup", missingSteps: ["decision_question", "source_scope", "success_measures", "delivery_cadence", "saved_question"], deliveryCount: workspaceDeliveries.length } };
   });
   const reviewed = deliveries.filter((delivery) => delivery.review);
   const now = Date.now();
@@ -1913,7 +1925,11 @@ const server = createServer(async (request, response) => {
       const notifications = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;
       const notificationAttempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
       const readinessSnapshots = store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots").snapshots;
-      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs, remediationSlaMs: operatorRemediationSlaMs }));
+      const questions = store.questionsLedger().questions;
+      const watchlists = store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists").watchlists;
+      const privateSources = store.recordsLedger("workspace_source", "workspace-source-ledger-v1", "sources").sources;
+      const onboardingByWorkspace = new Map(workspaces.map((workspace) => [workspace.id, buildOperatorOnboardingSummary({ workspace, profile: profiles.find((profile) => profile.workspaceId === workspace.id), questionCount: questions.filter((question) => question.workspaceId === workspace.id && question.state === "active").length, watchlistCount: watchlists.filter((watchlist) => watchlist.workspaceId === workspace.id).length, acceptedPrivateSourceCount: privateSources.filter((source) => source.workspaceId === workspace.id && source.reviewState === "accepted").length, deliveryCount: deliveries.filter((delivery) => delivery.workspaceId === workspace.id).length })]));
+      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, onboardingByWorkspace, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs, remediationSlaMs: operatorRemediationSlaMs }));
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

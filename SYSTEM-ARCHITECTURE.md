@@ -230,3 +230,7 @@ The workspace onboarding read model turns pilot setup into an explicit
 checklist: decision question, evidence scope, success measures, cadence,
 saved question, and first handoff. It reports configuration and recorded
 activity; it does not label a pilot successful without partner evidence.
+
+The operator overview adds a privacy-preserving onboarding queue across
+workspaces. It exposes only setup status, missing step identifiers, and
+delivery counts—not customer questions, private excerpts, or review notes.
