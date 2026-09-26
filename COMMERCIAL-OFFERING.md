@@ -89,6 +89,13 @@ Workshops and recurring research partnerships using the same evidence system.
 
 ## Why customers pay
 
+The internal operator can provision the next partner workspace from the
+operator view. Provisioning creates the workspace, names its first owner, and
+starts the same onboarding checklist used by every pilot. This turns a pilot
+from a hand-edited demo into a repeatable service operation. Identity mapping
+and invitations remain with the customer's identity system, so workspace
+provisioning does not pretend to solve authentication.
+
 Customers are not paying for more articles. They pay for reduced uncertainty:
 
 - faster orientation;

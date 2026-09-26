@@ -234,3 +234,11 @@ activity; it does not label a pilot successful without partner evidence.
 The operator overview adds a privacy-preserving onboarding queue across
 workspaces. It exposes only setup status, missing step identifiers, and
 delivery counts—not customer questions, private excerpts, or review notes.
+
+An operator can provision a partner workspace through the same service. The
+command writes a durable runtime registry entry, creates the first owner
+membership, records an audit event, and requires an idempotency key. The
+registry is merged with fixture workspaces for reads, included in runtime
+backups, and used by membership checks immediately. It stores identity IDs,
+not passwords or tokens; a production identity provider remains responsible
+for account creation, authentication, and invitations.

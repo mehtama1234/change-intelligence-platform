@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 
 const runtimeFiles = [
+  "workspace-registry.json",
   "workspace-questions.json",
   "audit-log.json",
   "idempotency-operations.json",

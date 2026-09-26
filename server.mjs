@@ -53,6 +53,7 @@ const evidenceLedgerPath = resolve(runtimeDir, "versioned-evidence-ledger.json")
 const reviewDecisionsPath = resolve(runtimeDir, "review-decisions.json");
 const reviewEventsPath = resolve(runtimeDir, "review-events.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
+const workspaceRegistryPath = resolve(runtimeDir, "workspace-registry.json");
 const sourceRegistryPath = resolve(root, "data/source-registry.json");
 const authMode = process.env.AUTH_MODE ?? "demo";
 const tokenActors = authMode === "token" ? JSON.parse(process.env.AUTH_TOKENS_JSON ?? "{}") : {};
@@ -125,25 +126,24 @@ function authenticatedActor(request, body) {
   return tokenActors[token];
 }
 
-async function workspaceConfig(id) {
+async function configuredWorkspaces() {
   const files = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
-  for (const file of files) {
-    const workspace = JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"));
-    if (workspace.id === id) return workspace;
-  }
-  return undefined;
+  const workspaces = await Promise.all(files.map(async (file) => JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"))));
+  const registry = await readJson(workspaceRegistryPath, { workspaces: [] });
+  const byId = new Map(workspaces.map((workspace) => [workspace.id, workspace]));
+  for (const workspace of registry.workspaces ?? []) byId.set(workspace.id, workspace);
+  return [...byId.values()];
+}
+
+async function workspaceConfig(id) {
+  return (await configuredWorkspaces()).find((workspace) => workspace.id === id);
 }
 
 async function workspaceAccess(request, requestedWorkspaceId) {
   if (authMode !== "token") return { workspaceId: requestedWorkspaceId ?? null, workspaceIds: null, actorId: authenticatedActor(request, {}) };
   const actorId = authenticatedActor(request, {});
   if (!actorId) return { error: { status: 401, body: { error: "Authentication required." } } };
-  const files = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
-  const workspaces = [];
-  for (const file of files) {
-    const workspace = JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"));
-    if (workspace.members?.some((member) => member.id === actorId)) workspaces.push(workspace);
-  }
+  const workspaces = (await configuredWorkspaces()).filter((workspace) => workspace.members?.some((member) => member.id === actorId));
   if (requestedWorkspaceId) {
     const requested = await workspaceConfig(requestedWorkspaceId);
     if (!requested) return { error: { status: 404, body: { error: "Workspace not found." } } };
@@ -1393,6 +1393,38 @@ const server = createServer(async (request, response) => {
       await writeFile(operatorRoutesPath, `${JSON.stringify(store.recordsLedger("operator_notification_route", "operator-notification-route-ledger-v1", "settings"), null, 2)}\n`);
       return json(response, 200, routes);
     }
+    if (request.method === "POST" && url.pathname === "/api/operator/workspaces") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const body = await requestBody(request);
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (!idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for operator writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const name = String(body.name ?? "").trim().slice(0, 120);
+      const ownerId = String(body.ownerId ?? "").trim().slice(0, 120);
+      if (name.length < 3) return json(response, 400, { error: "Workspace name must be at least 3 characters." });
+      if (ownerId.length < 3) return json(response, 400, { error: "Owner identity ID must be at least 3 characters." });
+      const requestedMembers = Array.isArray(body.members) ? body.members : [];
+      if (requestedMembers.length > 49) return json(response, 400, { error: "A workspace can have at most 50 members at provisioning time." });
+      const members = [{ id: ownerId, role: "owner" }];
+      for (const candidate of requestedMembers) {
+        const id = String(candidate?.id ?? "").trim().slice(0, 120);
+        const role = String(candidate?.role ?? "viewer");
+        if (!id || id === ownerId || !["owner", "researcher", "viewer"].includes(role)) continue;
+        if (!members.some((member) => member.id === id)) members.push({ id, role });
+      }
+      const now = new Date().toISOString();
+      const workspace = { schemaVersion: "workspace-v1", id: `workspace-${randomUUID()}`, name, members, watchlists: [], provisionedAt: now, provisionedBy: operator.actorId };
+      const registry = await readJson(workspaceRegistryPath, { schemaVersion: "workspace-registry-v1", workspaces: [] });
+      registry.schemaVersion = "workspace-registry-v1";
+      registry.workspaces = [...(registry.workspaces ?? []), workspace];
+      await writeFile(workspaceRegistryPath, `${JSON.stringify(registry, null, 2)}\n`);
+      const responseBody = { ...workspace, identityProvisioning: "Map these member identity IDs to production identity-provider accounts before inviting the partner." };
+      await appendAudit({ requestId, action: "provision_workspace", targetId: workspace.id, workspaceId: workspace.id, actorId: operator.actorId, actorRole: "operator", result: "provisioned", occurredAt: now });
+      await storeOperation({ key: idempotencyKey, action: "provision_workspace", status: 201, body: responseBody, completedAt: now });
+      return json(response, 201, responseBody);
+    }
     if (request.method === "GET" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/export")) {
       const briefingId = decodeURIComponent(url.pathname.slice("/api/briefings/".length, -"/export".length));
       const workspaceId = url.searchParams.get("workspace");
@@ -1754,12 +1786,7 @@ const server = createServer(async (request, response) => {
     if (url.pathname === "/api/workspaces") {
       const access = await workspaceAccess(request);
       if (denyWorkspaceRead(response, access)) return;
-      const configs = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
-      const workspaces = [];
-      for (const file of configs) {
-        const workspace = JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"));
-        if (!access.workspaceIds || access.workspaceIds.includes(workspace.id)) workspaces.push({ id: workspace.id, name: workspace.name, memberCount: workspace.members?.length ?? 0 });
-      }
+      const workspaces = (await configuredWorkspaces()).filter((workspace) => !access.workspaceIds || access.workspaceIds.includes(workspace.id)).map((workspace) => ({ id: workspace.id, name: workspace.name, memberCount: workspace.members?.length ?? 0 }));
       return json(response, 200, workspaces);
     }
     if (url.pathname === "/api/workspace-export") {
@@ -1898,22 +1925,14 @@ const server = createServer(async (request, response) => {
     if (url.pathname === "/api/operator/portfolio-readiness") {
       const operator = operatorAccess(request);
       if (operator.error) return json(response, operator.error.status, operator.error.body);
-      const workspaceFiles = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
-      const workspaces = await Promise.all(workspaceFiles.map(async (file) => {
-        const workspace = JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"));
-        return { id: workspace.id, name: workspace.name };
-      }));
+      const workspaces = (await configuredWorkspaces()).map((workspace) => ({ id: workspace.id, name: workspace.name }));
       const snapshots = store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots").snapshots;
       return json(response, 200, buildOperatorPortfolioReadiness({ workspaces, snapshots }));
     }
     if (url.pathname === "/api/operator/pilot-overview") {
       const operator = operatorAccess(request);
       if (operator.error) return json(response, operator.error.status, operator.error.body);
-      const workspaceFiles = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
-      const workspaces = await Promise.all(workspaceFiles.map(async (file) => {
-        const workspace = JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"));
-        return { id: workspace.id, name: workspace.name };
-      }));
+      const workspaces = (await configuredWorkspaces()).map((workspace) => ({ id: workspace.id, name: workspace.name }));
       const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
       const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
       const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions;

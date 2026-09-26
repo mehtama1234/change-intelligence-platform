@@ -15,7 +15,7 @@ await writeFile(`${runtimeDir}/workspace-pilot-deliveries.json`, `${JSON.stringi
 await writeFile(`${runtimeDir}/workspace-alerts.json`, `${JSON.stringify({ schemaVersion: "workspace-alert-ledger-v1", workspaces: [{ id: "demo-research", name: "Demo research workspace" }], alerts: [{ id: "remediation-alert-test", workspaceId: "demo-research", watchlistName: "AI controls", sourceId: "trend-hunting-ai-control", repository: "trend-hunting", sourcePath: "README.md", kind: "source_availability", state: "open", severity: "high", recommendedAction: "Reconnect the source.", createdAt: new Date(impactNow - 120000).toISOString() }] }, null, 2)}\n`);
 const child = spawn(process.execPath, [resolve(root, "server.mjs")], {
   cwd: root,
-  env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher", "outsider-token": "outside-user", "operator-token": "ops-user" }), OPERATOR_ACTORS_JSON: JSON.stringify(["ops-user"]), OPERATOR_MAX_FAILED_REFRESHES: "-1" },
+  env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher", "outsider-token": "outside-user", "operator-token": "ops-user", "new-owner-token": "new-owner" }), OPERATOR_ACTORS_JSON: JSON.stringify(["ops-user"]), OPERATOR_MAX_FAILED_REFRESHES: "-1" },
   stdio: ["ignore", "pipe", "pipe"]
 });
 let output = "";
@@ -99,6 +99,22 @@ try {
   const portfolioResponse = await fetch(`${base}/api/operator/portfolio-readiness`, { headers: { Authorization: "Bearer operator-token" } });
   const portfolioBody = await portfolioResponse.json();
   if (portfolioResponse.status !== 200 || portfolioBody.schemaVersion !== "operator-portfolio-readiness-v1" || !portfolioBody.counts || !Array.isArray(portfolioBody.workspaces) || JSON.stringify(portfolioBody).includes("private-event") || JSON.stringify(portfolioBody).includes("private note")) throw new Error("Operator portfolio readiness contract or privacy boundary failed.");
+  const provisioningKey = "operator-workspace-provisioning";
+  const provision = await fetch(`${base}/api/operator/workspaces`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": provisioningKey, "content-type": "application/json" }, body: JSON.stringify({ name: "New partner workspace", ownerId: "new-owner", members: [{ id: "new-researcher", role: "researcher" }] }) });
+  const provisionBody = await provision.json();
+  if (provision.status !== 201 || !provisionBody.id?.startsWith("workspace-") || provisionBody.members?.[0]?.role !== "owner" || provisionBody.identityProvisioning === undefined) throw new Error("Operator workspace provisioning contract failed.");
+  const provisionRetry = await fetch(`${base}/api/operator/workspaces`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": provisioningKey, "content-type": "application/json" }, body: JSON.stringify({ name: "Different name", ownerId: "different-owner" }) });
+  const provisionRetryBody = await provisionRetry.json();
+  if (provisionRetry.status !== 201 || provisionRetryBody.id !== provisionBody.id) throw new Error("Workspace provisioning idempotency did not replay the original result.");
+  const newOwnerWorkspaces = await (await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer new-owner-token" } })).json();
+  if (newOwnerWorkspaces.length !== 1 || newOwnerWorkspaces[0].id !== provisionBody.id) throw new Error("Provisioned workspace was not visible only to its configured member.");
+  const provisionedOnboarding = await fetch(`${base}/api/workspace-onboarding?workspace=${encodeURIComponent(provisionBody.id)}`, { headers: { Authorization: "Bearer new-owner-token" } });
+  const provisionedOnboardingBody = await provisionedOnboarding.json();
+  if (provisionedOnboarding.status !== 200 || provisionedOnboardingBody.status !== "needs_setup") throw new Error("Provisioned workspace did not enter onboarding.");
+  const outsiderProvisionedOnboarding = await fetch(`${base}/api/workspace-onboarding?workspace=${encodeURIComponent(provisionBody.id)}`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderProvisionedOnboarding.status !== 403) throw new Error("Provisioned workspace leaked to an outsider.");
+  const persistedRegistry = JSON.parse(await readFile(`${runtimeDir}/workspace-registry.json`, "utf8"));
+  if (!persistedRegistry.workspaces?.some((workspace) => workspace.id === provisionBody.id)) throw new Error("Workspace registry did not persist the provisioned workspace.");
   const routeWrite = await fetch(`${base}/api/operator/notification-routes`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": "operator-route-config", "content-type": "application/json" }, body: JSON.stringify({ default: ["platform-ops"], warningIds: { "refresh-failures": ["refresh-ops"] }, workspaces: { "demo-research": ["tenant-ops"] }, destinations: { "tenant-ops": { id: "tenant-ops-webhook", mode: "webhook", url: "https://tenant.example.test/notify" } } }) });
   if (routeWrite.status !== 200) throw new Error(`Operator route configuration failed: ${routeWrite.status}`);
   const routeRead = await (await fetch(`${base}/api/operator/notification-routes`, { headers: { Authorization: "Bearer operator-token" } })).json();

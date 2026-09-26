@@ -25,6 +25,14 @@
         <div id="operator-notifications" class="record-list" aria-live="polite"></div>
         <div id="operator-delivery-health" class="table-wrap" aria-live="polite"></div>
         <div id="operator-portfolio-readiness" class="table-wrap" aria-live="polite"></div>
+        <section class="record-card" aria-labelledby="operator-provision-title">
+          <h2 id="operator-provision-title">Provision partner workspace</h2>
+          <p class="muted">Creates the workspace record and its first owner. Production identity accounts still need to be mapped by the identity provider.</p>
+          <label for="operator-workspace-name">Workspace name <input id="operator-workspace-name" type="text" maxlength="120" autocomplete="off"></label>
+          <label for="operator-workspace-owner">Owner identity ID <input id="operator-workspace-owner" type="text" maxlength="120" autocomplete="off"></label>
+          <button id="provision-workspace" type="button">Provision workspace</button>
+          <span id="operator-provision-status" class="muted" role="status"></span>
+        </section>
         <section class="record-card" aria-labelledby="operator-routing-title">
           <h2 id="operator-routing-title">Notification routing</h2>
           <p class="muted">JSON route settings are restricted to operators. Use <code>default</code>, <code>warningIds</code>, <code>workspaces</code>, and <code>destinations</code> recipient lists.</p>

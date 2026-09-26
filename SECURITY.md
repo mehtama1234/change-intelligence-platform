@@ -119,6 +119,12 @@ The demo reader keeps a manually entered token only for the current browser
 session; production should replace this with an identity provider and secure
 session cookie.
 
+Workspace provisioning is operator-only and idempotent. It records member
+identity IDs and workspace metadata, but never creates credentials or exposes
+secrets. The identity provider must map those IDs to real accounts before
+access is granted. Provisioned workspaces are included in the runtime backup
+manifest so a restore cannot silently lose tenant boundaries.
+
 Token-authenticated write requests must also send an `Idempotency-Key`. A
 retry with the same key replays the original result instead of creating a
 second question, decision, publication, or acknowledgment.
