@@ -17,6 +17,8 @@ const required = [
   [compose, "restart: unless-stopped", "restart policy"],
   [scheduler, "process.on(\"SIGTERM\"", "scheduler termination handling"],
   [scheduler, "run-refresh-cycle.mjs", "scheduler refresh invocation"]
+  , [scheduler, "scheduler-status.json", "scheduler status receipt"]
+  , [scheduler, "SCHEDULER_MAX_CYCLES", "scheduler test-cycle control"]
   , [compose, "OPERATOR_NOTIFICATION_DELIVERY_MODE", "notification delivery mode"]
   , [compose, "OPERATOR_NOTIFICATION_WEBHOOK_URL", "notification webhook configuration"]
 ];

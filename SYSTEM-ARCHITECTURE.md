@@ -32,7 +32,10 @@ packet and atlas generation consume that ledger when it is available.
 
 ## Core services
 
-1. **Scheduler** — runs source checks and refresh jobs.
+1. **Scheduler** — runs source checks and refresh jobs, writes a durable
+   `scheduler-status.json` heartbeat, and records the last run, exit state, and
+   next scheduled run so an operator can tell whether the system is running,
+   sleeping, failed, or stopped.
 2. **Acquisition service** — retrieves documents and records immutable source metadata.
 3. **Extraction service** — identifies passages, metrics, entities, dates, and changes.
 4. **Normalization service** — preserves units, periods, populations, geography, and definitions.
@@ -87,6 +90,10 @@ warning is not escalated again, and each warning has at most one notification
 outbox item.
 
 The system should create review work, not silently publish uncertain claims.
+
+The scheduler status is operational evidence, not proof that a refresh produced
+good research. Operators must still inspect the refresh receipt, failed steps,
+source freshness, and review queues before treating a delivery as ready.
 
 ## Storage
 

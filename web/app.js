@@ -107,7 +107,9 @@ async function loadOperations() {
   const report = await reportResponse.json();
   const readiness = operations.readiness;
   const refresh = operations.refresh;
-  byId("operations-summary").textContent = `Last run ${refresh.runId || "not recorded"} · ${refresh.status} · ${refresh.endedAt || "no completion time"}.`;
+  const scheduler = operations.scheduler || { status: "not_started" };
+  const schedulerTiming = scheduler.status === "running" ? "refresh in progress" : scheduler.nextRunAt ? `next run ${scheduler.nextRunAt}` : "next run not scheduled";
+  byId("operations-summary").textContent = `Last run ${refresh.runId || "not recorded"} · ${refresh.status} · ${refresh.endedAt || "no completion time"}. Scheduler: ${scheduler.status} · ${schedulerTiming}.`;
   const checks = [
     ["Readiness", readiness.status],
     ["Refresh", readiness.checks.refresh.status],

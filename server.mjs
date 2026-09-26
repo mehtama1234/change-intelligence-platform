@@ -17,6 +17,7 @@ const reviewPath = resolve(runtimeDir, "latest-review-work.json");
 const historyPath = resolve(runtimeDir, "versioned-evidence-ledger.json");
 const refreshPath = resolve(runtimeDir, "latest-refresh.json");
 const refreshHistoryPath = resolve(runtimeDir, "refresh-history.json");
+const schedulerStatusPath = resolve(runtimeDir, "scheduler-status.json");
 const alertsPath = resolve(runtimeDir, "workspace-alerts.json");
 const questionsPath = resolve(runtimeDir, "workspace-questions.json");
 const questionEvaluationsPath = resolve(runtimeDir, "question-evaluations.json");
@@ -1029,9 +1030,10 @@ const server = createServer(async (request, response) => {
     if (url.pathname === "/api/operations") {
       const readiness = await readinessReport();
       const refresh = await readJson(refreshPath, { status: "not_run", steps: [] });
+      const scheduler = await readJson(schedulerStatusPath, { schemaVersion: "refresh-scheduler-status-v1", status: "not_started" });
       const history = await readJson(refreshHistoryPath, { schemaVersion: "refresh-history-v1", runs: [] });
       const sourceScan = await readJson(sourceScanPath, { counts: {}, sources: [] });
-      return json(response, 200, { schemaVersion: "operations-read-model-v1", generatedAt: new Date().toISOString(), readiness, refresh, refreshHistory: history.runs ?? [], sourceScan: { counts: sourceScan.counts, sourceCount: sourceScan.sources?.length ?? 0 }, database: store.health() });
+      return json(response, 200, { schemaVersion: "operations-read-model-v1", generatedAt: new Date().toISOString(), readiness, refresh, scheduler, refreshHistory: history.runs ?? [], sourceScan: { counts: sourceScan.counts, sourceCount: sourceScan.sources?.length ?? 0 }, database: store.health() });
     }
     if (url.pathname === "/api/usage") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

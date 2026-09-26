@@ -18,6 +18,7 @@ await writeFile(resolve(runtimeDir, "source-capture-ledger.json"), `${JSON.strin
 await writeFile(resolve(runtimeDir, "workspace-comparison-views.json"), `${JSON.stringify({ schemaVersion: "workspace-comparison-view-ledger-v1", views: [{ id: "comparison-test", workspaceId: "demo-research", name: "Backup comparison", kind: "companies", entityIds: ["company:nvidia", "company:microsoft"] }] }, null, 2)}\n`);
 await writeFile(resolve(runtimeDir, "workspace-notification-preferences.json"), `${JSON.stringify({ schemaVersion: "workspace-notification-preference-ledger-v1", preferences: [{ id: "notification-preference-demo-research", workspaceId: "demo-research", comparisonAlerts: false, sourceAlerts: true, delivery: "in_app" }] }, null, 2)}\n`);
 await writeFile(resolve(runtimeDir, "workspace-delivery-notifications.json"), `${JSON.stringify({ schemaVersion: "workspace-delivery-notification-ledger-v1", notifications: [{ id: "workspace-delivery-notification-test", workspaceId: "demo-research", status: "pending" }] }, null, 2)}\n`);
+await writeFile(resolve(runtimeDir, "scheduler-status.json"), `${JSON.stringify({ schemaVersion: "refresh-scheduler-status-v1", status: "sleeping", runCount: 4 }, null, 2)}\n`);
 for (const name of ["workspace-questions.json", "audit-log.json", "idempotency-operations.json", "workspace-alerts.json", "briefing-publications.json", "insight-decisions.json", "insight-publications.json", "workspace-pilot-profiles.json", "workspace-pilot-deliveries.json", "workspace-pilot-decisions.json", "operator-warning-events.json", "operator-notification-outbox.json", "operator-notification-routes.json", "operator-notification-attempts.json", "pilot-readiness.json", "latest-source-scan.json", "source-scan-history.json", "source-capture-ledger.json", "research-ingestion.json", "domain-atlas.json", "versioned-evidence-ledger.json", "review-decisions.json", "review-events.json", "refresh-history.json", "insight-evaluation.json"]) {
   if (existsSync(resolve(sourceRuntime, name))) await copyFile(resolve(sourceRuntime, name), resolve(runtimeDir, name));
 }
@@ -51,6 +52,7 @@ if (!manifest.files.some((file) => file.name === "raw/source-captures/test-sourc
 if (!manifest.files.some((file) => file.name === "workspace-comparison-views.json")) throw new Error("Backup omitted saved comparison views.");
 if (!manifest.files.some((file) => file.name === "workspace-notification-preferences.json")) throw new Error("Backup omitted workspace notification preferences.");
 if (!manifest.files.some((file) => file.name === "workspace-delivery-notifications.json")) throw new Error("Backup omitted workspace delivery notifications.");
+if (!manifest.files.some((file) => file.name === "scheduler-status.json")) throw new Error("Backup omitted scheduler status.");
 await restoreRuntime({ backup: backupDir, destination: restoredDir });
 if ((await readFile(resolve(restoredDir, "raw/source-captures/test-source/abc.source"), "utf8")) !== "immutable captured source\n") throw new Error("Restore did not recover immutable source capture.");
 const restoredStore = createRuntimeStore(restoredDir);

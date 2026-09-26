@@ -46,7 +46,7 @@ const childEnv = {
   SEC_MANIFEST_PATH: secManifestPath,
   SEC_XBRL_PATH: secXbrlPath
 };
-const runId = `refresh-${new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 17)}`;
+const runId = process.env.REFRESH_RUN_ID ?? `refresh-${new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 17)}`;
 childEnv.REFRESH_RUN_ID = runId;
 const steps = [];
 let lock;

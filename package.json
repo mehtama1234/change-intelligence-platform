@@ -37,6 +37,7 @@
     "test:insight-recovery": "node scripts/test-insight-recovery-workflow.mjs",
     "test:source-scan-runtime": "node scripts/test-source-scan-runtime-dir.mjs",
     "test:refresh-runtime": "node scripts/test-refresh-runtime-dir.mjs",
+    "test:scheduler": "node scripts/test-scheduler.mjs",
     "validate:deployment": "node scripts/validate-deployment-config.mjs",
     "validate:frontend": "node scripts/validate-frontend-contract.mjs",
     "test:api:auth": "node scripts/test-api-auth.mjs",
@@ -47,7 +48,7 @@
     "dispatch:workspace-notifications": "node scripts/dispatch-workspace-notifications.mjs",
     "test:workspace-delivery": "node scripts/test-workspace-delivery.mjs",
     "test:operator-delivery": "node scripts/test-operator-delivery.mjs",
-    "ci:core": "npm run validate:fixtures && npm run validate:packet && npm run validate:adapters && npm run validate:deployment && npm run validate:frontend && npm run evaluate:insight-quality && npm run test:insight-quality && npm run test:review-flow && npm run test:insight-publication && npm run test:insight-provenance && npm run test:insight-recovery && npm run test:source-scan-runtime && npm run test:refresh-runtime && npm run test:read-model && npm run test:storage && npm run test:api:auth && npm run test:pilot-delivery && npm run test:workspace-delivery",
+    "ci:core": "npm run validate:fixtures && npm run validate:packet && npm run validate:adapters && npm run validate:deployment && npm run validate:frontend && npm run evaluate:insight-quality && npm run test:insight-quality && npm run test:review-flow && npm run test:insight-publication && npm run test:insight-provenance && npm run test:insight-recovery && npm run test:source-scan-runtime && npm run test:refresh-runtime && npm run test:scheduler && npm run test:read-model && npm run test:storage && npm run test:api:auth && npm run test:pilot-delivery && npm run test:workspace-delivery",
     "serve": "node server.mjs",
     "refresh": "node scripts/run-refresh-cycle.mjs",
     "scheduler": "node scripts/scheduler.mjs"
