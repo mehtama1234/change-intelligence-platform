@@ -18,6 +18,7 @@
     "build:question-briefings": "node scripts/build-question-briefings.mjs",
     "generate:insight-candidates": "node scripts/generate-insight-candidates.mjs",
     "verify:e2e": "node scripts/verify-end-to-end.mjs",
+    "test:api:auth": "node scripts/test-api-auth.mjs",
     "serve": "node server.mjs",
     "refresh": "node scripts/run-refresh-cycle.mjs",
     "scheduler": "node scripts/scheduler.mjs"
