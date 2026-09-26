@@ -1,5 +1,5 @@
 const fixtureUrl = "../api/packet";
-const state = { packet: null, role: "all", theme: "all", company: "all", industry: "all", workspaceId: "demo-research", actorId: "demo-researcher", token: sessionStorage.getItem("change-intelligence-token") || "" };
+const state = { packet: null, role: "all", theme: "all", company: "all", industry: "all", timelineType: "all", timelineQuery: "", timelineEvents: [], workspaceId: "demo-research", actorId: "demo-researcher", token: sessionStorage.getItem("change-intelligence-token") || "" };
 
 const byId = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
@@ -85,9 +85,24 @@ async function loadEvidenceHistory() {
   if (!response.ok || !timelineResponse.ok) throw new Error(`Evidence history unavailable (${response.status})`);
   const history = await response.json();
   const timeline = await timelineResponse.json();
-  const events = (timeline.events ?? []).slice().reverse();
+  state.timelineEvents = (timeline.events ?? []).slice().reverse();
+  const types = [...new Set(state.timelineEvents.map((event) => event.eventType))].sort();
+  byId("timeline-type-filter").innerHTML = `<option value="all">All events</option>${types.map((type) => `<option value="${escapeHtml(type)}">${escapeHtml(type.replaceAll("_", " "))}</option>`).join("")}`;
+  byId("timeline-type-filter").value = state.timelineType;
   byId("evidence-history-summary").textContent = `${history.activeResearchRecordCount} active reviewed record${history.activeResearchRecordCount === 1 ? "" : "s"} · ${history.decisionCount} decision${history.decisionCount === 1 ? "" : "s"} · ${timeline.eventCount} timeline event${timeline.eventCount === 1 ? "" : "s"}.`;
-  byId("evidence-history-items").innerHTML = events.length ? events.slice(0, 20).map((event) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(event.eventType.replaceAll("_", " "))}</span>${event.reviewType ? `<span>${escapeHtml(event.reviewType.replaceAll("_", " "))}</span>` : ""}${event.status ? `<span>${escapeHtml(event.status)}</span>` : ""}<span>${escapeHtml(event.occurredAt)}</span></div><h3>${escapeHtml(event.sourceId || event.targetId)}</h3><p>${escapeHtml(event.outcome || event.status || "Recorded event")}${event.reviewer ? ` · by ${escapeHtml(event.reviewer)}` : ""}${event.previousEvidenceDigest ? ` · previous evidence ${escapeHtml(event.previousEvidenceDigest.slice(0, 12))}` : ""}</p><details><summary>Open event identity</summary><dl><dt>Target</dt><dd><code>${escapeHtml(event.targetId)}</code></dd><dt>Current digest</dt><dd><code>${escapeHtml(event.currentEvidenceDigest || event.currentDigest || event.sourceDigest || "not recorded")}</code></dd><dt>Event ID</dt><dd><code>${escapeHtml(event.id || event.publicationId || "source-scan")}</code></dd></dl></details></article>`).join("") : `<p class="muted">No source or publication events have been recorded yet.</p>`;
+  renderTimeline();
+}
+
+function renderTimeline() {
+  const query = state.timelineQuery.toLowerCase();
+  const events = state.timelineEvents.filter((event) => (state.timelineType === "all" || event.eventType === state.timelineType) && (!query || [event.sourceId, event.targetId, event.candidateKey, event.workspaceId].some((value) => String(value ?? "").toLowerCase().includes(query))));
+  byId("evidence-history-items").innerHTML = events.length ? events.slice(0, 20).map((event) => { const inspectKind = event.eventType.startsWith("source") ? "source" : event.eventType.startsWith("insight") ? "insight" : event.eventType.startsWith("briefing") ? "briefing" : ""; const inspectTarget = inspectKind === "insight" ? (event.candidateKey || event.targetId) : event.sourceId || event.targetId; return `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(event.eventType.replaceAll("_", " "))}</span>${event.reviewType ? `<span>${escapeHtml(event.reviewType.replaceAll("_", " "))}</span>` : ""}${event.status ? `<span>${escapeHtml(event.status)}</span>` : ""}<span>${escapeHtml(event.occurredAt)}</span></div><h3>${escapeHtml(event.sourceId || event.targetId)}</h3><p>${escapeHtml(event.outcome || event.status || "Recorded event")}${event.reviewer ? ` · by ${escapeHtml(event.reviewer)}` : ""}${event.previousEvidenceDigest ? ` · previous evidence ${escapeHtml(event.previousEvidenceDigest.slice(0, 12))}` : ""}</p>${inspectKind ? `<button class="secondary-button timeline-open" data-timeline-kind="${inspectKind}" data-timeline-target="${escapeHtml(inspectTarget)}" type="button">Open affected ${inspectKind}</button>` : ""}<details><summary>Open event identity</summary><dl><dt>Target</dt><dd><code>${escapeHtml(event.targetId)}</code></dd><dt>Current digest</dt><dd><code>${escapeHtml(event.currentEvidenceDigest || event.currentDigest || event.sourceDigest || "not recorded")}</code></dd><dt>Event ID</dt><dd><code>${escapeHtml(event.id || event.publicationId || "source-scan")}</code></dd></dl></details></article>`; }).join("") : `<p class="muted">No timeline events match these filters.</p>`;
+  document.querySelectorAll(".timeline-open").forEach((button) => button.addEventListener("click", () => {
+    const target = button.dataset.timelineTarget;
+    if (button.dataset.timelineKind === "source") inspectEvidence(target).catch((error) => showInspector("Inspection unavailable", error.message, ""));
+    else if (button.dataset.timelineKind === "insight") inspectInsight(target).catch((error) => showInspector("Inspection unavailable", error.message, ""));
+    else inspectBriefing(target).catch((error) => showInspector("Inspection unavailable", error.message, ""));
+  }));
 }
 
 function showInspector(title, summary, content) {
@@ -135,6 +150,14 @@ async function inspectInsight(insightId) {
       <h3>What would change our mind</h3><ul>${boundaries.whatWouldChangeOurMind.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
       <h3>Next test</h3><p>${escapeHtml(boundaries.nextTest)}</p>
     </article>`);
+}
+
+async function inspectBriefing(briefingId) {
+  const response = await apiFetch(`../api/briefings?workspace=${encodeURIComponent(state.workspaceId)}`);
+  if (!response.ok) throw new Error("Briefing could not be loaded.");
+  const briefing = (await response.json()).find((item) => item.id === briefingId);
+  if (!briefing) throw new Error("Briefing is not available in this workspace.");
+  showInspector(briefing.title, `${briefing.state} · ${briefing.publication}`, `<article class="inspection-card"><p>${escapeHtml(briefing.reading)}</p><h3>Evidence boundary</h3><p>${escapeHtml(briefing.boundary)}</p><h3>Next test</h3><p>${escapeHtml(briefing.nextTest)}</p>${briefing.staleReason ? `<p class="error">${escapeHtml(briefing.staleReason)}</p>` : ""}<p>Evidence records: ${escapeHtml(briefing.evidence.map((item) => item.recordId).join(", ") || "none")}</p></article>`);
 }
 
 function render() {
@@ -247,6 +270,8 @@ byId("role-filter").addEventListener("change", (event) => {
 });
 
 for (const field of ["theme", "company", "industry"]) byId(`${field}-filter`).addEventListener("change", (event) => { state[field] = event.target.value; render(); });
+byId("timeline-type-filter").addEventListener("change", (event) => { state.timelineType = event.target.value; renderTimeline(); });
+byId("timeline-query-filter").addEventListener("input", (event) => { state.timelineQuery = event.target.value; renderTimeline(); });
 
 async function loadQuestions() {
   const workspace = encodeURIComponent(state.workspaceId);

@@ -485,7 +485,7 @@ const server = createServer(async (request, response) => {
         ...sourceSnapshots.map((snapshot) => ({ eventType: "source_scan", targetId: snapshot.id, sourceId: snapshot.id, status: snapshot.status, previousDigest: snapshot.previousSha256 ?? null, currentDigest: snapshot.sha256 ?? null, occurredAt: snapshot.checkedAt })),
         ...reviewEvents,
         ...briefingPublications.map((publication) => ({ eventType: "briefing_publish", targetId: publication.briefingId, workspaceId: publication.workspaceId, reviewer: publication.publishedBy, currentEvidenceDigest: publication.evidenceDigest, occurredAt: publication.publishedAt, publicationId: publication.id })),
-        ...insightPublications.map((publication) => ({ eventType: "insight_publish", targetId: publication.candidateId, workspaceId: publication.workspaceId, reviewer: publication.publisher, currentEvidenceDigest: publication.evidenceDigest, occurredAt: publication.publishedAt, publicationId: publication.id }))
+        ...insightPublications.map((publication) => ({ eventType: "insight_publish", targetId: publication.candidateId, candidateKey: publication.candidateKey, workspaceId: publication.workspaceId, reviewer: publication.publisher, currentEvidenceDigest: publication.evidenceDigest, occurredAt: publication.publishedAt, publicationId: publication.id }))
       ].sort((a, b) => String(a.occurredAt).localeCompare(String(b.occurredAt)));
       return json(response, 200, { schemaVersion: "research-timeline-v1", eventCount: events.length, events });
     }
