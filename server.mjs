@@ -41,6 +41,9 @@ const operatorActors = new Set(JSON.parse(process.env.OPERATOR_ACTORS_JSON ?? "[
 const backupDir = process.env.BACKUP_DIR ? resolve(root, process.env.BACKUP_DIR) : undefined;
 const maxRefreshAgeMs = Number(process.env.MAX_REFRESH_AGE_MS ?? 7 * 24 * 60 * 60 * 1000);
 const maxSourceAgeMs = Number(process.env.MAX_SOURCE_AGE_MS ?? 14 * 24 * 60 * 60 * 1000);
+const maxFalseAlertRate = Number(process.env.OPERATOR_MAX_FALSE_ALERT_RATE ?? 0.4);
+const maxFailedRefreshes = Number(process.env.OPERATOR_MAX_FAILED_REFRESHES ?? 0);
+const maxDelayedDeliveries = Number(process.env.OPERATOR_MAX_DELAYED_DELIVERIES ?? 0);
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 await mkdir(runtimeDir, { recursive: true });
 const store = createRuntimeStore(runtimeDir);
@@ -263,7 +266,7 @@ function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions 
   };
 }
 
-function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts }) {
+function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries }) {
   const summaries = workspaces.map((workspace) => {
     const workspaceDeliveries = deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
     const reviewed = workspaceDeliveries.filter((delivery) => delivery.review);
@@ -278,6 +281,15 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
   const now = Date.now();
   const sourceAges = (sourceScan.sources ?? []).map((source) => ({ id: source.id, ageMs: Number.isFinite(Date.parse(source.checkedAt)) ? Math.max(0, now - Date.parse(source.checkedAt)) : null })).filter((source) => source.ageMs !== null);
   const failedRuns = refreshHistory.filter((run) => run.status !== "complete");
+  const dispositions = alerts.filter((alert) => ["useful", "false_positive", "needs_correction"].includes(alert.resolutionDisposition));
+  const falseAlertRate = dispositions.length ? alerts.filter((alert) => alert.resolutionDisposition === "false_positive").length / dispositions.length : null;
+  const delayedDeliveries = summaries.filter((workspace) => workspace.deliveryDelayed).length;
+  const warnings = [];
+  if (failedRuns.length > maxFailedRefreshes) warnings.push({ id: "refresh-failures", severity: "high", observed: failedRuns.length, threshold: maxFailedRefreshes, message: "One or more refresh runs are failing; inspect the failed steps before customer delivery." });
+  const staleSources = sourceAges.filter((source) => source.ageMs > maxSourceAgeMs).length;
+  if (staleSources > 0 || (sourceScan.counts?.missing ?? 0) > 0) warnings.push({ id: "source-freshness", severity: "high", observed: { stale: staleSources, missing: sourceScan.counts?.missing ?? 0 }, threshold: { maxAgeMs: maxSourceAgeMs, missing: 0 }, message: "Sources are too old or unavailable for a fully current reading." });
+  if (falseAlertRate !== null && falseAlertRate > maxFalseAlertRate) warnings.push({ id: "false-alert-rate", severity: "medium", observed: falseAlertRate, threshold: maxFalseAlertRate, message: "The recorded false-alert rate is above the operating limit; review watchlist rules and source changes." });
+  if (delayedDeliveries > maxDelayedDeliveries) warnings.push({ id: "delivery-delay", severity: "medium", observed: delayedDeliveries, threshold: maxDelayedDeliveries, message: "Configured pilot deliveries are behind their expected cadence." });
   const scansByRun = new Map((sourceScanHistory.runs ?? []).map((run) => [run.runId, run]));
   const deliveriesByRun = new Map();
   for (const delivery of deliveries) deliveriesByRun.set(delivery.refreshRunId, (deliveriesByRun.get(delivery.refreshRunId) ?? []).concat(delivery));
@@ -294,7 +306,9 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
     generatedAt: new Date().toISOString(),
     scope: { workspaceCount: workspaces.length, configuredPilots: profiles.length, deliveries: deliveries.length, reviewedDeliveries: reviewed.length },
     aggregate: { usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, notUsefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "not_useful").length, unclearDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "unclear").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, pilotCheckpoints: decisions.length, checkpointCounts: Object.fromEntries(["improve", "continue", "expand", "stop"].map((decision) => [decision, decisions.filter((item) => item.decision === decision).length])), auditedPilotActions: auditEntries.filter((entry) => ["configure_pilot", "review_pilot_delivery", "decide_pilot"].includes(entry.action)).length, openAlerts: alerts.filter((alert) => alert.state === "open").length, falseAlerts: alerts.filter((alert) => alert.resolutionDisposition === "false_positive").length, alertCorrections: alerts.filter((alert) => alert.resolutionDisposition === "needs_correction").length },
-    operations: { latestRefreshStatus: refreshHistory.at(-1)?.status ?? "not_run", failedRefreshRuns: failedRuns.length, lastRefreshAt: refreshHistory.at(-1)?.endedAt ?? null, sourceCount: sourceScan.sources?.length ?? 0, staleSources: sourceAges.filter((source) => source.ageMs > 14 * 86400000).length, oldestSourceAgeMs: sourceAges.length ? Math.max(...sourceAges.map((source) => source.ageMs)) : null, delayedDeliveries: summaries.filter((workspace) => workspace.deliveryDelayed).length },
+    operations: { latestRefreshStatus: refreshHistory.at(-1)?.status ?? "not_run", failedRefreshRuns: failedRuns.length, lastRefreshAt: refreshHistory.at(-1)?.endedAt ?? null, sourceCount: sourceScan.sources?.length ?? 0, staleSources, oldestSourceAgeMs: sourceAges.length ? Math.max(...sourceAges.map((source) => source.ageMs)) : null, delayedDeliveries, falseAlertRate },
+    thresholds: { maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries },
+    warnings,
     trend,
     workspaces: summaries,
     limitation: "This operator view contains aggregate pilot health only. It intentionally excludes customer questions, review notes, source details, and private workspace content. Counts describe recorded activity, not general product-market fit or causation."
@@ -954,7 +968,7 @@ const server = createServer(async (request, response) => {
       const refreshHistory = (await readJson(refreshHistoryPath, { runs: [] })).runs ?? [];
       const sourceScan = await readJson(sourceScanPath, { sources: [] });
       const sourceScanHistory = await readJson(sourceScanHistoryPath, { runs: [] });
-      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts }));
+      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries }));
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

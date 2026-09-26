@@ -23,6 +23,11 @@ The operator view exposes pilot counts and delivery status only. It does not
 expose customer questions, review notes, source passages, or private workspace
 content.
 
+Operator warning limits are configuration, not hidden product judgments:
+`OPERATOR_MAX_FALSE_ALERT_RATE` defaults to `0.4`, while failed refreshes and
+delayed deliveries default to `0`. Source age uses `MAX_SOURCE_AGE_MS`. The
+operator response returns the observed value and threshold beside each warning.
+
 Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map
 before checking the member's workspace role.
