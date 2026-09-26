@@ -4,8 +4,8 @@
   "sourceSnapshotDate": "2026-09-25",
   "operations": {
     "latestSourceScan": {
-      "generatedAt": "2026-09-26T03:40:50.047Z",
-      "runId": "scan-20260926034050",
+      "generatedAt": "2026-09-26T04:06:59.084Z",
+      "runId": "scan-20260926040659",
       "counts": {
         "new": 0,
         "changed": 0,
