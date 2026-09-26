@@ -8,9 +8,13 @@ const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const packet = JSON.parse(await readFile(resolve(root, "data/processed/ai-work-control.packet.json"), "utf8"));
 const records = new Map(packet.records.map((record) => [record.id, record]));
 const decisionsPath = resolve(root, "data/processed/runs/ai-work-control/insight-decisions.json");
+const publicationsPath = resolve(root, "data/processed/runs/ai-work-control/insight-publications.json");
 const decisions = existsSync(decisionsPath) ? JSON.parse(await readFile(decisionsPath, "utf8")) : { decisions: [] };
+const publications = existsSync(publicationsPath) ? JSON.parse(await readFile(publicationsPath, "utf8")) : { publications: [] };
 const latestDecision = new Map();
 for (const decision of decisions.decisions) latestDecision.set(decision.candidateKey, decision);
+const latestPublication = new Map();
+for (const publication of publications.publications) latestPublication.set(publication.candidateKey, publication);
 const candidates = packet.insights.map((insight) => {
   const evidence = insight.recordIds.map((id) => records.get(id)).filter(Boolean).map((record) => ({
     recordId: record.id,
@@ -23,18 +27,21 @@ const candidates = packet.insights.map((insight) => {
   const candidateKey = insight.id;
   const decision = latestDecision.get(candidateKey);
   const currentDecision = decision?.evidenceDigest === evidenceDigest ? decision : undefined;
-  const resultingState = currentDecision ? ({ accept: "accepted_for_publication", defer: "deferred", reject: "rejected", correct: "correction_required" }[currentDecision.decision] ?? "needs_researcher_review") : "needs_researcher_review";
+  const publication = latestPublication.get(candidateKey);
+  const currentPublication = publication?.evidenceDigest === evidenceDigest && currentDecision?.decision === "accept" ? publication : undefined;
+  const resultingState = currentPublication ? "published" : currentDecision ? ({ accept: "accepted_for_publication", defer: "deferred", reject: "rejected", correct: "correction_required" }[currentDecision.decision] ?? "needs_researcher_review") : "needs_researcher_review";
   return {
     id: `candidate-${insight.id}-${evidenceDigest.slice(0, 12)}`,
     insightId: insight.id,
     title: insight.title,
     plainLanguageSummary: insight.plainLanguageSummary,
     status: resultingState,
-    publication: "not_published",
+    publication: currentPublication ? "published" : "not_published",
     generatedAt: new Date().toISOString(),
     candidateKey,
     evidenceDigest,
     ...(currentDecision ? { decisionId: currentDecision.id, decidedBy: currentDecision.reviewer, decidedAt: currentDecision.decidedAt, decisionNote: currentDecision.note } : {}),
+    ...(currentPublication ? { publicationId: currentPublication.id, publishedBy: currentPublication.publisher, publishedAt: currentPublication.publishedAt } : {}),
     evidence,
     strongestAlternative: insight.strongestAlternative,
     whatWouldChangeOurMind: insight.whatWouldChangeOurMind,

@@ -17,10 +17,14 @@ function render() {
   const insightCandidate = state.packet.operations?.insightCandidates?.candidates?.[0];
   if (insightCandidate) {
     byId("insight-status").textContent = insightCandidate.status.replaceAll("_", " ");
-    byId("insight-review-actions").innerHTML = insightCandidate.status === "needs_researcher_review" ? `<button id="accept-insight" type="button">Accept for publication review</button>` : `<span>Decision recorded by ${escapeHtml(insightCandidate.decidedBy || "researcher")}.</span>`;
+    byId("insight-review-actions").innerHTML = insightCandidate.status === "needs_researcher_review" ? `<button id="accept-insight" type="button">Accept for publication review</button>` : insightCandidate.status === "accepted_for_publication" ? `<button id="publish-insight" type="button">Publish insight</button>` : insightCandidate.status === "published" ? `<span>Published by ${escapeHtml(insightCandidate.publishedBy || "researcher")}.</span>` : `<span>Decision recorded by ${escapeHtml(insightCandidate.decidedBy || "researcher")}.</span>`;
     byId("accept-insight")?.addEventListener("click", async () => {
       const response = await fetch(`../api/insight-candidates/${encodeURIComponent(insightCandidate.id)}/decision`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", actorId: "demo-researcher", decision: "accept", note: "Accepted for publication review after evidence inspection." }) });
       if (response.ok) byId("insight-review-actions").textContent = "Accepted for publication review.";
+    });
+    byId("publish-insight")?.addEventListener("click", async () => {
+      const response = await fetch(`../api/insight-candidates/${encodeURIComponent(insightCandidate.id)}/publish`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", actorId: "demo-researcher", note: "Published after review." }) });
+      if (response.ok) byId("insight-review-actions").textContent = "Published.";
     });
   }
 

@@ -17,6 +17,7 @@ const briefingsPath = resolve(root, "data/processed/runs/ai-work-control/workspa
 const briefingPublicationsPath = resolve(root, "data/processed/runs/ai-work-control/briefing-publications.json");
 const insightDecisionsPath = resolve(root, "data/processed/runs/ai-work-control/insight-decisions.json");
 const insightCandidatesPath = resolve(root, "data/processed/runs/ai-work-control/insight-candidates.json");
+const insightPublicationsPath = resolve(root, "data/processed/runs/ai-work-control/insight-publications.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 
@@ -130,6 +131,24 @@ const server = createServer(async (request, response) => {
       ledger.updatedAt = decision.decidedAt;
       await writeFile(insightDecisionsPath, `${JSON.stringify(ledger, null, 2)}\n`);
       return json(response, 200, decision);
+    }
+    if (request.method === "POST" && url.pathname.startsWith("/api/insight-candidates/") && url.pathname.endsWith("/publish")) {
+      const candidateId = decodeURIComponent(url.pathname.slice("/api/insight-candidates/".length, -"/publish".length));
+      const body = await requestBody(request);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === body.actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot publish insights." });
+      const candidates = await readJson(insightCandidatesPath, { candidates: [] });
+      const candidate = candidates.candidates.find((item) => item.id === candidateId);
+      if (!candidate) return json(response, 404, { error: "Insight candidate not found." });
+      if (candidate.status !== "accepted_for_publication") return json(response, 409, { error: "Insight must be accepted for publication before publishing." });
+      const ledger = await readJson(insightPublicationsPath, { schemaVersion: "insight-publication-ledger-v1", publications: [] });
+      const publication = { id: `insight-publication-${randomUUID()}`, candidateKey: candidate.candidateKey, candidateId, workspaceId: workspace.id, evidenceDigest: candidate.evidenceDigest, publisher: member.id, publisherRole: member.role, publishedAt: new Date().toISOString(), note: String(body.note ?? "").slice(0, 2000) };
+      ledger.publications.push(publication);
+      ledger.updatedAt = publication.publishedAt;
+      await writeFile(insightPublicationsPath, `${JSON.stringify(ledger, null, 2)}\n`);
+      return json(response, 200, publication);
     }
     if (request.method !== "GET") return json(response, 405, { error: "Only GET and alert acknowledgement POST are supported." });
     if (url.pathname === "/api/health") return json(response, 200, { status: "ok", service: "change-intelligence-read-model", generatedAt: new Date().toISOString() });

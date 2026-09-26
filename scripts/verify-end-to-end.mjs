@@ -29,7 +29,8 @@ assert(report?.sourceRefs.captureStatus === "complete", "all direct SEC records 
 assert(evaluations.evaluations.every((evaluation) => evaluation.state === "evidence_retrieved"), "question evaluations must remain evidence retrieval, not answers");
 assert(briefings.briefings.every((briefing) => ["draft", "published", "stale"].includes(briefing.state)), "briefings must have an explicit publication state");
 assert(insightCandidates.candidates.length === packet.insights.length, "each insight must produce one candidate");
-assert(insightCandidates.candidates.every((candidate) => ["needs_researcher_review", "accepted_for_publication", "deferred", "rejected", "correction_required"].includes(candidate.status) && candidate.publication === "not_published"), "insight candidates must have an explicit review state and remain unpublished");
+assert(insightCandidates.candidates.every((candidate) => ["needs_researcher_review", "accepted_for_publication", "published", "deferred", "rejected", "correction_required"].includes(candidate.status)), "insight candidates must have an explicit review state");
+assert(insightCandidates.candidates.every((candidate) => candidate.status !== "published" || (candidate.publication === "published" && candidate.publicationId)), "published insights need a publication receipt");
 for (const candidate of insightCandidates.candidates) for (const evidence of candidate.evidence) assert(records.get(evidence.recordId)?.sourceDigest === evidence.sourceDigest, `${candidate.id}: insight evidence digest does not match packet`);
 for (const briefing of briefings.briefings) {
   for (const evidence of briefing.evidence) assert(records.get(evidence.recordId)?.sourceDigest === evidence.sourceDigest, `${briefing.id}: evidence digest does not match packet`);

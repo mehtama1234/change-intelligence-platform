@@ -4,8 +4,8 @@
   "sourceSnapshotDate": "2026-09-25",
   "operations": {
     "latestSourceScan": {
-      "generatedAt": "2026-09-26T04:37:44.506Z",
-      "runId": "scan-20260926043744",
+      "generatedAt": "2026-09-26T04:42:15.795Z",
+      "runId": "scan-20260926044215",
       "counts": {
         "new": 0,
         "changed": 0,
@@ -27,7 +27,7 @@
     },
     "workspaceAlerts": {
       "schemaVersion": "workspace-alert-ledger-v1",
-      "generatedAt": "2026-09-26T04:37:44.771Z",
+      "generatedAt": "2026-09-26T04:42:16.089Z",
       "workspaces": [
         {
           "id": "demo-research",
@@ -59,12 +59,12 @@
     },
     "questionEvaluations": {
       "schemaVersion": "question-evaluation-ledger-v1",
-      "generatedAt": "2026-09-26T04:37:46.163Z",
+      "generatedAt": "2026-09-26T04:42:17.623Z",
       "evaluations": [
         {
           "questionId": "question-1790396868707-0zillf",
           "workspaceId": "demo-research",
-          "evaluatedAt": "2026-09-26T04:37:46.163Z",
+          "evaluatedAt": "2026-09-26T04:42:17.623Z",
           "state": "evidence_retrieved",
           "matchedRecordIds": [
             "trend-hunting-ai-control",
@@ -133,7 +133,7 @@
     },
     "briefings": {
       "schemaVersion": "workspace-briefing-ledger-v1",
-      "generatedAt": "2026-09-26T04:37:46.731Z",
+      "generatedAt": "2026-09-26T04:42:18.189Z",
       "briefings": [
         {
           "id": "briefing-question-1790396868707-0zillf",
@@ -146,7 +146,7 @@
           "publishedAt": "2026-09-26T04:34:31.213Z",
           "publicationId": "publication-1790397271213-qdiac3",
           "evidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
-          "generatedAt": "2026-09-26T04:37:46.731Z",
+          "generatedAt": "2026-09-26T04:42:18.189Z",
           "evidence": [
             {
               "recordId": "trend-hunting-ai-control",
@@ -234,22 +234,25 @@
     },
     "insightCandidates": {
       "schemaVersion": "insight-candidate-ledger-v1",
-      "generatedAt": "2026-09-26T04:39:48.471Z",
+      "generatedAt": "2026-09-26T04:42:19.322Z",
       "candidates": [
         {
           "id": "candidate-insight-ai-capability-control-gap-001-710b18999d68",
           "insightId": "insight-ai-capability-control-gap-001",
           "title": "AI can return time without returning control",
           "plainLanguageSummary": "The current evidence supports a narrower reading than 'AI makes work more productive': AI can remove visible tasks while decisions, measurement, correction, and dependence remain controlled by an employer, platform, or infrastructure provider.",
-          "status": "accepted_for_publication",
-          "publication": "not_published",
-          "generatedAt": "2026-09-26T04:39:48.471Z",
+          "status": "published",
+          "publication": "published",
+          "generatedAt": "2026-09-26T04:42:19.322Z",
           "candidateKey": "insight-ai-capability-control-gap-001",
           "evidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
           "decisionId": "insight-decision-f1302f01-b437-4f15-bceb-e1c11fbfb195",
           "decidedBy": "demo-researcher",
           "decidedAt": "2026-09-26T04:39:39.341Z",
           "decisionNote": "Inspected evidence and alternatives.",
+          "publicationId": "insight-publication-81a80021-c4df-4594-938d-bbfa46908e14",
+          "publishedBy": "demo-researcher",
+          "publishedAt": "2026-09-26T04:41:55.147Z",
           "evidence": [
             {
               "recordId": "trend-hunting-ai-control",
