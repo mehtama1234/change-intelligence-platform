@@ -33,7 +33,7 @@ async function loadWorkspaces() {
   if (!workspaces.some((workspace) => workspace.id === state.workspaceId)) state.workspaceId = workspaces[0].id;
   select.value = state.workspaceId;
   setWorkspaceStatus(state.token ? "Connected." : "Demo workspace.");
-  await Promise.all([loadChanges(), loadOperations(), loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists(), loadComparisonViews()]);
+  await Promise.all([loadChanges(), loadOperations(), loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists(), loadComparisonViews(), loadWorkspaceSources()]);
 }
 
 async function loadComparisonViews() {
@@ -63,6 +63,30 @@ async function loadWatchlists() {
   const watchlists = await response.json();
   byId("watchlists-summary").textContent = `${watchlists.length} watchlist${watchlists.length === 1 ? "" : "s"} in this workspace.`;
   byId("watchlists-items").innerHTML = watchlists.length ? watchlists.map((watchlist) => `<article class="record-card"><div class="record-meta"><span class="role">monitoring</span><span>${escapeHtml(watchlist.alertOn.join(", "))}</span></div><h3>${escapeHtml(watchlist.name)}</h3><p>${watchlist.sourceIds.length} source${watchlist.sourceIds.length === 1 ? "" : "s"} · created ${escapeHtml(watchlist.createdAt)}</p><details><summary>Open watchlist scope</summary><p>${watchlist.sourceIds.map((sourceId) => `<code>${escapeHtml(sourceId)}</code>`).join(" ")}</p></details></article>`).join("") : `<p class="muted">No custom watchlists yet.</p>`;
+}
+
+async function loadWorkspaceSources() {
+  const response = await apiFetch(`../api/workspace-sources?workspace=${encodeURIComponent(state.workspaceId)}`);
+  if (!response.ok) throw new Error(`Private source intake unavailable (${response.status})`);
+  const body = await response.json();
+  byId("workspace-sources-summary").textContent = `${body.sources.length} private source${body.sources.length === 1 ? "" : "s"}. Unreviewed material is not used in shared insights or briefings.`;
+  const form = byId("workspace-source-form");
+  form.hidden = !body.canSubmit;
+  byId("workspace-sources-items").innerHTML = body.sources.length ? body.sources.map((source) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(source.reviewState.replaceAll("_", " "))}</span><span>${escapeHtml(source.submittedAt)}</span><span>digest ${escapeHtml(source.sourceDigest.slice(0, 12))}</span></div><h3>${escapeHtml(source.title)}</h3><p>${escapeHtml(source.observation)}</p><p class="muted">${escapeHtml(source.sourceRef)}${source.sourceLocator ? ` · ${escapeHtml(source.sourceLocator)}` : ""}</p><details><summary>Open submitted excerpt</summary><blockquote>${escapeHtml(source.sourceExcerpt)}</blockquote>${source.reviewNote ? `<p class="muted">Review note: ${escapeHtml(source.reviewNote)}</p>` : ""}</details>${body.canReview && source.reviewState === "pending_review" ? `<div class="review-actions"><button class="review-private-source" data-source-id="${escapeHtml(source.id)}" data-review-state="accepted" type="button">Accept for workspace use</button><button class="review-private-source" data-source-id="${escapeHtml(source.id)}" data-review-state="rejected" type="button">Reject</button></div>` : ""}</article>`).join("") : `<p class="muted">No private sources have been submitted for this workspace.</p>`;
+  form.onsubmit = async (event) => {
+    event.preventDefault();
+    const status = byId("workspace-source-status");
+    const result = await apiFetch("../api/workspace-sources", { method: "POST", body: { title: byId("workspace-source-title").value, sourceRef: byId("workspace-source-ref").value, sourceLocator: byId("workspace-source-locator").value, excerpt: byId("workspace-source-excerpt").value, observation: byId("workspace-source-observation").value, affectedGroups: byId("workspace-source-groups").value.split(",").map((value) => value.trim()).filter(Boolean) } });
+    const responseBody = await result.json();
+    status.textContent = result.ok ? "Private source submitted for review." : responseBody.error || "Could not submit private source.";
+    if (result.ok) { form.reset(); await loadWorkspaceSources(); }
+  };
+  document.querySelectorAll(".review-private-source").forEach((button) => button.addEventListener("click", async () => {
+    const note = window.prompt("Optional review note:", "") ?? "";
+    const result = await apiFetch(`../api/workspace-sources/${encodeURIComponent(button.dataset.sourceId)}/review`, { method: "POST", body: { reviewState: button.dataset.reviewState, reviewNote: note } });
+    byId("workspace-source-status").textContent = result.ok ? "Private source review saved." : `Could not save review (${result.status}).`;
+    if (result.ok) await loadWorkspaceSources();
+  }));
 }
 
 async function loadAlerts() {
@@ -666,7 +690,7 @@ byId("question-form").addEventListener("submit", async (event) => {
   }
 });
 
-byId("workspace-select").addEventListener("change", async (event) => { state.workspaceId = event.target.value; await Promise.all([loadChanges(), loadComparisonViews(), loadOperations(), loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists(), loadEvidenceHistory(), loadInsightReview()]); });
+byId("workspace-select").addEventListener("change", async (event) => { state.workspaceId = event.target.value; await Promise.all([loadChanges(), loadComparisonViews(), loadOperations(), loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists(), loadWorkspaceSources(), loadEvidenceHistory(), loadInsightReview()]); });
 byId("watchlist-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const status = byId("watchlist-status");

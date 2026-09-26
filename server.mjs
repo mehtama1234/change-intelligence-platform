@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { readFile, readdir, writeFile, mkdir, stat } from "node:fs/promises";
 import { resolve, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -30,6 +30,7 @@ const insightOpportunitiesPath = resolve(runtimeDir, "insight-opportunities.json
 const insightPromotionsPath = resolve(runtimeDir, "insight-promotions.json");
 const decisionOutcomesPath = resolve(runtimeDir, "decision-outcomes.json");
 const watchlistsPath = resolve(runtimeDir, "workspace-watchlists.json");
+const workspaceSourcesPath = resolve(runtimeDir, "workspace-sources.json");
 const comparisonViewsPath = resolve(runtimeDir, "workspace-comparison-views.json");
 const notificationPreferencesPath = resolve(runtimeDir, "workspace-notification-preferences.json");
 const deliveryNotificationsPath = resolve(runtimeDir, "workspace-delivery-notifications.json");
@@ -79,6 +80,7 @@ await importRuntimeLedgers(store, {
   insightPublications: insightPublicationsPath,
   decisionOutcomes: decisionOutcomesPath,
   watchlists: watchlistsPath,
+  workspaceSources: workspaceSourcesPath,
   comparisonViews: comparisonViewsPath,
   notificationPreferences: notificationPreferencesPath,
   deliveryNotifications: deliveryNotificationsPath,
@@ -398,7 +400,7 @@ function workspaceRecords(records, workspaceId) {
   return (records ?? []).filter((record) => record.workspaceId === workspaceId);
 }
 
-function buildWorkspaceExport({ workspace, packet, questions, evaluations, briefings, watchlists, comparisons, preferences, notifications, deliveries, pilotProfile, pilotDecisions, outcomes, briefingPublications, insightPublications, auditEntries }) {
+function buildWorkspaceExport({ workspace, packet, questions, evaluations, briefings, watchlists, privateSources, comparisons, preferences, notifications, deliveries, pilotProfile, pilotDecisions, outcomes, briefingPublications, insightPublications, auditEntries }) {
   const sourceIds = new Set();
   for (const question of questions) for (const sourceId of question.scope?.sourceIds ?? []) sourceIds.add(sourceId);
   for (const briefing of briefings) for (const evidence of briefing.evidence ?? []) sourceIds.add(evidence.recordId);
@@ -415,6 +417,7 @@ function buildWorkspaceExport({ workspace, packet, questions, evaluations, brief
     questionEvaluations: evaluations,
     briefings,
     watchlists,
+    privateSources,
     comparisons,
     notificationPreferences: safePreferences,
     deliveryNotifications: notifications,
@@ -439,6 +442,7 @@ async function persistWorkspaceLedgersAfterDeletion() {
     [insightPublicationsPath, store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications")],
     [decisionOutcomesPath, store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes")],
     [watchlistsPath, store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists")],
+    [workspaceSourcesPath, store.recordsLedger("workspace_source", "workspace-source-ledger-v1", "sources")],
     [comparisonViewsPath, store.recordsLedger("comparison_view", "workspace-comparison-view-ledger-v1", "views")],
     [notificationPreferencesPath, store.recordsLedger("notification_preference", "workspace-notification-preference-ledger-v1", "preferences")],
     [deliveryNotificationsPath, store.recordsLedger("delivery_notification", "workspace-delivery-notification-ledger-v1", "notifications")],
@@ -1107,6 +1111,54 @@ const server = createServer(async (request, response) => {
       await writeFile(watchlistsPath, `${JSON.stringify(store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists"), null, 2)}\n`);
       return json(response, 201, watchlist);
     }
+    if (request.method === "POST" && url.pathname === "/api/workspace-sources") {
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot submit private sources." });
+      const title = String(body.title ?? "").trim();
+      const sourceRef = String(body.sourceRef ?? "").trim();
+      const sourceLocator = String(body.sourceLocator ?? "").trim();
+      const excerpt = String(body.excerpt ?? "").trim();
+      const observation = String(body.observation ?? "").trim();
+      const affectedGroups = [...new Set((Array.isArray(body.affectedGroups) ? body.affectedGroups : []).map((value) => String(value).trim()).filter(Boolean))].slice(0, 20);
+      if (title.length < 3 || title.length > 200 || sourceRef.length < 3 || sourceRef.length > 500 || excerpt.length < 20 || excerpt.length > 5000 || observation.length < 10 || observation.length > 2000) return json(response, 400, { error: "Provide a title, source reference, excerpt of at least 20 characters, and observation of at least 10 characters." });
+      const now = new Date().toISOString();
+      const sourceDigest = createHash("sha256").update(`${sourceRef}\n${sourceLocator}\n${excerpt}`).digest("hex");
+      const source = { id: `workspace-source-${randomUUID()}`, workspaceId: workspace.id, title, sourceRef, sourceLocator: sourceLocator || null, sourceExcerpt: excerpt, observation, affectedGroups, sourceDigest, claimState: "submitted", reviewState: "pending_review", submittedBy: member.id, submittedRole: member.role, submittedAt: now, reviewedBy: null, reviewedAt: null, reviewNote: null };
+      store.commitRecord({ kind: "workspace_source", record: source, audit: { requestId, action: "submit_workspace_source", targetId: source.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "submitted", occurredAt: now }, operation: { key: idempotencyKey, action: "submit_workspace_source", status: 201, body: source, completedAt: now } });
+      await writeFile(workspaceSourcesPath, `${JSON.stringify(store.recordsLedger("workspace_source", "workspace-source-ledger-v1", "sources"), null, 2)}\n`);
+      return json(response, 201, source);
+    }
+    if (request.method === "POST" && url.pathname.startsWith("/api/workspace-sources/") && url.pathname.endsWith("/review")) {
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const sourceId = decodeURIComponent(url.pathname.slice("/api/workspace-sources/".length, -"/review".length));
+      const source = store.findRecord("workspace_source", sourceId);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!source || !workspace || source.workspaceId !== workspace.id) return json(response, 404, { error: "Private source not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot review private sources." });
+      const reviewState = String(body.reviewState ?? "");
+      if (!['accepted', 'rejected'].includes(reviewState)) return json(response, 400, { error: "Review state must be accepted or rejected." });
+      const now = new Date().toISOString();
+      const reviewed = { ...source, claimState: reviewState === "accepted" ? "reviewed" : "rejected", reviewState, reviewedBy: member.id, reviewedAt: now, reviewNote: String(body.reviewNote ?? "").trim().slice(0, 2000) || null };
+      store.commitRecord({ kind: "workspace_source", record: reviewed, audit: { requestId, action: "review_workspace_source", targetId: source.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: reviewState, occurredAt: now }, operation: { key: idempotencyKey, action: "review_workspace_source", status: 200, body: reviewed, completedAt: now } });
+      await writeFile(workspaceSourcesPath, `${JSON.stringify(store.recordsLedger("workspace_source", "workspace-source-ledger-v1", "sources"), null, 2)}\n`);
+      return json(response, 200, reviewed);
+    }
     if (request.method === "POST" && url.pathname === "/api/comparison-views") {
       const body = await requestBody(request);
       const actorId = authenticatedActor(request, body);
@@ -1705,6 +1757,7 @@ const server = createServer(async (request, response) => {
       const pilotDeliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
       const briefingPublications = store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications").publications;
       const insightPublications = store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications").publications;
+      const privateSources = store.recordsLedger("workspace_source", "workspace-source-ledger-v1", "sources").sources;
       await appendAudit({ requestId, action: "export_workspace", targetId: workspace.id, workspaceId: workspace.id, actorId: access.actorId ?? null, actorRole: null, result: "exported", occurredAt: new Date().toISOString() });
       const exported = buildWorkspaceExport({
         workspace,
@@ -1713,6 +1766,7 @@ const server = createServer(async (request, response) => {
         evaluations: workspaceRecords(evaluationsLedger.evaluations, workspace.id),
         briefings: workspaceRecords(briefingsLedger.briefings, workspace.id),
         watchlists: workspaceRecords(watchlistsLedger.watchlists, workspace.id),
+        privateSources: workspaceRecords(privateSources, workspace.id),
         comparisons: workspaceRecords(comparisonsLedger.views, workspace.id),
         preferences: workspaceRecords(preferencesLedger.preferences, workspace.id)[0] ?? null,
         notifications: workspaceRecords(notificationsLedger.notifications, workspace.id),
@@ -1837,6 +1891,15 @@ const server = createServer(async (request, response) => {
       if (denyWorkspaceRead(response, access)) return;
       const watchlists = store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists").watchlists;
       return json(response, 200, access.workspaceIds ? watchlists.filter((watchlist) => access.workspaceIds.includes(watchlist.workspaceId)) : watchlists);
+    }
+    if (url.pathname === "/api/workspace-sources") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      const sources = store.recordsLedger("workspace_source", "workspace-source-ledger-v1", "sources").sources;
+      const visible = access.workspaceIds ? sources.filter((source) => access.workspaceIds.includes(source.workspaceId)) : sources;
+      const workspace = access.workspaceId ? await workspaceConfig(access.workspaceId) : null;
+      const member = workspace?.members?.find((candidate) => candidate.id === access.actorId);
+      return json(response, 200, { schemaVersion: "workspace-source-read-model-v1", workspaceId: access.workspaceId, canSubmit: member ? ["owner", "researcher"].includes(member.role) : false, canReview: member ? ["owner", "researcher"].includes(member.role) : false, sources: visible.slice().sort((a, b) => String(b.submittedAt).localeCompare(String(a.submittedAt))) });
     }
     if (url.pathname === "/api/comparison-views") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

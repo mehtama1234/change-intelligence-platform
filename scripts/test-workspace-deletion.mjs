@@ -17,6 +17,9 @@ await writeFile(`${runtimeDir}/workspace-watchlists.json`, JSON.stringify({ sche
   { id: "delete-watchlist", workspaceId: "demo-research", name: "Delete this watchlist", sourceIds: [], repositoryIds: [], alertOn: ["changed"] },
   { id: "keep-watchlist", workspaceId: "other-workspace", name: "Keep this watchlist", sourceIds: [], repositoryIds: [], alertOn: ["changed"] }
 ] }, null, 2));
+await writeFile(`${runtimeDir}/workspace-sources.json`, JSON.stringify({ schemaVersion: "workspace-source-ledger-v1", sources: [
+  { id: "delete-source", workspaceId: "demo-research", title: "Delete this private source", sourceRef: "private-source", sourceExcerpt: "A bounded private source excerpt for deletion testing.", observation: "This private source belongs only to the demo workspace.", sourceDigest: "delete-source-digest", claimState: "submitted", reviewState: "pending_review", submittedBy: "demo-owner", submittedAt: now }
+] }, null, 2));
 
 function start() {
   const child = spawn(process.execPath, [resolve(root, "server.mjs")], {
@@ -49,7 +52,7 @@ try {
   await waitUntilHealthy(server.getOutput);
   const retention = await fetch(`${base}/api/workspace-retention?workspace=demo-research`, { headers: ownerHeaders });
   const retentionBody = await retention.json();
-  if (retention.status !== 200 || retentionBody.canDelete !== true || retentionBody.counts.questions !== 1 || retentionBody.counts.watchlist !== 1 || retentionBody.confirmation !== "DELETE demo-research") throw new Error(`Retention preview failed: ${JSON.stringify(retentionBody)}`);
+  if (retention.status !== 200 || retentionBody.canDelete !== true || retentionBody.counts.questions !== 1 || retentionBody.counts.watchlist !== 1 || retentionBody.counts.workspace_source !== 1 || retentionBody.confirmation !== "DELETE demo-research") throw new Error(`Retention preview failed: ${JSON.stringify(retentionBody)}`);
   const researcherRetention = await fetch(`${base}/api/workspace-retention?workspace=demo-research`, { headers: researcherHeaders });
   const researcherRetentionBody = await researcherRetention.json();
   if (researcherRetention.status !== 200 || researcherRetentionBody.canDelete !== false) throw new Error("Non-owner received deletion permission.");
@@ -61,7 +64,7 @@ try {
   if (researcherDeletion.status !== 403) throw new Error(`Expected non-owner deletion to return 403, received ${researcherDeletion.status}`);
   const deletion = await fetch(`${base}/api/workspace-deletion`, { method: "POST", headers: { ...ownerHeaders, "Idempotency-Key": "delete-demo-research", "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", confirmation: "DELETE demo-research" }) });
   const deletionBody = await deletion.json();
-  if (deletion.status !== 200 || deletionBody.deleted.questions !== 1 || deletionBody.deleted.watchlist !== 1 || !deletionBody.preserved.includes("shared research evidence")) throw new Error(`Workspace deletion failed: ${JSON.stringify(deletionBody)}`);
+  if (deletion.status !== 200 || deletionBody.deleted.questions !== 1 || deletionBody.deleted.watchlist !== 1 || deletionBody.deleted.workspace_source !== 1 || !deletionBody.preserved.includes("shared research evidence")) throw new Error(`Workspace deletion failed: ${JSON.stringify(deletionBody)}`);
   const retry = await fetch(`${base}/api/workspace-deletion`, { method: "POST", headers: { ...ownerHeaders, "Idempotency-Key": "delete-demo-research", "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", confirmation: "DELETE demo-research" }) });
   if (retry.status !== 200 || JSON.stringify(await retry.json()) !== JSON.stringify(deletionBody)) throw new Error("Deletion idempotency did not replay the original result.");
   const deletedQuestions = await fetch(`${base}/api/questions?workspace=demo-research`, { headers: ownerHeaders });

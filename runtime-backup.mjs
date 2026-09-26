@@ -8,6 +8,7 @@ const runtimeFiles = [
   "audit-log.json",
   "idempotency-operations.json",
   "workspace-alerts.json",
+  "workspace-sources.json",
   "briefing-publications.json",
   "insight-decisions.json",
   "insight-publications.json",

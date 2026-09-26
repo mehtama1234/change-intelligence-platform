@@ -215,3 +215,9 @@ workspace-private rows in one SQLite transaction, writes the deletion audit
 receipt, and rebuilds the JSON compatibility ledgers from SQLite so deleted
 records cannot return after restart. Shared research evidence, immutable source
 captures, and global scan history are deliberately preserved.
+
+Private customer sources use a separate `workspace_source` record kind. A
+workspace owner or researcher can submit a bounded excerpt and observation;
+the service records a content digest and keeps the item in `pending_review`.
+Only an explicit workspace review changes it to `accepted` or `rejected`, and
+these records are never added to the shared packet automatically.

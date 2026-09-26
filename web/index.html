@@ -216,6 +216,31 @@
         <div id="watchlists-items" class="record-list" aria-live="polite"></div>
       </section>
 
+      <section id="workspace-sources" aria-labelledby="workspace-sources-title">
+        <div class="section-heading">
+          <p class="eyebrow">Customer workspace · private evidence</p>
+          <h2 id="workspace-sources-title">Bring in a private source</h2>
+          <p id="workspace-sources-summary" class="muted">Private material stays inside this workspace until a researcher reviews it.</p>
+        </div>
+        <form id="workspace-source-form" class="question-form">
+          <label for="workspace-source-title">Source title</label>
+          <input id="workspace-source-title" minlength="3" maxlength="200" required placeholder="e.g. Customer pilot memo">
+          <label for="workspace-source-ref">Source reference</label>
+          <input id="workspace-source-ref" minlength="3" maxlength="500" required placeholder="URL, file name, or internal reference">
+          <label for="workspace-source-locator">Passage or page location</label>
+          <input id="workspace-source-locator" maxlength="300" placeholder="Page 4, section 2, or timestamp">
+          <label for="workspace-source-excerpt">Exact excerpt</label>
+          <textarea id="workspace-source-excerpt" minlength="20" maxlength="5000" required placeholder="Paste the bounded passage that supports the observation."></textarea>
+          <label for="workspace-source-observation">What does it show?</label>
+          <textarea id="workspace-source-observation" minlength="10" maxlength="2000" required placeholder="State only what this source supports."></textarea>
+          <label for="workspace-source-groups">Affected people or groups</label>
+          <input id="workspace-source-groups" maxlength="500" placeholder="One group per comma">
+          <button type="submit">Submit private source for review</button>
+          <p id="workspace-source-status" class="muted" role="status"></p>
+        </form>
+        <div id="workspace-sources-items" class="record-list" aria-live="polite"></div>
+      </section>
+
       <section id="workspace-questions" aria-labelledby="questions-title">
         <div class="section-heading">
           <p class="eyebrow">Customer workspace · saved questions</p>

@@ -108,6 +108,10 @@ owner, requires the exact workspace confirmation phrase, requires an
 idempotency key in token mode, and records an audit receipt. It removes only
 workspace-private product records; shared evidence, immutable captures, and
 global scan history remain available.
+Private customer-source submissions use the same workspace membership boundary.
+They are stored as private runtime records with a content digest and review
+state; they are excluded from the shared packet until a researcher explicitly
+reviews them. Source excerpts are returned only to members of that workspace.
 The demo reader keeps a manually entered token only for the current browser
 session; production should replace this with an identity provider and secure
 session cookie.
