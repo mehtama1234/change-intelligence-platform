@@ -44,6 +44,7 @@ const childEnv = {
   INSIGHT_OUTPUT_DIR: runDir,
   INSIGHT_CANDIDATE_PATH: resolve(runDir, "insight-candidates.json"),
   INSIGHT_EVALUATION_PATH: resolve(runDir, "insight-evaluation.json"),
+  INSIGHT_OPPORTUNITIES_PATH: resolve(runDir, "insight-opportunities.json"),
   ATLAS_OUTPUT_PATH: resolve(runDir, "domain-atlas.json"),
   SEC_CAPTURE_DIR: secCaptureDir,
   SEC_MANIFEST_PATH: secManifestPath,
@@ -105,6 +106,7 @@ try {
   await runStep("materialize-evidence", "materialize-evidence-versions.mjs");
   await runStep("build-packet", "build-ai-work-control-packet.mjs");
   await runStep("build-domain-atlas", "build-domain-atlas.mjs");
+  await runStep("discover-insight-opportunities", "discover-insight-opportunities.mjs");
   await runStep("generate-insight-candidates", "generate-insight-candidates.mjs");
   await runStep("evaluate-insight-quality", "evaluate-insight-quality.mjs");
   await runStep("publish-insight-candidates", "build-ai-work-control-packet.mjs");

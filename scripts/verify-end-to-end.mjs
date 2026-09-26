@@ -14,12 +14,13 @@ const insightCandidates = await json("data/processed/runs/ai-work-control/insigh
 const insightPublications = await json("data/processed/runs/ai-work-control/insight-publications.json");
 const deliveries = await json("data/processed/runs/ai-work-control/workspace-pilot-deliveries.json");
 const insightEvaluation = await json("data/processed/runs/ai-work-control/insight-evaluation.json");
+const insightOpportunities = await json("data/processed/runs/ai-work-control/insight-opportunities.json");
 const atlas = await json("data/processed/ai-work-control.atlas.json");
 const ingestion = await json("data/processed/ai-work-control.ingestion.json");
 const errors = [];
 const assert = (condition, message) => { if (!condition) errors.push(message); };
 const records = new Map(packet.records.map((record) => [record.id, record]));
-const requiredSteps = ["capture-sec-filings", "extract-sec-xbrl", "validate-source-adapters", "scan-repositories", "ingest-research-repositories", "evaluate-watchlists", "process-review-work", "materialize-evidence", "build-packet", "build-domain-atlas", "evaluate-questions", "build-question-briefings", "publish-question-evaluations", "generate-insight-candidates", "evaluate-insight-quality", "publish-insight-candidates", "evaluate-operator-warnings", "sync-runtime-store", "dispatch-operator-notifications", "record-pilot-readiness"];
+const requiredSteps = ["capture-sec-filings", "extract-sec-xbrl", "validate-source-adapters", "scan-repositories", "ingest-research-repositories", "evaluate-watchlists", "process-review-work", "materialize-evidence", "build-packet", "build-domain-atlas", "discover-insight-opportunities", "evaluate-questions", "build-question-briefings", "publish-question-evaluations", "generate-insight-candidates", "evaluate-insight-quality", "publish-insight-candidates", "evaluate-operator-warnings", "sync-runtime-store", "dispatch-operator-notifications", "record-pilot-readiness"];
 
 assert(packet.records.length >= 7, "packet should contain the six-repository vertical slice records");
 assert(atlas.schemaVersion === "domain-atlas-v1" && atlas.sourceRecordCount === packet.records.length, "domain atlas must normalize the current packet");
@@ -38,6 +39,7 @@ assert(evaluations.evaluations.every((evaluation) => evaluation.state === "evide
 assert(briefings.briefings.every((briefing) => ["draft", "published", "stale"].includes(briefing.state)), "briefings must have an explicit publication state");
 assert(insightCandidates.candidates.length === packet.insights.length, "each insight must produce one candidate");
 assert(insightEvaluation.status === "pass" && insightEvaluation.evaluations.length === packet.insights.length, "insight quality evaluation must pass for every insight");
+assert(insightOpportunities.schemaVersion === "insight-opportunity-ledger-v1" && insightOpportunities.opportunities.every((opportunity) => opportunity.status === "opportunity_needs_researcher_review" && opportunity.evidence.length >= 2), "cross-repository insight opportunities must remain review-only and source-linked");
 assert(insightCandidates.candidates.every((candidate) => ["needs_researcher_review", "accepted_for_publication", "published", "stale", "deferred", "rejected", "correction_required"].includes(candidate.status)), "insight candidates must have an explicit review state");
 assert(insightCandidates.candidates.every((candidate) => candidate.status !== "stale" || (candidate.staleReason && candidate.previousEvidenceDigest)), "stale insights need an explanation and prior digest");
 assert(insightCandidates.candidates.every((candidate) => candidate.status !== "published" || (candidate.publication === "published" && candidate.publicationId)), "published insights need a publication receipt");

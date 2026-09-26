@@ -21,6 +21,7 @@ const alertsPath = resolve(root, process.env.ALERTS_PATH ?? `${runtimeDir}/works
 const questionEvaluationsPath = resolve(root, process.env.QUESTION_EVALUATIONS_PATH ?? `${runtimeDir}/question-evaluations.json`);
 const briefingsPath = resolve(root, process.env.BRIEFINGS_PATH ?? `${runtimeDir}/workspace-briefings.json`);
 const insightCandidatesPath = resolve(root, process.env.INSIGHT_CANDIDATES_PATH ?? `${runtimeDir}/insight-candidates.json`);
+const insightOpportunitiesPath = resolve(root, process.env.INSIGHT_OPPORTUNITIES_PATH ?? `${runtimeDir}/insight-opportunities.json`);
 const map = JSON.parse(await readFile(mapPath, "utf8"));
 const sourceScan = existsSync(sourceScanPath) ? JSON.parse(await readFile(sourceScanPath, "utf8")) : undefined;
 const ingestion = existsSync(ingestionPath) ? JSON.parse(await readFile(ingestionPath, "utf8")) : undefined;
@@ -31,6 +32,7 @@ const alerts = existsSync(alertsPath) ? JSON.parse(await readFile(alertsPath, "u
 const questionEvaluations = existsSync(questionEvaluationsPath) ? JSON.parse(await readFile(questionEvaluationsPath, "utf8")) : undefined;
 const briefings = existsSync(briefingsPath) ? JSON.parse(await readFile(briefingsPath, "utf8")) : undefined;
 const insightCandidates = existsSync(insightCandidatesPath) ? JSON.parse(await readFile(insightCandidatesPath, "utf8")) : undefined;
+const insightOpportunities = existsSync(insightOpportunitiesPath) ? JSON.parse(await readFile(insightOpportunitiesPath, "utf8")) : undefined;
 const previousPacket = existsSync(previousPacketPath) ? JSON.parse(await readFile(previousPacketPath, "utf8")) : undefined;
 const previousRecordsById = new Map((previousPacket?.records ?? []).map((record) => [record.id, record]));
 
@@ -238,6 +240,7 @@ const packet = {
       ,...(questionEvaluations ? { questionEvaluations } : {})
       ,...(briefings ? { briefings } : {})
       ,...(insightCandidates ? { insightCandidates } : {})
+      ,...(insightOpportunities ? { insightOpportunities } : {})
     }
   } : {}),
   records,

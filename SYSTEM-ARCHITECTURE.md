@@ -79,6 +79,11 @@ packet and atlas generation consume that ledger when it is available.
     correction, switching, and deployment shared concepts, while ignoring
     broad words such as AI and work when they appear alone. Each match records
     its concept and reason so a researcher can see why evidence was retrieved.
+22. **Cross-repository opportunity discovery** — groups recurring mechanisms
+    across independent repositories and writes review-only opportunities with
+    source digests, alternative explanations, falsifiers, and next tests. The
+    discovery stage proposes research work; it cannot publish or deliver a
+    customer claim.
 
 ## Background jobs
 
