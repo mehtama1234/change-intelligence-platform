@@ -73,6 +73,14 @@ theme. It separately counts public-company annual-plus-quarterly histories and
 does not treat a missing outcome record as proof of an outcome. This keeps a
 thin evidence base visible instead of allowing a polished summary to hide it.
 
+### Outcome bridge
+
+Shows the separate rails used to test a company story: company movement,
+independent measurements, and counterexamples. It states what the comparison
+can support and what it cannot support. A bridge may remain
+`cross_context_not_matched` until the same named workflow, population, and
+period can be followed from deployment through use and later result.
+
 ### Briefing studio
 
 Lets a user select evidence, arrange a bounded story, add a question, export

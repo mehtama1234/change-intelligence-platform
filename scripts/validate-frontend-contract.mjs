@@ -36,6 +36,7 @@ const required = [
   [html, 'id="pilot-report"', "pilot learning report"],
   [html, 'id="pilot-history"', "pilot history"],
   [html, 'id="coverage-panel"', "evidence coverage panel"],
+  [html, 'id="outcome-bridges"', "outcome bridge panel"],
   [html, 'id="atlas-panel"', "domain atlas panel"],
   [html, 'id="atlas-detail"', "atlas entity detail"],
   [html, 'id="atlas-compare-form"', "atlas comparison form"],

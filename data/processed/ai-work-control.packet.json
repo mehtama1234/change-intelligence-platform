@@ -2023,6 +2023,40 @@
       ]
     }
   ],
+  "outcomeBridges": [
+    {
+      "id": "outcome-bridge-ai-work-control-001",
+      "title": "Company movement versus worker control and remedy",
+      "question": "Does reported AI capability or deployment movement produce more worker control, usable correction, and durable remedy?",
+      "companyRecordIds": [
+        "atlas-c3-ai-report-window",
+        "atlas-nvidia-ai-platform-window",
+        "atlas-microsoft-cloud-window",
+        "atlas-oracle-cloud-window",
+        "atlas-broadcom-ai-infrastructure-window"
+      ],
+      "independentRecordIds": [
+        "trend-ai-agency-control-measure",
+        "cultural-nber-ai-task-adoption",
+        "cultural-jrc-algorithmic-management-outcomes",
+        "cultural-amazon-bandameeda-remedy"
+      ],
+      "counterexampleRecordIds": [
+        "trend-uber-kumar-review-counterexample"
+      ],
+      "status": "cross_context_not_matched",
+      "canSupport": [
+        "Company reports show commercial and operational movement.",
+        "Independent records show measured control, adoption, working-condition, or remedy observations.",
+        "The counterexample shows that human review does not guarantee restoration."
+      ],
+      "cannotSupport": [
+        "These records do not follow the same named workflow, employer, worker cohort, model, or period from deployment to outcome.",
+        "The comparison does not establish that a company's reported movement caused the independent worker outcomes."
+      ],
+      "nextTest": "Select one named AI-mediated workflow and follow the same population across deployment, use, correction, appeal, exit, and later result for at least two periods."
+    }
+  ],
   "insights": [
     {
       "id": "insight-ai-capability-control-gap-001",

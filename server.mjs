@@ -217,6 +217,7 @@ async function ensureWorkspaceOnboardingNotification({ workspaceId, identityId, 
 
 function buildCoverage(packet, registry) {
   const records = packet.records ?? [];
+  const recordsById = new Map(records.map((record) => [record.id, record]));
   const countByRole = (roles) => records.filter((record) => roles.includes(record.sourceRole)).length;
   const reportWindows = records.filter((record) => record.reportWindow).map((record) => ({
     recordId: record.id,
@@ -242,7 +243,11 @@ function buildCoverage(packet, registry) {
     const sourceRecords = records.filter((record) => record.sourceRepository === source.id);
     return { id: source.id, refresh: source.refresh, purpose: source.purpose, recordCount: sourceRecords.length, latestAsOf: sourceRecords.map((record) => record.asOf).sort().at(-1) ?? null, status: sourceRecords.length ? "present" : "missing" };
   });
-  return { schemaVersion: "coverage-read-model-v1", domain: packet.domain ?? null, sourceSnapshotDate: packet.sourceSnapshotDate ?? null, repositories, reportWindows, requirements, summary: { ready: requirements.filter((item) => item.status === "ready").length, partial: requirements.filter((item) => item.status === "partial").length, missing: requirements.filter((item) => item.status === "missing").length } };
+  const outcomeBridges = (packet.outcomeBridges ?? []).map((bridge) => {
+    const group = (ids) => (ids ?? []).map((id) => recordsById.get(id)).filter(Boolean).map((record) => ({ id: record.id, title: record.title, sourceRole: record.sourceRole, claimState: record.claimState, asOf: record.asOf ?? null }));
+    return { ...bridge, companyRecords: group(bridge.companyRecordIds), independentRecords: group(bridge.independentRecordIds), counterexampleRecords: group(bridge.counterexampleRecordIds) };
+  });
+  return { schemaVersion: "coverage-read-model-v1", domain: packet.domain ?? null, sourceSnapshotDate: packet.sourceSnapshotDate ?? null, repositories, reportWindows, outcomeBridges, requirements, summary: { ready: requirements.filter((item) => item.status === "ready").length, partial: requirements.filter((item) => item.status === "partial").length, missing: requirements.filter((item) => item.status === "missing").length } };
 }
 
 function buildPilotMetrics({ workspaceId, auditEntries, alerts, outcomes, briefings }) {

@@ -216,6 +216,13 @@ for (const ingestedSource of ingestion?.records ?? map.sources) {
   });
 }
 
+const outcomeBridges = (map.outcomeBridges ?? []).map((bridge) => {
+  const referencedIds = [...(bridge.companyRecordIds ?? []), ...(bridge.independentRecordIds ?? []), ...(bridge.counterexampleRecordIds ?? [])];
+  const missingIds = referencedIds.filter((id) => !records.some((record) => record.id === id));
+  if (missingIds.length) throw new Error(`${bridge.id}: missing referenced records: ${missingIds.join(", ")}`);
+  return bridge;
+});
+
 const acceptedVersions = evidenceLedger?.records ?? [];
 for (const version of acceptedVersions) {
   if (version.state !== "accepted_for_research" || !version.record?.id) continue;
@@ -266,6 +273,7 @@ const packet = {
     }
   } : {}),
   records,
+  outcomeBridges,
   insights: [map.insight, ...(map.additionalInsights ?? []), ...(insightPromotions.promotions ?? []).map((promotion) => ({ ...promotion.insight, origin: "discovered_opportunity", promotionId: promotion.id }))]
 };
 

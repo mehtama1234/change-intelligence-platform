@@ -93,3 +93,14 @@ signal → documented condition → repeated pattern → mechanism evidence
 ```
 
 The ladder is not a confidence score. It describes what kind of proof exists.
+
+## Outcome bridges
+
+An outcome bridge is a declared comparison between separate evidence rails. It
+must name the company records, independent outcome records, and any
+counterexample. It must also state the question, the supported reading, the
+unsupported reading, and the next test.
+
+Company movement plus independent outcome evidence is not automatically a
+causal link. Until the same workflow, population, and period are matched, the
+bridge remains an open comparison rather than a conclusion.
