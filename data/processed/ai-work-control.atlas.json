@@ -1,9 +1,9 @@
 {
   "schemaVersion": "domain-atlas-v1",
-  "generatedAt": "2026-09-26T15:40:36.490Z",
+  "generatedAt": "2026-09-26T18:08:54.860Z",
   "domain": "ai-work-control",
   "sourceSnapshotDate": "2026-09-25",
-  "sourceRecordCount": 23,
+  "sourceRecordCount": 24,
   "entities": {
     "themes": [
       {
@@ -32,6 +32,7 @@
           "cultural-jrc-algorithmic-management-outcomes",
           "cultural-named-workplace-system-stage-ledger",
           "cultural-amazon-bandameeda-remedy",
+          "atlas-oracle-cloud-window-question-001",
           "trend-uber-kumar-review-counterexample"
         ]
       }
@@ -161,6 +162,13 @@
         "label": "Prediction tools can make scarce fundraising staff more selective while moving judgment about who receives attention into a data system.",
         "evidenceIds": [
           "inc5000-veradata-donor-analytics"
+        ]
+      },
+      {
+        "id": "mechanism:reported-financial-movement-does-not-by-itself-identify-the-workflow-workload-or-user-change-that-produced-it",
+        "label": "Reported financial movement does not by itself identify the workflow, workload, or user change that produced it.",
+        "evidenceIds": [
+          "atlas-oracle-cloud-window-question-001"
         ]
       },
       {
@@ -370,7 +378,8 @@
           "atlas-nvidia-ai-platform-window",
           "atlas-microsoft-cloud-window",
           "atlas-oracle-cloud-window",
-          "atlas-broadcom-ai-infrastructure-window"
+          "atlas-broadcom-ai-infrastructure-window",
+          "atlas-oracle-cloud-window-question-001"
         ]
       },
       {
@@ -385,7 +394,8 @@
         "label": "cloud infrastructure workers",
         "evidenceIds": [
           "atlas-microsoft-cloud-window",
-          "atlas-oracle-cloud-window"
+          "atlas-oracle-cloud-window",
+          "atlas-oracle-cloud-window-question-001"
         ]
       },
       {
@@ -413,6 +423,7 @@
           "atlas-oracle-cloud-window",
           "cultural-nber-ai-customer-support-productivity",
           "cultural-amazon-bandameeda-remedy",
+          "atlas-oracle-cloud-window-question-001",
           "trend-uber-kumar-review-counterexample"
         ]
       },
@@ -470,7 +481,8 @@
           "atlas-nvidia-ai-platform-window",
           "atlas-microsoft-cloud-window",
           "atlas-oracle-cloud-window",
-          "atlas-broadcom-ai-infrastructure-window"
+          "atlas-broadcom-ai-infrastructure-window",
+          "atlas-oracle-cloud-window-question-001"
         ]
       },
       {
@@ -718,7 +730,8 @@
           "atlas-nvidia-ai-platform-window",
           "atlas-microsoft-cloud-window",
           "atlas-oracle-cloud-window",
-          "atlas-broadcom-ai-infrastructure-window"
+          "atlas-broadcom-ai-infrastructure-window",
+          "atlas-oracle-cloud-window-question-001"
         ]
       },
       {
@@ -1607,6 +1620,41 @@
     {
       "from": "cultural-amazon-bandameeda-remedy",
       "to": "repository:cultural-geopolitical-theme-mining",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "atlas-oracle-cloud-window-question-001",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "atlas-oracle-cloud-window-question-001",
+      "to": "mechanism:reported-financial-movement-does-not-by-itself-identify-the-workflow-workload-or-user-change-that-produced-it",
+      "relation": "explains"
+    },
+    {
+      "from": "atlas-oracle-cloud-window-question-001",
+      "to": "affected-group:enterprise-users",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-oracle-cloud-window-question-001",
+      "to": "affected-group:cloud-infrastructure-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-oracle-cloud-window-question-001",
+      "to": "affected-group:customers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-oracle-cloud-window-question-001",
+      "to": "affected-group:capital-providers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-oracle-cloud-window-question-001",
+      "to": "repository:company-atlas-lab",
       "relation": "classified_as_repositorie"
     },
     {

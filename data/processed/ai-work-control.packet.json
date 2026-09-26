@@ -2169,6 +2169,32 @@
       ]
     },
     {
+      "id": "atlas-oracle-cloud-window-question-001",
+      "sourceRole": "open_question",
+      "sourceRepository": "company-atlas-lab",
+      "sourceRef": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+      "sourceLocator": "Open attribution question",
+      "sourceDigest": "781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583",
+      "sourceBytes": 2413,
+      "sourceExcerpt": "## What the sequence cannot establish The bridge does not establish AI demand, cloud capacity return, customer value, durability, or public and worker outcomes. It also does not isolate whether price, use, customer mix, capacity, demand, or another operating change caused the reported revenue movement.",
+      "title": "What operating change explains Oracle's reported movement?",
+      "observation": "The bridge reports quarterly revenue movement but does not identify whether price, use, customer mix, capacity, demand, or another operating change caused it.",
+      "theme": "ai-work-control",
+      "mechanism": "Reported financial movement does not by itself identify the workflow, workload, or user change that produced it.",
+      "affectedGroups": [
+        "enterprise users",
+        "cloud infrastructure workers",
+        "customers",
+        "capital providers"
+      ],
+      "claimState": "open",
+      "asOf": "2026-09-25",
+      "limits": [
+        "This is a research question, not a finding.",
+        "The source does not establish customer value, AI demand, capacity return, durability, or worker outcomes."
+      ]
+    },
+    {
       "id": "trend-uber-kumar-review-counterexample",
       "sourceRole": "research",
       "sourceRepository": "trend-hunting",

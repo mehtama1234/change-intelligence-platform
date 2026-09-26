@@ -50,7 +50,7 @@
       "adapter": "repository-files",
       "refresh": "weekly",
       "purpose": "company dossiers, question matrices, cases, and briefings",
-      "recordCount": 6,
+      "recordCount": 7,
       "status": "ingested"
     }
   ],
@@ -583,6 +583,26 @@
       "sourceDigest": "78e50dcb48e4452ad98bf8e308e58ce80ffe85344d61d2571bf9244f98b37ad3",
       "sourceBytes": 1197,
       "capturePath": "raw/source-captures/atlas-broadcom-ai-infrastructure-window/78e50dcb48e4452ad98bf8e308e58ce80ffe85344d61d2571bf9244f98b37ad3.source",
+      "ingestedAt": "2026-09-26T14:49:01.548Z"
+    },
+    {
+      "id": "atlas-oracle-cloud-window-question-001",
+      "sourceRole": "open_question",
+      "sourceRepository": "company-atlas-lab",
+      "sourcePath": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+      "sourceLocator": "Open attribution question",
+      "title": "What operating change explains Oracle's reported movement?",
+      "observation": "The bridge reports quarterly revenue movement but does not identify whether price, use, customer mix, capacity, demand, or another operating change caused it.",
+      "theme": "ai-work-control",
+      "mechanism": "Reported financial movement does not by itself identify the workflow, workload, or user change that produced it.",
+      "affectedGroups": ["enterprise users", "cloud infrastructure workers", "customers", "capital providers"],
+      "claimState": "open",
+      "asOf": "2026-09-25",
+      "limits": ["This is a research question, not a finding.", "The source does not establish customer value, AI demand, capacity return, durability, or worker outcomes."],
+      "excerptTerms": ["operating cause", "open", "cannot establish"],
+      "sourceDigest": "781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583",
+      "sourceBytes": 2413,
+      "capturePath": "raw/source-captures/atlas-oracle-cloud-window-question-001/781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583.source",
       "ingestedAt": "2026-09-26T14:49:01.548Z"
     },
     {

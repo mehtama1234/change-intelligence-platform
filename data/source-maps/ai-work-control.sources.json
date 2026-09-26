@@ -421,6 +421,22 @@
       "denominator": "One Uber Eats worker; 97–98% of Brisbane partners reportedly met the rating threshold in the decision’s context",
       "limits": ["This counterexample does not prove ratings are accurate, that all workers receive equivalent review, or that unrecorded correction did not occur."],
       "excerptTerms": ["counterexample", "human review", "dismissed"]
+    },
+    {
+      "id": "atlas-oracle-cloud-window-question-001",
+      "sourceRole": "open_question",
+      "sourceRepository": "company-atlas-lab",
+      "sourcePath": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+      "sourceLocator": "Open attribution question",
+      "title": "What operating change explains Oracle's reported movement?",
+      "observation": "The bridge reports quarterly revenue movement but does not identify whether price, use, customer mix, capacity, demand, or another operating change caused it.",
+      "theme": "ai-work-control",
+      "mechanism": "Reported financial movement does not by itself identify the workflow, workload, or user change that produced it.",
+      "affectedGroups": ["enterprise users", "cloud infrastructure workers", "customers", "capital providers"],
+      "claimState": "open",
+      "asOf": "2026-09-25",
+      "limits": ["This is a research question, not a finding.", "The source does not establish customer value, AI demand, capacity return, durability, or worker outcomes."],
+      "excerptTerms": ["operating cause", "open", "cannot establish"]
     }
   ],
   "outcomeBridges": [
