@@ -261,6 +261,56 @@ function buildWorkspaceUpdate({ workspaceId, workspaceName, refresh, readiness, 
   };
 }
 
+function buildChangeIntelligenceFeed({ packet, scan, briefings = [], candidates = [], workspaceIds = null }) {
+  const recordsById = new Map((packet.records ?? []).map((record) => [record.id, record]));
+  const recordsByPath = new Map((packet.records ?? []).map((record) => [record.sourceRef, record]));
+  const candidatesByKey = new Map(candidates.map((candidate) => [candidate.candidateKey, candidate]));
+  const visibleBriefings = briefings.filter((briefing) => !workspaceIds || workspaceIds.includes(briefing.workspaceId));
+  const items = (scan.sources ?? [])
+    .filter((source) => source.status !== "unchanged")
+    .map((source) => {
+      const record = recordsById.get(source.id) ?? recordsByPath.get(source.path);
+      const linkedInsights = record ? (packet.insights ?? []).filter((insight) => (insight.recordIds ?? []).includes(record.id)).map((insight) => {
+        const candidate = candidatesByKey.get(insight.id);
+        return { id: insight.id, title: insight.title, status: candidate?.status ?? insight.status ?? "not_generated", stale: candidate?.status === "stale", nextTest: insight.nextTest ?? null };
+      }) : [];
+      const linkedBriefings = record ? visibleBriefings.filter((briefing) => (briefing.evidence ?? []).some((evidence) => evidence.recordId === record.id)).map((briefing) => ({ id: briefing.id, title: briefing.title, state: briefing.state, stale: briefing.state === "stale" })) : [];
+      const action = source.status === "missing" ? "Restore or replace the unavailable source before relying on this reading." : source.status === "changed" ? "Open the updated source and re-check linked interpretations." : source.status === "new" ? "Review the new source before using it in a published reading." : "Check this deferred source when its refresh cadence is due.";
+      return {
+        id: `change-${source.id}-${source.checkedAt ?? scan.runId ?? "current"}`,
+        sourceId: source.id,
+        status: source.status,
+        repository: source.repository,
+        sourcePath: source.path,
+        checkedAt: source.checkedAt ?? scan.generatedAt ?? null,
+        previousSha256: source.previousSha256 ?? null,
+        currentSha256: source.sha256 ?? null,
+        title: record?.title ?? source.path,
+        plainLanguage: source.status === "missing" ? "The source is unavailable, so the evidence chain may no longer be complete." : source.status === "changed" ? "The source material changed since the last scan." : source.status === "new" ? "A new source was found in the research set." : "This source was deferred because its refresh cadence has not arrived.",
+        whyItMatters: record?.mechanism ?? source.reviewReason ?? "The source needs an explicit review before downstream claims are treated as current.",
+        observation: record?.observation ?? null,
+        sourceRole: record?.sourceRole ?? null,
+        claimState: record?.claimState ?? null,
+        asOf: record?.asOf ?? null,
+        affectedGroups: record?.affectedGroups ?? [],
+        limits: record?.limits ?? [],
+        nextAction: action,
+        recordId: record?.id ?? null,
+        linkedInsights,
+        linkedBriefings,
+        staleDownstreamCount: linkedInsights.filter((insight) => insight.stale).length + linkedBriefings.filter((briefing) => briefing.stale).length
+      };
+    });
+  return {
+    schemaVersion: "change-intelligence-feed-v1",
+    runId: scan.runId ?? null,
+    generatedAt: scan.generatedAt ?? null,
+    items,
+    summary: { total: items.length, changed: items.filter((item) => item.status === "changed").length, new: items.filter((item) => item.status === "new").length, missing: items.filter((item) => item.status === "missing").length, deferred: items.filter((item) => item.status === "deferred").length, downstreamItemsNeedingReview: items.filter((item) => item.staleDownstreamCount > 0).length },
+    limitation: "This feed identifies source and publication work triggered by a refresh. It does not decide whether a change matters in the world; inspect the source, limits, and linked evidence before acting."
+  };
+}
+
 function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions, outcomes = [] }) {
   const reviewed = deliveries.filter((delivery) => delivery.review);
   const count = (items, value) => items.filter((item) => item === value).length;
@@ -1289,6 +1339,17 @@ const server = createServer(async (request, response) => {
       const includeUnchanged = url.searchParams.get("includeUnchanged") === "true";
       const changes = (scan.sources ?? []).filter((source) => includeUnchanged || source.status !== "unchanged").map((source) => ({ id: source.id, repository: source.repository, sourcePath: source.path, status: source.status, needsReview: source.needsReview, reason: source.reviewReason, checkedAt: source.checkedAt, previousSha256: source.previousSha256 ?? null, currentSha256: source.sha256 ?? null }));
       return json(response, 200, { schemaVersion: "source-change-feed-v1", runId: scan.runId, generatedAt: scan.generatedAt, counts: scan.counts, changes });
+    }
+    if (url.pathname === "/api/change-intelligence") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      const [packet, scan, briefingLedger, candidateLedger] = await Promise.all([
+        readJson(packetPath, { records: [], insights: [] }),
+        readJson(sourceScanPath, { runId: null, generatedAt: null, sources: [] }),
+        readJson(briefingsPath, { briefings: [] }),
+        readJson(insightCandidatesPath, { candidates: [] })
+      ]);
+      return json(response, 200, buildChangeIntelligenceFeed({ packet, scan, briefings: briefingLedger.briefings ?? [], candidates: candidateLedger.candidates ?? [], workspaceIds: access.workspaceIds }));
     }
     if (url.pathname === "/api/coverage") {
       const packet = await readJson(packetPath, { domain: null, sourceSnapshotDate: null, records: [] });

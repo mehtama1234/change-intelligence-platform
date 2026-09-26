@@ -10,7 +10,7 @@ const runtimeDir = `/tmp/change-intelligence-read-model-${Date.now()}`;
 await mkdir(runtimeDir, { recursive: true });
 const sourceMap = JSON.parse(await readFile(resolve(root, "data/source-maps/ai-work-control.sources.json"), "utf8"));
 const checkedAt = new Date().toISOString();
-const sourceSnapshot = { schemaVersion: "source-scan-receipt-v1", runId: "scan-read-model-fixture", generatedAt: checkedAt, counts: { new: 0, changed: 0, unchanged: sourceMap.sources.length, missing: 0 }, sources: sourceMap.sources.map((source) => ({ id: source.id, repository: source.sourceRepository, path: source.sourcePath, status: "unchanged", needsReview: false, checkedAt })) };
+const sourceSnapshot = { schemaVersion: "source-scan-receipt-v1", runId: "scan-read-model-fixture", generatedAt: checkedAt, counts: { new: 0, changed: 1, unchanged: sourceMap.sources.length - 1, missing: 0 }, sources: sourceMap.sources.map((source, index) => ({ id: source.id, repository: source.sourceRepository, path: source.sourcePath, status: index === 0 ? "changed" : "unchanged", needsReview: index === 0, reviewReason: index === 0 ? "Source bytes changed." : null, previousSha256: index === 0 ? "old-source-digest" : null, sha256: index === 0 ? "new-source-digest" : null, checkedAt })) };
 await writeFile(resolve(runtimeDir, "latest-source-scan.json"), `${JSON.stringify(sourceSnapshot, null, 2)}\n`);
 await writeFile(resolve(runtimeDir, "source-scan-history.json"), `${JSON.stringify({ schemaVersion: "source-scan-history-v1", runs: [sourceSnapshot, { ...sourceSnapshot, runId: "scan-read-model-older", generatedAt: new Date(Date.parse(checkedAt) - 86400000).toISOString() }] }, null, 2)}\n`);
 const child = spawn(process.execPath, [resolve(root, "server.mjs")], {
@@ -42,6 +42,9 @@ try {
   const changesResponse = await request("/api/changes?includeUnchanged=true");
   const changes = await changesResponse.json();
   if (changesResponse.status !== 200 || changes.schemaVersion !== "source-change-feed-v1" || changes.changes.length !== sourceMap.sources.length) throw new Error("Source change feed contract failed.");
+  const intelligenceResponse = await request("/api/change-intelligence?workspace=demo-research");
+  const intelligence = await intelligenceResponse.json();
+  if (intelligenceResponse.status !== 200 || intelligence.schemaVersion !== "change-intelligence-feed-v1" || intelligence.summary.changed !== 1 || intelligence.items.length !== 1 || intelligence.items[0].recordId !== sourceMap.sources[0].id || !intelligence.items[0].plainLanguage || !intelligence.items[0].nextAction) throw new Error("Change-intelligence feed contract failed.");
   const coverageResponse = await request("/api/coverage");
   const coverage = await coverageResponse.json();
   if (coverageResponse.status !== 200 || coverage.schemaVersion !== "coverage-read-model-v1" || coverage.reportWindows.length !== 5 || coverage.requirements.find((item) => item.id === "public-company-history")?.status !== "ready" || coverage.repositories.length !== 6) throw new Error("Evidence coverage contract failed.");

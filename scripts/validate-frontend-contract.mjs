@@ -48,7 +48,7 @@ const required = [
   [html, 'id="next-test"', "next-test view"],
   [html, 'aria-live="polite"', "live update announcement"],
   [app, "../api/packet", "packet read model"],
-  [app, "../api/changes?includeUnchanged=true", "change feed API"],
+  [app, "../api/change-intelligence?workspace=", "change intelligence feed API"],
   [app, "../api/coverage", "evidence coverage API"],
   [app, "../api/atlas", "domain atlas API"],
   [app, "../api/atlas/entity?kind=", "atlas entity detail API"],

@@ -103,6 +103,10 @@ packet and atlas generation consume that ledger when it is available.
 27. **Briefing version history** — each workspace can inspect the briefing's
     publication versions, evidence digests, re-review events, current version,
     and stale actions without seeing another workspace's history.
+28. **Change-intelligence feed** — a workspace-facing refresh read model turns
+    source changes into plain-language review work, links the affected evidence,
+    insights, and briefings, and states the next action without claiming that
+    every changed file is important.
 
 ## Background jobs
 
