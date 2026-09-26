@@ -26,6 +26,8 @@ const briefingPublicationsPath = resolve(runtimeDir, "briefing-publications.json
 const insightDecisionsPath = resolve(runtimeDir, "insight-decisions.json");
 const insightCandidatesPath = resolve(runtimeDir, "insight-candidates.json");
 const insightPublicationsPath = resolve(runtimeDir, "insight-publications.json");
+const insightOpportunitiesPath = resolve(runtimeDir, "insight-opportunities.json");
+const insightPromotionsPath = resolve(runtimeDir, "insight-promotions.json");
 const decisionOutcomesPath = resolve(runtimeDir, "decision-outcomes.json");
 const watchlistsPath = resolve(runtimeDir, "workspace-watchlists.json");
 const comparisonViewsPath = resolve(runtimeDir, "workspace-comparison-views.json");
@@ -749,6 +751,47 @@ const server = createServer(async (request, response) => {
         await writeReviewEvents();
       }
       return json(response, 200, decision);
+    }
+    if (request.method === "POST" && url.pathname.startsWith("/api/insight-opportunities/") && url.pathname.endsWith("/promote")) {
+      const opportunityId = decodeURIComponent(url.pathname.slice("/api/insight-opportunities/".length, -"/promote".length));
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot promote insight opportunities." });
+      const opportunities = await readJson(insightOpportunitiesPath, { opportunities: [] });
+      const opportunity = opportunities.opportunities.find((candidate) => candidate.id === opportunityId);
+      if (!opportunity) return json(response, 404, { error: "Insight opportunity not found." });
+      const promotions = await readJson(insightPromotionsPath, { schemaVersion: "insight-promotion-ledger-v1", promotions: [] });
+      const existing = promotions.promotions.find((promotion) => promotion.opportunityId === opportunity.id);
+      if (existing) return json(response, 409, { error: "This insight opportunity has already been promoted.", promotion: existing });
+      const title = String(body.title ?? "").trim().slice(0, 240);
+      const plainLanguageSummary = String(body.plainLanguageSummary ?? "").trim().slice(0, 2000);
+      const strongestAlternative = String(body.strongestAlternative ?? "").trim().slice(0, 2000);
+      const nextTest = String(body.nextTest ?? "").trim().slice(0, 2000);
+      const whatWouldChangeOurMind = [...new Set((Array.isArray(body.whatWouldChangeOurMind) ? body.whatWouldChangeOurMind : []).map((item) => String(item).trim()).filter(Boolean))].slice(0, 8);
+      if (title.length < 10 || plainLanguageSummary.length < 30 || strongestAlternative.length < 20 || nextTest.length < 20 || whatWouldChangeOurMind.length < 1) return json(response, 400, { error: "Promotion requires a substantive title, summary, alternative explanation, next test, and at least one falsifier." });
+      const packet = await readJson(packetPath, { records: [] });
+      const knownRecordIds = new Set(packet.records.map((record) => record.id));
+      const recordIds = [...new Set((opportunity.evidence ?? []).map((item) => item.recordId).filter((recordId) => knownRecordIds.has(recordId)))];
+      if (recordIds.length < 2) return json(response, 409, { error: "The opportunity no longer has two current source records." });
+      const now = new Date().toISOString();
+      const promotion = { id: `promotion-${randomUUID()}`, opportunityId: opportunity.id, workspaceId: workspace.id, promotedBy: member.id, promotedRole: member.role, promotedAt: now, note: String(body.note ?? "").trim().slice(0, 2000), insight: { id: `insight-promoted-${randomUUID()}`, title, plainLanguageSummary, recordIds, strongestAlternative, whatWouldChangeOurMind, nextTest, status: "draft", refreshBy: body.refreshBy ? String(body.refreshBy).slice(0, 32) : null } };
+      promotions.promotions = [...(promotions.promotions ?? []), promotion];
+      promotions.updatedAt = now;
+      await writeFile(insightPromotionsPath, `${JSON.stringify(promotions, null, 2)}\n`);
+      const audit = { requestId, action: "promote_insight_opportunity", targetId: opportunity.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "promoted", occurredAt: now };
+      await appendAudit(audit);
+      await storeOperation({ key: idempotencyKey, action: "promote_insight_opportunity", status: 201, body: promotion, completedAt: now });
+      store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "insight_opportunity_promoted", targetId: opportunity.id, promotionId: promotion.id, candidateKey: promotion.insight.id, workspaceId: workspace.id, reviewer: member.id, reviewerRole: member.role, outcome: "promoted_to_draft_insight", sourceRecordIds: recordIds, occurredAt: now }]);
+      await writeReviewEvents();
+      return json(response, 201, promotion);
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/source-review/") && url.pathname.endsWith("/decision")) {
       const candidateId = decodeURIComponent(url.pathname.slice("/api/source-review/".length, -"/decision".length));

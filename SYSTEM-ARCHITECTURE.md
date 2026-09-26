@@ -84,6 +84,10 @@ packet and atlas generation consume that ledger when it is available.
     source digests, alternative explanations, falsifiers, and next tests. The
     discovery stage proposes research work; it cannot publish or deliver a
     customer claim.
+23. **Opportunity promotion** — lets an authenticated researcher rewrite a
+    detected pattern into a bounded draft insight. The promotion keeps the
+    opportunity ID, source record IDs, reviewer, and review event, then enters
+    the ordinary insight decision and publication gates on the next refresh.
 
 ## Background jobs
 

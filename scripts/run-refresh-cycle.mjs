@@ -45,6 +45,7 @@ const childEnv = {
   INSIGHT_CANDIDATE_PATH: resolve(runDir, "insight-candidates.json"),
   INSIGHT_EVALUATION_PATH: resolve(runDir, "insight-evaluation.json"),
   INSIGHT_OPPORTUNITIES_PATH: resolve(runDir, "insight-opportunities.json"),
+  INSIGHT_PROMOTIONS_PATH: resolve(runDir, "insight-promotions.json"),
   ATLAS_OUTPUT_PATH: resolve(runDir, "domain-atlas.json"),
   SEC_CAPTURE_DIR: secCaptureDir,
   SEC_MANIFEST_PATH: secManifestPath,

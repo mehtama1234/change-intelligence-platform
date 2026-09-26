@@ -36,6 +36,8 @@ const runtimeFiles = [
   "source-availability-events.json",
   "refresh-history.json",
   "insight-evaluation.json"
+  ,"insight-opportunities.json"
+  ,"insight-promotions.json"
 ];
 
 async function digest(path) {
