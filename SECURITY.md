@@ -102,6 +102,12 @@ The `/api/workspace-export` endpoint requires one explicit workspace scope and
 the same membership check. It exports only that workspace's private records
 and bounded source links; it removes configured webhook URLs and does not
 export another workspace's records.
+The `/api/workspace-retention` endpoint shows the private-record counts for one
+member workspace. The `/api/workspace-deletion` command is restricted to an
+owner, requires the exact workspace confirmation phrase, requires an
+idempotency key in token mode, and records an audit receipt. It removes only
+workspace-private product records; shared evidence, immutable captures, and
+global scan history remain available.
 The demo reader keeps a manually entered token only for the current browser
 session; production should replace this with an identity provider and secure
 session cookie.

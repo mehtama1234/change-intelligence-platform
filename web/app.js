@@ -91,8 +91,8 @@ async function loadChanges() {
 
 async function loadOperations() {
   const workspace = encodeURIComponent(state.workspaceId);
-  const [response, usageResponse, metricsResponse, updateResponse, deliveryHealthResponse, serviceReportResponse, readinessResponse, profileResponse, deliveryResponse, reportResponse] = await Promise.all([apiFetch("../api/operations"), apiFetch(`../api/usage?workspace=${workspace}`), apiFetch(`../api/pilot-metrics?workspace=${workspace}`), apiFetch(`../api/workspace-update?workspace=${workspace}`), apiFetch(`../api/workspace-delivery-health?workspace=${workspace}`), apiFetch(`../api/workspace-service-report?workspace=${workspace}`), apiFetch(`../api/workspace-commercial-readiness?workspace=${workspace}`), apiFetch(`../api/workspace-pilot?workspace=${workspace}`), apiFetch(`../api/pilot-deliveries?workspace=${workspace}`), apiFetch(`../api/pilot-report?workspace=${workspace}`)]);
-  if (!response.ok || !usageResponse.ok || !metricsResponse.ok || !updateResponse.ok || !deliveryHealthResponse.ok || !serviceReportResponse.ok || !readinessResponse.ok || !profileResponse.ok || !deliveryResponse.ok || !reportResponse.ok) throw new Error(`Operations unavailable (${response.status})`);
+  const [response, usageResponse, metricsResponse, updateResponse, deliveryHealthResponse, serviceReportResponse, readinessResponse, profileResponse, deliveryResponse, reportResponse, retentionResponse] = await Promise.all([apiFetch("../api/operations"), apiFetch(`../api/usage?workspace=${workspace}`), apiFetch(`../api/pilot-metrics?workspace=${workspace}`), apiFetch(`../api/workspace-update?workspace=${workspace}`), apiFetch(`../api/workspace-delivery-health?workspace=${workspace}`), apiFetch(`../api/workspace-service-report?workspace=${workspace}`), apiFetch(`../api/workspace-commercial-readiness?workspace=${workspace}`), apiFetch(`../api/workspace-pilot?workspace=${workspace}`), apiFetch(`../api/pilot-deliveries?workspace=${workspace}`), apiFetch(`../api/pilot-report?workspace=${workspace}`), apiFetch(`../api/workspace-retention?workspace=${workspace}`)]);
+  if (!response.ok || !usageResponse.ok || !metricsResponse.ok || !updateResponse.ok || !deliveryHealthResponse.ok || !serviceReportResponse.ok || !readinessResponse.ok || !profileResponse.ok || !deliveryResponse.ok || !reportResponse.ok || !retentionResponse.ok) throw new Error(`Operations unavailable (${response.status})`);
   const operations = await response.json();
   const usage = await usageResponse.json();
   const pilot = await metricsResponse.json();
@@ -103,6 +103,7 @@ async function loadOperations() {
   const pilotProfile = await profileResponse.json();
   const deliveries = await deliveryResponse.json();
   const report = await reportResponse.json();
+  const retention = await retentionResponse.json();
   const readiness = operations.readiness;
   const refresh = operations.refresh;
   const scheduler = operations.scheduler || { status: "not_started" };
@@ -110,6 +111,19 @@ async function loadOperations() {
   const refreshScope = refresh.scope || { dueRepositories: [], deferredRepositories: [] };
   const sourceAvailability = operations.sourceAvailability || { counts: {} };
   byId("operations-summary").textContent = `Last run ${refresh.runId || "not recorded"} · ${refresh.status} · ${refresh.endedAt || "no completion time"}. Scope: ${refreshScope.dueRepositories.length} due · ${refreshScope.deferredRepositories.length} deferred. Source availability: ${sourceAvailability.counts.unavailable || 0} unavailable. Scheduler: ${scheduler.status} · ${schedulerTiming}.`;
+  const retainedItems = Object.entries(retention.counts).map(([kind, count]) => `${kind.replaceAll("_", " ")}: ${count}`).join(" · ") || "no private records";
+  byId("workspace-retention").innerHTML = `<article class="record-card"><div class="record-meta"><span class="role">data retention</span><span>${retention.canDelete ? "owner controls" : "read-only"}</span></div><h3>Workspace records</h3><p>${escapeHtml(retainedItems)}</p><p class="muted">${escapeHtml(retention.warning)} Shared research evidence, immutable source captures, and global scan history are preserved.</p>${retention.canDelete ? `<button id="delete-workspace-data" class="secondary-button" type="button">Delete private workspace records</button><span id="workspace-deletion-status" class="muted" role="status"></span>` : ""}</article>`;
+  const deleteButton = byId("delete-workspace-data");
+  if (deleteButton) deleteButton.addEventListener("click", async () => {
+    const confirmation = window.prompt(`This is permanent. Type ${retention.confirmation} to continue.`);
+    if (confirmation !== retention.confirmation) return;
+    const status = byId("workspace-deletion-status");
+    status.textContent = "Deleting…";
+    const result = await apiFetch("../api/workspace-deletion", { method: "POST", body: { workspaceId: state.workspaceId, confirmation } });
+    const body = await result.json();
+    status.textContent = result.ok ? "Private records deleted." : body.error || "Deletion failed.";
+    if (result.ok) await loadOperations();
+  });
   const checks = [
     ["Readiness", readiness.status],
     ["Refresh", readiness.checks.refresh.status],

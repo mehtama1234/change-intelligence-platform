@@ -209,3 +209,9 @@ close an open question, or turn adjacency into causation.
 
 Researchers decide whether a claim is publishable. Customers can see the
 review state and evidence boundary.
+
+Workspace deletion is an owner-only, exact-confirmation command. It deletes
+workspace-private rows in one SQLite transaction, writes the deletion audit
+receipt, and rebuilds the JSON compatibility ledgers from SQLite so deleted
+records cannot return after restart. Shared research evidence, immutable source
+captures, and global scan history are deliberately preserved.

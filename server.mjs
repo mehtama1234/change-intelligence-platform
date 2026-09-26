@@ -37,6 +37,7 @@ const deliveryNotificationAttemptsPath = resolve(runtimeDir, "workspace-delivery
 const pilotProfilesPath = resolve(runtimeDir, "workspace-pilot-profiles.json");
 const pilotDeliveriesPath = resolve(runtimeDir, "workspace-pilot-deliveries.json");
 const pilotDecisionsPath = resolve(runtimeDir, "workspace-pilot-decisions.json");
+const pilotReadinessPath = resolve(runtimeDir, "pilot-readiness.json");
 const operatorWarningsPath = resolve(runtimeDir, "operator-warning-events.json");
 const operatorNotificationsPath = resolve(runtimeDir, "operator-notification-outbox.json");
 const operatorRoutesPath = resolve(runtimeDir, "operator-notification-routes.json");
@@ -424,6 +425,33 @@ function buildWorkspaceExport({ workspace, packet, questions, evaluations, brief
     audit: auditEntries,
     limitation: "This export contains the selected workspace's recorded product history and source links. It is not a guarantee that the research was correct, complete, or useful, and it excludes webhook secrets and other workspaces."
   };
+}
+
+const workspaceDeletionSchema = "workspace-deletion-v1";
+
+async function persistWorkspaceLedgersAfterDeletion() {
+  const currentAlerts = await readJson(alertsPath, { workspaces: [] });
+  const ledgers = [
+    [questionsPath, store.questionsLedger()],
+    [alertsPath, store.alertsLedger(currentAlerts.workspaces ?? [])],
+    [briefingPublicationsPath, store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications")],
+    [insightDecisionsPath, store.recordsLedger("insight_decision", "insight-decision-ledger-v1", "decisions")],
+    [insightPublicationsPath, store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications")],
+    [decisionOutcomesPath, store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes")],
+    [watchlistsPath, store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists")],
+    [comparisonViewsPath, store.recordsLedger("comparison_view", "workspace-comparison-view-ledger-v1", "views")],
+    [notificationPreferencesPath, store.recordsLedger("notification_preference", "workspace-notification-preference-ledger-v1", "preferences")],
+    [deliveryNotificationsPath, store.recordsLedger("delivery_notification", "workspace-delivery-notification-ledger-v1", "notifications")],
+    [deliveryNotificationAttemptsPath, store.recordsLedger("delivery_notification_attempt", "workspace-delivery-notification-attempt-ledger-v1", "attempts")],
+    [pilotProfilesPath, store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles")],
+    [pilotDeliveriesPath, store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries")],
+    [pilotDecisionsPath, store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions")],
+    [pilotReadinessPath, store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots")],
+    [reviewDecisionsPath, store.recordsLedger("review_decision", "review-decision-ledger-v1", "decisions")],
+    [reviewEventsPath, store.recordsLedger("review_event", "review-event-ledger-v1", "events")],
+    [auditPath, store.auditLedger()]
+  ];
+  await Promise.all(ledgers.map(([path, body]) => writeFile(path, `${JSON.stringify(body, null, 2)}\n`)));
 }
 
 function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions, outcomes = [] }) {
@@ -1330,7 +1358,7 @@ const server = createServer(async (request, response) => {
       const latestPublication = publications.slice().sort((a, b) => String(a.publishedAt).localeCompare(String(b.publishedAt))).at(-1);
       return json(response, 200, { schemaVersion: "briefing-history-v1", briefing: { id: briefing.id, workspaceId: briefing.workspaceId, title: briefing.title, state: briefing.state, publication: briefing.publication ?? "not_published", evidenceDigest: briefing.evidenceDigest ?? null, staleReason: briefing.staleReason ?? null, customerActions: briefing.customerActions ?? [], insightActions: briefing.insightActions ?? [] }, versions: publications.sort((a, b) => String(a.publishedAt).localeCompare(String(b.publishedAt))).map((publication) => ({ id: publication.id, publishedAt: publication.publishedAt, publishedBy: publication.publishedBy, evidenceDigest: publication.evidenceDigest, previousEvidenceDigest: publication.previousEvidenceDigest ?? null, reReviewedUpdatedEvidence: publication.reReviewedUpdatedEvidence ?? false })), changes: events.sort((a, b) => String(a.occurredAt).localeCompare(String(b.occurredAt))).map((event) => ({ id: event.id, occurredAt: event.occurredAt, reviewer: event.reviewer, previousEvidenceDigest: event.previousEvidenceDigest ?? null, currentEvidenceDigest: event.currentEvidenceDigest ?? null, outcome: event.outcome })), currentPublicationId: latestPublication?.id ?? null, limitation: "History records publication and re-review events. It does not prove that the briefing was useful or that a decision based on it was correct." });
     }
-    if (request.method !== "GET") return json(response, 405, { error: "This method is not supported for this endpoint." });
+    if (request.method !== "GET" && !(request.method === "POST" && url.pathname === "/api/workspace-deletion")) return json(response, 405, { error: "This method is not supported for this endpoint." });
     if (url.pathname === "/api/health") return json(response, 200, { status: "ok", service: "change-intelligence-read-model", authMode, database: store.health(), generatedAt: new Date().toISOString() });
     if (url.pathname === "/api/readiness") {
       const report = await readinessReport();
@@ -1698,6 +1726,36 @@ const server = createServer(async (request, response) => {
       });
       response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="${workspace.id}-export.json"`, "Cache-Control": "no-store" });
       return response.end(JSON.stringify(exported));
+    }
+    if (url.pathname === "/api/workspace-retention") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      if (!access.workspaceId) return json(response, 400, { error: "Choose one workspace to inspect." });
+      const workspace = await workspaceConfig(access.workspaceId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      const member = workspace.members?.find((candidate) => candidate.id === access.actorId);
+      return json(response, 200, { schemaVersion: workspaceDeletionSchema, workspaceId: workspace.id, counts: store.workspaceRecordCounts(workspace.id), canDelete: member?.role === "owner", confirmation: `DELETE ${workspace.id}`, preserved: ["shared research evidence", "immutable source captures", "global source scan history"], warning: "Deletion is permanent for this workspace's private product records. Export the workspace first if you need a copy." });
+    }
+    if (request.method === "POST" && url.pathname === "/api/workspace-deletion") {
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || member.role !== "owner") return json(response, 403, { error: "Only a workspace owner can delete workspace data." });
+      if (String(body.confirmation ?? "") !== `DELETE ${workspace.id}`) return json(response, 400, { error: `Type DELETE ${workspace.id} to confirm permanent workspace deletion.` });
+      const now = new Date().toISOString();
+      const deleted = store.deleteWorkspaceRecords(workspace.id);
+      const result = { schemaVersion: workspaceDeletionSchema, workspaceId: workspace.id, deleted, preserved: ["shared research evidence", "immutable source captures", "global source scan history"], deletedAt: now, deletedBy: actorId };
+      await appendAudit({ requestId, action: "delete_workspace_data", targetId: workspace.id, workspaceId: workspace.id, actorId, actorRole: member.role, result: "deleted", occurredAt: now });
+      await persistWorkspaceLedgersAfterDeletion();
+      await storeOperation({ key: idempotencyKey, action: "delete_workspace_data", status: 200, body: result, completedAt: now });
+      return json(response, 200, result);
     }
     if (url.pathname === "/api/workspace-pilot") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

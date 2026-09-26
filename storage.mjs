@@ -67,6 +67,9 @@ export function createRuntimeStore(runtimeDir) {
   const insertOperation = db.prepare(`INSERT OR IGNORE INTO idempotency_operations (operation_key, action, status, body_json, completed_at) VALUES (@key, @action, @status, @bodyJson, @completedAt)`);
   const recordRow = db.prepare("SELECT body_json AS bodyJson FROM runtime_records WHERE record_kind = ? AND record_id = ?");
   const recordRows = db.prepare("SELECT body_json AS bodyJson FROM runtime_records WHERE record_kind = ? ORDER BY updated_at, record_id");
+  const workspaceRecordCount = db.prepare("SELECT record_kind AS kind, COUNT(*) AS count FROM runtime_records WHERE workspace_id = ? GROUP BY record_kind ORDER BY record_kind");
+  const deleteWorkspaceRecords = db.prepare("DELETE FROM runtime_records WHERE workspace_id = ?");
+  const deleteWorkspaceQuestions = db.prepare("DELETE FROM questions WHERE workspace_id = ?");
   const upsertRecord = db.prepare(`INSERT INTO runtime_records (record_kind, record_id, workspace_id, body_json, updated_at) VALUES (@kind, @id, @workspaceId, @bodyJson, @updatedAt) ON CONFLICT(record_kind, record_id) DO UPDATE SET workspace_id = excluded.workspace_id, body_json = excluded.body_json, updated_at = excluded.updated_at`);
 
   function questionFromRow(row) {
@@ -163,6 +166,19 @@ export function createRuntimeStore(runtimeDir) {
     operationsLedger,
     alertsLedger(workspaces = []) { return { schemaVersion: "workspace-alert-ledger-v1", workspaces, alerts: recordRows.all("alert").map((row) => parseJson(row.bodyJson, {})) }; },
     recordsLedger(kind, schemaVersion, property) { return { schemaVersion, [property]: recordRows.all(kind).map((row) => parseJson(row.bodyJson, {})) }; },
+    workspaceRecordCounts(workspaceId) {
+      const counts = Object.fromEntries(workspaceRecordCount.all(workspaceId).map((row) => [row.kind, row.count]));
+      counts.questions = db.prepare("SELECT COUNT(*) AS count FROM questions WHERE workspace_id = ?").get(workspaceId).count;
+      return counts;
+    },
+    deleteWorkspaceRecords(workspaceId) {
+      return db.transaction(() => {
+        const counts = this.workspaceRecordCounts(workspaceId);
+        deleteWorkspaceRecords.run(workspaceId);
+        deleteWorkspaceQuestions.run(workspaceId);
+        return counts;
+      })();
+    },
     findRecord(kind, id) { return parseJson(recordRow.get(kind, id)?.bodyJson, undefined); },
     syncRecords(kind, records, idField = "id") { db.transaction(() => { for (const record of records ?? []) upsertRecord.run({ kind, id: record[idField], workspaceId: record.workspaceId ?? null, bodyJson: JSON.stringify(record), updatedAt: record.updatedAt ?? record.generatedAt ?? record.checkedAt ?? record.publishedAt ?? record.acceptedAt ?? record.decidedAt ?? record.createdAt ?? new Date().toISOString() }); })(); },
     commitRecord({ kind, record, audit, operation }) {
