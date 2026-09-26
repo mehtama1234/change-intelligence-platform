@@ -77,6 +77,12 @@
         </div>
         <div id="atlas-entities" class="operations-cards" aria-live="polite"></div>
         <div id="atlas-links" class="record-list" aria-live="polite"></div>
+        <form id="atlas-compare-form" class="question-form">
+          <label for="atlas-compare-kind">Compare companies or industries</label>
+          <div><select id="atlas-compare-kind"><option value="companies">Companies</option><option value="industries">Industries</option></select><select id="atlas-compare-entities" multiple size="4" aria-label="Entities to compare"></select><button type="submit">Compare selected</button></div>
+          <p id="atlas-compare-status" class="muted" role="status"></p>
+        </form>
+        <div id="atlas-compare-results" class="table-wrap" aria-live="polite"></div>
         <div id="atlas-detail" class="inspector" aria-live="polite" hidden></div>
       </section>
 

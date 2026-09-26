@@ -51,6 +51,9 @@ try {
   const entityResponse = await request("/api/atlas/entity?kind=companies&id=company%3Anvidia");
   const entity = await entityResponse.json();
   if (entityResponse.status !== 200 || entity.schemaVersion !== "atlas-entity-read-model-v1" || entity.entity.label !== "NVIDIA" || !entity.evidence.length || !Array.isArray(entity.related) || !entity.timeline?.reportedMovement?.length || !entity.timeline.comparisons?.length || !entity.timeline.comparisons[0].columns.length || !entity.timeline.comparisons[0].quarters.length || !Array.isArray(entity.timeline.outcomeEvidence) || !entity.timeline.boundary.includes("separate rails")) throw new Error("Atlas entity read model contract failed.");
+  const comparisonResponse = await request("/api/atlas/compare?kind=companies&ids=company%3Anvidia%2Ccompany%3Amicrosoft");
+  const comparison = await comparisonResponse.json();
+  if (comparisonResponse.status !== 200 || comparison.schemaVersion !== "atlas-comparison-read-model-v1" || comparison.selected.length !== 2 || !Array.isArray(comparison.compatibleColumns) || !Array.isArray(comparison.incompatibilities) || !comparison.limitation.includes("identically labelled")) throw new Error("Atlas comparison read model contract failed.");
   const ingestionResponse = await request("/api/ingestion");
   const ingestion = await ingestionResponse.json();
   if (ingestionResponse.status !== 200 || ingestion.schemaVersion !== "research-ingestion-ledger-v1" || ingestion.repositories.length !== 6 || ingestion.records.length !== packet.records.length) throw new Error("Research ingestion read model contract failed.");

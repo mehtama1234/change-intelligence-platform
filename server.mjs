@@ -1047,6 +1047,23 @@ const server = createServer(async (request, response) => {
       const related = Object.values(atlas.entities ?? {}).flat().filter((candidate) => relatedEntityIds.has(candidate.id)).map((candidate) => ({ id: candidate.id, label: candidate.label, evidenceCount: candidate.evidenceIds.length }));
       return json(response, 200, { schemaVersion: "atlas-entity-read-model-v1", entity: { id: entity.id, label: entity.label, kind, evidenceCount: entity.evidenceIds.length }, evidence, timeline: { reportedMovement, comparisons, outcomeEvidence, nextTests, boundary: "Reported movement and independent evidence are shown on separate rails. Neither rail alone proves a real-world outcome or causation." }, related, limitation: "This page groups source-linked records around a normalized label. It does not prove that the entity caused the recorded changes or that the records are a complete account." });
     }
+    if (url.pathname === "/api/atlas/compare") {
+      const kind = url.searchParams.get("kind");
+      const ids = [...new Set((url.searchParams.get("ids") ?? "").split(",").map((value) => value.trim()).filter(Boolean))].slice(0, 8);
+      if (!["companies", "industries"].includes(kind) || ids.length < 2) return json(response, 400, { error: "Choose at least two companies or industries to compare." });
+      const atlas = await readJson(atlasPath, await readJson(staticAtlasPath, { entities: {}, edges: [] }));
+      const packet = await readJson(packetPath, { records: [] });
+      const selected = ids.map((id) => (atlas.entities?.[kind] ?? []).find((candidate) => candidate.id === id)).filter(Boolean);
+      if (selected.length !== ids.length) return json(response, 404, { error: "One or more comparison entities were not found." });
+      const comparisons = selected.map((entity) => {
+        const record = (packet.records ?? []).find((candidate) => entity.evidenceIds.includes(candidate.id) && candidate.reportWindow);
+        const columns = record?.reportWindow?.columns ?? [];
+        return { id: entity.id, label: entity.label, recordId: record?.id ?? null, sourceRef: record?.sourceRef ?? null, columns, quarters: record?.reportWindow?.quarters ?? [], annualBaseline: record?.reportWindow?.annualBaseline ?? null, reading: record?.reportWindow?.reading ?? null };
+      });
+      const sharedColumns = comparisons.length ? comparisons.reduce((shared, comparison) => shared.filter((column) => comparison.columns.includes(column)), comparisons[0].columns) : [];
+      const incompatibilities = comparisons.filter((comparison) => comparison.columns.length === 0 || sharedColumns.length !== comparison.columns.length).map((comparison) => ({ entityId: comparison.id, entity: comparison.label, missingFromSharedView: comparison.columns.filter((column) => !sharedColumns.includes(column)), reason: comparison.columns.length ? "This entity reports a different column set." : "No comparable annual-plus-quarterly report window is available." }));
+      return json(response, 200, { schemaVersion: "atlas-comparison-read-model-v1", kind, selected: comparisons.map(({ id, label, recordId }) => ({ id, label, recordId })), compatibleColumns: sharedColumns, comparisons, incompatibilities, comparable: sharedColumns.length > 0 && incompatibilities.length === 0, limitation: "Only identically labelled columns are compared. Different definitions, units, periods, currencies, or reporting boundaries remain incompatible and are not ranked." });
+    }
     if (url.pathname === "/api/ingestion") {
       return json(response, 200, await readJson(ingestionPath, await readJson(staticIngestionPath, { schemaVersion: "research-ingestion-ledger-v1", repositories: [], records: [] })));
     }

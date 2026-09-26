@@ -182,6 +182,23 @@ async function loadAtlas() {
   const links = (atlas.edges ?? []).slice(0, 12);
   byId("atlas-links").innerHTML = links.length ? `<p class="muted">Examples of normalized links</p><ul>${links.map((edge) => `<li><code>${escapeHtml(edge.from)}</code> → <code>${escapeHtml(edge.to)}</code> · ${escapeHtml(edge.relation.replaceAll("_", " "))}</li>`).join("")}</ul>` : `<p class="muted">No normalized links are available yet.</p>`;
   document.querySelectorAll(".atlas-entity").forEach((button) => button.addEventListener("click", () => inspectAtlasEntity(button.dataset.atlasKind, button.dataset.atlasId)));
+  const compareKind = byId("atlas-compare-kind");
+  const compareEntities = byId("atlas-compare-entities");
+  const populateCompareEntities = () => { const entities = atlas.entities[compareKind.value] ?? []; compareEntities.innerHTML = entities.map((entity) => `<option value="${escapeHtml(entity.id)}">${escapeHtml(entity.label)}</option>`).join(""); entities.slice(0, 2).forEach((entity) => { const option = [...compareEntities.options].find((candidate) => candidate.value === entity.id); if (option) option.selected = true; }); };
+  populateCompareEntities();
+  compareKind.onchange = populateCompareEntities;
+  byId("atlas-compare-form").onsubmit = async (event) => { event.preventDefault(); const ids = [...compareEntities.selectedOptions].map((option) => option.value); if (ids.length < 2) { byId("atlas-compare-status").textContent = "Choose at least two entities."; return; } await compareAtlasEntities(compareKind.value, ids); };
+}
+
+async function compareAtlasEntities(kind, ids) {
+  const status = byId("atlas-compare-status");
+  status.textContent = "Comparing only compatible columns…";
+  const response = await apiFetch(`../api/atlas/compare?kind=${encodeURIComponent(kind)}&ids=${ids.map(encodeURIComponent).join(",")}`);
+  if (!response.ok) { status.textContent = `Comparison unavailable (${response.status}).`; return; }
+  const body = await response.json();
+  status.textContent = body.comparable ? "All selected entities share the displayed columns." : "No ranking was produced because selected entities have incompatible or incomplete columns.";
+  const rows = body.comparisons.flatMap((comparison) => comparison.quarters.map((quarter) => `<tr><th scope="row">${escapeHtml(comparison.label)}</th><td>${escapeHtml(quarter.period)}</td>${body.compatibleColumns.map((column) => { const index = comparison.columns.indexOf(column); return `<td>${escapeHtml(index >= 0 ? quarter.values[index] ?? "not recorded" : "not comparable")}</td>`; }).join("")}</tr>`)).join("");
+  byId("atlas-compare-results").innerHTML = body.compatibleColumns.length ? `<table><caption>Comparable reported measures · no ranking implied</caption><thead><tr><th>Entity</th><th>Period</th>${body.compatibleColumns.map((column) => `<th>${escapeHtml(column)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>${body.incompatibilities.length ? `<p class="error">Compatibility warnings: ${body.incompatibilities.map((item) => `${escapeHtml(item.entity)} — ${escapeHtml(item.reason)}`).join("; ")}</p>` : ""}<p class="muted">${escapeHtml(body.limitation)}</p>` : `<p class="error">No shared columns are safe to compare. ${escapeHtml(body.limitation)}</p>`;
 }
 
 async function inspectAtlasEntity(kind, id) {
