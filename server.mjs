@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { readFile, readdir, writeFile, mkdir } from "node:fs/promises";
 import { resolve, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRuntimeStore, importRuntimeLedgers } from "./storage.mjs";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)));
 const port = Number(process.env.PORT ?? 8780);
@@ -26,6 +27,8 @@ const authMode = process.env.AUTH_MODE ?? "demo";
 const tokenActors = authMode === "token" ? JSON.parse(process.env.AUTH_TOKENS_JSON ?? "{}") : {};
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 await mkdir(runtimeDir, { recursive: true });
+const store = createRuntimeStore(runtimeDir);
+await importRuntimeLedgers(store, { runtimeDir, questions: questionsPath, audit: auditPath, operations: operationsPath });
 
 const json = (response, status, body) => {
   response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
@@ -90,23 +93,17 @@ async function readJson(path, fallback) {
 }
 
 async function appendAudit(entry) {
-  const ledger = await readJson(auditPath, { schemaVersion: "audit-log-v1", entries: [] });
-  ledger.entries.push(entry);
-  ledger.updatedAt = entry.occurredAt;
-  await writeFile(auditPath, `${JSON.stringify(ledger, null, 2)}\n`);
+  store.appendAudit(entry);
+  await writeFile(auditPath, `${JSON.stringify(store.auditLedger(), null, 2)}\n`);
 }
 
 async function replayOperation(key) {
-  if (!key) return undefined;
-  const ledger = await readJson(operationsPath, { schemaVersion: "idempotency-ledger-v1", operations: [] });
-  return ledger.operations.find((operation) => operation.key === key);
+  return key ? store.findOperation(key) : undefined;
 }
 
 async function storeOperation(operation) {
-  const ledger = await readJson(operationsPath, { schemaVersion: "idempotency-ledger-v1", operations: [] });
-  ledger.operations.push(operation);
-  ledger.updatedAt = operation.completedAt;
-  await writeFile(operationsPath, `${JSON.stringify(ledger, null, 2)}\n`);
+  store.storeOperation(operation);
+  await writeFile(operationsPath, `${JSON.stringify(store.operationsLedger(), null, 2)}\n`);
 }
 
 const server = createServer(async (request, response) => {
@@ -154,14 +151,13 @@ const server = createServer(async (request, response) => {
       if (!workspace) return json(response, 404, { error: "Workspace not found." });
       if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot save questions." });
       if (question.length < 8 || question.length > 500) return json(response, 400, { error: "Question must be between 8 and 500 characters." });
-      const ledger = await readJson(questionsPath, { schemaVersion: "workspace-question-ledger-v1", questions: [] });
       const now = new Date().toISOString();
       const saved = { id: `question-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, workspaceId: workspace.id, question, scope: body.scope ?? { watchlistIds: [] }, state: "active", createdBy: member.id, createdRole: member.role, createdAt: now, updatedAt: now, lastEvaluatedAt: null };
-      ledger.questions.push(saved);
-      ledger.updatedAt = now;
-      await writeFile(questionsPath, `${JSON.stringify(ledger, null, 2)}\n`);
-      await appendAudit({ requestId, action: "create_question", targetId: saved.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "created", occurredAt: now });
-      await storeOperation({ key: idempotencyKey, action: "create_question", status: 201, body: saved, completedAt: now });
+      const auditEntry = { requestId, action: "create_question", targetId: saved.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "created", occurredAt: now };
+      store.commitQuestion({ question: saved, audit: auditEntry, operation: { key: idempotencyKey, action: "create_question", status: 201, body: saved, completedAt: now } });
+      await writeFile(questionsPath, `${JSON.stringify(store.questionsLedger(), null, 2)}\n`);
+      await writeFile(auditPath, `${JSON.stringify(store.auditLedger(), null, 2)}\n`);
+      await writeFile(operationsPath, `${JSON.stringify(store.operationsLedger(), null, 2)}\n`);
       return json(response, 201, saved);
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/publish")) {
@@ -326,11 +322,11 @@ const server = createServer(async (request, response) => {
       return json(response, 200, access.workspaceIds ? ledger.alerts.filter((alert) => access.workspaceIds.includes(alert.workspaceId)) : ledger.alerts);
     }
     if (url.pathname === "/api/questions") {
-      const ledger = await readJson(questionsPath, { schemaVersion: "workspace-question-ledger-v1", questions: [] });
       const workspaceId = url.searchParams.get("workspace");
       const access = await workspaceAccess(request, workspaceId);
       if (denyWorkspaceRead(response, access)) return;
-      return json(response, 200, access.workspaceIds ? ledger.questions.filter((question) => access.workspaceIds.includes(question.workspaceId)) : ledger.questions);
+      const questions = store.questionsLedger().questions;
+      return json(response, 200, access.workspaceIds ? questions.filter((question) => access.workspaceIds.includes(question.workspaceId)) : questions);
     }
     if (url.pathname === "/api/question-evaluations") {
       const ledger = await readJson(questionEvaluationsPath, { schemaVersion: "question-evaluation-ledger-v1", evaluations: [] });
@@ -347,11 +343,11 @@ const server = createServer(async (request, response) => {
       return json(response, 200, access.workspaceIds ? ledger.briefings.filter((briefing) => access.workspaceIds.includes(briefing.workspaceId)) : ledger.briefings);
     }
     if (url.pathname === "/api/audit") {
-      const ledger = await readJson(auditPath, { schemaVersion: "audit-log-v1", entries: [] });
       const workspaceId = url.searchParams.get("workspace");
       const access = await workspaceAccess(request, workspaceId);
       if (denyWorkspaceRead(response, access)) return;
-      return json(response, 200, access.workspaceIds ? ledger.entries.filter((entry) => access.workspaceIds.includes(entry.workspaceId)) : ledger.entries);
+      const entries = store.auditLedger().entries;
+      return json(response, 200, access.workspaceIds ? entries.filter((entry) => access.workspaceIds.includes(entry.workspaceId)) : entries);
     }
     if (url.pathname === "/") {
       response.writeHead(302, { Location: "/web/index.html" });

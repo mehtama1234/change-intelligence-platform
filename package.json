@@ -19,9 +19,13 @@
     "generate:insight-candidates": "node scripts/generate-insight-candidates.mjs",
     "verify:e2e": "node scripts/verify-end-to-end.mjs",
     "test:read-model": "node scripts/test-read-model.mjs",
+    "test:storage": "node scripts/test-storage-persistence.mjs",
     "test:api:auth": "node scripts/test-api-auth.mjs",
     "serve": "node server.mjs",
     "refresh": "node scripts/run-refresh-cycle.mjs",
     "scheduler": "node scripts/scheduler.mjs"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.10.0"
   }
 }
