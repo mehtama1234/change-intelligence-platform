@@ -47,6 +47,7 @@ try {
   } else {
     steps.push({ name: "extract-sec-xbrl", status: "skipped", reason: "No SEC capture manifest exists." });
   }
+  await runStep("validate-source-adapters", "validate-source-adapters.mjs");
   await runStep("scan-repositories", "scan-source-changes.mjs");
   await runStep("evaluate-watchlists", "evaluate-watchlists.mjs");
   await runStep("process-review-work", "process-source-review.mjs");

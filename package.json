@@ -6,6 +6,7 @@
   "scripts": {
     "validate:fixtures": "node scripts/validate-fixtures.mjs",
     "validate:packet": "node scripts/validate-fixtures.mjs data/processed/ai-work-control.packet.json",
+    "validate:adapters": "node scripts/validate-source-adapters.mjs",
     "build:ai-work-control": "node scripts/build-ai-work-control-packet.mjs",
     "acquire:sec:c3-ai": "node scripts/acquire-sec-filing-window.mjs",
     "extract:sec:c3-ai": "node scripts/extract-sec-xbrl-window.mjs",
@@ -27,7 +28,7 @@
     "test:backup": "node scripts/test-runtime-backup.mjs",
     "test:readiness": "node scripts/test-operational-readiness.mjs",
     "test:api:auth": "node scripts/test-api-auth.mjs",
-    "ci:core": "npm run validate:fixtures && npm run validate:packet && npm run test:read-model && npm run test:storage && npm run test:api:auth",
+    "ci:core": "npm run validate:fixtures && npm run validate:packet && npm run validate:adapters && npm run test:read-model && npm run test:storage && npm run test:api:auth",
     "serve": "node server.mjs",
     "refresh": "node scripts/run-refresh-cycle.mjs",
     "scheduler": "node scripts/scheduler.mjs"

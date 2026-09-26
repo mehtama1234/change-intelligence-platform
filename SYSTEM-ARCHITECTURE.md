@@ -17,6 +17,13 @@ Each existing project supplies an adapter that produces the common contract:
 - `ibis-industries` → industry structure, operators, bottlenecks, and sector economics
 - `inc5000-analysis` → private-company growth, customer pain, and business models
 
+The first implementation uses a repository-files adapter. Its contract is
+machine-checked before a refresh: every registered repository must have at
+least one source record, every record must carry an identity, source path,
+observation, mechanism, affected groups, claim state, date, and limits, and
+the refresh environment can require every referenced file to be readable.
+Adapter output is then hashed and stored as a source snapshot before review.
+
 ## Core services
 
 1. **Scheduler** — runs source checks and refresh jobs.

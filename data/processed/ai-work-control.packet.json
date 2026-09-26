@@ -4,8 +4,8 @@
   "sourceSnapshotDate": "2026-09-25",
   "operations": {
     "latestSourceScan": {
-      "generatedAt": "2026-09-26T05:34:50.204Z",
-      "runId": "scan-20260926053450",
+      "generatedAt": "2026-09-26T05:43:51.027Z",
+      "runId": "scan-20260926054351",
       "counts": {
         "new": 0,
         "changed": 0,
@@ -27,7 +27,7 @@
     },
     "workspaceAlerts": {
       "schemaVersion": "workspace-alert-ledger-v1",
-      "generatedAt": "2026-09-26T05:34:50.557Z",
+      "generatedAt": "2026-09-26T05:43:51.794Z",
       "workspaces": [
         {
           "id": "demo-research",
@@ -59,12 +59,12 @@
     },
     "questionEvaluations": {
       "schemaVersion": "question-evaluation-ledger-v1",
-      "generatedAt": "2026-09-26T05:34:52.086Z",
+      "generatedAt": "2026-09-26T05:43:54.599Z",
       "evaluations": [
         {
           "questionId": "question-1790396868707-0zillf",
           "workspaceId": "demo-research",
-          "evaluatedAt": "2026-09-26T05:34:52.086Z",
+          "evaluatedAt": "2026-09-26T05:43:54.599Z",
           "state": "evidence_retrieved",
           "matchedRecordIds": [
             "trend-hunting-ai-control",
@@ -133,7 +133,7 @@
     },
     "briefings": {
       "schemaVersion": "workspace-briefing-ledger-v1",
-      "generatedAt": "2026-09-26T05:34:52.410Z",
+      "generatedAt": "2026-09-26T05:43:55.225Z",
       "briefings": [
         {
           "id": "briefing-question-1790396868707-0zillf",
@@ -146,7 +146,7 @@
           "publishedAt": "2026-09-26T04:34:31.213Z",
           "publicationId": "publication-1790397271213-qdiac3",
           "evidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
-          "generatedAt": "2026-09-26T05:34:52.410Z",
+          "generatedAt": "2026-09-26T05:43:55.225Z",
           "evidence": [
             {
               "recordId": "trend-hunting-ai-control",
@@ -234,7 +234,7 @@
     },
     "insightCandidates": {
       "schemaVersion": "insight-candidate-ledger-v1",
-      "generatedAt": "2026-09-26T05:34:53.190Z",
+      "generatedAt": "2026-09-26T05:43:56.608Z",
       "candidates": [
         {
           "id": "candidate-insight-ai-capability-control-gap-001-710b18999d68",
@@ -243,7 +243,7 @@
           "plainLanguageSummary": "The current evidence supports a narrower reading than 'AI makes work more productive': AI can remove visible tasks while decisions, measurement, correction, and dependence remain controlled by an employer, platform, or infrastructure provider.",
           "status": "published",
           "publication": "published",
-          "generatedAt": "2026-09-26T05:34:53.190Z",
+          "generatedAt": "2026-09-26T05:43:56.608Z",
           "candidateKey": "insight-ai-capability-control-gap-001",
           "evidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
           "decisionId": "insight-decision-f1302f01-b437-4f15-bceb-e1c11fbfb195",
