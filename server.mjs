@@ -1371,6 +1371,11 @@ const server = createServer(async (request, response) => {
       const decisions = store.recordsLedger("insight_decision", "insight-decision-ledger-v1", "decisions").decisions.filter((item) => item.candidateKey === insight.id && visible(item));
       const publications = store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications").publications.filter((item) => item.candidateKey === insight.id && visible(item));
       const reviewEvents = store.recordsLedger("review_event", "review-event-ledger-v1", "events").events.filter((item) => (item.candidateKey === insight.id || item.targetId === candidate?.id) && visible(item));
+      const briefingLedger = await readJson(briefingsPath, { briefings: [] });
+      const briefingLinks = briefingLedger.briefings.filter((briefing) => (!access.workspaceId || briefing.workspaceId === access.workspaceId) && (briefing.insightProvenance ?? []).some((item) => item.candidateKey === insight.id || item.insightId === insight.id)).map((briefing) => ({ id: briefing.id, workspaceId: briefing.workspaceId, title: briefing.title, state: briefing.state, publication: briefing.publication, publicationId: briefing.publicationId ?? null, evidenceDigest: briefing.evidenceDigest ?? null, staleReason: briefing.staleReason ?? null, generatedAt: briefing.generatedAt ?? null }));
+      const latestPublicationForInsight = publications.slice().sort((a, b) => String(b.publishedAt).localeCompare(String(a.publishedAt)))[0];
+      const evidenceChanged = Boolean(candidate && latestPublicationForInsight && candidate.evidenceDigest !== latestPublicationForInsight.evidenceDigest);
+      const claimChanged = Boolean(candidate && latestPublicationForInsight && candidate.claimDigest && latestPublicationForInsight.claimDigest && candidate.claimDigest !== latestPublicationForInsight.claimDigest);
       return json(response, 200, {
         schemaVersion: "insight-inspection-v1",
         insight,
@@ -1378,6 +1383,8 @@ const server = createServer(async (request, response) => {
         candidate: candidate ?? null,
         review: candidate ? { status: candidate.status, publication: candidate.publication, evidenceDigest: candidate.evidenceDigest, decisionId: candidate.decisionId ?? null, decidedBy: candidate.decidedBy ?? null, decidedAt: candidate.decidedAt ?? null, decisionNote: candidate.decisionNote ?? null, publicationId: candidate.publicationId ?? null, publishedBy: candidate.publishedBy ?? null, publishedAt: candidate.publishedAt ?? null } : null,
         reviewHistory: { decisions, publications, events: reviewEvents },
+        freshness: { state: candidate?.status === "stale" ? "stale" : candidate?.status ?? "not_generated", evidenceChanged, claimChanged, currentEvidenceDigest: candidate?.evidenceDigest ?? null, publishedEvidenceDigest: latestPublicationForInsight?.evidenceDigest ?? null, currentClaimDigest: candidate?.claimDigest ?? null, publishedClaimDigest: latestPublicationForInsight?.claimDigest ?? null },
+        briefingLinks,
         boundaries: {
           strongestAlternative: insight.strongestAlternative,
           whatWouldChangeOurMind: insight.whatWouldChangeOurMind ?? [],

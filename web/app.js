@@ -326,19 +326,25 @@ async function inspectInsight(insightId) {
   const response = await apiFetch(`../api/insights/${encodeURIComponent(insightId)}?workspace=${encodeURIComponent(state.workspaceId)}`);
   if (!response.ok) throw new Error("Insight could not be loaded.");
   const inspection = await response.json();
-  const { insight, evidence, review, reviewHistory, boundaries } = inspection;
+  const { insight, evidence, review, reviewHistory, boundaries, freshness, briefingLinks } = inspection;
   const decisions = reviewHistory?.decisions ?? [];
   const publications = reviewHistory?.publications ?? [];
-  showInspector(insight.title, `${review?.status?.replaceAll("_", " ") || "not yet reviewed"} · refresh by ${insight.refreshBy}`, `
+  const events = reviewHistory?.events ?? [];
+  const historyItems = [...decisions.map((item) => ({ historyType: "decision", at: item.decidedAt, by: item.reviewer, text: `${item.decision} · ${item.note || "No note"}` })), ...publications.map((item) => ({ historyType: "publication", at: item.publishedAt, by: item.publisher, text: `published · ${item.note || "No note"}` })), ...events.map((item) => ({ historyType: item.eventType?.replaceAll("_", " ") || "review event", at: item.occurredAt, by: item.reviewer, text: `${item.outcome || "recorded"}${item.previousEvidenceDigest ? ` · previous evidence ${item.previousEvidenceDigest.slice(0, 12)}` : ""}` }))].sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const freshnessMessage = freshness?.state === "stale" ? `${freshness.evidenceChanged ? "Source evidence changed" : "Insight wording changed"}. Re-review is required before treating this as current.` : freshness?.state === "published" ? "Current published version matches the recorded evidence." : "This insight has not completed publication.";
+  showInspector(insight.title, `${review?.status?.replaceAll("_", " ") || "not yet reviewed"} · refresh by ${insight.refreshBy || "not scheduled"}`, `
     <article class="inspection-card">
       <p>${escapeHtml(insight.plainLanguageSummary)}</p>
+      ${insight.origin ? `<p class="muted">Origin: discovered opportunity${insight.promotionId ? ` · promotion ${escapeHtml(insight.promotionId)}` : ""}.</p>` : ""}
+      <h3>Currentness</h3><p class="${freshness?.state === "stale" ? "error" : ""}">${escapeHtml(freshnessMessage)}</p><dl class="inspection-details"><dt>Current evidence</dt><dd><code>${escapeHtml(freshness?.currentEvidenceDigest || "not recorded")}</code></dd><dt>Published evidence</dt><dd><code>${escapeHtml(freshness?.publishedEvidenceDigest || "not recorded")}</code></dd>${freshness?.currentClaimDigest ? `<dt>Current claim version</dt><dd><code>${escapeHtml(freshness.currentClaimDigest)}</code></dd>` : ""}</dl>
       <h3>Evidence chain</h3>
       <div class="chain-list">${evidence.map((record) => `<button class="chain-item inspect-record" data-record-id="${escapeHtml(record.id)}"><strong>${escapeHtml(record.title)}</strong><span>${escapeHtml(record.sourceRepository)} · ${escapeHtml(record.claimState.replaceAll("_", " "))}</span></button>`).join("")}</div>
       <h3>Strongest alternative</h3><p>${escapeHtml(boundaries.strongestAlternative)}</p>
       <h3>What would change our mind</h3><ul>${boundaries.whatWouldChangeOurMind.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
       <h3>Next test</h3><p>${escapeHtml(boundaries.nextTest)}</p>
       <h3>Approval history</h3>
-      ${decisions.length || publications.length ? `<ol class="review-history">${[...decisions.map((item) => ({ ...item, historyType: "decision", at: item.decidedAt, by: item.reviewer, text: `${item.decision} · ${item.note || "No note"}` })), ...publications.map((item) => ({ ...item, historyType: "publication", at: item.publishedAt, by: item.publisher, text: `published · ${item.note || "No note"}` }))].sort((a, b) => String(b.at).localeCompare(String(a.at))).map((item) => `<li><strong>${escapeHtml(item.historyType)}</strong> · ${escapeHtml(item.text)}<span>${escapeHtml(item.by || "researcher")} · ${escapeHtml(item.at || "time not recorded")}</span></li>`).join("")}</ol>` : `<p class="muted">No approval or publication event has been recorded.</p>`}
+      ${historyItems.length ? `<ol class="review-history">${historyItems.map((item) => `<li><strong>${escapeHtml(item.historyType)}</strong> · ${escapeHtml(item.text)}<span>${escapeHtml(item.by || "researcher")} · ${escapeHtml(item.at || "time not recorded")}</span></li>`).join("")}</ol>` : `<p class="muted">No approval, revision, or publication event has been recorded.</p>`}
+      <h3>Customer briefings using this insight</h3>${briefingLinks?.length ? `<ul>${briefingLinks.map((briefing) => `<li><strong>${escapeHtml(briefing.state)}</strong> · ${escapeHtml(briefing.title)} · ${escapeHtml(briefing.publication || "not published")}${briefing.staleReason ? ` — ${escapeHtml(briefing.staleReason)}` : ""}</li>`).join("")}</ul>` : `<p class="muted">No customer briefing currently uses this insight.</p>`}
     </article>`);
 }
 

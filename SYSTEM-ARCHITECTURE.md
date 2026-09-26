@@ -92,6 +92,10 @@ packet and atlas generation consume that ledger when it is available.
     records a revision event, and forces a previously published promoted
     insight back into the stale/re-review path. Its opportunity provenance is
     carried into inspection and customer briefing provenance.
+25. **Insight freshness read model** — customer inspection shows the current
+    and published evidence/claim digests, explains whether the source or the
+    wording changed, lists review and revision events, and names briefings that
+    use the insight and whether each briefing is stale.
 
 ## Background jobs
 
