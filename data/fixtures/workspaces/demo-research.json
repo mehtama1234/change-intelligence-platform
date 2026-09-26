@@ -2,6 +2,11 @@
   "schemaVersion": "workspace-v1",
   "id": "demo-research",
   "name": "Demo research workspace",
+  "members": [
+    { "id": "demo-owner", "role": "owner" },
+    { "id": "demo-researcher", "role": "researcher" },
+    { "id": "demo-viewer", "role": "viewer" }
+  ],
   "watchlists": [
     {
       "id": "ai-work-control-watch",

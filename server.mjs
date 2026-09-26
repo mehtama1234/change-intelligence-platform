@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir, writeFile } from "node:fs/promises";
 import { resolve, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -10,12 +10,31 @@ const reviewPath = resolve(root, "data/processed/runs/ai-work-control/latest-rev
 const historyPath = resolve(root, "data/processed/runs/ai-work-control/versioned-evidence-ledger.json");
 const refreshPath = resolve(root, "data/processed/runs/ai-work-control/latest-refresh.json");
 const alertsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-alerts.json");
+const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 
 const json = (response, status, body) => {
   response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
   response.end(JSON.stringify(body));
 };
+
+async function requestBody(request) {
+  let body = "";
+  for await (const chunk of request) {
+    body += chunk;
+    if (body.length > 1024 * 1024) throw Object.assign(new Error("Request body is too large."), { code: "PAYLOAD_TOO_LARGE" });
+  }
+  return body ? JSON.parse(body) : {};
+}
+
+async function workspaceConfig(id) {
+  const files = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
+  for (const file of files) {
+    const workspace = JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"));
+    if (workspace.id === id) return workspace;
+  }
+  return undefined;
+}
 
 async function readJson(path, fallback) {
   try { return JSON.parse(await readFile(path, "utf8")); } catch (error) {
@@ -27,7 +46,25 @@ async function readJson(path, fallback) {
 const server = createServer(async (request, response) => {
   try {
     const url = new URL(request.url, `http://${request.headers.host ?? "localhost"}`);
-    if (request.method !== "GET") return json(response, 405, { error: "Only GET is supported by this read model." });
+    if (request.method === "POST" && url.pathname.startsWith("/api/alerts/") && url.pathname.endsWith("/acknowledge")) {
+      const alertId = decodeURIComponent(url.pathname.slice("/api/alerts/".length, -"/acknowledge".length));
+      const body = await requestBody(request);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === body.actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot acknowledge alerts." });
+      const ledger = await readJson(alertsPath, { schemaVersion: "workspace-alert-ledger-v1", alerts: [] });
+      const alert = ledger.alerts.find((candidate) => candidate.id === alertId && candidate.workspaceId === workspace.id);
+      if (!alert) return json(response, 404, { error: "Alert not found in this workspace." });
+      alert.state = "acknowledged";
+      alert.acknowledgedBy = member.id;
+      alert.acknowledgedRole = member.role;
+      alert.acknowledgedAt = new Date().toISOString();
+      alert.acknowledgmentNote = String(body.note ?? "").slice(0, 2000);
+      await writeFile(alertsPath, `${JSON.stringify(ledger, null, 2)}\n`);
+      return json(response, 200, alert);
+    }
+    if (request.method !== "GET") return json(response, 405, { error: "Only GET and alert acknowledgement POST are supported." });
     if (url.pathname === "/api/health") return json(response, 200, { status: "ok", service: "change-intelligence-read-model", generatedAt: new Date().toISOString() });
     if (url.pathname === "/api/packet") return json(response, 200, await readJson(packetPath, { error: "Packet has not been built." }));
     if (url.pathname === "/api/review-work") return json(response, 200, await readJson(reviewPath, { schemaVersion: "source-review-work-v1", reviewRequired: 0, candidates: [] }));

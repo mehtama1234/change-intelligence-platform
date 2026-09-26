@@ -27,14 +27,35 @@
     },
     "workspaceAlerts": {
       "schemaVersion": "workspace-alert-ledger-v1",
-      "generatedAt": "2026-09-26T04:20:28.314Z",
+      "generatedAt": "2026-09-26T04:25:36.306Z",
       "workspaces": [
         {
           "id": "demo-research",
           "name": "Demo research workspace"
         }
       ],
-      "alerts": []
+      "alerts": [
+        {
+          "id": "alert-7eeb40b5125d0361dda6",
+          "workspaceId": "demo-research",
+          "watchlistId": "ai-work-control-watch",
+          "watchlistName": "AI work and enterprise control",
+          "sourceId": "trend-hunting-ai-control",
+          "repository": "trend-hunting",
+          "sourcePath": "analysis/DEEP-TRENDS-CROSS-THEME-SYNTHESIS-V2.md",
+          "state": "acknowledged",
+          "severity": "medium",
+          "kind": "source_change",
+          "reason": "Source bytes changed since the last scan; re-extract and review affected claims.",
+          "scanRunId": "scan-fixture-changed",
+          "createdAt": "2026-09-26T04:23:53.065Z",
+          "lastSeenAt": "2026-09-26T04:23:53.065Z",
+          "acknowledgedBy": "demo-researcher",
+          "acknowledgedRole": "researcher",
+          "acknowledgedAt": "2026-09-26T04:25:15.668Z",
+          "acknowledgmentNote": "Reviewed and assigned for follow-up."
+        }
+      ]
     }
   },
   "records": [
