@@ -28,6 +28,7 @@ const pilotDeliveriesPath = resolve(runtimeDir, "workspace-pilot-deliveries.json
 const pilotDecisionsPath = resolve(runtimeDir, "workspace-pilot-decisions.json");
 const operatorWarningsPath = resolve(runtimeDir, "operator-warning-events.json");
 const operatorNotificationsPath = resolve(runtimeDir, "operator-notification-outbox.json");
+const operatorRoutesPath = resolve(runtimeDir, "operator-notification-routes.json");
 const auditPath = resolve(runtimeDir, "audit-log.json");
 const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
 const sourceScanPath = resolve(runtimeDir, "latest-source-scan.json");
@@ -66,6 +67,7 @@ await importRuntimeLedgers(store, {
   pilotDecisions: pilotDecisionsPath,
   operatorWarnings: operatorWarningsPath,
   operatorNotifications: operatorNotificationsPath,
+  operatorRoutes: operatorRoutesPath,
   workspaceDir,
   sourceScan: sourceScanPath,
   evidenceLedger: evidenceLedgerPath,
@@ -771,6 +773,21 @@ const server = createServer(async (request, response) => {
       await writeFile(operatorNotificationsPath, `${JSON.stringify(store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications"), null, 2)}\n`);
       return json(response, 200, notification);
     }
+    if (request.method === "POST" && url.pathname === "/api/operator/notification-routes") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const body = await requestBody(request);
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (!idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for operator writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const cleanList = (value) => [...new Set((Array.isArray(value) ? value : []).map((item) => String(item).trim()).filter(Boolean))].slice(0, 100);
+      const routes = { id: "operator-notification-routes", default: cleanList(body.default), warningIds: Object.fromEntries(Object.entries(body.warningIds && typeof body.warningIds === "object" ? body.warningIds : {}).slice(0, 50).map(([warningId, recipients]) => [String(warningId).slice(0, 120), cleanList(recipients)]).filter(([, recipients]) => recipients.length)), workspaces: Object.fromEntries(Object.entries(body.workspaces && typeof body.workspaces === "object" ? body.workspaces : {}).slice(0, 100).map(([workspaceId, recipients]) => [String(workspaceId).slice(0, 120), cleanList(recipients)]).filter(([, recipients]) => recipients.length)), updatedBy: operator.actorId, updatedAt: new Date().toISOString() };
+      if (!routes.default.length && !Object.keys(routes.warningIds).length && !Object.keys(routes.workspaces).length) return json(response, 400, { error: "At least one notification route is required." });
+      store.commitRecord({ kind: "operator_notification_route", record: routes, audit: { requestId, action: "configure_operator_notification_routes", targetId: routes.id, workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: "configured", occurredAt: routes.updatedAt }, operation: { key: idempotencyKey, action: "configure_operator_notification_routes", status: 200, body: routes, completedAt: routes.updatedAt } });
+      await writeFile(operatorRoutesPath, `${JSON.stringify(store.recordsLedger("operator_notification_route", "operator-notification-route-ledger-v1", "settings"), null, 2)}\n`);
+      return json(response, 200, routes);
+    }
     if (request.method === "GET" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/export")) {
       const briefingId = decodeURIComponent(url.pathname.slice("/api/briefings/".length, -"/export".length));
       const workspaceId = url.searchParams.get("workspace");
@@ -1016,6 +1033,12 @@ const server = createServer(async (request, response) => {
       const operator = operatorAccess(request);
       if (operator.error) return json(response, operator.error.status, operator.error.body);
       return json(response, 200, { schemaVersion: "operator-notification-outbox-v1", notifications: store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications.map(({ body, ...notification }) => notification) });
+    }
+    if (url.pathname === "/api/operator/notification-routes") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const settings = store.recordsLedger("operator_notification_route", "operator-notification-route-ledger-v1", "settings").settings[0] ?? { id: "operator-notification-routes", default: [], warningIds: {}, workspaces: {} };
+      return json(response, 200, { schemaVersion: "operator-notification-route-read-model-v1", settings });
     }
     if (url.pathname === "/api/operator/pilot-overview") {
       const operator = operatorAccess(request);

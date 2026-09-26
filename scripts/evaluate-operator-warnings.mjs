@@ -21,6 +21,7 @@ const paths = {
   pilotDecisions: resolve(runtimeDir, "workspace-pilot-decisions.json"),
   operatorWarnings: resolve(runtimeDir, "operator-warning-events.json"),
   operatorNotifications: resolve(runtimeDir, "operator-notification-outbox.json"),
+  operatorRoutes: resolve(runtimeDir, "operator-notification-routes.json"),
   sourceScan: resolve(runtimeDir, "latest-source-scan.json"),
   evidenceLedger: resolve(runtimeDir, "versioned-evidence-ledger.json"),
   reviewDecisions: resolve(runtimeDir, "review-decisions.json"),
@@ -54,6 +55,8 @@ const [refreshHistory, sourceScan, profiles, deliveries] = await Promise.all([
 const store = createRuntimeStore(runtimeDir);
 try {
   await importRuntimeLedgers(store, paths);
+  const persistedRoutes = store.findRecord("operator_notification_route", "operator-notification-routes");
+  if (persistedRoutes) notificationRoutes = persistedRoutes;
   const alerts = store.alertsLedger().alerts;
   const warnings = [];
   const failedRuns = (refreshHistory.runs ?? []).filter((run) => run.status !== "complete");

@@ -15,6 +15,8 @@ byId("load-overview").addEventListener("click", async () => {
   const notificationResponse = await fetch("../api/operator/notifications", { headers: token ? { Authorization: `Bearer ${token}` } : {} });
   const notificationBody = notificationResponse.ok ? await notificationResponse.json() : { notifications: [] };
   byId("operator-notifications").innerHTML = notificationBody.notifications?.length ? `<h2>Notification outbox</h2>${notificationBody.notifications.slice().reverse().map((notification) => `<article class="record-card"><div class="record-meta"><span>${escapeHtml(notification.status)}</span><span>${escapeHtml(notification.recipient)}</span></div><h3>${escapeHtml(notification.subject)}</h3><p class="muted">Created ${escapeHtml(notification.createdAt)} · warning ${escapeHtml(notification.warningId)}</p>${notification.status === "pending" ? `<button class="operator-notification-action" data-notification-id="${escapeHtml(notification.id)}" type="button">Mark dispatched</button>` : `<p class="muted">Dispatched ${escapeHtml(notification.dispatchedAt || "")}</p>`}</article>`).join("")}` : `<p class="muted">Notification outbox is empty.</p>`;
+  const routeResponse = await fetch("../api/operator/notification-routes", { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (routeResponse.ok) byId("operator-routing-json").value = JSON.stringify((await routeResponse.json()).settings, null, 2);
   document.querySelectorAll(".operator-warning-action").forEach((button) => button.addEventListener("click", async () => {
     const note = window.prompt("What action was taken?");
     if (!note?.trim()) return;
@@ -29,6 +31,14 @@ byId("load-overview").addEventListener("click", async () => {
     const result = await fetch(`../api/operator/notifications/${encodeURIComponent(button.dataset.notificationId)}/dispatch`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Idempotency-Key": crypto.randomUUID?.() || `operator-notification-${Date.now()}`, "content-type": "application/json" }, body: JSON.stringify({ note }) });
     if (result.ok) byId("load-overview").click();
   }));
+  byId("save-operator-routing").onclick = async () => {
+    const status = byId("operator-routing-status");
+    try {
+      const settings = JSON.parse(byId("operator-routing-json").value);
+      const result = await fetch("../api/operator/notification-routes", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Idempotency-Key": crypto.randomUUID?.() || `operator-route-${Date.now()}`, "content-type": "application/json" }, body: JSON.stringify(settings) });
+      status.textContent = result.ok ? "Routing saved." : `Could not save routing (${result.status}).`;
+    } catch { status.textContent = "Routing must be valid JSON."; }
+  };
   byId("operator-workspaces").innerHTML = `<table><caption>Workspace pilot status · no private notes</caption><thead><tr><th>Workspace</th><th>Configured</th><th>Deliveries</th><th>Reviewed</th><th>Useful</th><th>Decision changes</th><th>Delivery timing</th><th>Latest checkpoint</th></tr></thead><tbody>${overview.workspaces.map((workspace) => `<tr><th scope="row">${escapeHtml(workspace.name)}</th><td>${workspace.pilotConfigured ? "yes" : "no"}</td><td>${escapeHtml(workspace.deliveries)}</td><td>${escapeHtml(workspace.reviewedDeliveries)}</td><td>${escapeHtml(workspace.usefulDeliveries)}</td><td>${escapeHtml(workspace.decisionChanges)}</td><td>${workspace.deliveryDelayed ? "delayed" : "on schedule / no data"}</td><td>${escapeHtml(workspace.latestDecision || "none")}</td></tr>`).join("")}</tbody></table>`;
   byId("operator-history").innerHTML = overview.trend.length ? `<table><caption>Refresh history · aggregate operating trend</caption><thead><tr><th>Run</th><th>Status</th><th>Failed steps</th><th>Changed sources</th><th>Missing sources</th><th>Oldest source age</th><th>Alerts useful / false / correction</th><th>Deliveries</th><th>Reviewed</th></tr></thead><tbody>${overview.trend.slice().reverse().map((run) => `<tr><th scope="row"><code>${escapeHtml(run.runId)}</code></th><td>${escapeHtml(run.status)}</td><td>${escapeHtml(run.failedSteps.join(", ") || "none")}</td><td>${escapeHtml(run.changedSources ?? "not recorded")}</td><td>${escapeHtml(run.missingSources ?? "not recorded")}</td><td>${run.oldestSourceAgeMs === null ? "not recorded" : `${Math.round(run.oldestSourceAgeMs / 86400000)} days`}</td><td>${escapeHtml(run.usefulAlerts)} / ${escapeHtml(run.falseAlerts)} / ${escapeHtml(run.correctionAlerts)}</td><td>${escapeHtml(run.deliveriesPrepared)}</td><td>${escapeHtml(run.deliveriesReviewed)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No refresh history is available yet.</p>`;
   byId("operator-limitation").textContent = overview.limitation;

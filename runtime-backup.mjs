@@ -18,6 +18,7 @@ const runtimeFiles = [
   "review-events.json",
   "operator-warning-events.json",
   "operator-notification-outbox.json",
+  "operator-notification-routes.json",
   "refresh-history.json",
   "insight-evaluation.json"
 ];

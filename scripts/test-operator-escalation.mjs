@@ -15,7 +15,8 @@ await write("latest-source-scan.json", { schemaVersion: "source-scan-receipt-v1"
 await write("workspace-alerts.json", { schemaVersion: "workspace-alert-ledger-v1", workspaces: [], alerts: [] });
 await write("workspace-pilot-profiles.json", { schemaVersion: "workspace-pilot-profile-ledger-v1", profiles: [{ id: "pilot-demo-research", workspaceId: "demo-research", cadence: "weekly" }] });
 await write("workspace-pilot-deliveries.json", { schemaVersion: "workspace-pilot-delivery-ledger-v1", deliveries: [] });
-const policyEnv = { ...process.env, RUNTIME_DATA_DIR: runtimeDir, OPERATOR_WARNING_ACK_SLA_MS: "0", OPERATOR_MAX_FAILED_REFRESHES: "-1", MAX_SOURCE_AGE_MS: "0", OPERATOR_NOTIFICATION_ROUTES_JSON: JSON.stringify({ default: ["platform-ops"], workspaces: { "demo-research": ["tenant-ops"] } }) };
+await write("operator-notification-routes.json", { schemaVersion: "operator-notification-route-ledger-v1", settings: [{ id: "operator-notification-routes", default: ["platform-ops"], warningIds: {}, workspaces: { "demo-research": ["tenant-ops"] } }] });
+const policyEnv = { ...process.env, RUNTIME_DATA_DIR: runtimeDir, OPERATOR_WARNING_ACK_SLA_MS: "0", OPERATOR_MAX_FAILED_REFRESHES: "-1", MAX_SOURCE_AGE_MS: "0" };
 await exec(process.execPath, [resolve(root, "scripts/evaluate-operator-warnings.mjs")], { cwd: root, env: policyEnv });
 const firstWarnings = JSON.parse(await readFile(resolve(runtimeDir, "operator-warning-events.json"), "utf8"));
 const firstNotifications = JSON.parse(await readFile(resolve(runtimeDir, "operator-notification-outbox.json"), "utf8"));

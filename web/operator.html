@@ -23,6 +23,13 @@
         <div id="operator-cards" class="operations-cards" aria-live="polite"></div>
         <div id="operator-warnings" class="record-list" aria-live="polite"></div>
         <div id="operator-notifications" class="record-list" aria-live="polite"></div>
+        <section class="record-card" aria-labelledby="operator-routing-title">
+          <h2 id="operator-routing-title">Notification routing</h2>
+          <p class="muted">JSON route settings are restricted to operators. Use <code>default</code>, <code>warningIds</code>, and <code>workspaces</code> recipient lists.</p>
+          <textarea id="operator-routing-json" rows="8" spellcheck="false" aria-label="Notification routing JSON"></textarea>
+          <button id="save-operator-routing" type="button">Save routing</button>
+          <span id="operator-routing-status" class="muted" role="status"></span>
+        </section>
         <div id="operator-workspaces" class="table-wrap" aria-live="polite"></div>
         <div id="operator-history" class="table-wrap" aria-live="polite"></div>
         <p id="operator-limitation" class="muted"></p>

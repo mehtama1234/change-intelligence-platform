@@ -46,7 +46,9 @@ notification envelope, not customer workspace records or source passages.
 Routes are configured explicitly through `OPERATOR_NOTIFICATION_ROUTES_JSON`:
 `warningIds` routes global warning types, `workspaces` routes workspace-scoped
 warnings, and `default` is the fallback recipient list. A workspace-scoped
-notification carries only its workspace ID and warning summary.
+notification carries only its workspace ID and warning summary. Operators can
+manage the same settings through the authenticated `/api/operator/notification-routes`
+command; changes are persisted, idempotent, and audited.
 
 Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map
