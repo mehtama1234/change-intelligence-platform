@@ -62,6 +62,7 @@ select { margin-left: 6px; padding: 9px 12px; border: 1px solid var(--line); bor
 .question-form div { display: flex; gap: 8px; }
 .question-form input { min-width: 0; flex: 1; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
 button { padding: 10px 14px; border: 0; border-radius: 8px; background: var(--accent); color: white; font: inherit; font-weight: 700; cursor: pointer; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .muted { color: var(--muted); }
 .table-wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
 table { width: 100%; border-collapse: collapse; min-width: 480px; }
