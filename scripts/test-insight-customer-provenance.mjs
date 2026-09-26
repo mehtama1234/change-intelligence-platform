@@ -52,4 +52,7 @@ await exec(process.execPath, [resolve(root, "scripts/build-pilot-deliveries.mjs"
 const deliveries = JSON.parse(await readFile(resolve(runDir, "workspace-pilot-deliveries.json"), "utf8"));
 const delivery = deliveries.deliveries[0];
 if (delivery.status !== "held_for_review" || delivery.insightProvenance?.[0]?.state !== "stale" || delivery.briefings?.[0]?.state !== "stale") throw new Error("Customer delivery did not carry stale insight provenance or hold for re-review.");
+const notifications = JSON.parse(await readFile(resolve(runDir, "workspace-delivery-notifications.json"), "utf8"));
+const notification = notifications.notifications[0];
+if (notification.deliveryStatus !== "held_for_review" || notification.insightPublicationIds?.[0] !== insightPublication.id || !notification.staleInsightTitles?.length || !notification.body.includes("re-review")) throw new Error("Delivery notification did not carry bounded insight provenance and stale-state metadata.");
 console.log("Insight customer provenance test passed: published insight provenance reached briefings, changed evidence staled the briefing, and delivery was held for re-review.");

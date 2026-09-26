@@ -77,7 +77,10 @@ for (const profile of profiles) {
   if (!existingIds.has(delivery.id)) { deliveries.push(delivery); created += 1; }
   if (!existingNotificationIds.has(`workspace-delivery-notification-${delivery.id}`)) {
     const preference = preferences.find((candidate) => candidate.workspaceId === profile.workspaceId);
-    notifications.push({ id: `workspace-delivery-notification-${delivery.id}`, workspaceId: profile.workspaceId, deliveryId: delivery.id, type: "pilot_delivery", channel: preference?.delivery ?? "in_app", destinationId: preference?.destinationId ?? null, status: preference?.deliveryUpdates === false ? "suppressed" : "pending", subject: `New ${profile.cadence} intelligence handoff`, body: delivery.headline, createdAt: now, deliveredAt: null, suppressedAt: preference?.deliveryUpdates === false ? now : null });
+    const briefingStates = workspaceBriefings.map((briefing) => ({ id: briefing.id, state: briefing.state, publication: briefing.publication ?? "not_published" }));
+    const staleInsightTitles = linkedInsights.filter((insight) => insight.state === "stale").map((insight) => insight.title);
+    const body = `${delivery.headline}${linkedInsights.length ? ` ${linkedInsights.length} bounded insight${linkedInsights.length === 1 ? " is" : "s are"} linked with publication receipts.` : ""}${staleInsightTitles.length ? ` ${staleInsightTitles.length} linked insight${staleInsightTitles.length === 1 ? " needs" : "s need"} re-review before use.` : ""}`;
+    notifications.push({ id: `workspace-delivery-notification-${delivery.id}`, workspaceId: profile.workspaceId, deliveryId: delivery.id, type: "pilot_delivery", channel: preference?.delivery ?? "in_app", destinationId: preference?.destinationId ?? null, status: preference?.deliveryUpdates === false ? "suppressed" : "pending", subject: `New ${profile.cadence} intelligence handoff`, body, deliveryStatus: delivery.status, briefingStates, insightPublicationIds: linkedInsights.map((insight) => insight.publicationId), staleInsightTitles, createdAt: now, deliveredAt: null, suppressedAt: preference?.deliveryUpdates === false ? now : null });
   }
 }
 await mkdir(resolve(outputPath, ".."), { recursive: true });

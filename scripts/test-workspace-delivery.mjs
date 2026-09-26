@@ -10,7 +10,7 @@ const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const runtimeDir = `/tmp/change-intelligence-workspace-delivery-${Date.now()}`;
 await mkdir(runtimeDir, { recursive: true });
 const preference = { id: "notification-preference-demo-research", workspaceId: "demo-research", deliveryUpdates: true, delivery: "webhook", destinationId: "partner-webhook", webhookUrl: "PLACEHOLDER" };
-const notification = { id: "workspace-delivery-notification-test", workspaceId: "demo-research", deliveryId: "delivery-test", channel: "webhook", destinationId: "partner-webhook", status: "pending", subject: "Refresh handoff", body: "One bounded update is ready.", createdAt: new Date().toISOString() };
+const notification = { id: "workspace-delivery-notification-test", workspaceId: "demo-research", deliveryId: "delivery-test", channel: "webhook", destinationId: "partner-webhook", status: "pending", subject: "Refresh handoff", body: "One bounded update is ready.", deliveryStatus: "prepared", briefingStates: [{ id: "briefing-test", state: "published", publication: "published" }], insightPublicationIds: ["insight-publication-test"], staleInsightTitles: [], createdAt: new Date().toISOString() };
 await writeFile(resolve(runtimeDir, "workspace-notification-preferences.json"), `${JSON.stringify({ schemaVersion: "workspace-notification-preference-ledger-v1", preferences: [preference] }, null, 2)}\n`);
 await writeFile(resolve(runtimeDir, "workspace-delivery-notifications.json"), `${JSON.stringify({ schemaVersion: "workspace-delivery-notification-ledger-v1", notifications: [notification] }, null, 2)}\n`);
 let received = 0;
@@ -25,7 +25,7 @@ try {
   await exec(process.execPath, [resolve(root, "scripts/dispatch-workspace-notifications.mjs")], { cwd: root, env });
   const delivered = JSON.parse(await readFile(resolve(runtimeDir, "workspace-delivery-notifications.json"), "utf8"));
   const attempts = JSON.parse(await readFile(resolve(runtimeDir, "workspace-delivery-notification-attempts.json"), "utf8"));
-  if (received !== 1 || delivered.notifications[0].status !== "delivered" || delivered.notifications[0].attempts !== 1 || attempts.attempts[0].status !== "delivered" || body.notification.workspaceId !== "demo-research" || body.notification.deliveryId !== "delivery-test" || JSON.stringify(body).includes("webhookUrl")) throw new Error("Workspace webhook delivery did not produce a bounded tenant-safe success envelope.");
+  if (received !== 1 || delivered.notifications[0].status !== "delivered" || delivered.notifications[0].attempts !== 1 || attempts.attempts[0].status !== "delivered" || body.notification.workspaceId !== "demo-research" || body.notification.deliveryId !== "delivery-test" || body.notification.deliveryStatus !== "prepared" || body.notification.insightPublicationIds[0] !== "insight-publication-test" || JSON.stringify(body).includes("webhookUrl")) throw new Error("Workspace webhook delivery did not produce a bounded tenant-safe success envelope with provenance metadata.");
   delivered.notifications[0] = { ...delivered.notifications[0], status: "pending", deliveredAt: null, attempts: 0, lastError: null };
   await writeFile(resolve(runtimeDir, "workspace-delivery-notifications.json"), `${JSON.stringify(delivered, null, 2)}\n`);
   server.removeAllListeners("request");
