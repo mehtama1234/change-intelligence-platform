@@ -155,3 +155,8 @@ The operator and customer can now tell the difference between “configured and
 waiting for the next refresh” and “the first handoff is ready.” That prevents
 onboarding from ending at account creation and makes the first paid service
 moment measurable.
+
+The operator queue now shows whether each partner is still waiting for its
+first refresh or already has a reviewable handoff. The handoff retains the
+refresh run that produced it, giving the service team a concrete way to find a
+missed delivery and explain what happened.

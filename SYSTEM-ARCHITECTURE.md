@@ -273,3 +273,9 @@ queued for its first eligible refresh from one with a first delivery ready. It
 derives this state from the durable pilot profile, delivery ledger, and
 scheduler status; it does not claim that a scheduled run succeeded until the
 delivery record exists.
+
+The aggregate operator view includes the same schedule state for each tenant,
+so a configured workspace waiting for its first refresh is visible without
+exposing its questions or evidence. A failed refresh remains a global
+operational warning, while a successful workspace delivery is tied to the
+refresh run ID for inspection.

@@ -64,14 +64,17 @@ try {
   await stopServer(server);
   server = null;
 
-  await exec(process.execPath, [resolve(root, "scripts/build-pilot-deliveries.mjs")], { cwd: root, env: { ...process.env, RUNTIME_DATA_DIR: runtimeDir, REFRESH_RUN_ID: "provisioned-flow-refresh" } });
-  await exec(process.execPath, [resolve(root, "scripts/sync-runtime-store.mjs")], { cwd: root, env: { ...process.env, RUNTIME_DATA_DIR: runtimeDir } });
+  await exec(process.execPath, [resolve(root, "scripts/run-refresh-cycle.mjs")], { cwd: root, env: { ...process.env, RUNTIME_DATA_DIR: runtimeDir, REFRESH_RUN_ID: "provisioned-flow-refresh", REFRESH_SKIP_SEC: "1" }, maxBuffer: 20 * 1024 * 1024 });
 
   server = startServer();
   await waitForHealth(server);
   const deliveriesResponse = await fetch(`${base}/api/pilot-deliveries?workspace=${encodeURIComponent(workspaceId)}`, { headers: auth });
   const deliveries = await deliveriesResponse.json();
   if (deliveriesResponse.status !== 200 || deliveries.deliveries.length !== 1 || deliveries.deliveries[0].workspaceId !== workspaceId || deliveries.deliveries[0].status !== "prepared") throw new Error(`First provisioned handoff was not available as a prepared delivery: ${JSON.stringify(deliveries)}`);
+  const refreshReceipt = JSON.parse(await readFile(`${runtimeDir}/latest-refresh.json`, "utf8"));
+  if (refreshReceipt.status !== "complete" || deliveries.deliveries[0].refreshRunId !== "provisioned-flow-refresh") throw new Error(`The actual refresh cycle did not complete for the provisioned workspace: ${JSON.stringify(refreshReceipt)}`);
+  const handoffNotifications = await (await fetch(`${base}/api/workspace-delivery-notifications?workspace=${encodeURIComponent(workspaceId)}`, { headers: auth })).json();
+  if (!handoffNotifications.notifications.some((notification) => notification.type === "pilot_delivery" && notification.deliveryId === deliveries.deliveries[0].id && notification.status === "pending")) throw new Error("The actual refresh cycle did not create the first handoff notification.");
   const afterResponse = await fetch(`${base}/api/workspace-onboarding?workspace=${encodeURIComponent(workspaceId)}`, { headers: auth });
   const after = await afterResponse.json();
   if (after.status !== "active" || after.steps.find((step) => step.id === "first_delivery")?.status !== "ready") throw new Error(`Onboarding did not become active after the first handoff: ${JSON.stringify(after)}`);
@@ -79,7 +82,7 @@ try {
   if (deliveredSchedule.status !== "first_delivery_ready" || deliveredSchedule.latestDeliveryId !== deliveries.deliveries[0].id) throw new Error(`Workspace schedule did not record the first handoff: ${JSON.stringify(deliveredSchedule)}`);
   const operatorOverview = await (await fetch(`${base}/api/operator/pilot-overview`, { headers: operatorAuth })).json();
   const operatorWorkspace = operatorOverview.workspaces.find((candidate) => candidate.id === workspaceId);
-  if (!operatorWorkspace || operatorWorkspace.onboarding?.status !== "active" || operatorWorkspace.deliveries !== 1) throw new Error("Operator overview did not include the provisioned workspace's first handoff.");
+  if (!operatorWorkspace || operatorWorkspace.onboarding?.status !== "active" || operatorWorkspace.deliveries !== 1 || operatorWorkspace.schedule?.status !== "first_delivery_ready") throw new Error("Operator overview did not include the provisioned workspace's first handoff schedule.");
   const registry = JSON.parse(await readFile(`${runtimeDir}/workspace-registry.json`, "utf8"));
   if (!registry.workspaces.some((candidate) => candidate.id === workspaceId)) throw new Error("Provisioned workspace registry entry was lost.");
   console.log("Provisioned workspace flow passed: runtime tenant, pilot configuration, first handoff, restart recovery, and operator visibility are connected.");
