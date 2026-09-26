@@ -19,8 +19,10 @@ and that the deployment uses the Compose services in this repository.
 For GitHub Actions, add a repository secret named
 `RESEARCH_REPOSITORIES_TOKEN` with read-only access to the private
 `company-atlas-lab`, `trend-hunting`, and `inc5000-analysis` repositories. CI
-deliberately fails when this secret is missing; it does not replace private
-research inputs with stale fixtures.
+uses the checked-in packet-derived contract snapshot for its reproducible core
+tests and skips live-input validation when this secret is absent. Configure the
+secret to turn on strict live repository validation; the snapshot is test data,
+not a production source mount.
 
 Check the rendered deployment before starting it:
 

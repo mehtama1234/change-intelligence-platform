@@ -13,24 +13,29 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      RESEARCH_ROOT: ${{ github.workspace }}/research
+      RESEARCH_ROOT: ${{ github.workspace }}/ci-research
       RESEARCH_REPOSITORIES_TOKEN: ${{ secrets.RESEARCH_REPOSITORIES_TOKEN }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Materialize research repositories
+      - name: Prepare checked-in research contract snapshot
+        run: node scripts/prepare-ci-research-snapshot.mjs
+      - name: Validate live research repositories when credentials are configured
+        if: ${{ env.RESEARCH_REPOSITORIES_TOKEN != '' }}
         run: |
-          mkdir -p "$RESEARCH_ROOT"
+          live_root="$RUNNER_TEMP/live-research"
+          mkdir -p "$live_root"
           for repository in annual-report-research cultural-geopolitical-theme-mining ibis-industries; do
-            git clone --depth 1 --branch main "https://github.com/mehtama1234/${repository}.git" "$RESEARCH_ROOT/$repository"
+            git clone --depth 1 --branch main "https://github.com/mehtama1234/${repository}.git" "$live_root/$repository"
           done
-          if [ -z "${RESEARCH_REPOSITORIES_TOKEN:-}" ]; then
-            echo "::error::Set the RESEARCH_REPOSITORIES_TOKEN repository secret so CI can read the private research repositories."
-            exit 1
-          fi
           for repository in company-atlas-lab trend-hunting inc5000-analysis; do
-            git -c "http.extraheader=AUTHORIZATION: bearer ${RESEARCH_REPOSITORIES_TOKEN}" clone --depth 1 --branch main "https://github.com/mehtama1234/${repository}.git" "$RESEARCH_ROOT/$repository"
+            git -c "http.extraheader=AUTHORIZATION: bearer ${RESEARCH_REPOSITORIES_TOKEN}" clone --depth 1 --branch main "https://github.com/mehtama1234/${repository}.git" "$live_root/$repository"
           done
+          RESEARCH_ROOT="$live_root" REQUIRE_SOURCE_FILES=1 npm run validate:adapters
+          RESEARCH_ROOT="$live_root" npm run validate:company-report-windows
+      - name: Note that live research credentials are not configured
+        if: ${{ env.RESEARCH_REPOSITORIES_TOKEN == '' }}
+        run: echo "::notice::Live research repository validation skipped; configure RESEARCH_REPOSITORIES_TOKEN to enable it. Core tests use the checked-in contract snapshot."
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
