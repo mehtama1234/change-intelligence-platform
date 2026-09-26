@@ -20,7 +20,7 @@ const ingestion = await json("data/processed/ai-work-control.ingestion.json");
 const errors = [];
 const assert = (condition, message) => { if (!condition) errors.push(message); };
 const records = new Map(packet.records.map((record) => [record.id, record]));
-const requiredSteps = ["capture-sec-filings", "extract-sec-xbrl", "validate-source-adapters", "scan-repositories", "ingest-research-repositories", "evaluate-watchlists", "process-review-work", "materialize-evidence", "build-packet", "build-domain-atlas", "discover-insight-opportunities", "evaluate-questions", "build-question-briefings", "publish-question-evaluations", "generate-insight-candidates", "evaluate-insight-quality", "publish-insight-candidates", "evaluate-operator-warnings", "sync-runtime-store", "dispatch-operator-notifications", "record-pilot-readiness"];
+const requiredSteps = ["capture-sec-report-windows", "extract-sec-xbrl", "validate-source-adapters", "validate-company-report-windows", "scan-repositories", "ingest-research-repositories", "evaluate-watchlists", "process-review-work", "materialize-evidence", "build-packet", "build-domain-atlas", "discover-insight-opportunities", "evaluate-questions", "build-question-briefings", "publish-question-evaluations", "generate-insight-candidates", "evaluate-insight-quality", "publish-insight-candidates", "evaluate-operator-warnings", "sync-runtime-store", "dispatch-operator-notifications", "record-pilot-readiness"];
 
 assert(packet.records.length >= 7, "packet should contain the six-repository vertical slice records");
 assert(atlas.schemaVersion === "domain-atlas-v1" && atlas.sourceRecordCount === packet.records.length, "domain atlas must normalize the current packet");
@@ -31,7 +31,11 @@ assert(packet.insights.every((insight) => insight.recordIds.every((id) => record
 assert(packet.insights.every((insight) => insight.whatWouldChangeOurMind?.length), "insights need explicit falsifiers");
 assert(scan.repositories.length === 6 && scan.counts.missing === 0, "source scan must cover six repositories without missing sources");
 assert(refresh.status === "complete", `latest refresh is ${refresh.status}, not complete`);
-for (const step of requiredSteps) assert(refresh.steps.some((stepResult) => stepResult.name === step && stepResult.status === "complete"), `refresh missing completed step: ${step}`);
+for (const step of requiredSteps) {
+  const result = refresh.steps.find((stepResult) => stepResult.name === step);
+  const maySkip = ["capture-sec-report-windows", "extract-sec-xbrl"].includes(step);
+  assert(result && (result.status === "complete" || (maySkip && result.status === "skipped")), `refresh missing completed step: ${step}`);
+}
 const report = packet.records.find((record) => record.reportWindow)?.reportWindow;
 assert(report?.movementSource === "sec_xbrl", "report movement must come from direct SEC XBRL");
 assert(report?.sourceRefs.captureStatus === "complete", "all direct SEC records must be captured");

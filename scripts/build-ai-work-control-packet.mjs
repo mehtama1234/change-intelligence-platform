@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
@@ -11,6 +11,7 @@ const mapPath = resolve(root, process.env.SOURCE_MAP_PATH ?? "data/source-maps/a
 const outputPath = resolve(root, process.env.PACKET_OUTPUT_PATH ?? process.env.PACKET_PATH ?? "data/processed/ai-work-control.packet.json");
 const previousPacketPath = outputPath;
 const captureManifestPath = resolve(root, process.env.SEC_MANIFEST_PATH ?? "data/raw/ai-work-control/c3-ai/manifest.json");
+const secWindowsCaptureDir = process.env.SEC_WINDOWS_CAPTURE_DIR ? resolve(root, process.env.SEC_WINDOWS_CAPTURE_DIR) : null;
 const xbrlExtractPath = resolve(root, process.env.SEC_XBRL_PATH ?? "data/processed/ai-work-control/c3-ai.xbrl.json");
 const sourceScanPath = resolve(root, process.env.SOURCE_SCAN_PATH ?? `${runtimeDir}/latest-source-scan.json`);
 const ingestionPath = resolve(root, process.env.INGESTION_OUTPUT_PATH ?? `${runtimeDir}/research-ingestion.json`);
@@ -37,6 +38,7 @@ const insightOpportunities = existsSync(insightOpportunitiesPath) ? JSON.parse(a
 const insightPromotions = existsSync(insightPromotionsPath) ? JSON.parse(await readFile(insightPromotionsPath, "utf8")) : { promotions: [] };
 const previousPacket = existsSync(previousPacketPath) ? JSON.parse(await readFile(previousPacketPath, "utf8")) : undefined;
 const previousRecordsById = new Map((previousPacket?.records ?? []).map((record) => [record.id, record]));
+const configuredSourcesById = new Map((map.sources ?? []).map((source) => [source.id, source]));
 
 function stripMarkup(text) {
   return text
@@ -64,6 +66,17 @@ function parseAmount(value) {
   const negative = normalized.startsWith("(") && normalized.endsWith(")");
   const number = Number(normalized.replace(/[()]/g, ""));
   return negative ? -number : number;
+}
+
+function safeCompanyName(value) {
+  return String(value ?? "unknown").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+function directLinks(markdown) {
+  return [
+    ...[...markdown.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g)].map((match) => ({ label: match[1], url: match[2] })),
+    ...[...markdown.matchAll(/-\s*([^:\n]+):\s*<(https?:\/\/[^>]+)>/g)].map((match) => ({ label: match[1].trim(), url: match[2] }))
+  ];
 }
 
 function parseQuarterBridge(markdown) {
@@ -114,12 +127,18 @@ async function buildReportWindow(source, sourceLedger) {
   const initialRead = await readFile(initialReadPath, "utf8");
   const parsedBridge = parseQuarterBridge(bridge);
   const quarters = parsedBridge.quarters;
-  const directRecords = [...sourceLedger.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g)]
-    .map((match) => ({ label: match[1], url: match[2] }));
-  const captureManifest = existsSync(captureManifestPath)
-    ? JSON.parse(await readFile(captureManifestPath, "utf8"))
+  const ledgerPath = source.reportWindow.sourceLedgerPath
+    ? resolve(sourceRoot, source.sourceRepository, source.reportWindow.sourceLedgerPath)
+    : null;
+  const reportLedger = ledgerPath && existsSync(ledgerPath) ? await readFile(ledgerPath, "utf8") : sourceLedger;
+  const directRecords = directLinks(reportLedger);
+  const windowManifestPath = secWindowsCaptureDir ? resolve(secWindowsCaptureDir, safeCompanyName(source.company ?? source.id), "manifest.json") : captureManifestPath;
+  const effectiveManifestPath = existsSync(windowManifestPath) ? windowManifestPath : captureManifestPath;
+  const captureManifest = existsSync(effectiveManifestPath)
+    ? JSON.parse(await readFile(effectiveManifestPath, "utf8"))
     : undefined;
-  const xbrlExtract = existsSync(xbrlExtractPath)
+  const captureManifestMatches = captureManifest?.sourceId === source.id;
+  const xbrlExtract = captureManifestMatches && existsSync(xbrlExtractPath)
     ? JSON.parse(await readFile(xbrlExtractPath, "utf8"))
     : undefined;
   const directQuarters = xbrlExtract ? parseDirectQuarterFacts(xbrlExtract) : [];
@@ -150,18 +169,19 @@ async function buildReportWindow(source, sourceLedger) {
         directExtract: "data/processed/ai-work-control/c3-ai.xbrl.json",
         directExtractStatus: directMatchesBridge ? "matches_bridge" : "does_not_match_bridge"
       } : {}),
-      ...(captureManifest ? {
-        captureManifest: "data/raw/ai-work-control/c3-ai/manifest.json",
+      ...(captureManifestMatches ? {
+        captureManifest: relative(root, effectiveManifestPath),
         captureStatus: captureManifest.records.every((record) => record.status === "retrieved") ? "complete" : "incomplete",
         capturedRecords: captureManifest.records.filter((record) => record.status === "retrieved").length,
         attemptedRecords: captureManifest.records.length
-      } : { captureStatus: "not_attempted" })
+      } : { captureStatus: "indexed_not_captured" })
     }
   };
 }
 
 const records = [];
-for (const source of ingestion?.records ?? map.sources) {
+for (const ingestedSource of ingestion?.records ?? map.sources) {
+  const source = { ...ingestedSource, reportWindow: configuredSourcesById.get(ingestedSource.id)?.reportWindow ?? ingestedSource.reportWindow };
   if (source.refreshState === "deferred") {
     const previousRecord = previousRecordsById.get(source.id);
     if (!previousRecord) throw new Error(`${source.id}: deferred source has no prior packet record to carry forward`);

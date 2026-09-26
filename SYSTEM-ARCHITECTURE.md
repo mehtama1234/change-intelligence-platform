@@ -30,6 +30,13 @@ The ingestion step writes a repository-by-repository ledger containing the
 source digest, byte count, capture reference, and normalized research fields;
 packet and atlas generation consume that ledger when it is available.
 
+Public-company report windows have an additional contract. Each configured
+company must have an annual baseline, at least three later quarterly records,
+an accounting bridge, and at least four direct SEC links. The refresh can then
+capture the five-company window into separate immutable manifests. A link in a
+research ledger is marked as indexed until its document bytes are captured; the
+reader does not present an indexed link as a downloaded source.
+
 ## Core services
 
 1. **Scheduler** — runs source checks and refresh jobs, writes a durable

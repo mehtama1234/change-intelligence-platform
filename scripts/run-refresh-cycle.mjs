@@ -14,7 +14,8 @@ const historyPath = resolve(runDir, "refresh-history.json");
 const scopePath = resolve(runDir, "refresh-scope.json");
 const scopeStatePath = resolve(runDir, "refresh-scope-state.json");
 const availabilityPath = resolve(runDir, "latest-source-availability.json");
-const secCaptureDir = resolve(runDir, "raw/ai-work-control/c3-ai");
+const secWindowsCaptureDir = resolve(runDir, "raw/ai-work-control/sec-report-windows");
+const secCaptureDir = resolve(secWindowsCaptureDir, "c3-ai");
 const secManifestPath = resolve(secCaptureDir, "manifest.json");
 const secXbrlPath = resolve(runDir, "c3-ai.xbrl.json");
 const childEnv = {
@@ -49,6 +50,7 @@ const childEnv = {
   INSIGHT_PROMOTIONS_PATH: resolve(runDir, "insight-promotions.json"),
   ATLAS_OUTPUT_PATH: resolve(runDir, "domain-atlas.json"),
   SEC_CAPTURE_DIR: secCaptureDir,
+  SEC_WINDOWS_CAPTURE_DIR: secWindowsCaptureDir,
   SEC_MANIFEST_PATH: secManifestPath,
   SEC_XBRL_PATH: secXbrlPath
   ,REFRESH_SCOPE_PATH: scopePath
@@ -91,10 +93,10 @@ try {
   const scope = JSON.parse(await readFile(scopePath, "utf8"));
   const annualReportDue = scope.dueRepositories?.includes("annual-report-research");
   if (process.env.REFRESH_SKIP_SEC === "1" || !annualReportDue) {
-    steps.push({ name: "capture-sec-filings", status: "skipped", reason: "SEC capture skipped by configuration." });
+    steps.push({ name: "capture-sec-report-windows", status: "skipped", reason: "SEC capture skipped by configuration." });
     steps.push({ name: "extract-sec-xbrl", status: "skipped", reason: "SEC extraction skipped by configuration." });
   } else {
-    await runStep("capture-sec-filings", "acquire-sec-filing-window.mjs", true);
+    await runStep("capture-sec-report-windows", "acquire-sec-report-windows.mjs", true);
     if (existsSync(secManifestPath)) {
       await runStep("extract-sec-xbrl", "extract-sec-xbrl-window.mjs", true);
     } else {
@@ -102,6 +104,7 @@ try {
     }
   }
   await runStep("validate-source-adapters", "validate-source-adapters.mjs");
+  await runStep("validate-company-report-windows", "validate-company-report-windows.mjs");
   await runStep("scan-repositories", "scan-source-changes.mjs");
   await runStep("ingest-research-repositories", "ingest-research-repositories.mjs");
   await runStep("evaluate-watchlists", "evaluate-watchlists.mjs");

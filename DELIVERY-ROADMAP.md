@@ -21,6 +21,8 @@ chain, an alert, and an exportable briefing.
 ## Phase 3 — quarterly intelligence
 
 - ingest annual and quarterly reports;
+- validate and capture reproducible annual-plus-three-quarter windows for the
+  first five public companies;
 - compare management claims with later results;
 - track guidance, narrative changes, segment movement, cash, and capital;
 - publish quarter-change briefings;

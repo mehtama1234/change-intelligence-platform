@@ -192,7 +192,9 @@
       "excerptTerms": ["FY2025 10-K", "FY2026 Q1", "does not independently measure"],
       "reportWindow": {
         "bridgePath": "company-industry-analysis/companies/c3-ai/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
-        "initialReadPath": "company-industry-analysis/companies/c3-ai/INITIAL-EVIDENCE-READ.md"
+        "initialReadPath": "company-industry-analysis/companies/c3-ai/INITIAL-EVIDENCE-READ.md",
+        "annualBaseline": "FY2025 10-K",
+        "sourceLedgerPath": "company-industry-analysis/companies/c3-ai/SOURCE-LEDGER.md"
       }
     },
     {
@@ -213,7 +215,7 @@
       "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
       "limits": ["The bridge does not establish customer workload value, switching cost, deployment return, worker outcome, or downstream public benefit."],
       "excerptTerms": ["three-quarter", "Data Center", "outcome"],
-      "reportWindow": { "bridgePath": "company-industry-analysis/companies/nvidia/THREE-QUARTER-ACCOUNTING-BRIDGE.md", "initialReadPath": "company-industry-analysis/companies/nvidia/INITIAL-EVIDENCE-READ.md", "annualBaseline": "FY2025 10-K", "columns": ["Direct records", "Bounded use", "Not established"], "reading": "This is an issuer-reported platform and capacity history, not a customer or worker outcome." }
+      "reportWindow": { "bridgePath": "company-industry-analysis/companies/nvidia/THREE-QUARTER-ACCOUNTING-BRIDGE.md", "initialReadPath": "company-industry-analysis/companies/nvidia/INITIAL-EVIDENCE-READ.md", "annualBaseline": "FY2025 10-K", "sourceLedgerPath": "company-industry-analysis/companies/nvidia/SOURCE-LEDGER.md", "columns": ["Direct records", "Bounded use", "Not established"], "reading": "This is an issuer-reported platform and capacity history, not a customer or worker outcome." }
     },
     {
       "id": "atlas-microsoft-cloud-window",
@@ -233,7 +235,7 @@
       "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
       "limits": ["The bridge does not isolate AI contribution, workload use, customer value, reliability, affordability, energy effects, or worker outcomes."],
       "excerptTerms": ["Microsoft Cloud", "quarterly", "cannot establish"],
-      "reportWindow": { "bridgePath": "company-industry-analysis/companies/microsoft/THREE-QUARTER-ACCOUNTING-BRIDGE.md", "initialReadPath": "company-industry-analysis/companies/microsoft/INITIAL-EVIDENCE-READ.md", "annualBaseline": "FY2025 10-K", "reading": "This is reported cloud growth and contract context, not proof of a customer workload result." }
+      "reportWindow": { "bridgePath": "company-industry-analysis/companies/microsoft/THREE-QUARTER-ACCOUNTING-BRIDGE.md", "initialReadPath": "company-industry-analysis/companies/microsoft/INITIAL-EVIDENCE-READ.md", "annualBaseline": "FY2025 10-K", "sourceLedgerPath": "company-industry-analysis/companies/microsoft/SOURCE-LEDGER.md", "reading": "This is reported cloud growth and contract context, not proof of a customer workload result." }
     },
     {
       "id": "atlas-oracle-cloud-window",
@@ -253,7 +255,7 @@
       "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
       "limits": ["The bridge does not establish AI demand, cloud capacity return, customer value, durability, or public and worker outcomes."],
       "excerptTerms": ["quarterly", "revenue", "cannot establish"],
-      "reportWindow": { "bridgePath": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md", "initialReadPath": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md", "annualBaseline": "FY2025 10-K", "reading": "This is a reported revenue sequence; the operating cause and outcome remain open." }
+      "reportWindow": { "bridgePath": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md", "initialReadPath": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md", "annualBaseline": "FY2025 10-K", "sourceLedgerPath": "company-industry-analysis/companies/oracle/SOURCE-LEDGER.md", "reading": "This is a reported revenue sequence; the operating cause and outcome remain open." }
     },
     {
       "id": "atlas-broadcom-ai-infrastructure-window",
@@ -273,7 +275,7 @@
       "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
       "limits": ["The bridge does not prove AI-demand durability, customer switching cost, deployment reliability, security, worker conditions, or public outcomes."],
       "excerptTerms": ["Q1 FY2026", "customer", "AI-demand"],
-      "reportWindow": { "bridgePath": "company-industry-analysis/companies/broadcom/THREE-QUARTER-ACCOUNTING-BRIDGE.md", "initialReadPath": "company-industry-analysis/companies/broadcom/INITIAL-EVIDENCE-READ.md", "annualBaseline": "FY2025 10-K", "columns": ["Proper use", "Not established"], "reading": "This is a company-reported platform history; customer value and downstream effects need separate evidence." }
+      "reportWindow": { "bridgePath": "company-industry-analysis/companies/broadcom/THREE-QUARTER-ACCOUNTING-BRIDGE.md", "initialReadPath": "company-industry-analysis/companies/broadcom/INITIAL-EVIDENCE-READ.md", "annualBaseline": "FY2025 10-K", "sourceLedgerPath": "company-industry-analysis/companies/broadcom/SOURCE-LEDGER.md", "columns": ["Proper use", "Not established"], "reading": "This is a company-reported platform history; customer value and downstream effects need separate evidence." }
     },
     {
       "id": "trend-ai-agency-control-measure",

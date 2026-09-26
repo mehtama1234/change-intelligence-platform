@@ -4,183 +4,22 @@
   "sourceSnapshotDate": "2026-09-25",
   "operations": {
     "latestSourceScan": {
-      "generatedAt": "2026-09-26T10:02:19.763Z",
-      "runId": "scan-20260926100219763",
+      "generatedAt": "2026-09-26T14:18:01.482Z",
+      "runId": "scan-20260926141801481",
       "counts": {
-        "new": 4,
+        "new": 0,
         "changed": 0,
-        "unchanged": 16,
-        "missing": 0
+        "unchanged": 0,
+        "missing": 0,
+        "deferred": 20
       },
-      "reviewRequired": 4,
-      "reviewQueue": [
-        {
-          "id": "review-inc5000-luma-ai-networking-new",
-          "sourceId": "inc5000-luma-ai-networking",
-          "repository": "inc5000-analysis",
-          "sourcePath": "data/processed/featured.json",
-          "state": "needs_review",
-          "action": "reacquire_and_reextract",
-          "reason": "No prior capture exists for this source.",
-          "currentSha256": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
-        },
-        {
-          "id": "review-inc5000-caylent-ai-delivery-new",
-          "sourceId": "inc5000-caylent-ai-delivery",
-          "repository": "inc5000-analysis",
-          "sourcePath": "data/processed/featured.json",
-          "state": "needs_review",
-          "action": "reacquire_and_reextract",
-          "reason": "No prior capture exists for this source.",
-          "currentSha256": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
-        },
-        {
-          "id": "review-inc5000-insurify-ai-decisions-new",
-          "sourceId": "inc5000-insurify-ai-decisions",
-          "repository": "inc5000-analysis",
-          "sourcePath": "data/processed/featured.json",
-          "state": "needs_review",
-          "action": "reacquire_and_reextract",
-          "reason": "No prior capture exists for this source.",
-          "currentSha256": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
-        },
-        {
-          "id": "review-inc5000-veradata-donor-analytics-new",
-          "sourceId": "inc5000-veradata-donor-analytics",
-          "repository": "inc5000-analysis",
-          "sourcePath": "data/processed/featured.json",
-          "state": "needs_review",
-          "action": "reacquire_and_reextract",
-          "reason": "No prior capture exists for this source.",
-          "currentSha256": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
-        }
-      ],
+      "reviewRequired": 0,
+      "reviewQueue": [],
       "reviewWork": {
         "reviewRequired": 0,
         "readyForResearcher": 0,
         "blocked": 0,
-        "candidates": [
-          {
-            "id": "review-inc5000-luma-ai-networking-new",
-            "sourceId": "inc5000-luma-ai-networking",
-            "repository": "inc5000-analysis",
-            "state": "accepted_for_research",
-            "action": "reacquire_and_reextract",
-            "reason": "No prior capture exists for this source.",
-            "sourcePath": "data/processed/featured.json",
-            "sourceRole": "private_company",
-            "sourceLocator": "company=Luma Optics",
-            "title": "Luma Optics sells the network layer needed by larger AI systems",
-            "observation": "The Inc. 5000 record describes Luma Optics as a maker of optical transceiver hardware for data centers handling demanding AI workloads.",
-            "theme": "ai-work-control",
-            "mechanism": "As model workloads grow, the bottleneck can move from computing chips to the network that moves data between them, creating a specialized supplier layer.",
-            "affectedGroups": [
-              "AI companies",
-              "data-center workers",
-              "enterprise users",
-              "capital providers"
-            ],
-            "claimState": "reported",
-            "asOf": "2026-09-25",
-            "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-            "sourceBytes": 207596,
-            "sourceExcerpt": "nd routing software; per-ride fees and outcomes-based bonuses from plans.\", \"confidence\": \"high\", \"classified\": true, \"feature_reason\": [ \"big+fast\" ] }, { \"rank\": 47, \"company\": \"Luma Optics\", \"growth_pct\": 5757.0, \"revenue_band\": \"$100M - $250M\", \"rev_lo_musd\": 100, \"rev_hi_musd\": 250, \"rev_mid_musd\": 175, \"pct_secondary\": 160.0, \"founded\": 2006, \"industry_raw\": \"Artificial Intelligence & Data\", \"city\": \"Sebastapol\", \"state\": \"CA\", \"slug\": \"luma-optics\", \"list_year\": 2025, \"description\": \"Crafting optical transceiver hardware to handle the heaviest AI workloads efficiently and reliably.\", \"desc_source\": \"fetched2025\", \"company_age\": 19, \"durability_years\": 1, \"years_present\": [ 2025 ], \"ra",
-            "limits": [
-              "The Inc. record describes the business and growth, but does not prove customer performance, deployment durability, pricing power, or worker outcomes."
-            ],
-            "publication": "not_published"
-          },
-          {
-            "id": "review-inc5000-caylent-ai-delivery-new",
-            "sourceId": "inc5000-caylent-ai-delivery",
-            "repository": "inc5000-analysis",
-            "state": "accepted_for_research",
-            "action": "reacquire_and_reextract",
-            "reason": "No prior capture exists for this source.",
-            "sourcePath": "data/processed/featured.json",
-            "sourceRole": "private_company",
-            "sourceLocator": "company=Caylent",
-            "title": "Caylent sells help turning AI plans into cloud systems",
-            "observation": "The Inc. 5000 record describes Caylent as an AWS-focused services company using an AI-enabled delivery approach to help enterprises deploy ideas.",
-            "theme": "ai-work-control",
-            "mechanism": "When enterprises cannot turn a model or cloud plan into a working system, implementation firms capture value by supplying scarce technical knowledge and execution capacity.",
-            "affectedGroups": [
-              "enterprise users",
-              "software workers",
-              "implementation teams",
-              "customers"
-            ],
-            "claimState": "reported",
-            "asOf": "2026-09-25",
-            "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-            "sourceBytes": 207596,
-            "sourceExcerpt": "via carrier affiliate commissions; network effects scale.\", \"confidence\": \"high\", \"classified\": true, \"feature_reason\": [ \"big+fast\", \"durable 4yr\" ] }, { \"rank\": 352, \"company\": \"Caylent\", \"growth_pct\": 1122.0, \"revenue_band\": \"$100M - $250M\", \"rev_lo_musd\": 100, \"rev_hi_musd\": 250, \"rev_mid_musd\": 175, \"pct_secondary\": 295.0, \"founded\": 2015, \"industry_raw\": \"IT Services\", \"city\": \"Irvine\", \"state\": \"CA\", \"slug\": \"caylent\", \"list_year\": 2025, \"description\": \"An AI-enabled delivery methodology with deep AWS experience, turning customers\\u2019 ideas into impact.\", \"desc_source\": \"api2023\", \"company_age\": 10, \"durability_years\": 2, \"years_present\": [ 2023, 2025 ], \"rank_by_year\": { \"2023\": 93",
-            "limits": [
-              "The Inc. record identifies a service and growth story, but does not establish deployment quality, customer savings, worker workload, or repeatable AI productivity."
-            ],
-            "publication": "not_published"
-          },
-          {
-            "id": "review-inc5000-insurify-ai-decisions-new",
-            "sourceId": "inc5000-insurify-ai-decisions",
-            "repository": "inc5000-analysis",
-            "state": "accepted_for_research",
-            "action": "reacquire_and_reextract",
-            "reason": "No prior capture exists for this source.",
-            "sourcePath": "data/processed/featured.json",
-            "sourceRole": "private_company",
-            "sourceLocator": "company=Insurify",
-            "title": "Insurify applies AI to a consumer insurance choice",
-            "observation": "The Inc. 5000 record describes Insurify as an AI-powered insurance comparison platform that helps shoppers compare policies and quotes.",
-            "theme": "ai-work-control",
-            "mechanism": "A comparison service can reduce search effort for consumers while also shaping which choices, prices, and explanations they see.",
-            "affectedGroups": [
-              "insurance shoppers",
-              "insurers",
-              "customer-support workers",
-              "regulators"
-            ],
-            "claimState": "reported",
-            "asOf": "2026-09-25",
-            "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-            "sourceBytes": 207596,
-            "sourceExcerpt": "nd scale; recurring manufacturing margins from diversified customer base.\", \"confidence\": \"med\", \"classified\": true, \"feature_reason\": [ \"big+fast\" ] }, { \"rank\": 635, \"company\": \"Insurify\", \"growth_pct\": 657.0, \"revenue_band\": \"$250M - $500M\", \"rev_lo_musd\": 250, \"rev_hi_musd\": 500, \"rev_mid_musd\": 375, \"pct_secondary\": 48.0, \"founded\": 2013, \"industry_raw\": \"Insurance\", \"city\": \"Cambridge\", \"state\": \"MA\", \"slug\": \"insurify\", \"list_year\": 2025, \"description\": \"An AI-powered insurance comparison platform that helped 24 million shoppers over the last year.\", \"desc_source\": \"api2024\", \"company_age\": 12, \"durability_years\": 4, \"years_present\": [ 2022, 2023, 2024, 2025 ], \"rank_by_year\": { \"2022",
-            "limits": [
-              "The Inc. record does not show quote accuracy, consumer savings, recommendation bias, coverage quality, or how users can correct an error."
-            ],
-            "publication": "not_published"
-          },
-          {
-            "id": "review-inc5000-veradata-donor-analytics-new",
-            "sourceId": "inc5000-veradata-donor-analytics",
-            "repository": "inc5000-analysis",
-            "state": "accepted_for_research",
-            "action": "reacquire_and_reextract",
-            "reason": "No prior capture exists for this source.",
-            "sourcePath": "data/processed/featured.json",
-            "sourceRole": "private_company",
-            "sourceLocator": "company=VeraData",
-            "title": "VeraData uses AI to help nonprofits decide whom to approach",
-            "observation": "The Inc. 5000 record describes VeraData as an AI and machine-learning company serving philanthropic organizations with donor analysis.",
-            "theme": "ai-work-control",
-            "mechanism": "Prediction tools can make scarce fundraising staff more selective while moving judgment about who receives attention into a data system.",
-            "affectedGroups": [
-              "nonprofit workers",
-              "donors",
-              "charities",
-              "people served by nonprofits"
-            ],
-            "claimState": "reported",
-            "asOf": "2026-09-25",
-            "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-            "sourceBytes": 207596,
-            "sourceExcerpt": "izes data sharing; durability (2/4 years) proves recurring revenue model.\", \"confidence\": \"med\", \"classified\": true, \"feature_reason\": [ \"big+fast\" ] }, { \"rank\": 532, \"company\": \"VeraData\", \"growth_pct\": 756.0, \"revenue_band\": \"$100M - $250M\", \"rev_lo_musd\": 100, \"rev_hi_musd\": 250, \"rev_mid_musd\": 175, \"pct_secondary\": 155.0, \"founded\": 2009, \"industry_raw\": \"Artificial Intelligence & Data\", \"city\": \"Fort Myers\", \"state\": \"FL\", \"slug\": \"veradata\", \"list_year\": 2025, \"description\": \"Harnesses AI, machine learning, and donor science to revolutionize philanthropy.\", \"desc_source\": \"fetched2025\", \"company_age\": 16, \"durability_years\": 1, \"years_present\": [ 2025 ], \"rank_by_year\": { \"2025\": 532",
-            "limits": [
-              "The Inc. record does not measure prediction accuracy, donor treatment, fundraising results, access effects, or how staff challenge a recommendation."
-            ],
-            "publication": "not_published"
-          }
-        ],
+        "candidates": [],
         "decisions": [
           {
             "id": "decision-e5608d69-2622-454b-a1b2-7271950319df",
@@ -232,174 +71,9 @@
           }
         ],
         "versionedEvidence": {
-          "activeResearchRecordCount": 4,
+          "activeResearchRecordCount": 0,
           "decisionCount": 4,
-          "records": [
-            {
-              "versionId": "inc5000-luma-ai-networking-48fc203e7770",
-              "sourceId": "inc5000-luma-ai-networking",
-              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-              "state": "accepted_for_research",
-              "publication": "not_published",
-              "acceptedBy": "codex-researcher",
-              "acceptedAt": "2026-09-26T10:06:49.430Z",
-              "decisionId": "decision-e5608d69-2622-454b-a1b2-7271950319df",
-              "record": {
-                "id": "inc5000-luma-ai-networking",
-                "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-                "sourceBytes": 207596,
-                "sourceExcerpt": "nd routing software; per-ride fees and outcomes-based bonuses from plans.\", \"confidence\": \"high\", \"classified\": true, \"feature_reason\": [ \"big+fast\" ] }, { \"rank\": 47, \"company\": \"Luma Optics\", \"growth_pct\": 5757.0, \"revenue_band\": \"$100M - $250M\", \"rev_lo_musd\": 100, \"rev_hi_musd\": 250, \"rev_mid_musd\": 175, \"pct_secondary\": 160.0, \"founded\": 2006, \"industry_raw\": \"Artificial Intelligence & Data\", \"city\": \"Sebastapol\", \"state\": \"CA\", \"slug\": \"luma-optics\", \"list_year\": 2025, \"description\": \"Crafting optical transceiver hardware to handle the heaviest AI workloads efficiently and reliably.\", \"desc_source\": \"fetched2025\", \"company_age\": 19, \"durability_years\": 1, \"years_present\": [ 2025 ], \"ra",
-                "sourceRole": "private_company",
-                "sourceRepository": "inc5000-analysis",
-                "sourceRef": "data/processed/featured.json",
-                "sourceLocator": "company=Luma Optics",
-                "title": "Luma Optics sells the network layer needed by larger AI systems",
-                "observation": "The Inc. 5000 record describes Luma Optics as a maker of optical transceiver hardware for data centers handling demanding AI workloads.",
-                "theme": "ai-work-control",
-                "mechanism": "As model workloads grow, the bottleneck can move from computing chips to the network that moves data between them, creating a specialized supplier layer.",
-                "affectedGroups": [
-                  "AI companies",
-                  "data-center workers",
-                  "enterprise users",
-                  "capital providers"
-                ],
-                "claimState": "reported",
-                "asOf": "2026-09-25",
-                "limits": [
-                  "The Inc. record describes the business and growth, but does not prove customer performance, deployment durability, pricing power, or worker outcomes."
-                ],
-                "researchReview": {
-                  "state": "accepted_for_research",
-                  "decisionId": "decision-e5608d69-2622-454b-a1b2-7271950319df",
-                  "reviewer": "codex-researcher",
-                  "acceptedAt": "2026-09-26T10:06:49.430Z"
-                }
-              }
-            },
-            {
-              "versionId": "inc5000-caylent-ai-delivery-48fc203e7770",
-              "sourceId": "inc5000-caylent-ai-delivery",
-              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-              "state": "accepted_for_research",
-              "publication": "not_published",
-              "acceptedBy": "codex-researcher",
-              "acceptedAt": "2026-09-26T10:06:49.813Z",
-              "decisionId": "decision-08b03b2d-5144-49e2-b9fc-3fbbee750a86",
-              "record": {
-                "id": "inc5000-caylent-ai-delivery",
-                "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-                "sourceBytes": 207596,
-                "sourceExcerpt": "via carrier affiliate commissions; network effects scale.\", \"confidence\": \"high\", \"classified\": true, \"feature_reason\": [ \"big+fast\", \"durable 4yr\" ] }, { \"rank\": 352, \"company\": \"Caylent\", \"growth_pct\": 1122.0, \"revenue_band\": \"$100M - $250M\", \"rev_lo_musd\": 100, \"rev_hi_musd\": 250, \"rev_mid_musd\": 175, \"pct_secondary\": 295.0, \"founded\": 2015, \"industry_raw\": \"IT Services\", \"city\": \"Irvine\", \"state\": \"CA\", \"slug\": \"caylent\", \"list_year\": 2025, \"description\": \"An AI-enabled delivery methodology with deep AWS experience, turning customers\\u2019 ideas into impact.\", \"desc_source\": \"api2023\", \"company_age\": 10, \"durability_years\": 2, \"years_present\": [ 2023, 2025 ], \"rank_by_year\": { \"2023\": 93",
-                "sourceRole": "private_company",
-                "sourceRepository": "inc5000-analysis",
-                "sourceRef": "data/processed/featured.json",
-                "sourceLocator": "company=Caylent",
-                "title": "Caylent sells help turning AI plans into cloud systems",
-                "observation": "The Inc. 5000 record describes Caylent as an AWS-focused services company using an AI-enabled delivery approach to help enterprises deploy ideas.",
-                "theme": "ai-work-control",
-                "mechanism": "When enterprises cannot turn a model or cloud plan into a working system, implementation firms capture value by supplying scarce technical knowledge and execution capacity.",
-                "affectedGroups": [
-                  "enterprise users",
-                  "software workers",
-                  "implementation teams",
-                  "customers"
-                ],
-                "claimState": "reported",
-                "asOf": "2026-09-25",
-                "limits": [
-                  "The Inc. record identifies a service and growth story, but does not establish deployment quality, customer savings, worker workload, or repeatable AI productivity."
-                ],
-                "researchReview": {
-                  "state": "accepted_for_research",
-                  "decisionId": "decision-08b03b2d-5144-49e2-b9fc-3fbbee750a86",
-                  "reviewer": "codex-researcher",
-                  "acceptedAt": "2026-09-26T10:06:49.813Z"
-                }
-              }
-            },
-            {
-              "versionId": "inc5000-insurify-ai-decisions-48fc203e7770",
-              "sourceId": "inc5000-insurify-ai-decisions",
-              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-              "state": "accepted_for_research",
-              "publication": "not_published",
-              "acceptedBy": "codex-researcher",
-              "acceptedAt": "2026-09-26T10:06:50.227Z",
-              "decisionId": "decision-8dfdd78f-a34f-4bcf-9f61-92a5b6011b36",
-              "record": {
-                "id": "inc5000-insurify-ai-decisions",
-                "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-                "sourceBytes": 207596,
-                "sourceExcerpt": "nd scale; recurring manufacturing margins from diversified customer base.\", \"confidence\": \"med\", \"classified\": true, \"feature_reason\": [ \"big+fast\" ] }, { \"rank\": 635, \"company\": \"Insurify\", \"growth_pct\": 657.0, \"revenue_band\": \"$250M - $500M\", \"rev_lo_musd\": 250, \"rev_hi_musd\": 500, \"rev_mid_musd\": 375, \"pct_secondary\": 48.0, \"founded\": 2013, \"industry_raw\": \"Insurance\", \"city\": \"Cambridge\", \"state\": \"MA\", \"slug\": \"insurify\", \"list_year\": 2025, \"description\": \"An AI-powered insurance comparison platform that helped 24 million shoppers over the last year.\", \"desc_source\": \"api2024\", \"company_age\": 12, \"durability_years\": 4, \"years_present\": [ 2022, 2023, 2024, 2025 ], \"rank_by_year\": { \"2022",
-                "sourceRole": "private_company",
-                "sourceRepository": "inc5000-analysis",
-                "sourceRef": "data/processed/featured.json",
-                "sourceLocator": "company=Insurify",
-                "title": "Insurify applies AI to a consumer insurance choice",
-                "observation": "The Inc. 5000 record describes Insurify as an AI-powered insurance comparison platform that helps shoppers compare policies and quotes.",
-                "theme": "ai-work-control",
-                "mechanism": "A comparison service can reduce search effort for consumers while also shaping which choices, prices, and explanations they see.",
-                "affectedGroups": [
-                  "insurance shoppers",
-                  "insurers",
-                  "customer-support workers",
-                  "regulators"
-                ],
-                "claimState": "reported",
-                "asOf": "2026-09-25",
-                "limits": [
-                  "The Inc. record does not show quote accuracy, consumer savings, recommendation bias, coverage quality, or how users can correct an error."
-                ],
-                "researchReview": {
-                  "state": "accepted_for_research",
-                  "decisionId": "decision-8dfdd78f-a34f-4bcf-9f61-92a5b6011b36",
-                  "reviewer": "codex-researcher",
-                  "acceptedAt": "2026-09-26T10:06:50.227Z"
-                }
-              }
-            },
-            {
-              "versionId": "inc5000-veradata-donor-analytics-48fc203e7770",
-              "sourceId": "inc5000-veradata-donor-analytics",
-              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-              "state": "accepted_for_research",
-              "publication": "not_published",
-              "acceptedBy": "codex-researcher",
-              "acceptedAt": "2026-09-26T10:06:50.620Z",
-              "decisionId": "decision-8430961a-a93a-4cbf-9619-de028600a1b7",
-              "record": {
-                "id": "inc5000-veradata-donor-analytics",
-                "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-                "sourceBytes": 207596,
-                "sourceExcerpt": "izes data sharing; durability (2/4 years) proves recurring revenue model.\", \"confidence\": \"med\", \"classified\": true, \"feature_reason\": [ \"big+fast\" ] }, { \"rank\": 532, \"company\": \"VeraData\", \"growth_pct\": 756.0, \"revenue_band\": \"$100M - $250M\", \"rev_lo_musd\": 100, \"rev_hi_musd\": 250, \"rev_mid_musd\": 175, \"pct_secondary\": 155.0, \"founded\": 2009, \"industry_raw\": \"Artificial Intelligence & Data\", \"city\": \"Fort Myers\", \"state\": \"FL\", \"slug\": \"veradata\", \"list_year\": 2025, \"description\": \"Harnesses AI, machine learning, and donor science to revolutionize philanthropy.\", \"desc_source\": \"fetched2025\", \"company_age\": 16, \"durability_years\": 1, \"years_present\": [ 2025 ], \"rank_by_year\": { \"2025\": 532",
-                "sourceRole": "private_company",
-                "sourceRepository": "inc5000-analysis",
-                "sourceRef": "data/processed/featured.json",
-                "sourceLocator": "company=VeraData",
-                "title": "VeraData uses AI to help nonprofits decide whom to approach",
-                "observation": "The Inc. 5000 record describes VeraData as an AI and machine-learning company serving philanthropic organizations with donor analysis.",
-                "theme": "ai-work-control",
-                "mechanism": "Prediction tools can make scarce fundraising staff more selective while moving judgment about who receives attention into a data system.",
-                "affectedGroups": [
-                  "nonprofit workers",
-                  "donors",
-                  "charities",
-                  "people served by nonprofits"
-                ],
-                "claimState": "reported",
-                "asOf": "2026-09-25",
-                "limits": [
-                  "The Inc. record does not measure prediction accuracy, donor treatment, fundraising results, access effects, or how staff challenge a recommendation."
-                ],
-                "researchReview": {
-                  "state": "accepted_for_research",
-                  "decisionId": "decision-8430961a-a93a-4cbf-9619-de028600a1b7",
-                  "reviewer": "codex-researcher",
-                  "acceptedAt": "2026-09-26T10:06:50.620Z"
-                }
-              }
-            }
-          ]
+          "records": []
         }
       }
     },
@@ -436,94 +110,106 @@
     },
     "questionEvaluations": {
       "schemaVersion": "question-evaluation-ledger-v1",
-      "generatedAt": "2026-09-26T10:10:55.326Z",
+      "generatedAt": "2026-09-26T14:18:04.817Z",
       "evaluations": [
         {
           "questionId": "question-1790396868707-0zillf",
           "workspaceId": "demo-research",
-          "evaluatedAt": "2026-09-26T10:10:55.326Z",
+          "evaluatedAt": "2026-09-26T14:18:04.817Z",
           "state": "evidence_retrieved",
           "matchedRecordIds": [
             "trend-hunting-ai-control",
-            "cultural-ai-capability-dependence",
             "annual-ai-cultural-disintermediation",
-            "ibis-ai-workflow-compression",
-            "inc5000-coreweave-ai-infrastructure",
             "atlas-ai-work-evidence-thread",
-            "atlas-c3-ai-report-window"
+            "atlas-c3-ai-report-window",
+            "cultural-ai-capability-dependence",
+            "ibis-ai-workflow-compression",
+            "inc5000-coreweave-ai-infrastructure"
           ],
           "matches": [
             {
               "recordId": "trend-hunting-ai-control",
               "matchedTerms": [
-                "correction",
-                "work"
+                "correction"
               ],
-              "score": 2
-            },
-            {
-              "recordId": "cultural-ai-capability-dependence",
-              "matchedTerms": [
-                "work"
+              "matchedConcepts": [
+                "correction"
               ],
-              "score": 1
+              "matchReason": "explicit source scope",
+              "score": 4
             },
             {
               "recordId": "annual-ai-cultural-disintermediation",
-              "matchedTerms": [
-                "work"
-              ],
-              "score": 1
-            },
-            {
-              "recordId": "ibis-ai-workflow-compression",
-              "matchedTerms": [
-                "work"
-              ],
-              "score": 1
-            },
-            {
-              "recordId": "inc5000-coreweave-ai-infrastructure",
-              "matchedTerms": [
-                "work"
-              ],
+              "matchedTerms": [],
+              "matchedConcepts": [],
+              "matchReason": "explicit source scope",
               "score": 1
             },
             {
               "recordId": "atlas-ai-work-evidence-thread",
-              "matchedTerms": [
-                "work"
-              ],
+              "matchedTerms": [],
+              "matchedConcepts": [],
+              "matchReason": "explicit source scope",
               "score": 1
             },
             {
               "recordId": "atlas-c3-ai-report-window",
-              "matchedTerms": [
-                "work"
-              ],
+              "matchedTerms": [],
+              "matchedConcepts": [],
+              "matchReason": "explicit source scope",
+              "score": 1
+            },
+            {
+              "recordId": "cultural-ai-capability-dependence",
+              "matchedTerms": [],
+              "matchedConcepts": [],
+              "matchReason": "explicit source scope",
+              "score": 1
+            },
+            {
+              "recordId": "ibis-ai-workflow-compression",
+              "matchedTerms": [],
+              "matchedConcepts": [],
+              "matchReason": "explicit source scope",
+              "score": 1
+            },
+            {
+              "recordId": "inc5000-coreweave-ai-infrastructure",
+              "matchedTerms": [],
+              "matchedConcepts": [],
+              "matchReason": "explicit source scope",
               "score": 1
             }
           ],
-          "limitation": "Text matches identify evidence to inspect; they do not answer the question or establish causation."
+          "sourceBoundary": {
+            "sharedRecordCount": 7,
+            "acceptedPrivateSourceCount": 0,
+            "excludedPrivateSourceCount": 0
+          },
+          "limitation": "Concept matches identify evidence to inspect; they do not answer the question or establish causation. Broad words such as AI and work are not treated as evidence concepts by themselves."
         }
       ]
     },
     "briefings": {
       "schemaVersion": "workspace-briefing-ledger-v1",
-      "generatedAt": "2026-09-26T10:10:57.914Z",
+      "generatedAt": "2026-09-26T14:18:05.134Z",
       "briefings": [
         {
           "id": "briefing-question-1790396868707-0zillf",
           "workspaceId": "demo-research",
           "questionId": "question-1790396868707-0zillf",
           "title": "Will AI change correction work?",
-          "state": "published",
-          "publication": "published",
-          "publishedBy": "demo-researcher",
-          "publishedAt": "2026-09-26T04:34:31.213Z",
-          "publicationId": "publication-1790397271213-qdiac3",
-          "evidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
-          "generatedAt": "2026-09-26T10:10:57.914Z",
+          "state": "stale",
+          "publication": "needs_republish",
+          "staleReason": "The source evidence or a linked insight publication changed after the last publication. Inspect the updated provenance before republishing.",
+          "previousEvidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
+          "customerActions": [
+            "Do not rely on this briefing as current decision evidence.",
+            "Open the changed evidence and linked insight history.",
+            "Ask the research owner to re-review and republish this briefing before using it."
+          ],
+          "evidenceDigest": "60353018eb33e14cc578acc67142fbbe5e5eb05f8154a77e16e805e81bd0e047",
+          "generatedAt": "2026-09-26T14:18:05.134Z",
           "evidence": [
             {
               "recordId": "trend-hunting-ai-control",
@@ -537,17 +223,6 @@
               "sourceDigest": "67e2e17f48ee21d1f468944b6d1c53e4b6fc20428838ffcbb151937d7662252e"
             },
             {
-              "recordId": "cultural-ai-capability-dependence",
-              "title": "Capability can arrive with dependence",
-              "sourceRepository": "cultural-geopolitical-theme-mining",
-              "sourceRef": "site/ai-work-control-073.html",
-              "observation": "The reader frames AI infrastructure as potentially building useful capability and dependence together, while keeping portability, exit, and state-control effects open.",
-              "limits": [
-                "The page preserves open questions about application migration, outcomes, portability, and exit."
-              ],
-              "sourceDigest": "88ac071286e2f746095504540db23f4164a8c5a3e1c6ee190ebcebf753e4d8fe"
-            },
-            {
               "recordId": "annual-ai-cultural-disintermediation",
               "title": "AI is changing which work remains scarce",
               "sourceRepository": "annual-report-research",
@@ -557,28 +232,6 @@
                 "This is a cross-company annual-report synthesis, not one company's measured AI outcome."
               ],
               "sourceDigest": "93d9d56ee7792cdf8c73af339b9e88d5a52544fae201dd800a51ce17622c68a4"
-            },
-            {
-              "recordId": "ibis-ai-workflow-compression",
-              "title": "AI can make routine execution cheaper while raising the value of strategy",
-              "sourceRepository": "ibis-industries",
-              "sourceRef": "writeups_ai.json",
-              "observation": "The industry writeup describes AI website builders compressing template-based execution and shifting competition toward strategy, brand, personalization, and distribution.",
-              "limits": [
-                "The writeup combines industry estimates and company examples; each underlying measure needs source-level review before a general labor claim."
-              ],
-              "sourceDigest": "0d3dab9e8b23ea41b5ea11c224388642acbe5b5bcb8c27707542321255ad88ce"
-            },
-            {
-              "recordId": "inc5000-coreweave-ai-infrastructure",
-              "title": "AI demand creates a fast-growing infrastructure business",
-              "sourceRepository": "inc5000-analysis",
-              "sourceRef": "data/processed/featured.json",
-              "observation": "The Inc. 5000 record describes CoreWeave as a specialized GPU infrastructure provider serving AI labs, startups, and enterprises facing a shortage of compute.",
-              "limits": [
-                "The Inc. record identifies a growth hypothesis and revenue band; it does not prove customer benefit, durable margins, or AI productivity."
-              ],
-              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
             },
             {
               "recordId": "atlas-ai-work-evidence-thread",
@@ -601,17 +254,203 @@
                 "The report window does not identify an organization, model version, affected person, decision, input, output, error, override, appeal, remedy, or later outcome."
               ],
               "sourceDigest": "c0f1424493170ccf3ef4829cd34a6f8d0d7526768c3cf20ed3feffad4faece29"
+            },
+            {
+              "recordId": "cultural-ai-capability-dependence",
+              "title": "Capability can arrive with dependence",
+              "sourceRepository": "cultural-geopolitical-theme-mining",
+              "sourceRef": "site/ai-work-control-073.html",
+              "observation": "The reader frames AI infrastructure as potentially building useful capability and dependence together, while keeping portability, exit, and state-control effects open.",
+              "limits": [
+                "The page preserves open questions about application migration, outcomes, portability, and exit."
+              ],
+              "sourceDigest": "88ac071286e2f746095504540db23f4164a8c5a3e1c6ee190ebcebf753e4d8fe"
+            },
+            {
+              "recordId": "ibis-ai-workflow-compression",
+              "title": "AI can make routine execution cheaper while raising the value of strategy",
+              "sourceRepository": "ibis-industries",
+              "sourceRef": "writeups_ai.json",
+              "observation": "The industry writeup describes AI website builders compressing template-based execution and shifting competition toward strategy, brand, personalization, and distribution.",
+              "limits": [
+                "The writeup combines industry estimates and company examples; each underlying measure needs source-level review before a general labor claim."
+              ],
+              "sourceDigest": "0d3dab9e8b23ea41b5ea11c224388642acbe5b5bcb8c27707542321255ad88ce"
+            },
+            {
+              "recordId": "inc5000-coreweave-ai-infrastructure",
+              "title": "AI demand creates a fast-growing infrastructure business",
+              "sourceRepository": "inc5000-analysis",
+              "sourceRef": "data/processed/featured.json",
+              "observation": "The Inc. 5000 record describes CoreWeave as a specialized GPU infrastructure provider serving AI labs, startups, and enterprises facing a shortage of compute.",
+              "limits": [
+                "The Inc. record identifies a growth hypothesis and revenue band; it does not prove customer benefit, durable margins, or AI productivity."
+              ],
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
             }
           ],
+          "insightProvenance": [
+            {
+              "insightId": "insight-ai-capability-control-gap-001",
+              "candidateKey": "insight-ai-capability-control-gap-001",
+              "candidateId": "candidate-insight-ai-capability-control-gap-001-d49f41b81c49",
+              "title": "AI can return time without returning control",
+              "plainLanguageSummary": "The current evidence supports a narrower reading than 'AI makes work more productive': AI can remove visible tasks while decisions, measurement, correction, and dependence remain controlled by an employer, platform, or infrastructure provider.",
+              "state": "stale",
+              "publicationId": "insight-publication-81a80021-c4df-4594-938d-bbfa46908e14",
+              "publishedBy": "demo-researcher",
+              "publishedAt": "2026-09-26T04:41:55.147Z",
+              "publicationEvidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
+              "currentEvidenceDigest": "d49f41b81c499015a01374eebe317b9dfde6f4a37a8b908213e95e712efc7c38",
+              "publicationClaimDigest": null,
+              "currentClaimDigest": "6cb4d415ec2d5fdeb920b1b511b15aa4c4a7ccb66cf94bc04b694b12965974ec",
+              "sourceRecordIds": [
+                "trend-hunting-ai-control",
+                "cultural-ai-capability-dependence",
+                "annual-ai-cultural-disintermediation",
+                "ibis-ai-workflow-compression",
+                "inc5000-coreweave-ai-infrastructure",
+                "atlas-ai-work-evidence-thread",
+                "atlas-c3-ai-report-window",
+                "atlas-nvidia-ai-platform-window",
+                "atlas-microsoft-cloud-window",
+                "atlas-oracle-cloud-window",
+                "atlas-broadcom-ai-infrastructure-window",
+                "trend-ai-agency-control-measure",
+                "cultural-nber-ai-task-adoption",
+                "cultural-jrc-algorithmic-management-outcomes",
+                "cultural-amazon-bandameeda-remedy",
+                "trend-uber-kumar-review-counterexample"
+              ],
+              "sourceEvidence": [
+                {
+                  "recordId": "trend-hunting-ai-control",
+                  "sourceRepository": "trend-hunting",
+                  "sourceRef": "analysis/DEEP-TRENDS-CROSS-THEME-SYNTHESIS-V2.md",
+                  "sourceDigest": "67e2e17f48ee21d1f468944b6d1c53e4b6fc20428838ffcbb151937d7662252e"
+                },
+                {
+                  "recordId": "cultural-ai-capability-dependence",
+                  "sourceRepository": "cultural-geopolitical-theme-mining",
+                  "sourceRef": "site/ai-work-control-073.html",
+                  "sourceDigest": "88ac071286e2f746095504540db23f4164a8c5a3e1c6ee190ebcebf753e4d8fe"
+                },
+                {
+                  "recordId": "annual-ai-cultural-disintermediation",
+                  "sourceRepository": "annual-report-research",
+                  "sourceRef": "site/trends/ai-cultural-disintermediation.html",
+                  "sourceDigest": "93d9d56ee7792cdf8c73af339b9e88d5a52544fae201dd800a51ce17622c68a4"
+                },
+                {
+                  "recordId": "ibis-ai-workflow-compression",
+                  "sourceRepository": "ibis-industries",
+                  "sourceRef": "writeups_ai.json",
+                  "sourceDigest": "0d3dab9e8b23ea41b5ea11c224388642acbe5b5bcb8c27707542321255ad88ce"
+                },
+                {
+                  "recordId": "inc5000-coreweave-ai-infrastructure",
+                  "sourceRepository": "inc5000-analysis",
+                  "sourceRef": "data/processed/featured.json",
+                  "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
+                },
+                {
+                  "recordId": "atlas-ai-work-evidence-thread",
+                  "sourceRepository": "company-atlas-lab",
+                  "sourceRef": "local-runs/ai-work-culture-insight-thread.json",
+                  "sourceDigest": "49480c7a496f62b39ee0d89f8325fca1ec9204b07c47091d5641bc7ac5f51f97"
+                },
+                {
+                  "recordId": "atlas-c3-ai-report-window",
+                  "sourceRepository": "company-atlas-lab",
+                  "sourceRef": "company-industry-analysis/companies/c3-ai/SOURCE-LEDGER.md",
+                  "sourceDigest": "c0f1424493170ccf3ef4829cd34a6f8d0d7526768c3cf20ed3feffad4faece29"
+                },
+                {
+                  "recordId": "atlas-nvidia-ai-platform-window",
+                  "sourceRepository": "company-atlas-lab",
+                  "sourceRef": "company-industry-analysis/companies/nvidia/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+                  "sourceDigest": "75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0"
+                },
+                {
+                  "recordId": "atlas-microsoft-cloud-window",
+                  "sourceRepository": "company-atlas-lab",
+                  "sourceRef": "company-industry-analysis/companies/microsoft/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+                  "sourceDigest": "0c783b9df6776a6e99d2f0a641039dbf9ed0de6e38f7e52a823466e5b65dae5e"
+                },
+                {
+                  "recordId": "atlas-oracle-cloud-window",
+                  "sourceRepository": "company-atlas-lab",
+                  "sourceRef": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+                  "sourceDigest": "781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583"
+                },
+                {
+                  "recordId": "atlas-broadcom-ai-infrastructure-window",
+                  "sourceRepository": "company-atlas-lab",
+                  "sourceRef": "company-industry-analysis/companies/broadcom/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+                  "sourceDigest": "78e50dcb48e4452ad98bf8e308e58ce80ffe85344d61d2571bf9244f98b37ad3"
+                },
+                {
+                  "recordId": "trend-ai-agency-control-measure",
+                  "sourceRepository": "trend-hunting",
+                  "sourceRef": "analysis/AI-AGENCY-TEST-V1.md",
+                  "sourceDigest": "9aa6fb9e4de05f3c241925da7f2f39426807d5ad943ae116b596843882cc3a86"
+                },
+                {
+                  "recordId": "cultural-nber-ai-task-adoption",
+                  "sourceRepository": "cultural-geopolitical-theme-mining",
+                  "sourceRef": "analysis/projects/ai-work-control/nber-w35677-task-level-adoption-layer-v1.md",
+                  "sourceDigest": "c2aa137ca1e4fbf4709238b51db322e5ee36326606c2c828a56452953b8a9c92"
+                },
+                {
+                  "recordId": "cultural-jrc-algorithmic-management-outcomes",
+                  "sourceRepository": "cultural-geopolitical-theme-mining",
+                  "sourceRef": "analysis/projects/ai-work-control/jrc-aim-work-source-record-v1.md",
+                  "sourceDigest": "5577ac6f26d1d859a8c9a6f3577c709bebc69ef3dfc1ccef742db3dcec70582e"
+                },
+                {
+                  "recordId": "cultural-amazon-bandameeda-remedy",
+                  "sourceRepository": "cultural-geopolitical-theme-mining",
+                  "sourceRef": "analysis/projects/ai-work-control/amazon-bandameeda-deactivation-remedy-record-v1.md",
+                  "sourceDigest": "f2b548bf93149ed93ec9bddca9b09511ddb9541d73e3a0d9f9dcf6788cea9c91"
+                },
+                {
+                  "recordId": "trend-uber-kumar-review-counterexample",
+                  "sourceRepository": "trend-hunting",
+                  "sourceRef": "analysis/AI-V7-WORKER-COUNTEREXAMPLE-COMPARATOR-V1.md",
+                  "sourceDigest": "cd563ab438a730e4220e234c30d260f1238f6627f5693e1bba39aa9eebf85845"
+                }
+              ],
+              "strongestAlternative": "The apparent control gap may be temporary because early deployments have not yet matured into stable workflow changes.",
+              "whatWouldChangeOurMind": [
+                "A compatible longitudinal study shows durable control, pay, and remedy improvements for affected workers.",
+                "Company and independent records show that workers can understand, correct, and leave AI-mediated decisions without material penalty."
+              ],
+              "nextTest": "Track one named AI-mediated workflow from company deployment through worker or customer use, correction, appeal, and exit evidence.",
+              "changeTypes": [
+                "source evidence"
+              ],
+              "staleReason": "The source evidence changed after this publication.",
+              "customerActions": [
+                "Do not treat the prior insight as current decision evidence.",
+                "Open the updated evidence and briefing before relying on the reading.",
+                "Ask the research owner to re-review and republish the insight and briefing before acting on it."
+              ]
+            }
+          ],
+          "insightActions": [
+            "Do not treat the prior insight as current decision evidence.",
+            "Open the updated evidence and briefing before relying on the reading.",
+            "Ask the research owner to re-review and republish the insight and briefing before acting on it."
+          ],
           "reading": "The system found 7 related source records. A researcher must inspect them before making a conclusion.",
-          "boundary": "Text matches identify evidence to inspect; they do not answer the question or establish causation.",
+          "boundary": "Concept matches identify evidence to inspect; they do not answer the question or establish causation. Broad words such as AI and work are not treated as evidence concepts by themselves.",
           "nextTest": "Track one named AI-mediated workflow from company deployment through worker or customer use, correction, appeal, and exit evidence."
         }
       ]
     },
     "insightCandidates": {
       "schemaVersion": "insight-candidate-ledger-v1",
-      "generatedAt": "2026-09-26T10:14:48.918Z",
+      "generatedAt": "2026-09-26T14:18:03.913Z",
       "candidates": [
         {
           "id": "candidate-insight-ai-capability-control-gap-001-d49f41b81c49",
@@ -620,9 +459,10 @@
           "plainLanguageSummary": "The current evidence supports a narrower reading than 'AI makes work more productive': AI can remove visible tasks while decisions, measurement, correction, and dependence remain controlled by an employer, platform, or infrastructure provider.",
           "status": "accepted_for_publication",
           "publication": "not_published",
-          "generatedAt": "2026-09-26T10:14:48.918Z",
+          "generatedAt": "2026-09-26T14:18:03.913Z",
           "candidateKey": "insight-ai-capability-control-gap-001",
           "evidenceDigest": "d49f41b81c499015a01374eebe317b9dfde6f4a37a8b908213e95e712efc7c38",
+          "claimDigest": "6cb4d415ec2d5fdeb920b1b511b15aa4c4a7ccb66cf94bc04b694b12965974ec",
           "decisionId": "insight-decision-51a11fc5-dc1b-41b4-a869-c438ce4d8198",
           "decidedBy": "demo-researcher",
           "decidedAt": "2026-09-26T10:13:31.863Z",
@@ -758,9 +598,10 @@
           "plainLanguageSummary": "The current records show AI-related businesses appearing at several layers—compute, networking, implementation, comparison, and fundraising tools—while the customer result is still mostly unmeasured. This supports a map of where activity is forming, not a claim that the activity creates value.",
           "status": "accepted_for_publication",
           "publication": "not_published",
-          "generatedAt": "2026-09-26T10:14:48.918Z",
+          "generatedAt": "2026-09-26T14:18:03.913Z",
           "candidateKey": "insight-ai-specialist-layer-before-outcomes-002",
           "evidenceDigest": "c45cdefc1214943831d91a4eac1a43837b4d3cafaeef27ef9f8019c5744e7c7e",
+          "claimDigest": "d7b8eac6e62934883cd2d47fb43c052a15118cc5a6355b518808de532ea0ad94",
           "decisionId": "insight-decision-f7c4e7aa-d09a-4fb2-bd3e-190d17305217",
           "decidedBy": "demo-researcher",
           "decidedAt": "2026-09-26T10:13:31.897Z",
@@ -778,60 +619,28 @@
               "sourceRepository": "inc5000-analysis",
               "sourceRef": "data/processed/featured.json",
               "sourceRole": "private_company",
-              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-              "researchReview": {
-                "state": "accepted_for_research",
-                "versionId": "inc5000-luma-ai-networking-48fc203e7770",
-                "decisionId": "decision-e5608d69-2622-454b-a1b2-7271950319df",
-                "reviewer": "codex-researcher",
-                "acceptedAt": "2026-09-26T10:06:49.430Z",
-                "sourceReviewRun": "scan-20260926100219763"
-              }
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
             },
             {
               "recordId": "inc5000-caylent-ai-delivery",
               "sourceRepository": "inc5000-analysis",
               "sourceRef": "data/processed/featured.json",
               "sourceRole": "private_company",
-              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-              "researchReview": {
-                "state": "accepted_for_research",
-                "versionId": "inc5000-caylent-ai-delivery-48fc203e7770",
-                "decisionId": "decision-08b03b2d-5144-49e2-b9fc-3fbbee750a86",
-                "reviewer": "codex-researcher",
-                "acceptedAt": "2026-09-26T10:06:49.813Z",
-                "sourceReviewRun": "scan-20260926100219763"
-              }
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
             },
             {
               "recordId": "inc5000-insurify-ai-decisions",
               "sourceRepository": "inc5000-analysis",
               "sourceRef": "data/processed/featured.json",
               "sourceRole": "private_company",
-              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-              "researchReview": {
-                "state": "accepted_for_research",
-                "versionId": "inc5000-insurify-ai-decisions-48fc203e7770",
-                "decisionId": "decision-8dfdd78f-a34f-4bcf-9f61-92a5b6011b36",
-                "reviewer": "codex-researcher",
-                "acceptedAt": "2026-09-26T10:06:50.227Z",
-                "sourceReviewRun": "scan-20260926100219763"
-              }
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
             },
             {
               "recordId": "inc5000-veradata-donor-analytics",
               "sourceRepository": "inc5000-analysis",
               "sourceRef": "data/processed/featured.json",
               "sourceRole": "private_company",
-              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
-              "researchReview": {
-                "state": "accepted_for_research",
-                "versionId": "inc5000-veradata-donor-analytics-48fc203e7770",
-                "decisionId": "decision-8430961a-a93a-4cbf-9619-de028600a1b7",
-                "reviewer": "codex-researcher",
-                "acceptedAt": "2026-09-26T10:06:50.620Z",
-                "sourceReviewRun": "scan-20260926100219763"
-              }
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
             },
             {
               "recordId": "ibis-ai-workflow-compression",
@@ -857,6 +666,446 @@
           "nextTest": "For one named customer workflow, trace the supplier, implementation step, actual use, correction path, switching option, and later result across at least two reporting periods.",
           "limits": [
             "This candidate was assembled from current evidence references; it is not a new causal finding."
+          ]
+        }
+      ]
+    },
+    "insightOpportunities": {
+      "schemaVersion": "insight-opportunity-ledger-v1",
+      "generatedAt": "2026-09-26T14:18:03.624Z",
+      "sourcePacketDigest": "3b27ab3469cee60f015b3086a4d085bab80d314cb9a88b07627a1016bd8fca81",
+      "opportunities": [
+        {
+          "id": "opportunity-outcome-cabf8580f69f",
+          "concept": "outcome",
+          "title": "Cross-source pattern: measured outcomes",
+          "plainLanguageSummary": "11 records from 6 repositories use a similar measured outcomes mechanism. This is a lead for research, not a conclusion about what is happening in the world.",
+          "status": "opportunity_needs_researcher_review",
+          "evidenceDigest": "cabf8580f69ffb1410a5814a05d7fa6b9ebca93c32f07e3a6f81bcf9a929d571",
+          "evidence": [
+            {
+              "recordId": "annual-ai-cultural-disintermediation",
+              "sourceRepository": "annual-report-research",
+              "sourceRole": "company_report",
+              "title": "AI is changing which work remains scarce",
+              "sourceDigest": "93d9d56ee7792cdf8c73af339b9e88d5a52544fae201dd800a51ce17622c68a4"
+            },
+            {
+              "recordId": "ibis-ai-workflow-compression",
+              "sourceRepository": "ibis-industries",
+              "sourceRole": "industry",
+              "title": "AI can make routine execution cheaper while raising the value of strategy",
+              "sourceDigest": "0d3dab9e8b23ea41b5ea11c224388642acbe5b5bcb8c27707542321255ad88ce"
+            },
+            {
+              "recordId": "inc5000-caylent-ai-delivery",
+              "sourceRepository": "inc5000-analysis",
+              "sourceRole": "private_company",
+              "title": "Caylent sells help turning AI plans into cloud systems",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
+            },
+            {
+              "recordId": "atlas-ai-work-evidence-thread",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "research",
+              "title": "AI work narratives need independent cultural measures",
+              "sourceDigest": "49480c7a496f62b39ee0d89f8325fca1ec9204b07c47091d5641bc7ac5f51f97"
+            },
+            {
+              "recordId": "atlas-c3-ai-report-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "C3.ai's report window shows what company records can and cannot prove",
+              "sourceDigest": "c0f1424493170ccf3ef4829cd34a6f8d0d7526768c3cf20ed3feffad4faece29"
+            },
+            {
+              "recordId": "atlas-nvidia-ai-platform-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "NVIDIA's filings show platform growth without a measured deployment outcome",
+              "sourceDigest": "75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0"
+            },
+            {
+              "recordId": "atlas-microsoft-cloud-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "Microsoft's cloud growth does not identify the workload result",
+              "sourceDigest": "0c783b9df6776a6e99d2f0a641039dbf9ed0de6e38f7e52a823466e5b65dae5e"
+            },
+            {
+              "recordId": "atlas-oracle-cloud-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "Oracle's quarterly revenue movement leaves the operating cause open",
+              "sourceDigest": "781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583"
+            },
+            {
+              "recordId": "atlas-broadcom-ai-infrastructure-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "Broadcom's platform records need a separate customer-result test",
+              "sourceDigest": "78e50dcb48e4452ad98bf8e308e58ce80ffe85344d61d2571bf9244f98b37ad3"
+            },
+            {
+              "recordId": "trend-ai-agency-control-measure",
+              "sourceRepository": "trend-hunting",
+              "sourceRole": "research",
+              "title": "Reported AI productivity is more common than reported control",
+              "sourceDigest": "9aa6fb9e4de05f3c241925da7f2f39426807d5ad943ae116b596843882cc3a86"
+            },
+            {
+              "recordId": "cultural-nber-ai-task-adoption",
+              "sourceRepository": "cultural-geopolitical-theme-mining",
+              "sourceRole": "research",
+              "title": "AI exposure does not tell us which workers adopt it",
+              "sourceDigest": "c2aa137ca1e4fbf4709238b51db322e5ee36326606c2c828a56452953b8a9c92"
+            }
+          ],
+          "repositories": [
+            "annual-report-research",
+            "ibis-industries",
+            "inc5000-analysis",
+            "company-atlas-lab",
+            "trend-hunting",
+            "cultural-geopolitical-theme-mining"
+          ],
+          "strongestAlternative": "The apparent pattern may reflect the source map or shared language rather than a common real-world mechanism.",
+          "whatWouldChangeOurMind": [
+            "A source-level review shows the records use different definitions or populations.",
+            "Independent evidence fails to connect the shared mechanism to the same observed consequence."
+          ],
+          "nextTest": "Review the 11 source records side by side, record their definitions and populations, and test whether the measured outcomes mechanism recurs in a named workflow.",
+          "limits": [
+            "This opportunity is generated from shared record language and repository coverage; it is not a causal finding.",
+            "No customer delivery or publication may use this opportunity until a researcher creates and reviews a bounded insight."
+          ]
+        },
+        {
+          "id": "opportunity-control-47aaf93816b0",
+          "concept": "control",
+          "title": "Cross-source pattern: control and decision rights",
+          "plainLanguageSummary": "8 records from 4 repositories use a similar control and decision rights mechanism. This is a lead for research, not a conclusion about what is happening in the world.",
+          "status": "opportunity_needs_researcher_review",
+          "evidenceDigest": "47aaf93816b0deb52a95fc82187811182f3b778d707d3fd4b72171ae60b49f02",
+          "evidence": [
+            {
+              "recordId": "trend-hunting-ai-control",
+              "sourceRepository": "trend-hunting",
+              "sourceRole": "trend_signal",
+              "title": "AI capability is not the same as worker control",
+              "sourceDigest": "67e2e17f48ee21d1f468944b6d1c53e4b6fc20428838ffcbb151937d7662252e"
+            },
+            {
+              "recordId": "cultural-ai-capability-dependence",
+              "sourceRepository": "cultural-geopolitical-theme-mining",
+              "sourceRole": "social_cultural",
+              "title": "Capability can arrive with dependence",
+              "sourceDigest": "88ac071286e2f746095504540db23f4164a8c5a3e1c6ee190ebcebf753e4d8fe"
+            },
+            {
+              "recordId": "annual-ai-cultural-disintermediation",
+              "sourceRepository": "annual-report-research",
+              "sourceRole": "company_report",
+              "title": "AI is changing which work remains scarce",
+              "sourceDigest": "93d9d56ee7792cdf8c73af339b9e88d5a52544fae201dd800a51ce17622c68a4"
+            },
+            {
+              "recordId": "atlas-c3-ai-report-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "C3.ai's report window shows what company records can and cannot prove",
+              "sourceDigest": "c0f1424493170ccf3ef4829cd34a6f8d0d7526768c3cf20ed3feffad4faece29"
+            },
+            {
+              "recordId": "atlas-nvidia-ai-platform-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "NVIDIA's filings show platform growth without a measured deployment outcome",
+              "sourceDigest": "75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0"
+            },
+            {
+              "recordId": "trend-ai-agency-control-measure",
+              "sourceRepository": "trend-hunting",
+              "sourceRole": "research",
+              "title": "Reported AI productivity is more common than reported control",
+              "sourceDigest": "9aa6fb9e4de05f3c241925da7f2f39426807d5ad943ae116b596843882cc3a86"
+            },
+            {
+              "recordId": "cultural-jrc-algorithmic-management-outcomes",
+              "sourceRepository": "cultural-geopolitical-theme-mining",
+              "sourceRole": "research",
+              "title": "Some forms of algorithmic management are associated with less discretion and more stress",
+              "sourceDigest": "5577ac6f26d1d859a8c9a6f3577c709bebc69ef3dfc1ccef742db3dcec70582e"
+            },
+            {
+              "recordId": "cultural-amazon-bandameeda-remedy",
+              "sourceRepository": "cultural-geopolitical-theme-mining",
+              "sourceRole": "research",
+              "title": "A complete individual remedy chain can exist without proving system-wide repair",
+              "sourceDigest": "f2b548bf93149ed93ec9bddca9b09511ddb9541d73e3a0d9f9dcf6788cea9c91"
+            }
+          ],
+          "repositories": [
+            "trend-hunting",
+            "cultural-geopolitical-theme-mining",
+            "annual-report-research",
+            "company-atlas-lab"
+          ],
+          "strongestAlternative": "The apparent pattern may reflect the source map or shared language rather than a common real-world mechanism.",
+          "whatWouldChangeOurMind": [
+            "A source-level review shows the records use different definitions or populations.",
+            "Independent evidence fails to connect the shared mechanism to the same observed consequence."
+          ],
+          "nextTest": "Review the 8 source records side by side, record their definitions and populations, and test whether the control and decision rights mechanism recurs in a named workflow.",
+          "limits": [
+            "This opportunity is generated from shared record language and repository coverage; it is not a causal finding.",
+            "No customer delivery or publication may use this opportunity until a researcher creates and reviews a bounded insight."
+          ]
+        },
+        {
+          "id": "opportunity-adoption-f81caf41c613",
+          "concept": "adoption",
+          "title": "Cross-source pattern: adoption and deployment",
+          "plainLanguageSummary": "5 records from 3 repositories use a similar adoption and deployment mechanism. This is a lead for research, not a conclusion about what is happening in the world.",
+          "status": "opportunity_needs_researcher_review",
+          "evidenceDigest": "f81caf41c613f69e5e7caea961ddc48fe192e5d3c960cd1697ed57e8611b8e83",
+          "evidence": [
+            {
+              "recordId": "inc5000-caylent-ai-delivery",
+              "sourceRepository": "inc5000-analysis",
+              "sourceRole": "private_company",
+              "title": "Caylent sells help turning AI plans into cloud systems",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
+            },
+            {
+              "recordId": "atlas-ai-work-evidence-thread",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "research",
+              "title": "AI work narratives need independent cultural measures",
+              "sourceDigest": "49480c7a496f62b39ee0d89f8325fca1ec9204b07c47091d5641bc7ac5f51f97"
+            },
+            {
+              "recordId": "atlas-c3-ai-report-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "C3.ai's report window shows what company records can and cannot prove",
+              "sourceDigest": "c0f1424493170ccf3ef4829cd34a6f8d0d7526768c3cf20ed3feffad4faece29"
+            },
+            {
+              "recordId": "atlas-nvidia-ai-platform-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "NVIDIA's filings show platform growth without a measured deployment outcome",
+              "sourceDigest": "75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0"
+            },
+            {
+              "recordId": "cultural-nber-ai-task-adoption",
+              "sourceRepository": "cultural-geopolitical-theme-mining",
+              "sourceRole": "research",
+              "title": "AI exposure does not tell us which workers adopt it",
+              "sourceDigest": "c2aa137ca1e4fbf4709238b51db322e5ee36326606c2c828a56452953b8a9c92"
+            }
+          ],
+          "repositories": [
+            "inc5000-analysis",
+            "company-atlas-lab",
+            "cultural-geopolitical-theme-mining"
+          ],
+          "strongestAlternative": "The apparent pattern may reflect the source map or shared language rather than a common real-world mechanism.",
+          "whatWouldChangeOurMind": [
+            "A source-level review shows the records use different definitions or populations.",
+            "Independent evidence fails to connect the shared mechanism to the same observed consequence."
+          ],
+          "nextTest": "Review the 5 source records side by side, record their definitions and populations, and test whether the adoption and deployment mechanism recurs in a named workflow.",
+          "limits": [
+            "This opportunity is generated from shared record language and repository coverage; it is not a causal finding.",
+            "No customer delivery or publication may use this opportunity until a researcher creates and reviews a bounded insight."
+          ]
+        },
+        {
+          "id": "opportunity-economics-00db913464b4",
+          "concept": "economics",
+          "title": "Cross-source pattern: economics and demand",
+          "plainLanguageSummary": "6 records from 3 repositories use a similar economics and demand mechanism. This is a lead for research, not a conclusion about what is happening in the world.",
+          "status": "opportunity_needs_researcher_review",
+          "evidenceDigest": "00db913464b4ebd3350536cba6727e15f3080ec9a2f9fba4d0ed2997556bedaf",
+          "evidence": [
+            {
+              "recordId": "ibis-ai-workflow-compression",
+              "sourceRepository": "ibis-industries",
+              "sourceRole": "industry",
+              "title": "AI can make routine execution cheaper while raising the value of strategy",
+              "sourceDigest": "0d3dab9e8b23ea41b5ea11c224388642acbe5b5bcb8c27707542321255ad88ce"
+            },
+            {
+              "recordId": "inc5000-coreweave-ai-infrastructure",
+              "sourceRepository": "inc5000-analysis",
+              "sourceRole": "private_company",
+              "title": "AI demand creates a fast-growing infrastructure business",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
+            },
+            {
+              "recordId": "atlas-nvidia-ai-platform-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "NVIDIA's filings show platform growth without a measured deployment outcome",
+              "sourceDigest": "75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0"
+            },
+            {
+              "recordId": "atlas-microsoft-cloud-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "Microsoft's cloud growth does not identify the workload result",
+              "sourceDigest": "0c783b9df6776a6e99d2f0a641039dbf9ed0de6e38f7e52a823466e5b65dae5e"
+            },
+            {
+              "recordId": "atlas-oracle-cloud-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "Oracle's quarterly revenue movement leaves the operating cause open",
+              "sourceDigest": "781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583"
+            },
+            {
+              "recordId": "atlas-broadcom-ai-infrastructure-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "Broadcom's platform records need a separate customer-result test",
+              "sourceDigest": "78e50dcb48e4452ad98bf8e308e58ce80ffe85344d61d2571bf9244f98b37ad3"
+            }
+          ],
+          "repositories": [
+            "ibis-industries",
+            "inc5000-analysis",
+            "company-atlas-lab"
+          ],
+          "strongestAlternative": "The apparent pattern may reflect the source map or shared language rather than a common real-world mechanism.",
+          "whatWouldChangeOurMind": [
+            "A source-level review shows the records use different definitions or populations.",
+            "Independent evidence fails to connect the shared mechanism to the same observed consequence."
+          ],
+          "nextTest": "Review the 6 source records side by side, record their definitions and populations, and test whether the economics and demand mechanism recurs in a named workflow.",
+          "limits": [
+            "This opportunity is generated from shared record language and repository coverage; it is not a causal finding.",
+            "No customer delivery or publication may use this opportunity until a researcher creates and reviews a bounded insight."
+          ]
+        },
+        {
+          "id": "opportunity-infrastructure-25d9b054f48c",
+          "concept": "infrastructure",
+          "title": "Cross-source pattern: infrastructure and capacity",
+          "plainLanguageSummary": "7 records from 3 repositories use a similar infrastructure and capacity mechanism. This is a lead for research, not a conclusion about what is happening in the world.",
+          "status": "opportunity_needs_researcher_review",
+          "evidenceDigest": "25d9b054f48cb9ab6662d7e3b9408d322194b8e6c85e060c71d02e07fb35797b",
+          "evidence": [
+            {
+              "recordId": "cultural-ai-capability-dependence",
+              "sourceRepository": "cultural-geopolitical-theme-mining",
+              "sourceRole": "social_cultural",
+              "title": "Capability can arrive with dependence",
+              "sourceDigest": "88ac071286e2f746095504540db23f4164a8c5a3e1c6ee190ebcebf753e4d8fe"
+            },
+            {
+              "recordId": "inc5000-coreweave-ai-infrastructure",
+              "sourceRepository": "inc5000-analysis",
+              "sourceRole": "private_company",
+              "title": "AI demand creates a fast-growing infrastructure business",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
+            },
+            {
+              "recordId": "inc5000-luma-ai-networking",
+              "sourceRepository": "inc5000-analysis",
+              "sourceRole": "private_company",
+              "title": "Luma Optics sells the network layer needed by larger AI systems",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
+            },
+            {
+              "recordId": "inc5000-caylent-ai-delivery",
+              "sourceRepository": "inc5000-analysis",
+              "sourceRole": "private_company",
+              "title": "Caylent sells help turning AI plans into cloud systems",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
+            },
+            {
+              "recordId": "atlas-nvidia-ai-platform-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "NVIDIA's filings show platform growth without a measured deployment outcome",
+              "sourceDigest": "75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0"
+            },
+            {
+              "recordId": "atlas-microsoft-cloud-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "Microsoft's cloud growth does not identify the workload result",
+              "sourceDigest": "0c783b9df6776a6e99d2f0a641039dbf9ed0de6e38f7e52a823466e5b65dae5e"
+            },
+            {
+              "recordId": "atlas-oracle-cloud-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRole": "company_report",
+              "title": "Oracle's quarterly revenue movement leaves the operating cause open",
+              "sourceDigest": "781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583"
+            }
+          ],
+          "repositories": [
+            "cultural-geopolitical-theme-mining",
+            "inc5000-analysis",
+            "company-atlas-lab"
+          ],
+          "strongestAlternative": "The apparent pattern may reflect the source map or shared language rather than a common real-world mechanism.",
+          "whatWouldChangeOurMind": [
+            "A source-level review shows the records use different definitions or populations.",
+            "Independent evidence fails to connect the shared mechanism to the same observed consequence."
+          ],
+          "nextTest": "Review the 7 source records side by side, record their definitions and populations, and test whether the infrastructure and capacity mechanism recurs in a named workflow.",
+          "limits": [
+            "This opportunity is generated from shared record language and repository coverage; it is not a causal finding.",
+            "No customer delivery or publication may use this opportunity until a researcher creates and reviews a bounded insight."
+          ]
+        },
+        {
+          "id": "opportunity-correction-96be787c7e99",
+          "concept": "correction",
+          "title": "Cross-source pattern: correction and remedy",
+          "plainLanguageSummary": "3 records from 2 repositories use a similar correction and remedy mechanism. This is a lead for research, not a conclusion about what is happening in the world.",
+          "status": "opportunity_needs_researcher_review",
+          "evidenceDigest": "96be787c7e99f4893f8ff003aa139aa86ce2251d0ee1b477fb58d2a455774d44",
+          "evidence": [
+            {
+              "recordId": "trend-hunting-ai-control",
+              "sourceRepository": "trend-hunting",
+              "sourceRole": "trend_signal",
+              "title": "AI capability is not the same as worker control",
+              "sourceDigest": "67e2e17f48ee21d1f468944b6d1c53e4b6fc20428838ffcbb151937d7662252e"
+            },
+            {
+              "recordId": "cultural-amazon-bandameeda-remedy",
+              "sourceRepository": "cultural-geopolitical-theme-mining",
+              "sourceRole": "research",
+              "title": "A complete individual remedy chain can exist without proving system-wide repair",
+              "sourceDigest": "f2b548bf93149ed93ec9bddca9b09511ddb9541d73e3a0d9f9dcf6788cea9c91"
+            },
+            {
+              "recordId": "trend-uber-kumar-review-counterexample",
+              "sourceRepository": "trend-hunting",
+              "sourceRole": "research",
+              "title": "Human review can end in a compliant dismissal rather than restoration",
+              "sourceDigest": "cd563ab438a730e4220e234c30d260f1238f6627f5693e1bba39aa9eebf85845"
+            }
+          ],
+          "repositories": [
+            "trend-hunting",
+            "cultural-geopolitical-theme-mining"
+          ],
+          "strongestAlternative": "The apparent pattern may reflect the source map or shared language rather than a common real-world mechanism.",
+          "whatWouldChangeOurMind": [
+            "A source-level review shows the records use different definitions or populations.",
+            "Independent evidence fails to connect the shared mechanism to the same observed consequence."
+          ],
+          "nextTest": "Review the 3 source records side by side, record their definitions and populations, and test whether the correction and remedy mechanism recurs in a named workflow.",
+          "limits": [
+            "This opportunity is generated from shared record language and repository coverage; it is not a causal finding.",
+            "No customer delivery or publication may use this opportunity until a researcher creates and reviews a bounded insight."
           ]
         }
       ]
@@ -1013,15 +1262,7 @@
       "industry": "AI data-center networking",
       "limits": [
         "The Inc. record describes the business and growth, but does not prove customer performance, deployment durability, pricing power, or worker outcomes."
-      ],
-      "researchReview": {
-        "state": "accepted_for_research",
-        "versionId": "inc5000-luma-ai-networking-48fc203e7770",
-        "decisionId": "decision-e5608d69-2622-454b-a1b2-7271950319df",
-        "reviewer": "codex-researcher",
-        "acceptedAt": "2026-09-26T10:06:49.430Z",
-        "sourceReviewRun": "scan-20260926100219763"
-      }
+      ]
     },
     {
       "id": "inc5000-caylent-ai-delivery",
@@ -1048,15 +1289,7 @@
       "industry": "cloud and AI implementation services",
       "limits": [
         "The Inc. record identifies a service and growth story, but does not establish deployment quality, customer savings, worker workload, or repeatable AI productivity."
-      ],
-      "researchReview": {
-        "state": "accepted_for_research",
-        "versionId": "inc5000-caylent-ai-delivery-48fc203e7770",
-        "decisionId": "decision-08b03b2d-5144-49e2-b9fc-3fbbee750a86",
-        "reviewer": "codex-researcher",
-        "acceptedAt": "2026-09-26T10:06:49.813Z",
-        "sourceReviewRun": "scan-20260926100219763"
-      }
+      ]
     },
     {
       "id": "inc5000-insurify-ai-decisions",
@@ -1083,15 +1316,7 @@
       "industry": "AI-enabled insurance comparison",
       "limits": [
         "The Inc. record does not show quote accuracy, consumer savings, recommendation bias, coverage quality, or how users can correct an error."
-      ],
-      "researchReview": {
-        "state": "accepted_for_research",
-        "versionId": "inc5000-insurify-ai-decisions-48fc203e7770",
-        "decisionId": "decision-8dfdd78f-a34f-4bcf-9f61-92a5b6011b36",
-        "reviewer": "codex-researcher",
-        "acceptedAt": "2026-09-26T10:06:50.227Z",
-        "sourceReviewRun": "scan-20260926100219763"
-      }
+      ]
     },
     {
       "id": "inc5000-veradata-donor-analytics",
@@ -1118,15 +1343,7 @@
       "industry": "AI-enabled fundraising software",
       "limits": [
         "The Inc. record does not measure prediction accuracy, donor treatment, fundraising results, access effects, or how staff challenge a recommendation."
-      ],
-      "researchReview": {
-        "state": "accepted_for_research",
-        "versionId": "inc5000-veradata-donor-analytics-48fc203e7770",
-        "decisionId": "decision-8430961a-a93a-4cbf-9619-de028600a1b7",
-        "reviewer": "codex-researcher",
-        "acceptedAt": "2026-09-26T10:06:50.620Z",
-        "sourceReviewRun": "scan-20260926100219763"
-      }
+      ]
     },
     {
       "id": "atlas-ai-work-evidence-thread",
@@ -1330,28 +1547,35 @@
           "initialReadDigest": "56074687842722462bb7f3ad730586a20355cca18fd07b7700e997113c3877b1",
           "directRecords": [
             {
-              "label": "Annual report",
+              "label": "Q1 FY2026 release",
+              "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000115/q1fy26pr.htm"
+            },
+            {
+              "label": "Q2 FY2026 release",
+              "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000207/q2fy26pr.htm"
+            },
+            {
+              "label": "Q3 FY2026 release",
+              "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000228/q3fy26pr.htm"
+            },
+            {
+              "label": "FY2025 Form 10-K",
               "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000023/nvda-20250126.htm"
             },
             {
-              "label": "Form 10-Q",
-              "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000116/nvda-20250427.htm"
+              "label": "NVIDIA annual reports and proxies",
+              "url": "https://investor.nvidia.com/financial-info/annual-reports-and-proxies/default.aspx"
             },
             {
-              "label": "Form 10-Q",
-              "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000209/nvda-20250727.htm"
+              "label": "NVIDIA SEC filings",
+              "url": "https://investor.nvidia.com/financial-info/sec-filings/default.aspx"
             },
             {
-              "label": "Form 10-Q",
-              "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000230/nvda-20251026.htm"
+              "label": "NVIDIA financial reports and quarterly results",
+              "url": "https://investor.nvidia.com/financial-info/financial-reports/default.aspx"
             }
           ],
-          "directExtract": "data/processed/ai-work-control/c3-ai.xbrl.json",
-          "directExtractStatus": "does_not_match_bridge",
-          "captureManifest": "data/raw/ai-work-control/c3-ai/manifest.json",
-          "captureStatus": "complete",
-          "capturedRecords": 4,
-          "attemptedRecords": 4
+          "captureStatus": "indexed_not_captured"
         }
       },
       "limits": [
@@ -1439,24 +1663,27 @@
           "initialReadDigest": "413e8610b7cfd04168263bb9a9e027ae2ef91b2cabfdcd4bbd2d263d861480f8",
           "directRecords": [
             {
-              "label": "Q1 FY2026 10-Q",
+              "label": "10-K",
+              "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm"
+            },
+            {
+              "label": "10-Q",
               "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312525256321/msft-20250930.htm"
             },
             {
-              "label": "Q2 FY2026 10-Q",
+              "label": "10-Q",
               "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526027207/msft-20251231.htm"
             },
             {
-              "label": "Q3 FY2026 10-Q",
+              "label": "10-Q",
               "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526191507/msft-20260331.htm"
+            },
+            {
+              "label": "Microsoft FY2025 Form 10-K, filed July 30, 2025",
+              "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm"
             }
           ],
-          "directExtract": "data/processed/ai-work-control/c3-ai.xbrl.json",
-          "directExtractStatus": "does_not_match_bridge",
-          "captureManifest": "data/raw/ai-work-control/c3-ai/manifest.json",
-          "captureStatus": "complete",
-          "capturedRecords": 4,
-          "attemptedRecords": 4
+          "captureStatus": "indexed_not_captured"
         }
       },
       "limits": [
@@ -1544,24 +1771,31 @@
           "initialReadDigest": "781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583",
           "directRecords": [
             {
-              "label": "Q1 FY2026 10-Q",
+              "label": "10-K",
+              "url": "https://www.sec.gov/Archives/edgar/data/1341439/000095017025087926/orcl-20250531.htm"
+            },
+            {
+              "label": "10-Q",
               "url": "https://www.sec.gov/Archives/edgar/data/1341439/000119312525200095/orcl-20250831.htm"
             },
             {
-              "label": "Q2 FY2026 10-Q",
+              "label": "10-Q",
               "url": "https://www.sec.gov/Archives/edgar/data/1341439/000119312525315925/orcl-20251130.htm"
             },
             {
-              "label": "Q3 FY2026 10-Q",
+              "label": "10-Q",
               "url": "https://www.sec.gov/Archives/edgar/data/1341439/000119312526101045/orcl-20260228.htm"
+            },
+            {
+              "label": "DEF 14A",
+              "url": "https://www.sec.gov/Archives/edgar/data/1341439/000119312525220801/d72066ddef14a.htm"
+            },
+            {
+              "label": "FY2025 Form 10-K",
+              "url": "https://www.sec.gov/Archives/edgar/data/1341439/000095017025087926/orcl-20250531.htm"
             }
           ],
-          "directExtract": "data/processed/ai-work-control/c3-ai.xbrl.json",
-          "directExtractStatus": "does_not_match_bridge",
-          "captureManifest": "data/raw/ai-work-control/c3-ai/manifest.json",
-          "captureStatus": "complete",
-          "capturedRecords": 4,
-          "attemptedRecords": 4
+          "captureStatus": "indexed_not_captured"
         }
       },
       "limits": [
@@ -1639,13 +1873,29 @@
           "bridge": "company-industry-analysis/companies/broadcom/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
           "initialRead": "company-industry-analysis/companies/broadcom/INITIAL-EVIDENCE-READ.md",
           "initialReadDigest": "d3b516a3f005e81130c9c318b70c14d246b6554fd6b19bf69e10b9da88d8235c",
-          "directRecords": [],
-          "directExtract": "data/processed/ai-work-control/c3-ai.xbrl.json",
-          "directExtractStatus": "does_not_match_bridge",
-          "captureManifest": "data/raw/ai-work-control/c3-ai/manifest.json",
-          "captureStatus": "complete",
-          "capturedRecords": 4,
-          "attemptedRecords": 4
+          "directRecords": [
+            {
+              "label": "FY2025 annual report, year ended November 2, 2025, filed December 18, 2025",
+              "url": "https://www.sec.gov/Archives/edgar/data/1730168/000173016825000121/avgo-20251102.htm"
+            },
+            {
+              "label": "FY2026 Q1, filed March 11, 2026",
+              "url": "https://www.sec.gov/Archives/edgar/data/1730168/000173016826000016/avgo-20260201.htm"
+            },
+            {
+              "label": "FY2026 Q2, filed June 9, 2026",
+              "url": "https://www.sec.gov/Archives/edgar/data/1730168/000173016826000054/avgo-20260503.htm"
+            },
+            {
+              "label": "FY2026 Q3, filed September 10, 2026",
+              "url": "https://www.sec.gov/Archives/edgar/data/1730168/000173016826000080/avgo-20260802.htm"
+            },
+            {
+              "label": "FY2026 definitive proxy statement, filed March 2, 2026",
+              "url": "https://www.sec.gov/Archives/edgar/data/1730168/000119312526085691/d49254ddef14a.htm"
+            }
+          ],
+          "captureStatus": "indexed_not_captured"
         }
       },
       "limits": [
