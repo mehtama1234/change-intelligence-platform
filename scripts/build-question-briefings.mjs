@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
@@ -9,9 +10,12 @@ const questionsPath = resolve(root, "data/processed/runs/ai-work-control/workspa
 const evaluationsPath = resolve(root, "data/processed/runs/ai-work-control/question-evaluations.json");
 const outputDir = resolve(root, "data/processed/runs/ai-work-control");
 const outputPath = resolve(outputDir, "workspace-briefings.json");
+const publicationsPath = resolve(outputDir, "briefing-publications.json");
 const packet = JSON.parse(await readFile(packetPath, "utf8"));
 const questions = existsSync(questionsPath) ? JSON.parse(await readFile(questionsPath, "utf8")) : { questions: [] };
 const evaluations = existsSync(evaluationsPath) ? JSON.parse(await readFile(evaluationsPath, "utf8")) : { evaluations: [] };
+const publications = existsSync(publicationsPath) ? JSON.parse(await readFile(publicationsPath, "utf8")) : { publications: [] };
+const publicationByBriefing = new Map(publications.publications.map((publication) => [publication.briefingId, publication]));
 const recordsById = new Map(packet.records.map((record) => [record.id, record]));
 const evaluationByQuestion = new Map(evaluations.evaluations.map((evaluation) => [evaluation.questionId, evaluation]));
 
@@ -23,15 +27,21 @@ const briefings = questions.questions.filter((question) => question.state === "a
     sourceRepository: record.sourceRepository,
     sourceRef: record.sourceRef,
     observation: record.observation,
-    limits: record.limits
+    limits: record.limits,
+    sourceDigest: record.sourceDigest
   }));
+  const evidenceDigest = createHash("sha256").update(JSON.stringify(evidence.map((item) => [item.recordId, item.sourceDigest]))).digest("hex");
+  const publication = publicationByBriefing.get(`briefing-${question.id}`);
+  const currentPublication = publication?.evidenceDigest === evidenceDigest ? publication : undefined;
   return {
     id: `briefing-${question.id}`,
     workspaceId: question.workspaceId,
     questionId: question.id,
     title: question.question,
-    state: "draft",
-    publication: "not_published",
+    state: currentPublication ? "published" : publication ? "stale" : "draft",
+    publication: currentPublication ? "published" : publication ? "needs_republish" : "not_published",
+    ...(currentPublication ? { publishedBy: currentPublication.publishedBy, publishedAt: currentPublication.publishedAt, publicationId: currentPublication.id } : {}),
+    evidenceDigest,
     generatedAt: new Date().toISOString(),
     evidence,
     reading: evidence.length ? `The system found ${evidence.length} related source record${evidence.length === 1 ? "" : "s"}. A researcher must inspect them before making a conclusion.` : "The current packet contains no matching source records.",

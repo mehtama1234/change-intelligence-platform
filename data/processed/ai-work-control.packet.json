@@ -4,8 +4,8 @@
   "sourceSnapshotDate": "2026-09-25",
   "operations": {
     "latestSourceScan": {
-      "generatedAt": "2026-09-26T04:32:25.815Z",
-      "runId": "scan-20260926043225",
+      "generatedAt": "2026-09-26T04:35:08.089Z",
+      "runId": "scan-20260926043508",
       "counts": {
         "new": 0,
         "changed": 0,
@@ -27,7 +27,7 @@
     },
     "workspaceAlerts": {
       "schemaVersion": "workspace-alert-ledger-v1",
-      "generatedAt": "2026-09-26T04:32:28.248Z",
+      "generatedAt": "2026-09-26T04:35:08.555Z",
       "workspaces": [
         {
           "id": "demo-research",
@@ -59,12 +59,12 @@
     },
     "questionEvaluations": {
       "schemaVersion": "question-evaluation-ledger-v1",
-      "generatedAt": "2026-09-26T04:32:33.003Z",
+      "generatedAt": "2026-09-26T04:35:10.314Z",
       "evaluations": [
         {
           "questionId": "question-1790396868707-0zillf",
           "workspaceId": "demo-research",
-          "evaluatedAt": "2026-09-26T04:32:33.003Z",
+          "evaluatedAt": "2026-09-26T04:35:10.314Z",
           "state": "evidence_retrieved",
           "matchedRecordIds": [
             "trend-hunting-ai-control",
@@ -133,16 +133,20 @@
     },
     "briefings": {
       "schemaVersion": "workspace-briefing-ledger-v1",
-      "generatedAt": "2026-09-26T04:32:34.140Z",
+      "generatedAt": "2026-09-26T04:35:10.664Z",
       "briefings": [
         {
           "id": "briefing-question-1790396868707-0zillf",
           "workspaceId": "demo-research",
           "questionId": "question-1790396868707-0zillf",
           "title": "Will AI change correction work?",
-          "state": "draft",
-          "publication": "not_published",
-          "generatedAt": "2026-09-26T04:32:34.140Z",
+          "state": "published",
+          "publication": "published",
+          "publishedBy": "demo-researcher",
+          "publishedAt": "2026-09-26T04:34:31.213Z",
+          "publicationId": "publication-1790397271213-qdiac3",
+          "evidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
+          "generatedAt": "2026-09-26T04:35:10.664Z",
           "evidence": [
             {
               "recordId": "trend-hunting-ai-control",
@@ -152,7 +156,8 @@
               "observation": "The synthesis separates access to AI capability from control over tasks, worker welfare, and successful remedy.",
               "limits": [
                 "This is a synthesis boundary, not a pooled causal estimate."
-              ]
+              ],
+              "sourceDigest": "67e2e17f48ee21d1f468944b6d1c53e4b6fc20428838ffcbb151937d7662252e"
             },
             {
               "recordId": "cultural-ai-capability-dependence",
@@ -162,7 +167,8 @@
               "observation": "The reader frames AI infrastructure as potentially building useful capability and dependence together, while keeping portability, exit, and state-control effects open.",
               "limits": [
                 "The page preserves open questions about application migration, outcomes, portability, and exit."
-              ]
+              ],
+              "sourceDigest": "88ac071286e2f746095504540db23f4164a8c5a3e1c6ee190ebcebf753e4d8fe"
             },
             {
               "recordId": "annual-ai-cultural-disintermediation",
@@ -172,7 +178,8 @@
               "observation": "The annual-report synthesis tracks AI as a force that can compress routine execution while increasing the value of distribution, judgment, accountability, and scarce expertise.",
               "limits": [
                 "This is a cross-company annual-report synthesis, not one company's measured AI outcome."
-              ]
+              ],
+              "sourceDigest": "93d9d56ee7792cdf8c73af339b9e88d5a52544fae201dd800a51ce17622c68a4"
             },
             {
               "recordId": "ibis-ai-workflow-compression",
@@ -182,7 +189,8 @@
               "observation": "The industry writeup describes AI website builders compressing template-based execution and shifting competition toward strategy, brand, personalization, and distribution.",
               "limits": [
                 "The writeup combines industry estimates and company examples; each underlying measure needs source-level review before a general labor claim."
-              ]
+              ],
+              "sourceDigest": "0d3dab9e8b23ea41b5ea11c224388642acbe5b5bcb8c27707542321255ad88ce"
             },
             {
               "recordId": "inc5000-coreweave-ai-infrastructure",
@@ -192,7 +200,8 @@
               "observation": "The Inc. 5000 record describes CoreWeave as a specialized GPU infrastructure provider serving AI labs, startups, and enterprises facing a shortage of compute.",
               "limits": [
                 "The Inc. record identifies a growth hypothesis and revenue band; it does not prove customer benefit, durable margins, or AI productivity."
-              ]
+              ],
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
             },
             {
               "recordId": "atlas-ai-work-evidence-thread",
@@ -202,7 +211,8 @@
               "observation": "The Atlas thread places company-reported AI adoption beside editorial context, consumer measures, independent workplace measures, and an explicit open question about productivity and adoption.",
               "limits": [
                 "The thread explicitly says its sources do not establish productivity change, adoption scale, or causality."
-              ]
+              ],
+              "sourceDigest": "49480c7a496f62b39ee0d89f8325fca1ec9204b07c47091d5641bc7ac5f51f97"
             },
             {
               "recordId": "atlas-c3-ai-report-window",
@@ -212,7 +222,8 @@
               "observation": "C3.ai's direct-record ledger covers the FY2025 10-K and three FY2026 10-Qs. It supports reported software, customer, accounting, deployment, risk, and financial facts, but does not independently measure accuracy, productivity, decision quality, privacy, worker conditions, or end-user outcomes.",
               "limits": [
                 "The report window does not identify an organization, model version, affected person, decision, input, output, error, override, appeal, remedy, or later outcome."
-              ]
+              ],
+              "sourceDigest": "c0f1424493170ccf3ef4829cd34a6f8d0d7526768c3cf20ed3feffad4faece29"
             }
           ],
           "reading": "The system found 7 related source records. A researcher must inspect them before making a conclusion.",

@@ -13,6 +13,7 @@ const alertsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-
 const questionsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-questions.json");
 const questionEvaluationsPath = resolve(root, "data/processed/runs/ai-work-control/question-evaluations.json");
 const briefingsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-briefings.json");
+const briefingPublicationsPath = resolve(root, "data/processed/runs/ai-work-control/briefing-publications.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 
@@ -82,6 +83,30 @@ const server = createServer(async (request, response) => {
       ledger.updatedAt = now;
       await writeFile(questionsPath, `${JSON.stringify(ledger, null, 2)}\n`);
       return json(response, 201, saved);
+    }
+    if (request.method === "POST" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/publish")) {
+      const briefingId = decodeURIComponent(url.pathname.slice("/api/briefings/".length, -"/publish".length));
+      const body = await requestBody(request);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === body.actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot publish briefings." });
+      const ledger = await readJson(briefingsPath, { schemaVersion: "workspace-briefing-ledger-v1", briefings: [] });
+      const briefing = ledger.briefings.find((candidate) => candidate.id === briefingId && candidate.workspaceId === workspace.id);
+      if (!briefing) return json(response, 404, { error: "Briefing not found in this workspace." });
+      const publications = await readJson(briefingPublicationsPath, { schemaVersion: "briefing-publication-ledger-v1", publications: [] });
+      const now = new Date().toISOString();
+      const publication = { id: `publication-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, briefingId, workspaceId: workspace.id, evidenceDigest: briefing.evidenceDigest, publishedBy: member.id, publishedRole: member.role, publishedAt: now, note: String(body.note ?? "").slice(0, 2000) };
+      publications.publications.push(publication);
+      publications.updatedAt = now;
+      briefing.state = "published";
+      briefing.publication = "published";
+      briefing.publicationId = publication.id;
+      briefing.publishedBy = member.id;
+      briefing.publishedAt = now;
+      await writeFile(briefingsPath, `${JSON.stringify(ledger, null, 2)}\n`);
+      await writeFile(briefingPublicationsPath, `${JSON.stringify(publications, null, 2)}\n`);
+      return json(response, 200, { ...briefing, publication });
     }
     if (request.method !== "GET") return json(response, 405, { error: "Only GET and alert acknowledgement POST are supported." });
     if (url.pathname === "/api/health") return json(response, 200, { status: "ok", service: "change-intelligence-read-model", generatedAt: new Date().toISOString() });
