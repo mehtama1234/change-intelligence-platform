@@ -481,6 +481,24 @@ function buildWorkspaceExport({ workspace, packet, questions, evaluations, brief
   };
 }
 
+function buildPilotKickoff({ workspace, profile, questions, watchlists, deliveries, sourceCount }) {
+  const latestDelivery = deliveries.slice().sort((a, b) => String(b.generatedAt).localeCompare(String(a.generatedAt)))[0] ?? null;
+  return {
+    schemaVersion: "pilot-kickoff-packet-v1",
+    generatedAt: new Date().toISOString(),
+    workspace: { id: workspace.id, name: workspace.name },
+    offer: { name: "Evidence-backed change intelligence pilot", domain: "AI, work, and enterprise control", service: "Recurring source-linked briefings, change alerts, and decision follow-up" },
+    decision: { question: profile?.decisionQuestion ?? null, context: profile?.decisionContext ?? null, status: profile ? "configured" : "needs_configuration" },
+    scope: { watchlists: watchlists.map((watchlist) => ({ id: watchlist.id, name: watchlist.name, sourceCount: watchlist.sourceIds?.length ?? 0 })), savedQuestions: questions.length, acceptedPrivateSources: sourceCount },
+    cadence: { delivery: profile?.cadence ?? null, nextReviewAt: profile?.nextReviewAt ?? null, successMeasures: profile?.successMeasures ?? [] },
+    firstHandoff: { status: latestDelivery?.status ?? "not_generated", generatedAt: latestDelivery?.generatedAt ?? null, refreshRunId: latestDelivery?.refreshRunId ?? null, deliveryId: latestDelivery?.id ?? null },
+    reviewProtocol: ["Inspect the evidence and limits", "Record whether the handoff was useful", "Record whether it informed or changed a decision", "Record any correction and the next test"],
+    checkpoint: { afterReviewedDeliveries: 3, choices: ["improve", "continue", "expand", "stop"], humanDecisionRequired: true },
+    boundaries: ["The service records evidence and decisions; it does not make the commercial decision silently.", "A prepared handoff is not proof of usefulness or general market value.", "Every claim remains bounded by its source coverage and unresolved alternatives."],
+    nextAction: profile ? (latestDelivery ? "Review the first handoff, then record the partner's observation." : "Run the first refresh to create the reviewable handoff.") : "Configure the decision question, source scope, measures, and cadence before the first refresh."
+  };
+}
+
 const workspaceDeletionSchema = "workspace-deletion-v1";
 
 async function persistWorkspaceLedgersAfterDeletion() {
@@ -2051,6 +2069,31 @@ const server = createServer(async (request, response) => {
       });
       response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="${workspace.id}-export.json"`, "Cache-Control": "no-store" });
       return response.end(JSON.stringify(exported));
+    }
+    if (url.pathname === "/api/pilot-kickoff") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      if (!access.workspaceId) return json(response, 400, { error: "Choose one workspace for the pilot kickoff packet." });
+      const workspace = await workspaceConfig(access.workspaceId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      const [questionsLedger, watchlistsLedger, pilotProfilesLedger] = await Promise.all([
+        readJson(questionsPath, { questions: [] }),
+        readJson(watchlistsPath, { watchlists: [] }),
+        readJson(pilotProfilesPath, { profiles: [] })
+      ]);
+      const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
+      const privateSources = store.recordsLedger("workspace_source", "workspace-source-ledger-v1", "sources").sources;
+      const packet = buildPilotKickoff({
+        workspace,
+        profile: workspaceRecords(pilotProfilesLedger.profiles, workspace.id)[0] ?? null,
+        questions: workspaceRecords(questionsLedger.questions, workspace.id),
+        watchlists: workspaceRecords(watchlistsLedger.watchlists, workspace.id),
+        deliveries: workspaceRecords(deliveries, workspace.id),
+        sourceCount: workspaceRecords(privateSources, workspace.id).filter((source) => source.reviewState === "accepted").length
+      });
+      await appendAudit({ requestId, action: "export_pilot_kickoff", targetId: workspace.id, workspaceId: workspace.id, actorId: access.actorId ?? null, actorRole: null, result: "exported", occurredAt: new Date().toISOString() });
+      response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="${workspace.id}-pilot-kickoff.json"`, "Cache-Control": "no-store" });
+      return response.end(JSON.stringify(packet));
     }
     if (url.pathname === "/api/workspace-retention") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

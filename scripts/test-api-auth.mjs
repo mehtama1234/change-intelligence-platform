@@ -77,6 +77,9 @@ try {
   const readinessResponse = await fetch(`${base}/api/workspace-commercial-readiness?workspace=demo-research`, { headers: authHeaders });
   const readinessBody = await readinessResponse.json();
   if (readinessResponse.status !== 200 || readinessBody.schemaVersion !== "commercial-pilot-readiness-v1" || !["improve", "continue", "expand", "stop"].includes(readinessBody.recommendation) || readinessBody.humanCheckpointRequired !== true || !Array.isArray(readinessBody.history)) throw new Error("Commercial pilot readiness read model failed.");
+  const kickoffResponse = await fetch(`${base}/api/pilot-kickoff?workspace=demo-research`, { headers: authHeaders });
+  const kickoffBody = await kickoffResponse.json();
+  if (kickoffResponse.status !== 200 || kickoffBody.schemaVersion !== "pilot-kickoff-packet-v1" || kickoffBody.workspace?.id !== "demo-research" || !kickoffBody.reviewProtocol?.length || !kickoffBody.boundaries?.length) throw new Error("Pilot kickoff packet read model failed.");
   const outsiderPilot = await fetch(`${base}/api/workspace-pilot?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderPilot.status !== 403) throw new Error(`Expected non-member pilot read to return 403, received ${outsiderPilot.status}`);
   const outsiderOnboarding = await fetch(`${base}/api/workspace-onboarding?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });

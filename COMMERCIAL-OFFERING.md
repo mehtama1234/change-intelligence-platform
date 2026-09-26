@@ -184,3 +184,8 @@ That acceptance closes the operator item and records how long it took from the
 failed refresh to an accepted handoff. The commercial service can therefore
 measure not only whether it produced work, but whether the customer actually
 received and accepted the work.
+
+The workspace also provides a pilot kickoff packet for the first customer. It
+turns the configured decision, source scope, cadence, measures, first-handoff
+state, review protocol, checkpoint choices, and product limits into one dated
+artifact that the operator and partner can use to start the engagement.
