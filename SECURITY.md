@@ -156,6 +156,10 @@ step names, status, and retry timing to operators. Customers do not receive a
 handoff notification merely because a refresh failed; a prepared delivery is
 required before the normal delivery notice is valid.
 
+Retry requests are operator-only, idempotent, and claimed by the scheduler
+before any source work begins. A customer cannot cause an arbitrary refresh or
+force an unreviewed delivery by manipulating the retry state.
+
 Token-authenticated write requests must also send an `Idempotency-Key`. A
 retry with the same key replays the original result instead of creating a
 second question, decision, publication, or acknowledgment.

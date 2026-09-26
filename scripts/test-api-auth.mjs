@@ -1,10 +1,13 @@
 import { spawn } from "node:child_process";
+import { execFile } from "node:child_process";
 import { createHmac } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
+const exec = promisify(execFile);
 const port = 8791;
 const base = `http://127.0.0.1:${port}`;
 const runtimeDir = `/tmp/change-intelligence-api-auth-${Date.now()}`;
@@ -129,6 +132,10 @@ try {
   if (workspaceRetry.status !== 200 || workspaceRetryBody.status !== "retry_requested" || workspaceRetryBody.workspaceId !== provisionBody.id) throw new Error("Operator workspace refresh retry did not persist.");
   const workspaceRetryAgain = await fetch(`${base}/api/operator/workspace-refresh-failures/workspace-refresh-failure-auth-test/retry`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": "workspace-refresh-retry-auth-test" } });
   if (workspaceRetryAgain.status !== 200 || JSON.stringify(await workspaceRetryAgain.json()) !== JSON.stringify(workspaceRetryBody)) throw new Error("Workspace refresh retry was not idempotent.");
+  await exec(process.execPath, [resolve(root, "scripts/claim-workspace-refresh-retries.mjs")], { cwd: root, env: { ...process.env, RUNTIME_DATA_DIR: runtimeDir, REFRESH_RUN_ID: "workspace-retry-run", REFRESH_STARTED_AT: new Date().toISOString() } });
+  const claimedRetryLedger = JSON.parse(await readFile(`${runtimeDir}/workspace-refresh-outcomes.json`, "utf8"));
+  const claimedRetry = claimedRetryLedger.outcomes.find((outcome) => outcome.id === "workspace-refresh-failure-auth-test");
+  if (claimedRetry?.status !== "retrying" || claimedRetry.retryRunId !== "workspace-retry-run" || claimedRetry.retryAttempts !== 1) throw new Error("The refresh runner did not claim the requested workspace retry.");
   const persistedRegistry = JSON.parse(await readFile(`${runtimeDir}/workspace-registry.json`, "utf8"));
   if (!persistedRegistry.workspaces?.some((workspace) => workspace.id === provisionBody.id)) throw new Error("Workspace registry did not persist the provisioned workspace.");
   const invitedMemberWorkspaces = await (await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer new-researcher-token" } })).json();

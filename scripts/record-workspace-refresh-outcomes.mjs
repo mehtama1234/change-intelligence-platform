@@ -19,13 +19,14 @@ for (const profile of profiles) {
   const validDelivery = delivery?.status === "prepared";
   const existing = outcomes.filter((outcome) => outcome.workspaceId === profile.workspaceId).at(-1);
   if (status === "complete" && validDelivery) {
-    if (existing?.status === "open" || existing?.status === "retry_requested") outcomes.push({ ...existing, status: "resolved", resolvedAt: endedAt, resolvedRunId: runId, deliveryId: delivery.id });
+    if (existing?.status === "open" || existing?.status === "retry_requested" || existing?.status === "retrying") outcomes.push({ ...existing, status: "resolved", resolvedAt: endedAt, resolvedRunId: runId, deliveryId: delivery.id, retryCompletedAt: existing.status === "retrying" ? endedAt : existing.retryCompletedAt ?? null });
     continue;
   }
   if (status === "complete" && !validDelivery || status !== "complete") {
     const reason = status !== "complete" ? "refresh_failed" : delivery ? "delivery_not_prepared" : "delivery_not_created";
     if (existing?.runId === runId) continue;
-    outcomes.push({ id: `workspace-refresh-outcome-${profile.workspaceId}-${runId}`, workspaceId: profile.workspaceId, profileId: profile.id, runId, status: "open", reason, failedSteps, deliveryId: delivery?.id ?? null, observedAt: endedAt, retryRequestedAt: null, retryRequestedBy: null, resolvedAt: null, resolvedRunId: null });
+    if (existing?.status === "retrying" || existing?.status === "retry_requested") outcomes.push({ ...existing, status: "open", runId, reason, failedSteps, deliveryId: delivery?.id ?? null, observedAt: endedAt, retryFailedAt: existing.status === "retrying" ? endedAt : existing.retryFailedAt ?? null });
+    else outcomes.push({ id: `workspace-refresh-outcome-${profile.workspaceId}-${runId}`, workspaceId: profile.workspaceId, profileId: profile.id, runId, status: "open", reason, failedSteps, deliveryId: delivery?.id ?? null, observedAt: endedAt, retryRequestedAt: null, retryRequestedBy: null, resolvedAt: null, resolvedRunId: null });
   }
 }
 await writeFile(resolve(runtimeDir, "workspace-refresh-outcomes.json"), `${JSON.stringify({ schemaVersion: "workspace-refresh-outcome-ledger-v1", updatedAt: endedAt, outcomes: outcomes.slice(-500) }, null, 2)}\n`);

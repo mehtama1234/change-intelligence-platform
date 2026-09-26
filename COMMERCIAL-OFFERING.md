@@ -165,3 +165,8 @@ If a refresh fails for one partner, the operator sees that partner's failed
 run and can request a retry without sending an incomplete handoff. The
 customer sees a delivery notification only after the retry produces a
 reviewable prepared delivery.
+
+Retry history is tied to the refresh run that actually attempted recovery.
+This lets the service team explain whether a missed handoff was fixed, remains
+blocked, or needs a different source or research decision before another
+customer delivery is sent.

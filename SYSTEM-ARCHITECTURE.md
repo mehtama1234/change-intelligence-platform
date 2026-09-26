@@ -280,6 +280,12 @@ open operational item; a prepared delivery resolves it. Operators can request
 one retry with an idempotency key, and the next scheduled refresh performs the
 retry. This keeps customer delivery separate from internal recovery work.
 
+The refresh runner claims `retry_requested` items before it starts source work.
+It records the retry run ID and attempt count, and the outcome recorder either
+resolves the item when a prepared delivery exists or reopens it with the new
+failed step list. A retry therefore describes a real execution attempt, not
+just an operator button click.
+
 The aggregate operator view includes the same schedule state for each tenant,
 so a configured workspace waiting for its first refresh is visible without
 exposing its questions or evidence. A failed refresh remains a global

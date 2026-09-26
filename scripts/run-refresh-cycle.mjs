@@ -85,6 +85,7 @@ async function runStep(name, script, optional = false) {
 try {
   await mkdir(runDir, { recursive: true });
   lock = await open(lockPath, "wx");
+  await exec(process.execPath, [resolve(root, "scripts/claim-workspace-refresh-retries.mjs")], { cwd: root, env: { ...childEnv, REFRESH_STARTED_AT: new Date().toISOString() }, maxBuffer: 2 * 1024 * 1024 });
   await runStep("plan-refresh-scope", "plan-refresh-scope.mjs");
   await runStep("check-source-availability", "check-source-availability.mjs");
   const scope = JSON.parse(await readFile(scopePath, "utf8"));
