@@ -26,9 +26,14 @@ try {
   if (!healthy) throw new Error(`API did not start. ${output}`);
   const unauthenticated = await fetch(`${base}/api/questions`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", question: "Unauthenticated question" }) });
   if (unauthenticated.status !== 401) throw new Error(`Expected 401, received ${unauthenticated.status}`);
-  const authenticated = await fetch(`${base}/api/questions`, { method: "POST", headers: { Authorization: "Bearer research-token", "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", actorId: "demo-viewer", question: "Does token identity control this question?" }) });
+  const idempotencyKey = `auth-smoke-${Date.now()}`;
+  const request = { method: "POST", headers: { Authorization: "Bearer research-token", "Idempotency-Key": idempotencyKey, "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", actorId: "demo-viewer", question: "Does token identity control this question?" }) };
+  const authenticated = await fetch(`${base}/api/questions`, request);
   const result = await authenticated.json();
   if (authenticated.status !== 201 || result.createdBy !== "demo-researcher") throw new Error(`Authenticated identity was not applied: ${JSON.stringify(result)}`);
+  const retry = await fetch(`${base}/api/questions`, request);
+  const retryResult = await retry.json();
+  if (retry.status !== 201 || retryResult.id !== result.id) throw new Error(`Idempotent retry did not replay original result: ${JSON.stringify(retryResult)}`);
   if (!authenticated.headers.get("x-request-id")) throw new Error("Write response did not include a request ID.");
   const auditResponse = await fetch(`${base}/api/audit?workspace=demo-research`);
   const audit = await auditResponse.json();

@@ -19,6 +19,7 @@ const insightDecisionsPath = resolve(root, "data/processed/runs/ai-work-control/
 const insightCandidatesPath = resolve(root, "data/processed/runs/ai-work-control/insight-candidates.json");
 const insightPublicationsPath = resolve(root, "data/processed/runs/ai-work-control/insight-publications.json");
 const auditPath = resolve(root, "data/processed/runs/ai-work-control/audit-log.json");
+const operationsPath = resolve(root, "data/processed/runs/ai-work-control/idempotency-operations.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const authMode = process.env.AUTH_MODE ?? "demo";
 const tokenActors = authMode === "token" ? JSON.parse(process.env.AUTH_TOKENS_JSON ?? "{}") : {};
@@ -68,6 +69,19 @@ async function appendAudit(entry) {
   await writeFile(auditPath, `${JSON.stringify(ledger, null, 2)}\n`);
 }
 
+async function replayOperation(key) {
+  if (!key) return undefined;
+  const ledger = await readJson(operationsPath, { schemaVersion: "idempotency-ledger-v1", operations: [] });
+  return ledger.operations.find((operation) => operation.key === key);
+}
+
+async function storeOperation(operation) {
+  const ledger = await readJson(operationsPath, { schemaVersion: "idempotency-ledger-v1", operations: [] });
+  ledger.operations.push(operation);
+  ledger.updatedAt = operation.completedAt;
+  await writeFile(operationsPath, `${JSON.stringify(ledger, null, 2)}\n`);
+}
+
 const server = createServer(async (request, response) => {
   try {
     const url = new URL(request.url, `http://${request.headers.host ?? "localhost"}`);
@@ -98,6 +112,10 @@ const server = createServer(async (request, response) => {
       const body = await requestBody(request);
       const actorId = authenticatedActor(request, body);
       if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
       const workspace = await workspaceConfig(body.workspaceId);
       const member = workspace?.members?.find((candidate) => candidate.id === actorId);
       const question = String(body.question ?? "").trim();
@@ -111,6 +129,7 @@ const server = createServer(async (request, response) => {
       ledger.updatedAt = now;
       await writeFile(questionsPath, `${JSON.stringify(ledger, null, 2)}\n`);
       await appendAudit({ requestId, action: "create_question", targetId: saved.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "created", occurredAt: now });
+      await storeOperation({ key: idempotencyKey, action: "create_question", status: 201, body: saved, completedAt: now });
       return json(response, 201, saved);
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/publish")) {
