@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const html = await readFile(resolve(root, "web/index.html"), "utf8");
 const app = await readFile(resolve(root, "web/app.js"), "utf8");
+const operatorHtml = await readFile(resolve(root, "web/operator.html"), "utf8");
+const operatorApp = await readFile(resolve(root, "web/operator.js"), "utf8");
 const styles = await readFile(resolve(root, "web/styles.css"), "utf8");
 const required = [
   [html, 'id="workspace-select"', "workspace selector"],
@@ -50,6 +52,8 @@ const required = [
   [app, "stale", "stale publication handling"],
   [styles, "@media (max-width: 700px)", "responsive layout"],
   [styles, ":focus", "keyboard focus styling"]
+  , [operatorHtml, 'id="operator-workspaces"', "operator workspace table"]
+  , [operatorApp, "/api/operator/pilot-overview", "operator overview API"]
 ];
 const missing = required.filter(([text, value]) => !text.includes(value)).map(([, , label]) => label);
 if (missing.length) throw new Error(`Frontend contract failed: ${missing.join(", ")}`);

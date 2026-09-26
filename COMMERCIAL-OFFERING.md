@@ -64,6 +64,10 @@ reviewed, useful, and connected to a decision. This lets a buyer see whether
 the product is becoming dependable over time instead of judging it from one
 impressive briefing.
 
+Internal operators get a separate aggregate view across pilots. It shows
+delivery volume, review volume, usefulness, decision impact, and checkpoint
+counts without exposing customer notes or private evidence.
+
 ### Team workspace
 
 Private watchlists, competitors, themes, saved questions, shared briefings,

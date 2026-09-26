@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Change Intelligence — operator view</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <p class="eyebrow">Internal operations</p>
+      <h1>Pilot health across workspaces</h1>
+      <p class="lede">Aggregate delivery and review signals for operating the pilot program. Customer notes and private research stay inside their workspaces.</p>
+      <div class="workspace-context" aria-label="Operator connection">
+        <label for="operator-token">Operator token <input id="operator-token" type="password" autocomplete="off"></label>
+        <button id="load-overview" type="button">Load overview</button>
+        <span id="operator-status" class="muted" role="status"></span>
+      </div>
+    </header>
+    <main>
+      <section aria-labelledby="operator-summary-title">
+        <div class="section-heading"><p class="eyebrow">Aggregate only</p><h2 id="operator-summary-title">Pilot overview</h2><p id="operator-summary" class="muted">Enter an operator token to load the overview.</p></div>
+        <div id="operator-cards" class="operations-cards" aria-live="polite"></div>
+        <div id="operator-workspaces" class="table-wrap" aria-live="polite"></div>
+        <p id="operator-limitation" class="muted"></p>
+      </section>
+    </main>
+    <script type="module" src="operator.js"></script>
+  </body>
+</html>

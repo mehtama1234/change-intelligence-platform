@@ -12,6 +12,17 @@ AUTH_MODE=token
 AUTH_TOKENS_JSON='{"token-value":"workspace-member-id"}'
 ```
 
+The internal aggregate operator view is separate from workspace membership. In
+token mode, configure its actor allowlist explicitly:
+
+```sh
+OPERATOR_ACTORS_JSON='["operations-user-id"]'
+```
+
+The operator view exposes pilot counts and delivery status only. It does not
+expose customer questions, review notes, source passages, or private workspace
+content.
+
 Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map
 before checking the member's workspace role.

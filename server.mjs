@@ -37,6 +37,7 @@ const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const sourceRegistryPath = resolve(root, "data/source-registry.json");
 const authMode = process.env.AUTH_MODE ?? "demo";
 const tokenActors = authMode === "token" ? JSON.parse(process.env.AUTH_TOKENS_JSON ?? "{}") : {};
+const operatorActors = new Set(JSON.parse(process.env.OPERATOR_ACTORS_JSON ?? "[]"));
 const backupDir = process.env.BACKUP_DIR ? resolve(root, process.env.BACKUP_DIR) : undefined;
 const maxRefreshAgeMs = Number(process.env.MAX_REFRESH_AGE_MS ?? 7 * 24 * 60 * 60 * 1000);
 const maxSourceAgeMs = Number(process.env.MAX_SOURCE_AGE_MS ?? 14 * 24 * 60 * 60 * 1000);
@@ -122,6 +123,13 @@ function denyWorkspaceRead(response, access) {
   if (!access.error) return false;
   json(response, access.error.status, access.error.body);
   return true;
+}
+
+function operatorAccess(request) {
+  const actorId = authenticatedActor(request, {});
+  if (!actorId) return { error: { status: 401, body: { error: "Authentication required." } } };
+  if (!operatorActors.has(actorId)) return { error: { status: 403, body: { error: "Operator access is required." } } };
+  return { actorId };
 }
 
 async function readJson(path, fallback) {
@@ -252,6 +260,24 @@ function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions 
     decisionHistory: decisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt))).map((decision) => ({ decision: decision.decision, note: decision.note, nextStep: decision.nextStep, decidedAt: decision.decidedAt })),
     deliveryHistory: deliveries.slice().sort((a, b) => String(b.generatedAt).localeCompare(String(a.generatedAt))).map((delivery) => ({ id: delivery.id, generatedAt: delivery.generatedAt, status: delivery.status, refreshRunId: delivery.refreshRunId, headline: delivery.headline, usefulness: delivery.review?.usefulness ?? "not reviewed", decisionImpact: delivery.review?.decisionImpact ?? "not reviewed", reviewedAt: delivery.review?.reviewedAt ?? null })) ,
     limitation: "This report summarizes what this partner recorded about this pilot. It does not establish general market value, causation, or performance outside this workspace."
+  };
+}
+
+function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries }) {
+  const summaries = workspaces.map((workspace) => {
+    const workspaceDeliveries = deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
+    const reviewed = workspaceDeliveries.filter((delivery) => delivery.review);
+    const workspaceDecisions = decisions.filter((decision) => decision.workspaceId === workspace.id);
+    return { id: workspace.id, name: workspace.name, pilotConfigured: profiles.some((profile) => profile.workspaceId === workspace.id), deliveries: workspaceDeliveries.length, reviewedDeliveries: reviewed.length, usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, latestDeliveryAt: workspaceDeliveries.map((delivery) => delivery.generatedAt).sort().at(-1) ?? null, latestDecision: workspaceDecisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)))[0]?.decision ?? null };
+  });
+  const reviewed = deliveries.filter((delivery) => delivery.review);
+  return {
+    schemaVersion: "operator-pilot-overview-v1",
+    generatedAt: new Date().toISOString(),
+    scope: { workspaceCount: workspaces.length, configuredPilots: profiles.length, deliveries: deliveries.length, reviewedDeliveries: reviewed.length },
+    aggregate: { usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, notUsefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "not_useful").length, unclearDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "unclear").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, pilotCheckpoints: decisions.length, checkpointCounts: Object.fromEntries(["improve", "continue", "expand", "stop"].map((decision) => [decision, decisions.filter((item) => item.decision === decision).length])), auditedPilotActions: auditEntries.filter((entry) => ["configure_pilot", "review_pilot_delivery", "decide_pilot"].includes(entry.action)).length },
+    workspaces: summaries,
+    limitation: "This operator view contains aggregate pilot health only. It intentionally excludes customer questions, review notes, source details, and private workspace content. Counts describe recorded activity, not general product-market fit or causation."
   };
 }
 
@@ -892,6 +918,19 @@ const server = createServer(async (request, response) => {
       const visible = deliveries.filter((delivery) => !access.workspaceIds || access.workspaceIds.includes(delivery.workspaceId));
       const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions.filter((decision) => !access.workspaceIds || access.workspaceIds.includes(decision.workspaceId));
       return json(response, 200, buildPilotLearningReport({ workspaceId: access.workspaceId, profile, deliveries: visible, decisions }));
+    }
+    if (url.pathname === "/api/operator/pilot-overview") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const workspaceFiles = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
+      const workspaces = await Promise.all(workspaceFiles.map(async (file) => {
+        const workspace = JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"));
+        return { id: workspace.id, name: workspace.name };
+      }));
+      const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
+      const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
+      const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions;
+      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries }));
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));
