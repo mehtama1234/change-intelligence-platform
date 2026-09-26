@@ -30,6 +30,7 @@ evidence proves, and what remains open.
 7. [SDLC delivery plan](SDLC-DELIVERY-PLAN.md)
 8. [Security boundary](SECURITY.md)
 9. [Operations runbook](OPERATIONS-RUNBOOK.md)
+10. [Design-partner pilot kit](DESIGN-PARTNER-PILOT-KIT.md)
 
 Every push also runs the core release gate and a Linux container smoke test in
 GitHub Actions. The container job validates Compose interpolation, builds the
