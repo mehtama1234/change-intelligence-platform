@@ -13,6 +13,7 @@ const receiptPath = resolve(runDir, "latest-refresh.json");
 const historyPath = resolve(runDir, "refresh-history.json");
 const scopePath = resolve(runDir, "refresh-scope.json");
 const scopeStatePath = resolve(runDir, "refresh-scope-state.json");
+const availabilityPath = resolve(runDir, "latest-source-availability.json");
 const secCaptureDir = resolve(runDir, "raw/ai-work-control/c3-ai");
 const secManifestPath = resolve(secCaptureDir, "manifest.json");
 const secXbrlPath = resolve(runDir, "c3-ai.xbrl.json");
@@ -48,6 +49,7 @@ const childEnv = {
   SEC_MANIFEST_PATH: secManifestPath,
   SEC_XBRL_PATH: secXbrlPath
   ,REFRESH_SCOPE_PATH: scopePath
+  ,SOURCE_AVAILABILITY_PATH: availabilityPath
 };
 const runId = process.env.REFRESH_RUN_ID ?? `refresh-${new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 17)}`;
 childEnv.REFRESH_RUN_ID = runId;
@@ -81,6 +83,7 @@ try {
   await mkdir(runDir, { recursive: true });
   lock = await open(lockPath, "wx");
   await runStep("plan-refresh-scope", "plan-refresh-scope.mjs");
+  await runStep("check-source-availability", "check-source-availability.mjs");
   const scope = JSON.parse(await readFile(scopePath, "utf8"));
   const annualReportDue = scope.dueRepositories?.includes("annual-report-research");
   if (process.env.REFRESH_SKIP_SEC === "1" || !annualReportDue) {

@@ -110,7 +110,8 @@ async function loadOperations() {
   const scheduler = operations.scheduler || { status: "not_started" };
   const schedulerTiming = scheduler.status === "running" ? "refresh in progress" : scheduler.nextRunAt ? `next run ${scheduler.nextRunAt}` : "next run not scheduled";
   const refreshScope = refresh.scope || { dueRepositories: [], deferredRepositories: [] };
-  byId("operations-summary").textContent = `Last run ${refresh.runId || "not recorded"} · ${refresh.status} · ${refresh.endedAt || "no completion time"}. Scope: ${refreshScope.dueRepositories.length} due · ${refreshScope.deferredRepositories.length} deferred. Scheduler: ${scheduler.status} · ${schedulerTiming}.`;
+  const sourceAvailability = operations.sourceAvailability || { counts: {} };
+  byId("operations-summary").textContent = `Last run ${refresh.runId || "not recorded"} · ${refresh.status} · ${refresh.endedAt || "no completion time"}. Scope: ${refreshScope.dueRepositories.length} due · ${refreshScope.deferredRepositories.length} deferred. Source availability: ${sourceAvailability.counts.unavailable || 0} unavailable. Scheduler: ${scheduler.status} · ${schedulerTiming}.`;
   const checks = [
     ["Readiness", readiness.status],
     ["Refresh", readiness.checks.refresh.status],

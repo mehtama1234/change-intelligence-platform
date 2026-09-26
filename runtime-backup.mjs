@@ -31,6 +31,8 @@ const runtimeFiles = [
   "scheduler-status.json",
   "refresh-scope.json",
   "refresh-scope-state.json",
+  "latest-source-availability.json",
+  "source-availability-history.json",
   "refresh-history.json",
   "insight-evaluation.json"
 ];

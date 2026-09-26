@@ -17,8 +17,10 @@ const packet = JSON.parse(await readFile(resolve(runtimeDir, "ai-work-control.pa
 const atlas = JSON.parse(await readFile(resolve(runtimeDir, "domain-atlas.json"), "utf8"));
 const ingestion = JSON.parse(await readFile(resolve(runtimeDir, "research-ingestion.json"), "utf8"));
 const history = JSON.parse(await readFile(resolve(runtimeDir, "source-scan-history.json"), "utf8"));
+const availability = JSON.parse(await readFile(resolve(runtimeDir, "latest-source-availability.json"), "utf8"));
 const alerts = JSON.parse(await readFile(resolve(runtimeDir, "workspace-alerts.json"), "utf8"));
 const reviewWork = JSON.parse(await readFile(resolve(runtimeDir, "latest-review-work.json"), "utf8"));
 if (receipt.status !== "complete" || !receipt.steps.every((step) => ["complete", "skipped"].includes(step.status))) throw new Error("Isolated refresh did not complete cleanly.");
+if (availability.schemaVersion !== "source-availability-receipt-v1" || availability.counts.unavailable !== 0 || availability.sources.length !== packet.records.length) throw new Error("Isolated refresh did not record independent source availability.");
 if (!packet.records?.length || ingestion.schemaVersion !== "research-ingestion-ledger-v1" || ingestion.records.length !== packet.records.length || atlas.schemaVersion !== "domain-atlas-v1" || atlas.sourceRecordCount !== packet.records.length || history.runs.length !== 1 || reviewWork.reviewRequired !== packet.records.length || reviewWork.readyForResearcher !== packet.records.length || !alerts.alerts.some((alert) => alert.watchlistId === "custom-watchlist") || !alerts.alerts.some((alert) => alert.comparisonViewId === "comparison-test")) throw new Error("Isolated refresh did not materialize ingestion, packet, domain atlas, source review queue, source history, and comparison alerts in its runtime directory.");
 console.log("Refresh runtime test passed: the complete pipeline wrote its receipt, packet, source history, and store to the configured runtime directory.");

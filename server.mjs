@@ -43,6 +43,7 @@ const auditPath = resolve(runtimeDir, "audit-log.json");
 const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
 const sourceScanPath = resolve(runtimeDir, "latest-source-scan.json");
 const sourceScanHistoryPath = resolve(runtimeDir, "source-scan-history.json");
+const sourceAvailabilityPath = resolve(runtimeDir, "latest-source-availability.json");
 const evidenceLedgerPath = resolve(runtimeDir, "versioned-evidence-ledger.json");
 const reviewDecisionsPath = resolve(runtimeDir, "review-decisions.json");
 const reviewEventsPath = resolve(runtimeDir, "review-events.json");
@@ -486,6 +487,7 @@ async function readinessReport() {
   const now = Date.now();
   const refresh = await readJson(refreshPath, { status: "not_run", steps: [] });
   const sourceScan = await readJson(sourceScanPath, { counts: {}, sources: [] });
+  const sourceAvailability = await readJson(sourceAvailabilityPath, { counts: {}, sources: [] });
   const backupManifest = backupDir ? await readJson(resolve(backupDir, "manifest.json"), undefined) : undefined;
   const refreshAge = ageMs(refresh.endedAt, now);
   const currentSources = (sourceScan.sources ?? []).filter((source) => source.status !== "deferred");
@@ -498,7 +500,7 @@ async function readinessReport() {
   const checks = {
     database: { status: database.integrity === "ok" ? "ok" : "failed", integrity: database.integrity },
     refresh: { status: refresh.status === "complete" && refreshAge !== null && refreshAge <= maxRefreshAgeMs && failedSteps.length === 0 ? "ok" : "failed", runId: refresh.runId ?? null, ageMs: refreshAge, maxAgeMs: maxRefreshAgeMs, failedSteps },
-    sourceScan: { status: sourceScan.counts?.missing === 0 && overdueDeferredSources === 0 && (sourceAge === null || sourceAge <= maxSourceAgeMs) ? "ok" : "failed", ageMs: sourceAge, maxAgeMs: maxSourceAgeMs, missing: sourceScan.counts?.missing ?? null, deferred: sourceScan.counts?.deferred ?? 0, overdueDeferredSources, sourceCount: sourceScan.sources?.length ?? 0 },
+    sourceScan: { status: (sourceAvailability.counts?.unavailable ?? 0) === 0 && sourceScan.counts?.missing === 0 && overdueDeferredSources === 0 && (sourceAge === null || sourceAge <= maxSourceAgeMs) ? "ok" : "failed", ageMs: sourceAge, maxAgeMs: maxSourceAgeMs, missing: sourceScan.counts?.missing ?? null, unavailable: sourceAvailability.counts?.unavailable ?? null, deferred: sourceScan.counts?.deferred ?? 0, overdueDeferredSources, sourceCount: sourceScan.sources?.length ?? 0 },
     runtimeSync: { status: syncStep?.status === "complete" ? "ok" : "failed", attempts: syncStep?.attempts ?? null },
     backup: backupDir ? { status: backupManifest?.schemaVersion === "runtime-backup-v1" ? "ok" : "failed", createdAt: backupManifest?.createdAt ?? null, ageMs: ageMs(backupManifest?.createdAt, now), directory: backupDir } : { status: "not_configured", createdAt: null, ageMs: null }
   };
@@ -1035,7 +1037,8 @@ const server = createServer(async (request, response) => {
       const scheduler = await readJson(schedulerStatusPath, { schemaVersion: "refresh-scheduler-status-v1", status: "not_started" });
       const history = await readJson(refreshHistoryPath, { schemaVersion: "refresh-history-v1", runs: [] });
       const sourceScan = await readJson(sourceScanPath, { counts: {}, sources: [] });
-      return json(response, 200, { schemaVersion: "operations-read-model-v1", generatedAt: new Date().toISOString(), readiness, refresh, scheduler, refreshHistory: history.runs ?? [], sourceScan: { counts: sourceScan.counts, sourceCount: sourceScan.sources?.length ?? 0 }, database: store.health() });
+      const sourceAvailability = await readJson(sourceAvailabilityPath, { schemaVersion: "source-availability-receipt-v1", counts: {}, repositories: [] });
+      return json(response, 200, { schemaVersion: "operations-read-model-v1", generatedAt: new Date().toISOString(), readiness, refresh, scheduler, refreshHistory: history.runs ?? [], sourceScan: { counts: sourceScan.counts, sourceCount: sourceScan.sources?.length ?? 0 }, sourceAvailability: { checkedAt: sourceAvailability.checkedAt ?? null, counts: sourceAvailability.counts, repositories: sourceAvailability.repositories ?? [] }, database: store.health() });
     }
     if (url.pathname === "/api/usage") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

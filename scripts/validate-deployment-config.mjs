@@ -21,6 +21,7 @@ const required = [
   , [scheduler, "scheduler-status.json", "scheduler status receipt"]
   , [scheduler, "SCHEDULER_MAX_CYCLES", "scheduler test-cycle control"]
   , [refreshCycle, "plan-refresh-scope.mjs", "cadence planner invocation"]
+  , [refreshCycle, "check-source-availability.mjs", "source availability invocation"]
   , [compose, "OPERATOR_NOTIFICATION_DELIVERY_MODE", "notification delivery mode"]
   , [compose, "OPERATOR_NOTIFICATION_WEBHOOK_URL", "notification webhook configuration"]
 ];
