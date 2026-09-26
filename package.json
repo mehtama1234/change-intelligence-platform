@@ -11,6 +11,7 @@
     "extract:sec:c3-ai": "node scripts/extract-sec-xbrl-window.mjs",
     "scan:sources:ai-work-control": "node scripts/scan-source-changes.mjs",
     "process:source-review": "node scripts/process-source-review.mjs",
-    "record:review-decision": "node scripts/record-review-decision.mjs"
+    "record:review-decision": "node scripts/record-review-decision.mjs",
+    "materialize:evidence-versions": "node scripts/materialize-evidence-versions.mjs"
   }
 }

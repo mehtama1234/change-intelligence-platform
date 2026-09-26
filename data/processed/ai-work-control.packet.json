@@ -17,7 +17,12 @@
       "reviewWork": {
         "readyForResearcher": 0,
         "blocked": 0,
-        "candidates": []
+        "candidates": [],
+        "versionedEvidence": {
+          "activeResearchRecordCount": 0,
+          "decisionCount": 0,
+          "records": []
+        }
       }
     }
   },
