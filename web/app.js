@@ -119,7 +119,7 @@ function showInspector(title, summary, content) {
 }
 
 async function inspectEvidence(recordId) {
-  const response = await fetch(`../api/evidence/${encodeURIComponent(recordId)}`);
+  const response = await apiFetch(`../api/evidence/${encodeURIComponent(recordId)}?workspace=${encodeURIComponent(state.workspaceId)}`);
   if (!response.ok) throw new Error("Evidence could not be loaded.");
   const inspection = await response.json();
   const { record, source, relatedRecords, insightLinks, boundaries } = inspection;
@@ -142,7 +142,7 @@ async function inspectEvidence(recordId) {
 }
 
 async function inspectInsight(insightId) {
-  const response = await fetch(`../api/insights/${encodeURIComponent(insightId)}`);
+  const response = await apiFetch(`../api/insights/${encodeURIComponent(insightId)}?workspace=${encodeURIComponent(state.workspaceId)}`);
   if (!response.ok) throw new Error("Insight could not be loaded.");
   const inspection = await response.json();
   const { insight, evidence, review, boundaries } = inspection;

@@ -48,10 +48,10 @@ try {
   const usageResponse = await request("/api/usage?workspace=demo-research");
   const usage = await usageResponse.json();
   if (usageResponse.status !== 200 || usage.schemaVersion !== "workspace-usage-v1" || usage.workspaceId !== "demo-research") throw new Error("Workspace usage contract failed.");
-  const evidenceResponse = await request("/api/evidence/trend-hunting-ai-control");
+  const evidenceResponse = await request("/api/evidence/trend-hunting-ai-control?workspace=demo-research");
   const evidence = await evidenceResponse.json();
   if (evidenceResponse.status !== 200 || evidence.schemaVersion !== "evidence-inspection-v1" || evidence.record.id !== "trend-hunting-ai-control" || !evidence.source.excerpt || !evidence.insightLinks.length) throw new Error("Evidence inspection contract failed.");
-  const insightResponse = await request("/api/insights/insight-ai-capability-control-gap-001");
+  const insightResponse = await request("/api/insights/insight-ai-capability-control-gap-001?workspace=demo-research");
   const insight = await insightResponse.json();
   if (insightResponse.status !== 200 || insight.schemaVersion !== "insight-inspection-v1" || insight.evidence.length < 1 || !insight.boundaries.strongestAlternative) throw new Error("Insight inspection contract failed.");
   const missingResponse = await request("/api/evidence/not-a-real-record");

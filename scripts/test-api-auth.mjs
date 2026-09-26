@@ -44,6 +44,8 @@ try {
   if (outsiderUsage.status !== 403) throw new Error(`Expected non-member usage read to return 403, received ${outsiderUsage.status}`);
   const memberUsage = await fetch(`${base}/api/usage?workspace=demo-research`, { headers: authHeaders });
   if (memberUsage.status !== 200) throw new Error(`Workspace member usage read failed: ${memberUsage.status}`);
+  const outsiderEvidence = await fetch(`${base}/api/evidence/trend-hunting-ai-control?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderEvidence.status !== 403) throw new Error(`Expected non-member evidence inspection to return 403, received ${outsiderEvidence.status}`);
   const outsiderWorkspaces = await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer outsider-token" } });
   const outsiderWorkspaceList = await outsiderWorkspaces.json();
   if (outsiderWorkspaces.status !== 200 || outsiderWorkspaceList.length !== 0) throw new Error("Non-member should see no workspaces.");

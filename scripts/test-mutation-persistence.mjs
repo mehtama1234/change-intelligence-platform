@@ -68,6 +68,11 @@ try {
   if (!["acknowledge_alert", "publish_briefing", "export_briefing", "decide_insight", "review_source"].every((action) => actions.has(action))) throw new Error("Mutation and export audit records did not survive restart.");
   const history = await (await fetch(`${base}/api/evidence-history`, { headers: auth })).json();
   if (!history.decisionHistory.some((decision) => decision.candidateId === "review-test-candidate")) throw new Error("Source review decision did not survive restart.");
+  const traceEvidence = await fetch(`${base}/api/evidence/trend-hunting-ai-control?workspace=demo-research`, { headers: auth });
+  const traceInsight = await fetch(`${base}/api/insights/insight-ai-capability-control-gap-001?workspace=demo-research`, { headers: auth });
+  if (traceEvidence.status !== 200 || traceInsight.status !== 200) throw new Error("Authenticated source-trace inspections failed.");
+  const usage = await (await fetch(`${base}/api/usage?workspace=demo-research`, { headers: auth })).json();
+  if (usage.measures.evidenceInspections < 1 || usage.measures.insightInspections < 1 || usage.measures.briefingsExported < 1) throw new Error("Workspace usage did not count source tracing and export actions.");
   const timeline = await (await fetch(`${base}/api/timeline`, { headers: auth })).json();
   if (!timeline.events.some((event) => event.eventType === "source_review") || !timeline.events.some((event) => event.eventType === "briefing_republish")) throw new Error("Review timeline events did not survive restart.");
   console.log("Mutation persistence test passed: alert, briefing, insight, source-review, and timeline state survived restart.");

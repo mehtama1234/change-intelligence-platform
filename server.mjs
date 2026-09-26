@@ -428,10 +428,13 @@ const server = createServer(async (request, response) => {
     }
     if (url.pathname === "/api/packet") return json(response, 200, publicPacket(await readJson(packetPath, { error: "Packet has not been built." })));
     if (url.pathname.startsWith("/api/evidence/")) {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
       const recordId = decodeURIComponent(url.pathname.slice("/api/evidence/".length));
       const packet = await readJson(packetPath, { records: [], insights: [] });
       const record = packet.records.find((candidate) => candidate.id === recordId);
       if (!record) return json(response, 404, { error: "Evidence record not found." });
+      if (access.workspaceId) await appendAudit({ requestId, action: "inspect_evidence", targetId: record.id, workspaceId: access.workspaceId, actorId: access.actorId ?? null, actorRole: null, result: "opened", occurredAt: new Date().toISOString() });
       const relatedRecords = packet.records.filter((candidate) => (record.relatedRecordIds ?? []).includes(candidate.id));
       const insightLinks = packet.insights
         .filter((insight) => insight.recordIds?.includes(record.id))
@@ -457,10 +460,13 @@ const server = createServer(async (request, response) => {
       });
     }
     if (url.pathname.startsWith("/api/insights/")) {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
       const insightId = decodeURIComponent(url.pathname.slice("/api/insights/".length));
       const packet = await readJson(packetPath, { records: [], insights: [], operations: {} });
       const insight = packet.insights.find((candidate) => candidate.id === insightId);
       if (!insight) return json(response, 404, { error: "Insight not found." });
+      if (access.workspaceId) await appendAudit({ requestId, action: "inspect_insight", targetId: insight.id, workspaceId: access.workspaceId, actorId: access.actorId ?? null, actorRole: null, result: "opened", occurredAt: new Date().toISOString() });
       const recordsById = new Map(packet.records.map((record) => [record.id, record]));
       const candidate = packet.operations?.insightCandidates?.candidates?.find((item) => item.candidateKey === insight.id || item.id === insight.id);
       return json(response, 200, {
