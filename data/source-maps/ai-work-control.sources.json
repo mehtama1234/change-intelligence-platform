@@ -354,6 +354,7 @@
       "sourceRole": "research",
       "sourceRepository": "cultural-geopolitical-theme-mining",
       "sourcePath": "analysis/projects/ai-work-control/data/named-workplace-system-stage-ledger-v1.json",
+      "stageLedgerPath": "analysis/projects/ai-work-control/data/named-workplace-system-stage-ledger-v1.json",
       "sourceLocator": "five named workplace system stage comparison",
       "title": "Named workplace systems reach governance and remedy stages before lived outcomes are measured",
       "observation": "A five-case ledger follows IBM Germany AI systems, Microsoft Places and Copilot, OpenAI/Statsig recruitment systems, and Apple recruitment systems through named owners, dated rules, worker voice, control changes, enforcement or remedy, and the remaining worker, household, and exit gaps.",

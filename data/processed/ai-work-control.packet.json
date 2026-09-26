@@ -2021,6 +2021,98 @@
       ],
       "claimState": "compared",
       "asOf": "2026-09-17",
+      "stageLedger": {
+        "format": "named-workplace-system-stage-ledger-v1",
+        "status": "bounded_stage_comparison",
+        "checked": "2026-09-17",
+        "requiredStageOrder": [
+          "system_and_owner",
+          "dated_implementation_or_rule",
+          "worker_exposure",
+          "worker_voice",
+          "specific_control_or_rule_change",
+          "enforcement_or_appeal",
+          "worker_outcome",
+          "household_outcome",
+          "exit_or_collective_action"
+        ],
+        "records": [
+          {
+            "event_id": "DE-IBM-AI-2020-FRAMEWORK",
+            "system_and_owner": "IBM Germany AI systems; joint company and group works council",
+            "dated_implementation_or_rule": "2020-07-30 framework agreement; live implementation date not observed",
+            "worker_exposure": "Named recommendation, training, career, call-center, and monitoring systems reported; worker-level exposure not observed",
+            "worker_voice": "Group works-council agreement, AI experts, and ethics-council participation reported",
+            "specific_control_or_rule_change": "Transparency, human final decision, correction, inspection, escalation, and high-risk personnel limits reported as rules",
+            "enforcement_or_appeal": "Correction route is a reported rule; live intervention, compliance, and resolution are not observed",
+            "worker_outcome": "Not observed: pay, time, discretion, stress, health, security, or bargaining outcome",
+            "household_outcome": "Not observed: resources, care, debt, housing, food, or recovery",
+            "exit_or_collective_action": "Collective governance architecture observed; worker refusal, transfer, quit, organizing, or employer response not observed",
+            "source": "analysis/projects/ai-work-control/data/ibm-germany-ai-governance-event-v1.json",
+            "boundary": "Anticipatory governance is not proof of live worker control or welfare improvement."
+          },
+          {
+            "event_id": "DE-MS-PLACES-2025-COUNTRY-TARGETING",
+            "system_and_owner": "Microsoft Places; Microsoft Digital product group with works-council approval conditions",
+            "dated_implementation_or_rule": "2025-05-08 reported product intervention during internal rollout",
+            "worker_exposure": "Location sharing and cross-country visibility were the decision surface; worker take-up and actual exposure not observed",
+            "worker_voice": "Works-council concern about cross-country location visibility reported",
+            "specific_control_or_rule_change": "Country-level feature targeting and default opt-out for employee location sharing reported",
+            "enforcement_or_appeal": "Approval-linked rollout reported; logs, challenge route, enforcement, and durability not observed",
+            "worker_outcome": "Not observed: privacy, schedule control, workload, pay, health, security, or retaliation outcome",
+            "household_outcome": "Not observed: care, time, resources, or household-security outcome",
+            "exit_or_collective_action": "Opt-out design reported; actual opt-out, refusal consequence, switching, or collective action not observed",
+            "source": "analysis/projects/ai-work-control/data/microsoft-places-works-council-intervention-event-v1.json",
+            "technical_control_surface": "Current official product documentation describes administrator enablement, geographic policy scope, user consent, manual override/clear, Inform/Ask/Off modes, and no historical Automatic Update location view",
+            "technical_control_surface_source": "analysis/projects/ai-work-control/data/microsoft-places-technical-control-surface-source-note-v1.md",
+            "boundary": "A company-reported product change is not independent proof of enforceable worker choice or improved welfare."
+          },
+          {
+            "event_id": "DE-MS-COPILOT-2025-TOLERANCE-PHASE",
+            "system_and_owner": "Microsoft 365 Copilot; Microsoft Digital with European works-council review",
+            "dated_implementation_or_rule": "2024-2025 tolerance phase and spring 2025 reported approval; exact workplace implementation dates not observed",
+            "worker_exposure": "Controlled employee testing, training, permissions, DLP, and dashboards reported; worker-level intensity not observed",
+            "worker_voice": "Councils raised performance-ranking and sensitive-inference concerns; feedback reportedly reached product engineering",
+            "specific_control_or_rule_change": "Guardrails, approval process, and staged rollout reported; specific feature/code change not disclosed",
+            "enforcement_or_appeal": "Review process reported; review logs, prohibited-use enforcement, appeals, and anti-retaliation not observed",
+            "worker_outcome": "Not observed: productivity, workload, time, pay, discretion, health, security, or job outcome",
+            "household_outcome": "Not observed: care, resources, debt, or recovery outcome",
+            "exit_or_collective_action": "Participation in testing reported; opt-out, refusal consequence, transfer, quit, or later collective action not observed",
+            "source": "analysis/projects/ai-work-control/microsoft-germany-works-council-copilot-deployment-record-v1.md",
+            "boundary": "Company implementation reporting establishes a feedback loop, not a worker-level causal or representative result."
+          },
+          {
+            "event_id": "US-OPENAI-STATSiG-2026-PERM-RECRUITMENT",
+            "system_and_owner": "OpenAI OpCo, LLC and Statsig, Inc.; PERM recruitment and application systems",
+            "dated_implementation_or_rule": "OpenAI recruitment practice no later than 2023-06 through 2025-04; Statsig July 2025; settlement effective 2026-08-03",
+            "worker_exposure": "US workers were required to submit PERM applications by mail while other applicants could apply electronically; six PERM-related advertisements/recruitments identified",
+            "worker_voice": "Four OpenAI charge-based investigations plus an independent investigation and one Statsig charge-based investigation; individual charging parties and potential claimants are partly redacted",
+            "specific_control_or_rule_change": "$2 million potential back-pay fund; electronic posting/application; unique identifiers; applicant-tracking capture/searchability; good-faith qualification review; policy approval and training",
+            "enforcement_or_appeal": "IER claimant contact and eligibility process, semiannual reports, three-year inquiry/inspection authority, and 30-day cure route; implementation and exercise not yet observed",
+            "worker_outcome": "Potential back-pay liability is defined, but eligible claimant count, payment receipt, restored consideration, hiring, time/cost burden, and job outcome are not observed",
+            "household_outcome": "Not observed: resources, care, debt, housing, food, or recovery",
+            "exit_or_collective_action": "Individual charge rights remain; later job search, switching, organizing, trust, or political action not observed",
+            "source": "analysis/records/us-doj-openai-statsig-perm-recruitment-settlement-2026.json",
+            "boundary": "Named US recruitment-enforcement case with access-restoration and potential-recovery obligations; agreement is not an admission of liability and does not prove individual recovery or later behavior."
+          },
+          {
+            "event_id": "US-APPLE-2026-PERM-BACKPAY-IMPLEMENTATION",
+            "system_and_owner": "Apple Inc.; PERM recruitment and application systems",
+            "dated_implementation_or_rule": "Investigation opened 2019; settlement announced 2023-11-09; back-pay distribution update 2026-05-21",
+            "worker_exposure": "Apple did not post PERM positions on its external job website and required paper applications by mail while allowing electronic applications for other positions; DOJ reported deterrence of protected workers",
+            "worker_voice": "Individualized claims administration reviewed thousands of potential claimants and lost income; worker-level narratives and representative voice are not public",
+            "specific_control_or_rule_change": "External posting, electronic applications, applicant-tracking searchability, employee training, and three-year departmental monitoring required; DOJ reported some measures implemented during the investigation",
+            "enforcement_or_appeal": "DOJ reported that the $18.25 million back-pay fund was processed and exhausted after individualized review; post-monitoring findings and independent worker confirmation are not observed",
+            "worker_outcome": "Completed monetary remedy is reported, but individual payment distribution, restored consideration, hiring, and later job outcome are not observed",
+            "household_outcome": "Not observed: resources, care, debt, housing, food, or household recovery",
+            "exit_or_collective_action": "Claimant route and public enforcement are observed; later job search, switching, organizing, trust, or political action are not observed",
+            "source": "analysis/records/us-doj-apple-perm-backpay-distribution-2026.json",
+            "boundary": "Named US implementation event with reported completed back-pay administration; it does not prove restored opportunity, durable compliance, worker control, household recovery, or later behavior."
+          }
+        ],
+        "result": "The named cases reach governance and, for Microsoft Places, a reported product-design change. Apple adds a reported completed monetary-remedy stage, but none currently reaches independently observed restored opportunity, worker welfare, household security, or practical exit.",
+        "nextTest": "Obtain one worker-side, works-council, technical-release, or administrative artifact that links a named concern to a dated rule change and then measures actual exposure, override/appeal, workload/pace, pay, health, bargaining, household security, and exit against a differently governed workplace."
+      },
       "limits": [
         "The ledger is a bounded stage comparison, not a common workplace panel or causal estimate; most cases do not observe actual exposure, enforcement, worker welfare, household security, or practical exit."
       ]

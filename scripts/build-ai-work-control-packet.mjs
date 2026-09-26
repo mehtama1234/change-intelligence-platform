@@ -181,7 +181,8 @@ async function buildReportWindow(source, sourceLedger) {
 
 const records = [];
 for (const ingestedSource of ingestion?.records ?? map.sources) {
-  const source = { ...ingestedSource, reportWindow: configuredSourcesById.get(ingestedSource.id)?.reportWindow ?? ingestedSource.reportWindow };
+  const configuredSource = configuredSourcesById.get(ingestedSource.id);
+  const source = { ...ingestedSource, reportWindow: configuredSource?.reportWindow ?? ingestedSource.reportWindow, stageLedgerPath: configuredSource?.stageLedgerPath ?? ingestedSource.stageLedgerPath };
   if (source.refreshState === "deferred") {
     const previousRecord = previousRecordsById.get(source.id);
     if (!previousRecord) throw new Error(`${source.id}: deferred source has no prior packet record to carry forward`);
@@ -192,6 +193,12 @@ for (const ingestedSource of ingestion?.records ?? map.sources) {
   const raw = await readFile(fullPath, "utf8");
   const digest = createHash("sha256").update(raw).digest("hex");
   const reportWindow = source.reportWindow ? await buildReportWindow(source, raw) : undefined;
+  let stageLedger;
+  if (source.stageLedgerPath) {
+    const stageLedgerPath = resolve(sourceRoot, source.sourceRepository, source.stageLedgerPath);
+    const parsedStageLedger = JSON.parse(await readFile(stageLedgerPath, "utf8"));
+    stageLedger = { format: parsedStageLedger.format, status: parsedStageLedger.status, checked: parsedStageLedger.checked, requiredStageOrder: parsedStageLedger.required_stage_order ?? [], records: parsedStageLedger.records ?? [], result: parsedStageLedger.result ?? null, nextTest: parsedStageLedger.next_test ?? null };
+  }
   records.push({
     id: source.id,
     sourceRole: source.sourceRole,
@@ -212,6 +219,7 @@ for (const ingestedSource of ingestion?.records ?? map.sources) {
     ...(source.industry ? { industry: source.industry } : {}),
     ...(source.reportingPeriod ? { reportingPeriod: source.reportingPeriod } : {}),
     ...(reportWindow ? { reportWindow } : {}),
+    ...(stageLedger ? { stageLedger } : {}),
     limits: source.limits
   });
 }
