@@ -124,6 +124,10 @@ packet and atlas generation consume that ledger when it is available.
 33. **Watchlist event-state filtering** — the customer feed honors each
     watchlist's requested `new`, `changed`, and `missing` states rather than
     treating every source membership as an alert.
+34. **Workspace export** — an authenticated workspace member can download a
+    source-linked bundle of that workspace's questions, briefings, watchlists,
+    delivery history, decisions, receipts, and audit history; webhook secrets
+    and other workspaces are excluded.
 
 ## Background jobs
 

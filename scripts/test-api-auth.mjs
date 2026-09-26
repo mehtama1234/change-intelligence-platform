@@ -37,6 +37,11 @@ try {
   const authHeaders = { Authorization: "Bearer research-token" };
   const visibleQuestions = await fetch(`${base}/api/questions?workspace=demo-research`, { headers: authHeaders });
   if (visibleQuestions.status !== 200) throw new Error(`Authenticated workspace read failed: ${visibleQuestions.status}`);
+  const memberExport = await fetch(`${base}/api/workspace-export?workspace=demo-research`, { headers: authHeaders });
+  const memberExportBody = await memberExport.json();
+  if (memberExport.status !== 200 || memberExportBody.schemaVersion !== "workspace-export-v1" || memberExportBody.workspace.id !== "demo-research" || JSON.stringify(memberExportBody).includes("private-event")) throw new Error("Authenticated workspace export failed or leaked unrelated data.");
+  const outsiderExport = await fetch(`${base}/api/workspace-export?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderExport.status !== 403) throw new Error(`Expected non-member workspace export to return 403, received ${outsiderExport.status}`);
   const outsiderRead = await fetch(`${base}/api/questions?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderRead.status !== 403) throw new Error(`Expected non-member workspace read to return 403, received ${outsiderRead.status}`);
   const outsiderTimeline = await fetch(`${base}/api/timeline?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });

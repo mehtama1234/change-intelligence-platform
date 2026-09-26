@@ -393,6 +393,39 @@ function buildInsightEvidenceChain(insight, recordsById) {
   };
 }
 
+function workspaceRecords(records, workspaceId) {
+  return (records ?? []).filter((record) => record.workspaceId === workspaceId);
+}
+
+function buildWorkspaceExport({ workspace, packet, questions, evaluations, briefings, watchlists, comparisons, preferences, notifications, deliveries, pilotProfile, pilotDecisions, outcomes, briefingPublications, insightPublications, auditEntries }) {
+  const sourceIds = new Set();
+  for (const question of questions) for (const sourceId of question.scope?.sourceIds ?? []) sourceIds.add(sourceId);
+  for (const briefing of briefings) for (const evidence of briefing.evidence ?? []) sourceIds.add(evidence.recordId);
+  for (const watchlist of watchlists) for (const sourceId of watchlist.sourceIds ?? []) sourceIds.add(sourceId);
+  for (const delivery of deliveries) for (const briefing of delivery.briefings ?? []) for (const evidence of briefing.evidence ?? []) sourceIds.add(evidence.recordId);
+  const sourceRecords = (packet.records ?? []).filter((record) => sourceIds.has(record.id)).map((record) => ({ id: record.id, title: record.title, sourceRepository: record.sourceRepository, sourceRef: record.sourceRef, sourceDigest: record.sourceDigest, sourceLocator: record.sourceLocator ?? null, sourceExcerpt: record.sourceExcerpt ?? null, claimState: record.claimState, asOf: record.asOf, observation: record.observation, mechanism: record.mechanism, affectedGroups: record.affectedGroups ?? [], limits: record.limits ?? [] }));
+  const safePreferences = preferences ? { ...preferences, webhookUrl: undefined } : null;
+  if (safePreferences) delete safePreferences.webhookUrl;
+  return {
+    schemaVersion: "workspace-export-v1",
+    exportedAt: new Date().toISOString(),
+    workspace: { id: workspace.id, name: workspace.name },
+    questions,
+    questionEvaluations: evaluations,
+    briefings,
+    watchlists,
+    comparisons,
+    notificationPreferences: safePreferences,
+    deliveryNotifications: notifications,
+    pilot: { profile: pilotProfile, decisions: pilotDecisions, deliveries },
+    decisionOutcomes: outcomes,
+    publicationReceipts: { briefings: briefingPublications, insights: insightPublications },
+    sourceRecords,
+    audit: auditEntries,
+    limitation: "This export contains the selected workspace's recorded product history and source links. It is not a guarantee that the research was correct, complete, or useful, and it excludes webhook secrets and other workspaces."
+  };
+}
+
 function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions, outcomes = [] }) {
   const reviewed = deliveries.filter((delivery) => delivery.review);
   const count = (items, value) => items.filter((item) => item === value).length;
@@ -1620,6 +1653,51 @@ const server = createServer(async (request, response) => {
         if (!access.workspaceIds || access.workspaceIds.includes(workspace.id)) workspaces.push({ id: workspace.id, name: workspace.name, memberCount: workspace.members?.length ?? 0 });
       }
       return json(response, 200, workspaces);
+    }
+    if (url.pathname === "/api/workspace-export") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      if (!access.workspaceId) return json(response, 400, { error: "Choose one workspace to export." });
+      const workspace = await workspaceConfig(access.workspaceId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      const [packet, questionsLedger, evaluationsLedger, briefingsLedger, watchlistsLedger, comparisonsLedger, preferencesLedger, notificationsLedger, pilotProfilesLedger, pilotDecisionsLedger, outcomesLedger, auditLedger] = await Promise.all([
+        readJson(packetPath, { records: [] }),
+        readJson(questionsPath, { questions: [] }),
+        readJson(questionEvaluationsPath, { evaluations: [] }),
+        readJson(briefingsPath, { briefings: [] }),
+        readJson(watchlistsPath, { watchlists: [] }),
+        readJson(comparisonViewsPath, { views: [] }),
+        readJson(notificationPreferencesPath, { preferences: [] }),
+        readJson(deliveryNotificationsPath, { notifications: [] }),
+        readJson(pilotProfilesPath, { profiles: [] }),
+        readJson(pilotDecisionsPath, { decisions: [] }),
+        readJson(decisionOutcomesPath, { outcomes: [] }),
+        readJson(auditPath, { entries: [] })
+      ]);
+      const pilotDeliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
+      const briefingPublications = store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications").publications;
+      const insightPublications = store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications").publications;
+      await appendAudit({ requestId, action: "export_workspace", targetId: workspace.id, workspaceId: workspace.id, actorId: access.actorId ?? null, actorRole: null, result: "exported", occurredAt: new Date().toISOString() });
+      const exported = buildWorkspaceExport({
+        workspace,
+        packet,
+        questions: workspaceRecords(questionsLedger.questions, workspace.id),
+        evaluations: workspaceRecords(evaluationsLedger.evaluations, workspace.id),
+        briefings: workspaceRecords(briefingsLedger.briefings, workspace.id),
+        watchlists: workspaceRecords(watchlistsLedger.watchlists, workspace.id),
+        comparisons: workspaceRecords(comparisonsLedger.views, workspace.id),
+        preferences: workspaceRecords(preferencesLedger.preferences, workspace.id)[0] ?? null,
+        notifications: workspaceRecords(notificationsLedger.notifications, workspace.id),
+        deliveries: workspaceRecords(pilotDeliveries, workspace.id),
+        pilotProfile: workspaceRecords(pilotProfilesLedger.profiles, workspace.id)[0] ?? null,
+        pilotDecisions: workspaceRecords(pilotDecisionsLedger.decisions, workspace.id),
+        outcomes: workspaceRecords(outcomesLedger.outcomes, workspace.id),
+        briefingPublications: workspaceRecords(briefingPublications, workspace.id),
+        insightPublications: workspaceRecords(insightPublications, workspace.id),
+        auditEntries: workspaceRecords((await readJson(auditPath, { entries: [] })).entries, workspace.id)
+      });
+      response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="${workspace.id}-export.json"`, "Cache-Control": "no-store" });
+      return response.end(JSON.stringify(exported));
     }
     if (url.pathname === "/api/workspace-pilot") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

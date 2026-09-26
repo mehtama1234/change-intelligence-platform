@@ -51,6 +51,9 @@ try {
   const intelligenceResponse = await request("/api/change-intelligence?workspace=demo-research");
   const intelligence = await intelligenceResponse.json();
   if (intelligenceResponse.status !== 200 || intelligence.schemaVersion !== "change-intelligence-feed-v1" || intelligence.scope?.mode !== "watchlists" || intelligence.summary.changed !== 1 || intelligence.items.length !== 1 || intelligence.items[0].recordId !== sourceMap.sources[0].id || !intelligence.items[0].plainLanguage || !intelligence.items[0].nextAction) throw new Error("Change-intelligence feed contract failed.");
+  const exportResponse = await request("/api/workspace-export?workspace=demo-research");
+  const workspaceExport = await exportResponse.json();
+  if (exportResponse.status !== 200 || workspaceExport.schemaVersion !== "workspace-export-v1" || workspaceExport.workspace.id !== "demo-research" || workspaceExport.watchlists.some((watchlist) => watchlist.workspaceId !== "demo-research") || JSON.stringify(workspaceExport).includes("other-workspace")) throw new Error("Workspace export contract failed.");
   await writeFile(resolve(runtimeDir, "workspace-watchlists.json"), `${JSON.stringify({ schemaVersion: "workspace-watchlist-ledger-v1", watchlists: [] }, null, 2)}\n`);
   const onboardingFeedResponse = await request("/api/change-intelligence?workspace=demo-research");
   const onboardingFeed = await onboardingFeedResponse.json();

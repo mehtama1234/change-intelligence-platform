@@ -98,6 +98,10 @@ returns only workspaces where that actor is a member. The domain evidence packet
 and source-linked inspection endpoints are not customer-private workspace data.
 The public packet intentionally omits workspace alerts, questions, evaluations,
 and briefings; those are available only through membership-checked endpoints.
+The `/api/workspace-export` endpoint requires one explicit workspace scope and
+the same membership check. It exports only that workspace's private records
+and bounded source links; it removes configured webhook URLs and does not
+export another workspace's records.
 The demo reader keeps a manually entered token only for the current browser
 session; production should replace this with an identity provider and secure
 session cookie.

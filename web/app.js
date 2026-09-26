@@ -667,6 +667,19 @@ byId("save-token").addEventListener("click", async () => {
   if (token) { state.token = token; sessionStorage.setItem("change-intelligence-token", token); } else { state.token = ""; sessionStorage.removeItem("change-intelligence-token"); }
   try { await loadWorkspaces(); } catch (error) { setWorkspaceStatus(error.message); }
 });
+byId("workspace-export").addEventListener("click", async () => {
+  const status = byId("workspace-export-status");
+  status.textContent = "Preparing export…";
+  const response = await apiFetch(`../api/workspace-export?workspace=${encodeURIComponent(state.workspaceId)}`);
+  if (!response.ok) { status.textContent = `Could not export workspace (${response.status}).`; return; }
+  const blob = await response.blob();
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `${state.workspaceId}-export.json`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  status.textContent = "Workspace export downloaded.";
+});
 byId("token-input").value = state.token;
 loadWorkspaces().catch((error) => { setWorkspaceStatus(error.message); byId("questions-summary").textContent = error.message; });
 loadChanges().catch((error) => { byId("change-feed-summary").textContent = error.message; });
