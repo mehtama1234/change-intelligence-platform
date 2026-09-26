@@ -1,0 +1,77 @@
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const exec = promisify(execFile);
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
+const sourceRuntime = resolve(root, "data/processed/runs/ai-work-control");
+const runDir = await mkdtemp(resolve(tmpdir(), "change-intelligence-recovery-"));
+const packetPath = resolve(runDir, "packet.json");
+const port = 8794;
+const base = `http://127.0.0.1:${port}`;
+await mkdir(runDir, { recursive: true });
+for (const name of ["ai-work-control.packet.json", "workspace-questions.json", "question-evaluations.json", "insight-candidates.json"]) await copyFile(resolve(sourceRuntime, name), resolve(runDir, name === "ai-work-control.packet.json" ? "packet.json" : name));
+const candidatesPath = resolve(runDir, "insight-candidates.json");
+const briefingPath = resolve(runDir, "workspace-briefings.json");
+const briefingPublicationsPath = resolve(runDir, "briefing-publications.json");
+const insightPublicationsPath = resolve(runDir, "insight-publications.json");
+const candidates = JSON.parse(await readFile(candidatesPath, "utf8"));
+const candidate = candidates.candidates[0];
+candidate.status = "published";
+candidate.publication = "published";
+candidate.evidenceDigest = "old-insight-evidence-digest";
+await writeFile(candidatesPath, `${JSON.stringify(candidates, null, 2)}\n`);
+await writeFile(insightPublicationsPath, `${JSON.stringify({ schemaVersion: "insight-publication-ledger-v1", publications: [{ id: "old-insight-publication", candidateKey: candidate.candidateKey, candidateId: candidate.id, workspaceId: "demo-research", evidenceDigest: "old-insight-evidence-digest", publisher: "demo-researcher", publishedAt: "2026-09-26T09:00:00.000Z" }] }, null, 2)}\n`);
+await writeFile(briefingPublicationsPath, `${JSON.stringify({ schemaVersion: "briefing-publication-ledger-v1", publications: [] }, null, 2)}\n`);
+const buildEnv = { ...process.env, PACKET_OUTPUT_PATH: packetPath, QUESTIONS_PATH: resolve(runDir, "workspace-questions.json"), QUESTION_EVALUATIONS_PATH: resolve(runDir, "question-evaluations.json"), BRIEFINGS_PATH: briefingPath, BRIEFING_PUBLICATIONS_PATH: briefingPublicationsPath, INSIGHT_CANDIDATES_PATH: candidatesPath, INSIGHT_PUBLICATIONS_PATH: insightPublicationsPath, RUNTIME_DATA_DIR: runDir };
+await exec(process.execPath, [resolve(root, "scripts/build-question-briefings.mjs")], { cwd: root, env: buildEnv });
+let briefing = JSON.parse(await readFile(briefingPath, "utf8")).briefings[0];
+await writeFile(briefingPublicationsPath, `${JSON.stringify({ schemaVersion: "briefing-publication-ledger-v1", publications: [{ id: "old-briefing-publication", briefingId: briefing.id, workspaceId: briefing.workspaceId, evidenceDigest: briefing.evidenceDigest, publishedBy: "demo-researcher", publishedAt: "2026-09-26T09:05:00.000Z" }] }, null, 2)}\n`);
+await exec(process.execPath, [resolve(root, "scripts/build-question-briefings.mjs")], { cwd: root, env: buildEnv });
+const changed = JSON.parse(await readFile(candidatesPath, "utf8"));
+changed.candidates[0].status = "stale";
+changed.candidates[0].publication = "needs_republish";
+changed.candidates[0].previousEvidenceDigest = "old-insight-evidence-digest";
+changed.candidates[0].evidenceDigest = "new-insight-evidence-digest";
+await writeFile(candidatesPath, `${JSON.stringify(changed, null, 2)}\n`);
+await exec(process.execPath, [resolve(root, "scripts/build-question-briefings.mjs")], { cwd: root, env: buildEnv });
+briefing = JSON.parse(await readFile(briefingPath, "utf8")).briefings[0];
+if (briefing.state !== "stale" || briefing.insightProvenance?.[0]?.state !== "stale") throw new Error("Recovery setup did not create a stale insight and briefing.");
+
+const environment = { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runDir, PACKET_PATH: packetPath, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher" }) };
+const child = spawn(process.execPath, [resolve(root, "server.mjs")], { cwd: root, env: environment, stdio: ["ignore", "pipe", "pipe"] });
+let output = "";
+child.stdout.on("data", (data) => { output += data; });
+child.stderr.on("data", (data) => { output += data; });
+for (let attempt = 0; attempt < 50; attempt += 1) {
+  try { if ((await fetch(`${base}/api/health`)).ok) break; } catch {}
+  await new Promise((wait) => setTimeout(wait, 100));
+  if (attempt === 49) throw new Error(`API did not start. ${output}`);
+}
+const auth = { Authorization: "Bearer research-token" };
+const writeHeaders = (key) => ({ ...auth, "Idempotency-Key": key, "content-type": "application/json" });
+try {
+  const decision = await fetch(`${base}/api/insight-candidates/${encodeURIComponent(candidate.id)}/decision`, { method: "POST", headers: writeHeaders("recovery-insight-review"), body: JSON.stringify({ workspaceId: "demo-research", decision: "accept", note: "Re-reviewed the changed insight evidence and limits." }) });
+  if (decision.status !== 200) throw new Error(`Changed insight review failed: ${decision.status}`);
+  const insightPublish = await fetch(`${base}/api/insight-candidates/${encodeURIComponent(candidate.id)}/publish`, { method: "POST", headers: writeHeaders("recovery-insight-publish"), body: JSON.stringify({ workspaceId: "demo-research", note: "Republished after changed-evidence review." }) });
+  if (insightPublish.status !== 200) throw new Error(`Changed insight republish failed: ${insightPublish.status}`);
+  await exec(process.execPath, [resolve(root, "scripts/build-question-briefings.mjs")], { cwd: root, env: buildEnv });
+  briefing = JSON.parse(await readFile(briefingPath, "utf8")).briefings[0];
+  if (briefing.state !== "stale" || briefing.insightProvenance?.[0]?.state !== "published") throw new Error("Republished insight did not leave the prior briefing stale with current insight provenance.");
+  const briefingPublish = await fetch(`${base}/api/briefings/${encodeURIComponent(briefing.id)}/publish`, { method: "POST", headers: writeHeaders("recovery-briefing-publish"), body: JSON.stringify({ workspaceId: "demo-research", confirmUpdatedEvidence: true, note: "Republished after reviewing the current insight receipt." }) });
+  if (briefingPublish.status !== 200) throw new Error(`Briefing republish failed: ${briefingPublish.status}`);
+  await writeFile(resolve(runDir, "workspace-pilot-profiles.json"), `${JSON.stringify({ profiles: [{ id: "profile-demo", workspaceId: "demo-research", decisionQuestion: "What should change?", cadence: "monthly", nextReviewAt: "2026-10-31", successMeasures: ["Useful evidence"] }] }, null, 2)}\n`);
+  for (const [name, value] of [["workspace-pilot-deliveries.json", { deliveries: [] }], ["workspace-delivery-notifications.json", { notifications: [] }], ["workspace-notification-preferences.json", { preferences: [] }], ["workspace-alerts.json", { alerts: [] }], ["decision-outcomes.json", { outcomes: [] }], ["audit-log.json", { entries: [] }], ["latest-refresh.json", { status: "complete", runId: "recovery-refresh" }]]) await writeFile(resolve(runDir, name), `${JSON.stringify(value, null, 2)}\n`);
+  await exec(process.execPath, [resolve(root, "scripts/build-pilot-deliveries.mjs")], { cwd: root, env: { ...buildEnv, PILOT_PROFILES_PATH: resolve(runDir, "workspace-pilot-profiles.json"), PILOT_DELIVERIES_PATH: resolve(runDir, "workspace-pilot-deliveries.json"), WORKSPACE_NOTIFICATIONS_PATH: resolve(runDir, "workspace-delivery-notifications.json") } });
+  const deliveries = JSON.parse(await readFile(resolve(runDir, "workspace-pilot-deliveries.json"), "utf8"));
+  const delivery = deliveries.deliveries[0];
+  if (delivery.status !== "prepared" || delivery.insightProvenance?.[0]?.state !== "published") throw new Error("Recovered delivery was not prepared with current insight provenance.");
+  console.log("Insight recovery workflow test passed: changed insight was re-reviewed and republished, stale briefing was republished, and customer delivery became prepared.");
+} finally {
+  child.kill("SIGTERM");
+}

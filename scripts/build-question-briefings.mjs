@@ -38,6 +38,7 @@ function insightProvenanceForWorkspace(workspaceId) {
     return [{
       insightId: insight.id,
       candidateKey,
+      candidateId: candidate.id,
       title: insight.title,
       plainLanguageSummary: insight.plainLanguageSummary,
       state: currentPublication ? "published" : "stale",
