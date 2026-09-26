@@ -52,6 +52,7 @@ function insightProvenanceForQuestion(workspaceId, matchedRecordIds) {
       currentEvidenceDigest: candidate.evidenceDigest,
       sourceRecordIds: (candidate.evidence ?? []).map((item) => item.recordId),
       sourceEvidence: (candidate.evidence ?? []).map((item) => ({ recordId: item.recordId, sourceRepository: item.sourceRepository, sourceRef: item.sourceRef, sourceDigest: item.sourceDigest })),
+      ...(insight.origin ? { origin: insight.origin, promotionId: insight.promotionId ?? null } : {}),
       strongestAlternative: candidate.strongestAlternative,
       whatWouldChangeOurMind: candidate.whatWouldChangeOurMind ?? [],
       nextTest: candidate.nextTest,

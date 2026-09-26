@@ -730,7 +730,7 @@ const server = createServer(async (request, response) => {
       const candidate = candidates.candidates.find((item) => item.id === candidateId);
       if (!candidate) return json(response, 404, { error: "Insight candidate not found." });
       const wasStale = candidate.status === "stale";
-      const decision = { id: `insight-decision-${randomUUID()}`, candidateKey: candidate.candidateKey, candidateId, workspaceId: workspace.id, evidenceDigest: candidate.evidenceDigest, reviewer: member.id, reviewerRole: member.role, decision: body.decision, note: String(body.note ?? "").slice(0, 2000), decidedAt: new Date().toISOString(), publication: "not_published" };
+      const decision = { id: `insight-decision-${randomUUID()}`, candidateKey: candidate.candidateKey, candidateId, workspaceId: workspace.id, evidenceDigest: candidate.evidenceDigest, claimDigest: candidate.claimDigest ?? null, reviewer: member.id, reviewerRole: member.role, decision: body.decision, note: String(body.note ?? "").slice(0, 2000), decidedAt: new Date().toISOString(), publication: "not_published" };
       if (wasStale) decision.previousEvidenceDigest = candidate.previousEvidenceDigest ?? null;
       store.commitRecord({ kind: "insight_decision", record: decision, audit: { requestId, action: "decide_insight", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: decision.decision, occurredAt: decision.decidedAt }, operation: { key: idempotencyKey, action: "decide_insight", status: 200, body: decision, completedAt: decision.decidedAt } });
       await writeFile(insightDecisionsPath, `${JSON.stringify(store.recordsLedger("insight_decision", "insight-decision-ledger-v1", "decisions"), null, 2)}\n`);
@@ -751,6 +751,44 @@ const server = createServer(async (request, response) => {
         await writeReviewEvents();
       }
       return json(response, 200, decision);
+    }
+    if (request.method === "POST" && url.pathname.startsWith("/api/insight-promotions/") && url.pathname.endsWith("/revise")) {
+      const promotionId = decodeURIComponent(url.pathname.slice("/api/insight-promotions/".length, -"/revise".length));
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const promotions = await readJson(insightPromotionsPath, { schemaVersion: "insight-promotion-ledger-v1", promotions: [] });
+      const promotion = promotions.promotions.find((item) => item.id === promotionId);
+      if (!promotion) return json(response, 404, { error: "Insight promotion not found." });
+      const workspace = await workspaceConfig(body.workspaceId ?? promotion.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (promotion.workspaceId !== workspace.id || !member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot revise this insight promotion." });
+      const title = String(body.title ?? "").trim().slice(0, 240);
+      const plainLanguageSummary = String(body.plainLanguageSummary ?? "").trim().slice(0, 2000);
+      const strongestAlternative = String(body.strongestAlternative ?? "").trim().slice(0, 2000);
+      const nextTest = String(body.nextTest ?? "").trim().slice(0, 2000);
+      const whatWouldChangeOurMind = [...new Set((Array.isArray(body.whatWouldChangeOurMind) ? body.whatWouldChangeOurMind : []).map((item) => String(item).trim()).filter(Boolean))].slice(0, 8);
+      if (title.length < 10 || plainLanguageSummary.length < 30 || strongestAlternative.length < 20 || nextTest.length < 20 || whatWouldChangeOurMind.length < 1) return json(response, 400, { error: "Revision requires a substantive title, summary, alternative explanation, next test, and at least one falsifier." });
+      const previousRevision = promotion.insight.revision ?? 1;
+      const now = new Date().toISOString();
+      promotion.insight = { ...promotion.insight, title, plainLanguageSummary, strongestAlternative, nextTest, whatWouldChangeOurMind, status: "draft", revision: previousRevision + 1 };
+      promotion.revisedBy = member.id;
+      promotion.revisedRole = member.role;
+      promotion.revisedAt = now;
+      promotion.revisionNote = String(body.note ?? "").trim().slice(0, 2000);
+      promotions.updatedAt = now;
+      await writeFile(insightPromotionsPath, `${JSON.stringify(promotions, null, 2)}\n`);
+      const revision = { id: `insight-revision-${randomUUID()}`, promotionId, candidateKey: promotion.insight.id, workspaceId: workspace.id, revision: promotion.insight.revision, reviewer: member.id, reviewerRole: member.role, note: promotion.revisionNote, occurredAt: now };
+      await appendAudit({ requestId, action: "revise_insight_promotion", targetId: promotionId, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "revised", occurredAt: now });
+      await storeOperation({ key: idempotencyKey, action: "revise_insight_promotion", status: 200, body: revision, completedAt: now });
+      store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "insight_promotion_revised", targetId: promotionId, promotionId, candidateKey: promotion.insight.id, workspaceId: workspace.id, reviewer: member.id, reviewerRole: member.role, revision: promotion.insight.revision, outcome: "draft_requires_re_review", occurredAt: now }]);
+      await writeReviewEvents();
+      return json(response, 200, { ...revision, insight: promotion.insight });
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/insight-opportunities/") && url.pathname.endsWith("/promote")) {
       const opportunityId = decodeURIComponent(url.pathname.slice("/api/insight-opportunities/".length, -"/promote".length));
@@ -838,7 +876,7 @@ const server = createServer(async (request, response) => {
       const candidate = candidates.candidates.find((item) => item.id === candidateId);
       if (!candidate) return json(response, 404, { error: "Insight candidate not found." });
       if (candidate.status !== "accepted_for_publication") return json(response, 409, { error: "Insight must be accepted for publication before publishing." });
-      const publication = { id: `insight-publication-${randomUUID()}`, candidateKey: candidate.candidateKey, candidateId, workspaceId: workspace.id, evidenceDigest: candidate.evidenceDigest, publisher: member.id, publisherRole: member.role, publishedAt: new Date().toISOString(), note: String(body.note ?? "").slice(0, 2000) };
+      const publication = { id: `insight-publication-${randomUUID()}`, candidateKey: candidate.candidateKey, candidateId, workspaceId: workspace.id, evidenceDigest: candidate.evidenceDigest, claimDigest: candidate.claimDigest ?? null, publisher: member.id, publisherRole: member.role, publishedAt: new Date().toISOString(), note: String(body.note ?? "").slice(0, 2000) };
       store.commitRecord({ kind: "insight_publication", record: publication, audit: { requestId, action: "publish_insight", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "published", occurredAt: publication.publishedAt }, operation: { key: idempotencyKey, action: "publish_insight", status: 200, body: publication, completedAt: publication.publishedAt } });
       await writeFile(insightPublicationsPath, `${JSON.stringify(store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications"), null, 2)}\n`);
       candidate.status = "published";

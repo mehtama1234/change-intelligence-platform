@@ -88,6 +88,10 @@ packet and atlas generation consume that ledger when it is available.
     detected pattern into a bounded draft insight. The promotion keeps the
     opportunity ID, source record IDs, reviewer, and review event, then enters
     the ordinary insight decision and publication gates on the next refresh.
+24. **Promoted-insight revision** — a later rewrite changes the claim digest,
+    records a revision event, and forces a previously published promoted
+    insight back into the stale/re-review path. Its opportunity provenance is
+    carried into inspection and customer briefing provenance.
 
 ## Background jobs
 

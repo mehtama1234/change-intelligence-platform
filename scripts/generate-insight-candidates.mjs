@@ -26,11 +26,12 @@ const candidates = packet.insights.map((insight) => {
     ...(record.researchReview ? { researchReview: record.researchReview } : {})
   }));
   const evidenceDigest = createHash("sha256").update(JSON.stringify(evidence.map((item) => [item.recordId, item.sourceDigest]))).digest("hex");
+  const claimDigest = createHash("sha256").update(JSON.stringify({ title: insight.title, plainLanguageSummary: insight.plainLanguageSummary, strongestAlternative: insight.strongestAlternative, whatWouldChangeOurMind: insight.whatWouldChangeOurMind, nextTest: insight.nextTest, evidenceDigest })).digest("hex");
   const candidateKey = insight.id;
   const decision = latestDecision.get(candidateKey);
-  const currentDecision = decision?.evidenceDigest === evidenceDigest ? decision : undefined;
+  const currentDecision = decision?.evidenceDigest === evidenceDigest && (!insight.origin || decision.claimDigest === claimDigest) ? decision : undefined;
   const publication = latestPublication.get(candidateKey);
-  const currentPublication = publication?.evidenceDigest === evidenceDigest && currentDecision?.decision === "accept" ? publication : undefined;
+  const currentPublication = publication?.evidenceDigest === evidenceDigest && (!insight.origin || publication.claimDigest === claimDigest) && currentDecision?.decision === "accept" ? publication : undefined;
   // A changed publication makes the candidate stale until a researcher reviews
   // the new digest. Once that review accepts the candidate, keep the old
   // publication history but move the candidate back to the publishable queue.
@@ -47,6 +48,8 @@ const candidates = packet.insights.map((insight) => {
     generatedAt: new Date().toISOString(),
     candidateKey,
     evidenceDigest,
+    claimDigest,
+    ...(insight.origin ? { origin: insight.origin, promotionId: insight.promotionId ?? null } : {}),
     ...(currentDecision ? { decisionId: currentDecision.id, decidedBy: currentDecision.reviewer, decidedAt: currentDecision.decidedAt, decisionNote: currentDecision.note } : {}),
     ...(currentPublication ? { publicationId: currentPublication.id, publishedBy: currentPublication.publisher, publishedAt: currentPublication.publishedAt } : {}),
     evidence,
