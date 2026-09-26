@@ -11,6 +11,8 @@ const runDir = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed/run
 const lockPath = resolve(runDir, "refresh.lock");
 const receiptPath = resolve(runDir, "latest-refresh.json");
 const historyPath = resolve(runDir, "refresh-history.json");
+const scopePath = resolve(runDir, "refresh-scope.json");
+const scopeStatePath = resolve(runDir, "refresh-scope-state.json");
 const secCaptureDir = resolve(runDir, "raw/ai-work-control/c3-ai");
 const secManifestPath = resolve(secCaptureDir, "manifest.json");
 const secXbrlPath = resolve(runDir, "c3-ai.xbrl.json");
@@ -45,6 +47,7 @@ const childEnv = {
   SEC_CAPTURE_DIR: secCaptureDir,
   SEC_MANIFEST_PATH: secManifestPath,
   SEC_XBRL_PATH: secXbrlPath
+  ,REFRESH_SCOPE_PATH: scopePath
 };
 const runId = process.env.REFRESH_RUN_ID ?? `refresh-${new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 17)}`;
 childEnv.REFRESH_RUN_ID = runId;
@@ -77,7 +80,10 @@ async function runStep(name, script, optional = false) {
 try {
   await mkdir(runDir, { recursive: true });
   lock = await open(lockPath, "wx");
-  if (process.env.REFRESH_SKIP_SEC === "1") {
+  await runStep("plan-refresh-scope", "plan-refresh-scope.mjs");
+  const scope = JSON.parse(await readFile(scopePath, "utf8"));
+  const annualReportDue = scope.dueRepositories?.includes("annual-report-research");
+  if (process.env.REFRESH_SKIP_SEC === "1" || !annualReportDue) {
     steps.push({ name: "capture-sec-filings", status: "skipped", reason: "SEC capture skipped by configuration." });
     steps.push({ name: "extract-sec-xbrl", status: "skipped", reason: "SEC extraction skipped by configuration." });
   } else {
@@ -115,11 +121,18 @@ try {
     startedAt: steps[0]?.startedAt ?? new Date().toISOString(),
     endedAt: new Date().toISOString(),
     status: failed.length ? "partial" : "complete",
+    scope: { dueRepositories: scope.dueRepositories, deferredRepositories: scope.deferredRepositories, plannedAt: scope.plannedAt },
     steps
   };
+  if (!failed.length) {
+    const priorScopeState = existsSync(scopeStatePath) ? JSON.parse(await readFile(scopeStatePath, "utf8")) : { schemaVersion: "refresh-scope-state-v1", lastRunAtByRepository: {} };
+    const lastRunAtByRepository = { ...(priorScopeState.lastRunAtByRepository ?? {}) };
+    for (const repository of scope.dueRepositories ?? []) lastRunAtByRepository[repository] = receipt.endedAt;
+    await writeFile(scopeStatePath, `${JSON.stringify({ schemaVersion: "refresh-scope-state-v1", updatedAt: receipt.endedAt, lastRunAtByRepository }, null, 2)}\n`);
+  }
   await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
   const history = existsSync(historyPath) ? JSON.parse(await readFile(historyPath, "utf8")) : { schemaVersion: "refresh-history-v1", runs: [] };
-  history.runs = [...(history.runs ?? []), { runId: receipt.runId, startedAt: receipt.startedAt, endedAt: receipt.endedAt, status: receipt.status, steps: receipt.steps.map(({ name, status, attempts, durationMs }) => ({ name, status, attempts, durationMs })) }].slice(-100);
+  history.runs = [...(history.runs ?? []), { runId: receipt.runId, startedAt: receipt.startedAt, endedAt: receipt.endedAt, status: receipt.status, scope: receipt.scope, steps: receipt.steps.map(({ name, status, attempts, durationMs }) => ({ name, status, attempts, durationMs })) }].slice(-100);
   history.updatedAt = receipt.endedAt;
   await writeFile(historyPath, `${JSON.stringify(history, null, 2)}\n`);
   console.log(JSON.stringify({ runId, status: receipt.status, steps: steps.map(({ name, status }) => ({ name, status })) }, null, 2));

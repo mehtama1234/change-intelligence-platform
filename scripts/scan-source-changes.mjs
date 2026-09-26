@@ -11,6 +11,7 @@ const runDir = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed/run
 const latestPath = resolve(runDir, "latest-source-scan.json");
 const historyPath = resolve(runDir, "source-scan-history.json");
 const captureLedgerPath = resolve(runDir, "source-capture-ledger.json");
+const scopePath = resolve(runDir, process.env.REFRESH_SCOPE_PATH ?? "refresh-scope.json");
 const registry = JSON.parse(await readFile(registryPath, "utf8"));
 const map = JSON.parse(await readFile(mapPath, "utf8"));
 const configuredRepositories = new Set(registry.repositories.map((repository) => repository.id));
@@ -18,6 +19,8 @@ const sourceRoot = process.env.RESEARCH_ROOT ?? registry.researchRoot;
 const previous = existsSync(latestPath) ? JSON.parse(await readFile(latestPath, "utf8")) : undefined;
 const previousById = new Map((previous?.sources ?? []).map((source) => [source.id, source]));
 const captureLedger = existsSync(captureLedgerPath) ? JSON.parse(await readFile(captureLedgerPath, "utf8")) : { schemaVersion: "source-capture-ledger-v1", captures: [] };
+const scope = existsSync(scopePath) ? JSON.parse(await readFile(scopePath, "utf8")) : { dueRepositories: registry.repositories.map((repository) => repository.id), deferredRepositories: [] };
+const dueRepositories = new Set(scope.dueRepositories ?? registry.repositories.map((repository) => repository.id));
 const capturesByDigest = new Map((captureLedger.captures ?? []).map((capture) => [`${capture.id}:${capture.sha256}`, capture]));
 
 const sources = [];
@@ -32,13 +35,18 @@ for (const source of map.sources) {
     path: source.sourcePath,
     checkedAt: new Date().toISOString()
   };
+  const priorSource = previousById.get(source.id);
+  if (!dueRepositories.has(source.sourceRepository) && priorSource) {
+    sources.push({ ...priorSource, status: "deferred", needsReview: false, deferredAt: result.checkedAt, nextDueAt: scope.repositories?.find((repository) => repository.id === source.sourceRepository)?.nextDueAt ?? null, reviewReason: null });
+    continue;
+  }
   if (!existsSync(path)) {
     result.status = "missing";
   } else {
     const raw = await readFile(path);
     result.bytes = raw.length;
     result.sha256 = createHash("sha256").update(raw).digest("hex");
-    const old = previousById.get(source.id);
+    const old = priorSource;
     result.previousSha256 = old?.sha256;
     result.status = !old ? "new" : old.sha256 === result.sha256 ? "unchanged" : "changed";
     const captureKey = `${source.id}:${result.sha256}`;
@@ -67,7 +75,7 @@ for (const source of map.sources) {
   sources.push(result);
 }
 
-const counts = Object.fromEntries(["new", "changed", "unchanged", "missing"].map((status) => [status, sources.filter((source) => source.status === status).length]));
+const counts = Object.fromEntries(["new", "changed", "unchanged", "missing", "deferred"].map((status) => [status, sources.filter((source) => source.status === status).length]));
 const reviewQueue = sources.filter((source) => source.needsReview).map((source) => ({
   id: `review-${source.id}-${source.status}`,
   sourceId: source.id,

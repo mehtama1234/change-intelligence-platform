@@ -86,7 +86,7 @@ async function loadChanges() {
   if (!response.ok) throw new Error(`Change feed unavailable (${response.status})`);
   const feed = await response.json();
   const reviewCount = feed.changes.filter((change) => change.needsReview).length;
-  byId("change-feed-summary").textContent = `${feed.changes.length} sources checked in refresh ${feed.runId || "not yet run"}; ${reviewCount} need review.`;
+  byId("change-feed-summary").textContent = `${feed.changes.length} sources represented in refresh ${feed.runId || "not yet run"}; ${reviewCount} need review; ${feed.changes.filter((change) => change.status === "deferred").length} deferred by cadence.`;
   const visible = feed.changes.filter((change) => change.status !== "unchanged");
   byId("change-feed-items").innerHTML = visible.length ? visible.map((change) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(change.status)}</span><span>${change.needsReview ? "needs review" : "no review"}</span><span>${escapeHtml(change.repository)}</span></div><h3>${escapeHtml(change.sourcePath)}</h3><p>${escapeHtml(change.reason || "No source change recorded.")}</p><details><summary>Open source hashes</summary><dl><dt>Previous</dt><dd><code>${escapeHtml(change.previousSha256 || "none")}</code></dd><dt>Current</dt><dd><code>${escapeHtml(change.currentSha256 || "missing")}</code></dd><dt>Checked</dt><dd>${escapeHtml(change.checkedAt)}</dd></dl></details></article>`).join("") : `<p class="muted">No source bytes changed in the latest scan.</p>`;
 }
@@ -109,7 +109,8 @@ async function loadOperations() {
   const refresh = operations.refresh;
   const scheduler = operations.scheduler || { status: "not_started" };
   const schedulerTiming = scheduler.status === "running" ? "refresh in progress" : scheduler.nextRunAt ? `next run ${scheduler.nextRunAt}` : "next run not scheduled";
-  byId("operations-summary").textContent = `Last run ${refresh.runId || "not recorded"} · ${refresh.status} · ${refresh.endedAt || "no completion time"}. Scheduler: ${scheduler.status} · ${schedulerTiming}.`;
+  const refreshScope = refresh.scope || { dueRepositories: [], deferredRepositories: [] };
+  byId("operations-summary").textContent = `Last run ${refresh.runId || "not recorded"} · ${refresh.status} · ${refresh.endedAt || "no completion time"}. Scope: ${refreshScope.dueRepositories.length} due · ${refreshScope.deferredRepositories.length} deferred. Scheduler: ${scheduler.status} · ${schedulerTiming}.`;
   const checks = [
     ["Readiness", readiness.status],
     ["Refresh", readiness.checks.refresh.status],

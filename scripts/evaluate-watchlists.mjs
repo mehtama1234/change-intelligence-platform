@@ -51,7 +51,7 @@ for (const workspace of workspaces) {
     if (view.workspaceId !== workspace.id) continue;
     const selected = (view.entityIds ?? []).map((id) => (atlas.entities?.[view.kind] ?? []).find((entity) => entity.id === id)).filter(Boolean);
     const sourceIds = selected.flatMap((entity) => entity.evidenceIds ?? []).filter((id, index, values) => values.indexOf(id) === index);
-    const changed = (scan.sources ?? []).filter((item) => sourceIds.includes(item.id) && item.status !== "unchanged");
+    const changed = (scan.sources ?? []).filter((item) => sourceIds.includes(item.id) && !["unchanged", "deferred"].includes(item.status));
     const records = selected.map((entity) => (packet.records ?? []).find((record) => entity.evidenceIds?.includes(record.id) && record.reportWindow)).filter(Boolean);
     const sharedColumns = records.length ? records.reduce((shared, record) => shared.filter((column) => (record.reportWindow.columns ?? []).includes(column)), records[0].reportWindow.columns ?? []) : [];
     const incompatible = records.length !== selected.length || !sharedColumns.length;

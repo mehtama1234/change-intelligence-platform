@@ -9,6 +9,7 @@ const sourceRoot = process.env.RESEARCH_ROOT ?? "/home/mehta/git-repo";
 const runtimeDir = process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control";
 const mapPath = resolve(root, process.env.SOURCE_MAP_PATH ?? "data/source-maps/ai-work-control.sources.json");
 const outputPath = resolve(root, process.env.PACKET_OUTPUT_PATH ?? process.env.PACKET_PATH ?? "data/processed/ai-work-control.packet.json");
+const previousPacketPath = outputPath;
 const captureManifestPath = resolve(root, process.env.SEC_MANIFEST_PATH ?? "data/raw/ai-work-control/c3-ai/manifest.json");
 const xbrlExtractPath = resolve(root, process.env.SEC_XBRL_PATH ?? "data/processed/ai-work-control/c3-ai.xbrl.json");
 const sourceScanPath = resolve(root, process.env.SOURCE_SCAN_PATH ?? `${runtimeDir}/latest-source-scan.json`);
@@ -30,6 +31,8 @@ const alerts = existsSync(alertsPath) ? JSON.parse(await readFile(alertsPath, "u
 const questionEvaluations = existsSync(questionEvaluationsPath) ? JSON.parse(await readFile(questionEvaluationsPath, "utf8")) : undefined;
 const briefings = existsSync(briefingsPath) ? JSON.parse(await readFile(briefingsPath, "utf8")) : undefined;
 const insightCandidates = existsSync(insightCandidatesPath) ? JSON.parse(await readFile(insightCandidatesPath, "utf8")) : undefined;
+const previousPacket = existsSync(previousPacketPath) ? JSON.parse(await readFile(previousPacketPath, "utf8")) : undefined;
+const previousRecordsById = new Map((previousPacket?.records ?? []).map((record) => [record.id, record]));
 
 function stripMarkup(text) {
   return text
@@ -155,6 +158,12 @@ async function buildReportWindow(source, sourceLedger) {
 
 const records = [];
 for (const source of ingestion?.records ?? map.sources) {
+  if (source.refreshState === "deferred") {
+    const previousRecord = previousRecordsById.get(source.id);
+    if (!previousRecord) throw new Error(`${source.id}: deferred source has no prior packet record to carry forward`);
+    records.push({ ...previousRecord, refreshState: "deferred", deferredAt: source.deferredAt ?? new Date().toISOString() });
+    continue;
+  }
   const fullPath = resolve(sourceRoot, source.sourceRepository, source.sourcePath);
   const raw = await readFile(fullPath, "utf8");
   const digest = createHash("sha256").update(raw).digest("hex");

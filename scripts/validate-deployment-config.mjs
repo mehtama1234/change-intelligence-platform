@@ -6,6 +6,7 @@ const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const dockerfile = await readFile(resolve(root, "Dockerfile"), "utf8");
 const compose = await readFile(resolve(root, "docker-compose.yml"), "utf8");
 const scheduler = await readFile(resolve(root, "scripts/scheduler.mjs"), "utf8");
+const refreshCycle = await readFile(resolve(root, "scripts/run-refresh-cycle.mjs"), "utf8");
 const required = [
   [dockerfile, "ENV RUNTIME_DATA_DIR=/app/runtime", "Dockerfile runtime path"],
   [dockerfile, "ENV PACKET_PATH=/app/runtime/ai-work-control.packet.json", "Dockerfile packet path"],
@@ -19,6 +20,7 @@ const required = [
   [scheduler, "run-refresh-cycle.mjs", "scheduler refresh invocation"]
   , [scheduler, "scheduler-status.json", "scheduler status receipt"]
   , [scheduler, "SCHEDULER_MAX_CYCLES", "scheduler test-cycle control"]
+  , [refreshCycle, "plan-refresh-scope.mjs", "cadence planner invocation"]
   , [compose, "OPERATOR_NOTIFICATION_DELIVERY_MODE", "notification delivery mode"]
   , [compose, "OPERATOR_NOTIFICATION_WEBHOOK_URL", "notification webhook configuration"]
 ];

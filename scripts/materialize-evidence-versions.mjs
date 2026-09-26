@@ -9,8 +9,13 @@ const reviewPath = resolve(root, process.env.REVIEW_WORK_PATH ?? `${runtimeDir}/
 const decisionsPath = resolve(root, process.env.REVIEW_DECISIONS_PATH ?? `${runtimeDir}/review-decisions.json`);
 const outputDir = resolve(root, process.env.EVIDENCE_OUTPUT_DIR ?? runtimeDir);
 const outputName = process.env.EVIDENCE_OUTPUT_NAME ?? "versioned-evidence-ledger.json";
+const outputPath = resolve(outputDir, outputName);
+const scanPath = resolve(root, process.env.SOURCE_SCAN_PATH ?? `${runtimeDir}/latest-source-scan.json`);
 const reviewWork = JSON.parse(await readFile(reviewPath, "utf8"));
 const decisionLedger = existsSync(decisionsPath) ? JSON.parse(await readFile(decisionsPath, "utf8")) : { decisions: [] };
+const priorLedger = existsSync(outputPath) ? JSON.parse(await readFile(outputPath, "utf8")) : { records: [] };
+const scan = existsSync(scanPath) ? JSON.parse(await readFile(scanPath, "utf8")) : { sources: [] };
+const scanById = new Map((scan.sources ?? []).map((source) => [source.id, source]));
 const candidates = new Map(reviewWork.candidates.map((candidate) => [candidate.id, candidate]));
 const decisions = decisionLedger.decisions ?? [];
 const latestByCandidate = new Map();
@@ -55,6 +60,15 @@ for (const [candidateId, decision] of latestByCandidate) {
       }
     }
   });
+}
+
+const currentIds = new Set(records.map((record) => record.sourceId));
+for (const prior of priorLedger.records ?? []) {
+  const source = scanById.get(prior.sourceId);
+  if (currentIds.has(prior.sourceId) || !source || !["deferred", "unchanged"].includes(source.status)) continue;
+  if (source.sha256 && prior.sourceDigest !== source.sha256) continue;
+  records.push(prior);
+  currentIds.add(prior.sourceId);
 }
 
 const result = {

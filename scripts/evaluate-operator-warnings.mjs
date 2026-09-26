@@ -62,8 +62,9 @@ try {
   const warnings = [];
   const failedRuns = (refreshHistory.runs ?? []).filter((run) => run.status !== "complete");
   if (failedRuns.length > maxFailedRefreshes) warnings.push({ id: "refresh-failures", severity: "high", observedAt: failedRuns[0]?.endedAt ?? nowIso, message: "One or more refresh runs are failing; inspect the failed steps before customer delivery." });
-  const staleSources = (sourceScan.sources ?? []).filter((source) => Number.isFinite(Date.parse(source.checkedAt)) && now - Date.parse(source.checkedAt) > maxSourceAgeMs);
-  if (staleSources.length || (sourceScan.counts?.missing ?? 0) > 0) warnings.push({ id: "source-freshness", severity: "high", observedAt: sourceScan.generatedAt ?? staleSources.map((source) => source.checkedAt).sort()[0] ?? nowIso, message: "Sources are too old or unavailable for a fully current reading." });
+  const staleSources = (sourceScan.sources ?? []).filter((source) => source.status !== "deferred" && Number.isFinite(Date.parse(source.checkedAt)) && now - Date.parse(source.checkedAt) > maxSourceAgeMs);
+  const overdueDeferredSources = (sourceScan.sources ?? []).filter((source) => source.status === "deferred" && Date.parse(source.nextDueAt ?? "") <= now);
+  if (staleSources.length || overdueDeferredSources.length || (sourceScan.counts?.missing ?? 0) > 0) warnings.push({ id: "source-freshness", severity: "high", observedAt: sourceScan.generatedAt ?? staleSources.map((source) => source.checkedAt).sort()[0] ?? nowIso, message: "Sources are too old, overdue for their configured refresh cadence, or unavailable for a fully current reading." });
   const dispositions = alerts.filter((alert) => ["useful", "false_positive", "needs_correction"].includes(alert.resolutionDisposition));
   const falseAlertRate = dispositions.length ? alerts.filter((alert) => alert.resolutionDisposition === "false_positive").length / dispositions.length : null;
   if (falseAlertRate !== null && falseAlertRate > maxFalseAlertRate) warnings.push({ id: "false-alert-rate", severity: "medium", observedAt: alerts.map((alert) => alert.resolvedAt).filter(Boolean).sort()[0] ?? nowIso, message: "The recorded false-alert rate is above the operating limit; review watchlist rules and source changes." });

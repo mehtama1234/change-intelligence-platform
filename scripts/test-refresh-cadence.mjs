@@ -1,0 +1,27 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const exec = promisify(execFile);
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
+const runtimeDir = await mkdtemp(resolve(tmpdir(), "change-intelligence-cadence-"));
+await writeFile(resolve(runtimeDir, "workspace-watchlists.json"), `${JSON.stringify({ schemaVersion: "workspace-watchlist-ledger-v1", watchlists: [] }, null, 2)}\n`);
+await writeFile(resolve(runtimeDir, "workspace-comparison-views.json"), `${JSON.stringify({ schemaVersion: "workspace-comparison-view-ledger-v1", views: [] }, null, 2)}\n`);
+const baseEnv = { ...process.env, RUNTIME_DATA_DIR: runtimeDir, REFRESH_SKIP_SEC: "1", REFRESH_RETRIES: "0" };
+await exec(process.execPath, [resolve(root, "scripts/run-refresh-cycle.mjs")], { cwd: root, env: { ...baseEnv, REFRESH_RUN_ID: "cadence-first" }, maxBuffer: 10 * 1024 * 1024 });
+const firstReceipt = JSON.parse(await readFile(resolve(runtimeDir, "latest-refresh.json"), "utf8"));
+const firstPacket = JSON.parse(await readFile(resolve(runtimeDir, "ai-work-control.packet.json"), "utf8"));
+await writeFile(resolve(runtimeDir, "versioned-evidence-ledger.json"), `${JSON.stringify({ schemaVersion: "versioned-evidence-ledger-v1", sourceReviewRun: "cadence-seeded-review", decisionCount: firstPacket.records.length, activeResearchRecordCount: firstPacket.records.length, records: firstPacket.records.map((record) => ({ versionId: `${record.id}-${record.sourceDigest.slice(0, 12)}`, sourceId: record.id, sourceDigest: record.sourceDigest, state: "accepted_for_research", publication: "not_published", acceptedBy: "cadence-test", acceptedAt: firstReceipt.endedAt, decisionId: `cadence-decision-${record.id}`, record: { ...record } })), decisionHistory: [] }, null, 2)}\n`);
+const oneHourLater = new Date(Date.parse(firstReceipt.endedAt) + 60 * 60 * 1000).toISOString();
+await exec(process.execPath, [resolve(root, "scripts/run-refresh-cycle.mjs")], { cwd: root, env: { ...baseEnv, REFRESH_RUN_ID: "cadence-second", REFRESH_NOW: oneHourLater }, maxBuffer: 10 * 1024 * 1024 });
+const secondReceipt = JSON.parse(await readFile(resolve(runtimeDir, "latest-refresh.json"), "utf8"));
+const scope = JSON.parse(await readFile(resolve(runtimeDir, "refresh-scope.json"), "utf8"));
+const scan = JSON.parse(await readFile(resolve(runtimeDir, "latest-source-scan.json"), "utf8"));
+const ingestion = JSON.parse(await readFile(resolve(runtimeDir, "research-ingestion.json"), "utf8"));
+const packet = JSON.parse(await readFile(resolve(runtimeDir, "ai-work-control.packet.json"), "utf8"));
+const evidence = JSON.parse(await readFile(resolve(runtimeDir, "versioned-evidence-ledger.json"), "utf8"));
+if (firstReceipt.status !== "complete" || secondReceipt.status !== "complete" || secondReceipt.scope.dueRepositories.length !== 0 || secondReceipt.scope.deferredRepositories.length !== 6 || scope.deferredRepositories.length !== 6 || scan.counts.deferred !== scan.sources.length || ingestion.records.length !== packet.records.length || packet.records.length !== 20 || evidence.activeResearchRecordCount !== 20 || packet.records.filter((record) => record.researchReview?.state === "accepted_for_research").length !== 20) throw new Error("Cadence refresh did not defer repositories while preserving the complete evidence packet and accepted research ledger.");
+console.log("Refresh cadence test passed: a second hourly run deferred all six repositories and preserved all 20 records and accepted evidence versions.");

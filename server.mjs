@@ -488,7 +488,9 @@ async function readinessReport() {
   const sourceScan = await readJson(sourceScanPath, { counts: {}, sources: [] });
   const backupManifest = backupDir ? await readJson(resolve(backupDir, "manifest.json"), undefined) : undefined;
   const refreshAge = ageMs(refresh.endedAt, now);
-  const sourceTimes = (sourceScan.sources ?? []).map((source) => ageMs(source.checkedAt, now)).filter((value) => value !== null);
+  const currentSources = (sourceScan.sources ?? []).filter((source) => source.status !== "deferred");
+  const overdueDeferredSources = (sourceScan.sources ?? []).filter((source) => source.status === "deferred" && Date.parse(source.nextDueAt ?? "") <= now).length;
+  const sourceTimes = currentSources.map((source) => ageMs(source.checkedAt, now)).filter((value) => value !== null);
   const sourceAge = sourceTimes.length ? Math.max(...sourceTimes) : null;
   const failedSteps = (refresh.steps ?? []).filter((step) => step.status === "failed").map((step) => step.name);
   const syncStep = (refresh.steps ?? []).find((step) => step.name === "sync-runtime-store");
@@ -496,7 +498,7 @@ async function readinessReport() {
   const checks = {
     database: { status: database.integrity === "ok" ? "ok" : "failed", integrity: database.integrity },
     refresh: { status: refresh.status === "complete" && refreshAge !== null && refreshAge <= maxRefreshAgeMs && failedSteps.length === 0 ? "ok" : "failed", runId: refresh.runId ?? null, ageMs: refreshAge, maxAgeMs: maxRefreshAgeMs, failedSteps },
-    sourceScan: { status: sourceScan.counts?.missing === 0 && sourceAge !== null && sourceAge <= maxSourceAgeMs ? "ok" : "failed", ageMs: sourceAge, maxAgeMs: maxSourceAgeMs, missing: sourceScan.counts?.missing ?? null, sourceCount: sourceScan.sources?.length ?? 0 },
+    sourceScan: { status: sourceScan.counts?.missing === 0 && overdueDeferredSources === 0 && (sourceAge === null || sourceAge <= maxSourceAgeMs) ? "ok" : "failed", ageMs: sourceAge, maxAgeMs: maxSourceAgeMs, missing: sourceScan.counts?.missing ?? null, deferred: sourceScan.counts?.deferred ?? 0, overdueDeferredSources, sourceCount: sourceScan.sources?.length ?? 0 },
     runtimeSync: { status: syncStep?.status === "complete" ? "ok" : "failed", attempts: syncStep?.attempts ?? null },
     backup: backupDir ? { status: backupManifest?.schemaVersion === "runtime-backup-v1" ? "ok" : "failed", createdAt: backupManifest?.createdAt ?? null, ageMs: ageMs(backupManifest?.createdAt, now), directory: backupDir } : { status: "not_configured", createdAt: null, ageMs: null }
   };

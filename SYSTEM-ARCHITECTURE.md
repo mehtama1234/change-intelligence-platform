@@ -74,6 +74,12 @@ Jobs should run at different speeds:
 - monthly: cross-source synthesis and contradiction review;
 - on demand: customer watchlists, briefings, and custom research.
 
+The refresh planner enforces those cadences. Each run records which
+repositories were due and which were deferred. Deferred repositories remain in
+the evidence packet from their last accepted snapshot; they are not silently
+removed and are not treated as newly changed. A failed run does not advance a
+repository's last-refresh time, so the next run retries the work.
+
 After the research steps complete, a configured pilot workspace receives a
 delivery snapshot. It records what the refresh produced and what the partner
 should review. It does not claim that free-text success measures were met
