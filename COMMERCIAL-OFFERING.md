@@ -64,6 +64,12 @@ reviewed, useful, and connected to a decision. This lets a buyer see whether
 the product is becoming dependable over time instead of judging it from one
 impressive briefing.
 
+The automated commercial-pilot contract exercises this path across three
+reviewed deliveries. It checks that usefulness, decision impact, agreed
+measures, readiness, and the human improve/continue/expand/stop checkpoint are
+all retained as separate records. This is a product safety check, not evidence
+that every future customer will receive the same result.
+
 Internal operators get a separate aggregate view across pilots. It shows
 delivery volume, review volume, usefulness, decision impact, and checkpoint
 counts without exposing customer notes or private evidence.
