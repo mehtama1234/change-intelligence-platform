@@ -204,6 +204,16 @@ async function writeWorkspaceInvitations(invitations) {
   await writeFile(workspaceInvitationsPath, `${JSON.stringify({ schemaVersion: "workspace-invitation-ledger-v1", updatedAt: new Date().toISOString(), invitations }, null, 2)}\n`);
 }
 
+async function ensureWorkspaceOnboardingNotification({ workspaceId, identityId, actorId, actorRole, occurredAt, requestId }) {
+  const notifications = store.recordsLedger("delivery_notification", "workspace-delivery-notification-ledger-v1", "notifications").notifications;
+  const id = `workspace-onboarding-ready-${workspaceId}`;
+  if (notifications.some((notification) => notification.id === id)) return false;
+  const notification = { id, workspaceId, deliveryId: null, type: "onboarding_ready", channel: "in_app", destinationId: null, status: "pending", subject: "Your workspace is ready for onboarding", body: "Your account is confirmed. Sign in to complete the decision question, evidence scope, success measures, cadence, and first handoff checklist.", deliveryStatus: "ready_for_onboarding", createdAt: occurredAt, deliveredAt: null, activatedIdentityId: identityId };
+  store.commitRecord({ kind: "delivery_notification", record: notification, audit: { requestId, action: "queue_workspace_onboarding_notification", targetId: notification.id, workspaceId, actorId, actorRole, result: "pending", occurredAt }, operation: { key: null } });
+  await writeFile(deliveryNotificationsPath, `${JSON.stringify(store.recordsLedger("delivery_notification", "workspace-delivery-notification-ledger-v1", "notifications"), null, 2)}\n`);
+  return true;
+}
+
 function buildCoverage(packet, registry) {
   const records = packet.records ?? [];
   const countByRole = (roles) => records.filter((record) => roles.includes(record.sourceRole)).length;
@@ -1506,6 +1516,7 @@ const server = createServer(async (request, response) => {
       const invitationLedger = await readJson(workspaceInvitationsPath, { invitations: [] });
       const invitations = (invitationLedger.invitations ?? []).map((invitation) => invitation.workspaceId === workspaceId && invitation.identityId === identityId && invitation.status !== "activated" ? { ...invitation, status: "activated", activatedAt: now, activatedBy: operator.actorId } : invitation);
       await writeWorkspaceInvitations(invitations);
+      await ensureWorkspaceOnboardingNotification({ workspaceId, identityId, actorId: operator.actorId, actorRole: "operator", occurredAt: now, requestId });
       const responseBody = { workspaceId, member };
       await appendAudit({ requestId, action: "activate_workspace_member", targetId: identityId, workspaceId, actorId: operator.actorId, actorRole: "operator", result: "active", occurredAt: now });
       await storeOperation({ key: idempotencyKey, action: "activate_workspace_member", status: 200, body: responseBody, completedAt: now });
@@ -1537,6 +1548,7 @@ const server = createServer(async (request, response) => {
       const invitations = (invitationLedger.invitations ?? []).map((invitation) => invitation.identityId === identityId && invitation.status === "pending" ? { ...invitation, status: "activated", activatedAt: now, activatedBy: "identity-provider-webhook", confirmationEventId: eventId } : invitation);
       await writeWorkspaceInvitations(invitations);
       const responseBody = { eventId, identityId, activatedWorkspaceIds: matchingWorkspaces.map((workspace) => workspace.id), activatedAt: now };
+      for (const workspace of matchingWorkspaces) await ensureWorkspaceOnboardingNotification({ workspaceId: workspace.id, identityId, actorId: "identity-provider", actorRole: "integration", occurredAt: now, requestId });
       for (const workspace of matchingWorkspaces) await appendAudit({ requestId, action: "activate_workspace_member", targetId: identityId, workspaceId: workspace.id, actorId: "identity-provider", actorRole: "integration", result: "active", occurredAt: now });
       await storeOperation({ key: operationKey, action: "identity_provider_confirm_identity", status: 200, body: responseBody, completedAt: now });
       return json(response, 200, responseBody);

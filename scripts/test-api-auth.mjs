@@ -135,6 +135,8 @@ try {
   if (webhookRetry.status !== 200 || JSON.stringify(await webhookRetry.json()) !== JSON.stringify(webhookBody)) throw new Error("Identity-provider confirmation was not idempotent.");
   const confirmedMemberWorkspaces = await (await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer another-viewer-token" } })).json();
   if (confirmedMemberWorkspaces.length !== 1 || confirmedMemberWorkspaces[0].id !== provisionBody.id) throw new Error("Identity-provider confirmation did not grant the confirmed member access.");
+  const onboardingNotifications = await (await fetch(`${base}/api/workspace-delivery-notifications?workspace=${encodeURIComponent(provisionBody.id)}`, { headers: { Authorization: "Bearer another-viewer-token" } })).json();
+  if (!onboardingNotifications.notifications.some((notification) => notification.type === "onboarding_ready" && notification.deliveryStatus === "ready_for_onboarding" && notification.status === "pending")) throw new Error("Identity-provider confirmation did not create the workspace onboarding notification.");
   const activated = await fetch(`${base}/api/operator/workspaces/${encodeURIComponent(provisionBody.id)}/members/new-researcher/activate`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": "workspace-member-activate" }, body: "{}" });
   if (activated.status !== 200) throw new Error(`Operator member activation failed: ${activated.status}`);
   const activatedWorkspaces = await (await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer new-researcher-token" } })).json();

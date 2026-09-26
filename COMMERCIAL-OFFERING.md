@@ -145,3 +145,8 @@ Once connected to the customer's identity provider, confirmed accounts can
 move through the invitation outbox without manual credential handling. The
 service can then notify the customer, complete the setup checklist, and begin
 the first scheduled intelligence delivery.
+
+The customer-facing sequence is now explicit: account confirmed, onboarding
+notice shown, setup checklist completed, first refresh run, and reviewable
+handoff delivered. Each step remains observable, so the operator can see where
+a partner is waiting without reading the partner's private research.

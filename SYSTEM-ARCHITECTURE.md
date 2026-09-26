@@ -261,3 +261,9 @@ The provider boundary is a signed webhook at
 event ID for idempotency, activates matching invited memberships, and records
 the confirmation in the invitation ledger and audit log. A missing webhook
 secret disables the endpoint rather than allowing unsigned activation.
+
+Successful activation also creates one idempotent `onboarding_ready` workspace
+notification in the existing delivery-notification ledger. It points the
+confirmed customer to the onboarding checklist; it does not claim that the
+pilot is configured or that the first delivery exists. The same notification
+is visible only to members of that workspace.
