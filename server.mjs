@@ -45,6 +45,7 @@ const auditPath = resolve(runtimeDir, "audit-log.json");
 const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
 const sourceScanPath = resolve(runtimeDir, "latest-source-scan.json");
 const sourceScanHistoryPath = resolve(runtimeDir, "source-scan-history.json");
+const captureLedgerPath = resolve(runtimeDir, "source-capture-ledger.json");
 const sourceAvailabilityPath = resolve(runtimeDir, "latest-source-availability.json");
 const evidenceLedgerPath = resolve(runtimeDir, "versioned-evidence-ledger.json");
 const reviewDecisionsPath = resolve(runtimeDir, "review-decisions.json");
@@ -308,6 +309,55 @@ function buildChangeIntelligenceFeed({ packet, scan, briefings = [], candidates 
     items,
     summary: { total: items.length, changed: items.filter((item) => item.status === "changed").length, new: items.filter((item) => item.status === "new").length, missing: items.filter((item) => item.status === "missing").length, deferred: items.filter((item) => item.status === "deferred").length, downstreamItemsNeedingReview: items.filter((item) => item.staleDownstreamCount > 0).length },
     limitation: "This feed identifies source and publication work triggered by a refresh. It does not decide whether a change matters in the world; inspect the source, limits, and linked evidence before acting."
+  };
+}
+
+function summarizeSourceDiff(beforeText, afterText) {
+  const limit = 200000;
+  const beforeTruncated = beforeText.length > limit;
+  const afterTruncated = afterText.length > limit;
+  const beforeLines = beforeText.slice(0, limit).split(/\r?\n/);
+  const afterLines = afterText.slice(0, limit).split(/\r?\n/);
+  let prefix = 0;
+  while (prefix < beforeLines.length && prefix < afterLines.length && beforeLines[prefix] === afterLines[prefix]) prefix += 1;
+  let suffix = 0;
+  while (suffix < beforeLines.length - prefix && suffix < afterLines.length - prefix && beforeLines.at(-1 - suffix) === afterLines.at(-1 - suffix)) suffix += 1;
+  const removedLines = beforeLines.slice(prefix, beforeLines.length - suffix).slice(0, 80);
+  const addedLines = afterLines.slice(prefix, afterLines.length - suffix).slice(0, 80);
+  return {
+    state: beforeText === afterText ? "unchanged" : "changed",
+    firstChangedLine: prefix + 1,
+    removedLines,
+    addedLines,
+    removedLineCount: Math.max(0, beforeLines.length - prefix - suffix),
+    addedLineCount: Math.max(0, afterLines.length - prefix - suffix),
+    truncated: beforeTruncated || afterTruncated || removedLines.length < Math.max(0, beforeLines.length - prefix - suffix) || addedLines.length < Math.max(0, afterLines.length - prefix - suffix),
+    limitation: "This is a bounded line-level comparison of captured source bytes. It identifies changed text; it does not decide whether the underlying claim is true or important."
+  };
+}
+
+async function readSourceDiff(source) {
+  const captureLedger = await readJson(captureLedgerPath, { captures: [] });
+  const captures = captureLedger.captures ?? [];
+  const currentCapture = captures.find((capture) => capture.id === source.id && capture.sha256 === source.sha256) ?? (source.capturePath ? { id: source.id, sha256: source.sha256, capturePath: source.capturePath } : null);
+  const previousCapture = source.previousSha256 ? captures.find((capture) => capture.id === source.id && capture.sha256 === source.previousSha256) : null;
+  const readCapture = async (capture) => {
+    if (!capture?.capturePath || capture.capturePath.startsWith("/") || capture.capturePath.includes("..")) return null;
+    try { return await readFile(resolve(runtimeDir, capture.capturePath), "utf8"); } catch (error) { if (error.code === "ENOENT") return null; throw error; }
+  };
+  const before = await readCapture(previousCapture);
+  const after = await readCapture(currentCapture);
+  return {
+    schemaVersion: "source-diff-v1",
+    sourceId: source.id,
+    status: source.status,
+    repository: source.repository,
+    sourcePath: source.path,
+    previousSha256: source.previousSha256 ?? null,
+    currentSha256: source.sha256 ?? null,
+    captures: { previous: Boolean(before), current: Boolean(after) },
+    diff: before !== null && after !== null ? summarizeSourceDiff(before, after) : null,
+    limitation: "A missing capture prevents comparison. The source scan still records the digest and availability state, but no text difference is inferred."
   };
 }
 
@@ -1350,6 +1400,15 @@ const server = createServer(async (request, response) => {
         readJson(insightCandidatesPath, { candidates: [] })
       ]);
       return json(response, 200, buildChangeIntelligenceFeed({ packet, scan, briefings: briefingLedger.briefings ?? [], candidates: candidateLedger.candidates ?? [], workspaceIds: access.workspaceIds }));
+    }
+    if (request.method === "GET" && url.pathname.startsWith("/api/change-intelligence/") && url.pathname.endsWith("/diff")) {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      const sourceId = decodeURIComponent(url.pathname.slice("/api/change-intelligence/".length, -"/diff".length));
+      const scan = await readJson(sourceScanPath, { sources: [] });
+      const source = (scan.sources ?? []).find((candidate) => candidate.id === sourceId);
+      if (!source) return json(response, 404, { error: "Source change not found." });
+      return json(response, 200, await readSourceDiff(source));
     }
     if (url.pathname === "/api/coverage") {
       const packet = await readJson(packetPath, { domain: null, sourceSnapshotDate: null, records: [] });

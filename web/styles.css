@@ -116,6 +116,11 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 22px
 .inspection-details { display: grid; grid-template-columns: minmax(8rem, auto) 1fr; gap: 0.45rem 1rem; }
 .inspection-details dt { font-weight: 700; }
 .inspection-details dd { margin: 0; overflow-wrap: anywhere; }
+.source-diff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.source-diff-grid h4 { margin-bottom: .45rem; }
+.source-diff-grid pre { min-height: 6rem; max-height: 24rem; overflow: auto; padding: .85rem; border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; font: .86rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.diff-removed { background: #fff0ed; border: 1px solid #e3b4ad; color: #8e2c23; }
+.diff-added { background: #edf8ef; border: 1px solid #afd1b5; color: #205c2b; }
 .inline-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .link-button { border-radius: 0.35rem; text-align: left; }
 .chain-list { display: grid; gap: 0.5rem; }
@@ -137,3 +142,4 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 22px
 .provenance-item h5 { margin: 0 0 .35rem; font-size: 1rem; }
 .provenance-item p { margin-bottom: .45rem; }
 @media (max-width: 700px) { .insight-review-grid { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { .source-diff-grid { grid-template-columns: 1fr; } }

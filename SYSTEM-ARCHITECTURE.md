@@ -107,6 +107,9 @@ packet and atlas generation consume that ledger when it is available.
     source changes into plain-language review work, links the affected evidence,
     insights, and briefings, and states the next action without claiming that
     every changed file is important.
+29. **Captured source difference** — a researcher can compare the prior and
+    current immutable captures for a changed source through a bounded line-level
+    read model before re-extracting or re-reviewing downstream claims.
 
 ## Background jobs
 

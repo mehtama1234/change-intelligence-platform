@@ -49,6 +49,8 @@ const required = [
   [html, 'aria-live="polite"', "live update announcement"],
   [app, "../api/packet", "packet read model"],
   [app, "../api/change-intelligence?workspace=", "change intelligence feed API"],
+  [app, "/diff?workspace=", "source difference API"],
+  [app, "source-diff", "source difference inspector"],
   [app, "loadChanges(), loadComparisonViews(), loadOperations()", "workspace context refresh"],
   [app, "../api/coverage", "evidence coverage API"],
   [app, "../api/atlas", "domain atlas API"],
