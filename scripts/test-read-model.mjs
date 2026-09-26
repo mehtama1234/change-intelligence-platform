@@ -26,6 +26,12 @@ try {
   const packetResponse = await request("/api/packet");
   const packet = await packetResponse.json();
   if (packetResponse.status !== 200 || packet.operations?.workspaceAlerts || packet.operations?.questionEvaluations || packet.operations?.briefings) throw new Error("Public packet exposed workspace-private operations.");
+  const catalogResponse = await request("/api/catalog");
+  const catalog = await catalogResponse.json();
+  if (catalogResponse.status !== 200 || catalog.schemaVersion !== "catalog-read-model-v1" || catalog.repositoryCount !== 6 || !catalog.themes.length) throw new Error("Catalog read model contract failed.");
+  const recordsResponse = await request("/api/records?sourceRole=company_report");
+  const filteredRecords = await recordsResponse.json();
+  if (recordsResponse.status !== 200 || filteredRecords.schemaVersion !== "evidence-record-read-model-v1" || !filteredRecords.records.every((record) => record.sourceRole === "company_report")) throw new Error("Filtered record read model contract failed.");
   const evidenceResponse = await request("/api/evidence/trend-hunting-ai-control");
   const evidence = await evidenceResponse.json();
   if (evidenceResponse.status !== 200 || evidence.schemaVersion !== "evidence-inspection-v1" || evidence.record.id !== "trend-hunting-ai-control" || !evidence.source.excerpt || !evidence.insightLinks.length) throw new Error("Evidence inspection contract failed.");

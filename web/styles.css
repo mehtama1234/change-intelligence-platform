@@ -40,6 +40,10 @@ section { margin-bottom: 56px; }
 .chain-grid article, .record-card, .test-panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
 .chain-grid article { padding: 22px; }
 .chain-grid span { color: var(--accent); font-weight: 800; }
+.catalog { padding: 24px; background: var(--accent-soft); border: 1px solid var(--line); border-radius: 14px; }
+.catalog-filters { display: flex; flex-wrap: wrap; gap: 12px; }
+.catalog-filters label { display: grid; gap: 4px; color: var(--ink); font-weight: 700; }
+.catalog-filters select { margin: 0; min-width: 180px; }
 .chain-grid p, .record-card p, .test-panel p { color: var(--muted); }
 .evidence-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
 label { color: var(--muted); font-size: .9rem; }

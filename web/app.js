@@ -1,5 +1,5 @@
 const fixtureUrl = "../api/packet";
-const state = { packet: null, role: "all", workspaceId: "demo-research", actorId: "demo-researcher", token: sessionStorage.getItem("change-intelligence-token") || "" };
+const state = { packet: null, role: "all", theme: "all", company: "all", industry: "all", workspaceId: "demo-research", actorId: "demo-researcher", token: sessionStorage.getItem("change-intelligence-token") || "" };
 
 const byId = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
@@ -155,7 +155,16 @@ function render() {
   const roles = [...new Set(records.map((record) => record.sourceRole))].sort();
   byId("role-filter").innerHTML = `<option value="all">All sources</option>${roles.map((role) => `<option value="${escapeHtml(role)}">${escapeHtml(role.replaceAll("_", " "))}</option>`).join("")}`;
   byId("role-filter").value = state.role;
-  const visible = state.role === "all" ? records : records.filter((record) => record.sourceRole === state.role);
+  const options = (field, label) => {
+    const values = [...new Set(records.map((record) => record[field]).filter(Boolean))].sort();
+    byId(`${field}-filter`).innerHTML = `<option value="all">All ${label}</option>${values.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join("")}`;
+    byId(`${field}-filter`).value = state[field];
+  };
+  options("theme", "themes");
+  options("company", "companies");
+  options("industry", "industries");
+  const visible = records.filter((record) => (state.role === "all" || record.sourceRole === state.role) && (state.theme === "all" || record.theme === state.theme) && (state.company === "all" || record.company === state.company) && (state.industry === "all" || record.industry === state.industry));
+  byId("catalog-summary").textContent = `${visible.length} of ${records.length} evidence records shown across ${new Set(visible.map((record) => record.sourceRepository)).size} repositories.`;
   byId("records").innerHTML = visible.map((record) => `<article class="record-card">
     <div class="record-meta"><span class="role">${escapeHtml(record.sourceRole.replaceAll("_", " "))}</span><span>${escapeHtml(record.claimState)}</span><span>${escapeHtml(record.asOf)}</span></div>
     <h3>${escapeHtml(record.title)}</h3>
@@ -184,6 +193,8 @@ byId("role-filter").addEventListener("change", (event) => {
   state.role = event.target.value;
   render();
 });
+
+for (const field of ["theme", "company", "industry"]) byId(`${field}-filter`).addEventListener("change", (event) => { state[field] = event.target.value; render(); });
 
 async function loadQuestions() {
   const workspace = encodeURIComponent(state.workspaceId);

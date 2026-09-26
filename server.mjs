@@ -324,6 +324,19 @@ const server = createServer(async (request, response) => {
       ];
       return text(response, 200, `${values.map(([name, value]) => `${name} ${value}`).join("\n")}\n`);
     }
+    if (url.pathname === "/api/catalog" || url.pathname === "/api/records") {
+      const packet = await readJson(packetPath, { domain: null, sourceSnapshotDate: null, records: [], insights: [] });
+      const filters = {
+        theme: url.searchParams.get("theme"),
+        company: url.searchParams.get("company"),
+        industry: url.searchParams.get("industry"),
+        sourceRole: url.searchParams.get("sourceRole")
+      };
+      const matches = packet.records.filter((record) => Object.entries(filters).every(([field, value]) => !value || record[field] === value));
+      if (url.pathname === "/api/records") return json(response, 200, { schemaVersion: "evidence-record-read-model-v1", domain: packet.domain, sourceSnapshotDate: packet.sourceSnapshotDate, records: matches });
+      const values = (field) => [...new Set(packet.records.map((record) => record[field]).filter(Boolean))].sort().map((value) => ({ value, count: packet.records.filter((record) => record[field] === value).length }));
+      return json(response, 200, { schemaVersion: "catalog-read-model-v1", domain: packet.domain, sourceSnapshotDate: packet.sourceSnapshotDate, recordCount: packet.records.length, repositoryCount: new Set(packet.records.map((record) => record.sourceRepository)).size, themes: values("theme"), companies: values("company"), industries: values("industry"), sourceRoles: values("sourceRole") });
+    }
     if (url.pathname === "/api/packet") return json(response, 200, publicPacket(await readJson(packetPath, { error: "Packet has not been built." })));
     if (url.pathname.startsWith("/api/evidence/")) {
       const recordId = decodeURIComponent(url.pathname.slice("/api/evidence/".length));
