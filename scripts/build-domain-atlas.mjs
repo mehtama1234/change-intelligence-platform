@@ -11,7 +11,8 @@ const entityMaps = Object.fromEntries(["themes", "mechanisms", "companies", "ind
 const edges = [];
 const addEntity = (kind, label, record) => {
   if (!label) return null;
-  const id = `${kind.slice(0, -1)}:${slug(label)}`;
+  const singular = { themes: "theme", mechanisms: "mechanism", companies: "company", industries: "industry", affectedGroups: "affected-group", repositories: "repository" }[kind];
+  const id = `${singular}:${slug(label)}`;
   const map = entityMaps[kind];
   const entity = map.get(id) ?? { id, label, evidenceIds: [] };
   if (!entity.evidenceIds.includes(record.id)) entity.evidenceIds.push(record.id);

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "domain-atlas-v1",
-  "generatedAt": "2026-09-26T09:18:21.829Z",
+  "generatedAt": "2026-09-26T09:22:24.870Z",
   "domain": "ai-work-control",
   "sourceSnapshotDate": "2026-09-25",
   "sourceRecordCount": 16,
@@ -145,35 +145,35 @@
     ],
     "companies": [
       {
-        "id": "companie:broadcom",
+        "id": "company:broadcom",
         "label": "Broadcom",
         "evidenceIds": [
           "atlas-broadcom-ai-infrastructure-window"
         ]
       },
       {
-        "id": "companie:c3-ai",
+        "id": "company:c3-ai",
         "label": "C3.ai",
         "evidenceIds": [
           "atlas-c3-ai-report-window"
         ]
       },
       {
-        "id": "companie:microsoft",
+        "id": "company:microsoft",
         "label": "Microsoft",
         "evidenceIds": [
           "atlas-microsoft-cloud-window"
         ]
       },
       {
-        "id": "companie:nvidia",
+        "id": "company:nvidia",
         "label": "NVIDIA",
         "evidenceIds": [
           "atlas-nvidia-ai-platform-window"
         ]
       },
       {
-        "id": "companie:oracle",
+        "id": "company:oracle",
         "label": "Oracle",
         "evidenceIds": [
           "atlas-oracle-cloud-window"
@@ -182,14 +182,14 @@
     ],
     "industries": [
       {
-        "id": "industrie:ai-computing-infrastructure",
+        "id": "industry:ai-computing-infrastructure",
         "label": "AI computing infrastructure",
         "evidenceIds": [
           "atlas-nvidia-ai-platform-window"
         ]
       },
       {
-        "id": "industrie:cloud-and-enterprise-software",
+        "id": "industry:cloud-and-enterprise-software",
         "label": "cloud and enterprise software",
         "evidenceIds": [
           "atlas-microsoft-cloud-window",
@@ -197,14 +197,14 @@
         ]
       },
       {
-        "id": "industrie:enterprise-ai-software",
+        "id": "industry:enterprise-ai-software",
         "label": "enterprise AI software",
         "evidenceIds": [
           "atlas-c3-ai-report-window"
         ]
       },
       {
-        "id": "industrie:semiconductors-and-infrastructure-software",
+        "id": "industry:semiconductors-and-infrastructure-software",
         "label": "semiconductors and infrastructure software",
         "evidenceIds": [
           "atlas-broadcom-ai-infrastructure-window"
@@ -213,14 +213,14 @@
     ],
     "affectedGroups": [
       {
-        "id": "affectedGroup:agencies",
+        "id": "affected-group:agencies",
         "label": "agencies",
         "evidenceIds": [
           "ibis-ai-workflow-compression"
         ]
       },
       {
-        "id": "affectedGroup:ai-companies",
+        "id": "affected-group:ai-companies",
         "label": "AI companies",
         "evidenceIds": [
           "inc5000-coreweave-ai-infrastructure",
@@ -228,14 +228,14 @@
         ]
       },
       {
-        "id": "affectedGroup:ai-users",
+        "id": "affected-group:ai-users",
         "label": "AI users",
         "evidenceIds": [
           "trend-ai-agency-control-measure"
         ]
       },
       {
-        "id": "affectedGroup:capital-providers",
+        "id": "affected-group:capital-providers",
         "label": "capital providers",
         "evidenceIds": [
           "inc5000-coreweave-ai-infrastructure",
@@ -246,7 +246,7 @@
         ]
       },
       {
-        "id": "affectedGroup:cloud-infrastructure-workers",
+        "id": "affected-group:cloud-infrastructure-workers",
         "label": "cloud infrastructure workers",
         "evidenceIds": [
           "atlas-microsoft-cloud-window",
@@ -254,7 +254,7 @@
         ]
       },
       {
-        "id": "affectedGroup:customers",
+        "id": "affected-group:customers",
         "label": "customers",
         "evidenceIds": [
           "trend-hunting-ai-control",
@@ -266,21 +266,21 @@
         ]
       },
       {
-        "id": "affectedGroup:decision-subjects",
+        "id": "affected-group:decision-subjects",
         "label": "decision subjects",
         "evidenceIds": [
           "atlas-c3-ai-report-window"
         ]
       },
       {
-        "id": "affectedGroup:design-workers",
+        "id": "affected-group:design-workers",
         "label": "design workers",
         "evidenceIds": [
           "ibis-ai-workflow-compression"
         ]
       },
       {
-        "id": "affectedGroup:employers",
+        "id": "affected-group:employers",
         "label": "employers",
         "evidenceIds": [
           "trend-hunting-ai-control",
@@ -288,14 +288,14 @@
         ]
       },
       {
-        "id": "affectedGroup:enterprise-customers",
+        "id": "affected-group:enterprise-customers",
         "label": "enterprise customers",
         "evidenceIds": [
           "atlas-c3-ai-report-window"
         ]
       },
       {
-        "id": "affectedGroup:enterprise-users",
+        "id": "affected-group:enterprise-users",
         "label": "enterprise users",
         "evidenceIds": [
           "inc5000-coreweave-ai-infrastructure",
@@ -306,21 +306,21 @@
         ]
       },
       {
-        "id": "affectedGroup:households",
+        "id": "affected-group:households",
         "label": "households",
         "evidenceIds": [
           "trend-ai-agency-control-measure"
         ]
       },
       {
-        "id": "affectedGroup:infrastructure-operators",
+        "id": "affected-group:infrastructure-operators",
         "label": "infrastructure operators",
         "evidenceIds": [
           "atlas-broadcom-ai-infrastructure-window"
         ]
       },
       {
-        "id": "affectedGroup:infrastructure-workers",
+        "id": "affected-group:infrastructure-workers",
         "label": "infrastructure workers",
         "evidenceIds": [
           "inc5000-coreweave-ai-infrastructure",
@@ -328,35 +328,35 @@
         ]
       },
       {
-        "id": "affectedGroup:investors",
+        "id": "affected-group:investors",
         "label": "investors",
         "evidenceIds": [
           "atlas-c3-ai-report-window"
         ]
       },
       {
-        "id": "affectedGroup:managers",
+        "id": "affected-group:managers",
         "label": "managers",
         "evidenceIds": [
           "cultural-jrc-algorithmic-management-outcomes"
         ]
       },
       {
-        "id": "affectedGroup:occupational-groups",
+        "id": "affected-group:occupational-groups",
         "label": "occupational groups",
         "evidenceIds": [
           "cultural-nber-ai-task-adoption"
         ]
       },
       {
-        "id": "affectedGroup:organizations",
+        "id": "affected-group:organizations",
         "label": "organizations",
         "evidenceIds": [
           "cultural-ai-capability-dependence"
         ]
       },
       {
-        "id": "affectedGroup:platform-operators",
+        "id": "affected-group:platform-operators",
         "label": "platform operators",
         "evidenceIds": [
           "cultural-amazon-bandameeda-remedy",
@@ -364,14 +364,14 @@
         ]
       },
       {
-        "id": "affectedGroup:platform-owners",
+        "id": "affected-group:platform-owners",
         "label": "platform owners",
         "evidenceIds": [
           "annual-ai-cultural-disintermediation"
         ]
       },
       {
-        "id": "affectedGroup:platform-workers",
+        "id": "affected-group:platform-workers",
         "label": "platform workers",
         "evidenceIds": [
           "cultural-jrc-algorithmic-management-outcomes",
@@ -380,56 +380,56 @@
         ]
       },
       {
-        "id": "affectedGroup:platforms",
+        "id": "affected-group:platforms",
         "label": "platforms",
         "evidenceIds": [
           "ibis-ai-workflow-compression"
         ]
       },
       {
-        "id": "affectedGroup:public-institutions",
+        "id": "affected-group:public-institutions",
         "label": "public institutions",
         "evidenceIds": [
           "cultural-ai-capability-dependence"
         ]
       },
       {
-        "id": "affectedGroup:researchers",
+        "id": "affected-group:researchers",
         "label": "researchers",
         "evidenceIds": [
           "atlas-ai-work-evidence-thread"
         ]
       },
       {
-        "id": "affectedGroup:service-firms",
+        "id": "affected-group:service-firms",
         "label": "service firms",
         "evidenceIds": [
           "annual-ai-cultural-disintermediation"
         ]
       },
       {
-        "id": "affectedGroup:small-businesses",
+        "id": "affected-group:small-businesses",
         "label": "small businesses",
         "evidenceIds": [
           "ibis-ai-workflow-compression"
         ]
       },
       {
-        "id": "affectedGroup:software-and-hardware-workers",
+        "id": "affected-group:software-and-hardware-workers",
         "label": "software and hardware workers",
         "evidenceIds": [
           "atlas-broadcom-ai-infrastructure-window"
         ]
       },
       {
-        "id": "affectedGroup:software-workers",
+        "id": "affected-group:software-workers",
         "label": "software workers",
         "evidenceIds": [
           "atlas-microsoft-cloud-window"
         ]
       },
       {
-        "id": "affectedGroup:workers",
+        "id": "affected-group:workers",
         "label": "workers",
         "evidenceIds": [
           "trend-hunting-ai-control",
@@ -445,14 +445,14 @@
     ],
     "repositories": [
       {
-        "id": "repositorie:annual-report-research",
+        "id": "repository:annual-report-research",
         "label": "annual-report-research",
         "evidenceIds": [
           "annual-ai-cultural-disintermediation"
         ]
       },
       {
-        "id": "repositorie:company-atlas-lab",
+        "id": "repository:company-atlas-lab",
         "label": "company-atlas-lab",
         "evidenceIds": [
           "atlas-ai-work-evidence-thread",
@@ -464,7 +464,7 @@
         ]
       },
       {
-        "id": "repositorie:cultural-geopolitical-theme-mining",
+        "id": "repository:cultural-geopolitical-theme-mining",
         "label": "cultural-geopolitical-theme-mining",
         "evidenceIds": [
           "cultural-ai-capability-dependence",
@@ -474,21 +474,21 @@
         ]
       },
       {
-        "id": "repositorie:ibis-industries",
+        "id": "repository:ibis-industries",
         "label": "ibis-industries",
         "evidenceIds": [
           "ibis-ai-workflow-compression"
         ]
       },
       {
-        "id": "repositorie:inc5000-analysis",
+        "id": "repository:inc5000-analysis",
         "label": "inc5000-analysis",
         "evidenceIds": [
           "inc5000-coreweave-ai-infrastructure"
         ]
       },
       {
-        "id": "repositorie:trend-hunting",
+        "id": "repository:trend-hunting",
         "label": "trend-hunting",
         "evidenceIds": [
           "trend-hunting-ai-control",
@@ -511,22 +511,22 @@
     },
     {
       "from": "trend-hunting-ai-control",
-      "to": "affectedGroup:workers",
+      "to": "affected-group:workers",
       "relation": "affects"
     },
     {
       "from": "trend-hunting-ai-control",
-      "to": "affectedGroup:customers",
+      "to": "affected-group:customers",
       "relation": "affects"
     },
     {
       "from": "trend-hunting-ai-control",
-      "to": "affectedGroup:employers",
+      "to": "affected-group:employers",
       "relation": "affects"
     },
     {
       "from": "trend-hunting-ai-control",
-      "to": "repositorie:trend-hunting",
+      "to": "repository:trend-hunting",
       "relation": "classified_as_repositorie"
     },
     {
@@ -541,22 +541,22 @@
     },
     {
       "from": "cultural-ai-capability-dependence",
-      "to": "affectedGroup:workers",
+      "to": "affected-group:workers",
       "relation": "affects"
     },
     {
       "from": "cultural-ai-capability-dependence",
-      "to": "affectedGroup:organizations",
+      "to": "affected-group:organizations",
       "relation": "affects"
     },
     {
       "from": "cultural-ai-capability-dependence",
-      "to": "affectedGroup:public-institutions",
+      "to": "affected-group:public-institutions",
       "relation": "affects"
     },
     {
       "from": "cultural-ai-capability-dependence",
-      "to": "repositorie:cultural-geopolitical-theme-mining",
+      "to": "repository:cultural-geopolitical-theme-mining",
       "relation": "classified_as_repositorie"
     },
     {
@@ -571,27 +571,27 @@
     },
     {
       "from": "annual-ai-cultural-disintermediation",
-      "to": "affectedGroup:workers",
+      "to": "affected-group:workers",
       "relation": "affects"
     },
     {
       "from": "annual-ai-cultural-disintermediation",
-      "to": "affectedGroup:service-firms",
+      "to": "affected-group:service-firms",
       "relation": "affects"
     },
     {
       "from": "annual-ai-cultural-disintermediation",
-      "to": "affectedGroup:customers",
+      "to": "affected-group:customers",
       "relation": "affects"
     },
     {
       "from": "annual-ai-cultural-disintermediation",
-      "to": "affectedGroup:platform-owners",
+      "to": "affected-group:platform-owners",
       "relation": "affects"
     },
     {
       "from": "annual-ai-cultural-disintermediation",
-      "to": "repositorie:annual-report-research",
+      "to": "repository:annual-report-research",
       "relation": "classified_as_repositorie"
     },
     {
@@ -606,27 +606,27 @@
     },
     {
       "from": "ibis-ai-workflow-compression",
-      "to": "affectedGroup:design-workers",
+      "to": "affected-group:design-workers",
       "relation": "affects"
     },
     {
       "from": "ibis-ai-workflow-compression",
-      "to": "affectedGroup:agencies",
+      "to": "affected-group:agencies",
       "relation": "affects"
     },
     {
       "from": "ibis-ai-workflow-compression",
-      "to": "affectedGroup:small-businesses",
+      "to": "affected-group:small-businesses",
       "relation": "affects"
     },
     {
       "from": "ibis-ai-workflow-compression",
-      "to": "affectedGroup:platforms",
+      "to": "affected-group:platforms",
       "relation": "affects"
     },
     {
       "from": "ibis-ai-workflow-compression",
-      "to": "repositorie:ibis-industries",
+      "to": "repository:ibis-industries",
       "relation": "classified_as_repositorie"
     },
     {
@@ -641,27 +641,27 @@
     },
     {
       "from": "inc5000-coreweave-ai-infrastructure",
-      "to": "affectedGroup:ai-companies",
+      "to": "affected-group:ai-companies",
       "relation": "affects"
     },
     {
       "from": "inc5000-coreweave-ai-infrastructure",
-      "to": "affectedGroup:enterprise-users",
+      "to": "affected-group:enterprise-users",
       "relation": "affects"
     },
     {
       "from": "inc5000-coreweave-ai-infrastructure",
-      "to": "affectedGroup:infrastructure-workers",
+      "to": "affected-group:infrastructure-workers",
       "relation": "affects"
     },
     {
       "from": "inc5000-coreweave-ai-infrastructure",
-      "to": "affectedGroup:capital-providers",
+      "to": "affected-group:capital-providers",
       "relation": "affects"
     },
     {
       "from": "inc5000-coreweave-ai-infrastructure",
-      "to": "repositorie:inc5000-analysis",
+      "to": "repository:inc5000-analysis",
       "relation": "classified_as_repositorie"
     },
     {
@@ -676,22 +676,22 @@
     },
     {
       "from": "atlas-ai-work-evidence-thread",
-      "to": "affectedGroup:workers",
+      "to": "affected-group:workers",
       "relation": "affects"
     },
     {
       "from": "atlas-ai-work-evidence-thread",
-      "to": "affectedGroup:customers",
+      "to": "affected-group:customers",
       "relation": "affects"
     },
     {
       "from": "atlas-ai-work-evidence-thread",
-      "to": "affectedGroup:researchers",
+      "to": "affected-group:researchers",
       "relation": "affects"
     },
     {
       "from": "atlas-ai-work-evidence-thread",
-      "to": "repositorie:company-atlas-lab",
+      "to": "repository:company-atlas-lab",
       "relation": "classified_as_repositorie"
     },
     {
@@ -706,37 +706,37 @@
     },
     {
       "from": "atlas-c3-ai-report-window",
-      "to": "companie:c3-ai",
+      "to": "company:c3-ai",
       "relation": "classified_as_companie"
     },
     {
       "from": "atlas-c3-ai-report-window",
-      "to": "industrie:enterprise-ai-software",
+      "to": "industry:enterprise-ai-software",
       "relation": "classified_as_industrie"
     },
     {
       "from": "atlas-c3-ai-report-window",
-      "to": "affectedGroup:enterprise-customers",
+      "to": "affected-group:enterprise-customers",
       "relation": "affects"
     },
     {
       "from": "atlas-c3-ai-report-window",
-      "to": "affectedGroup:workers",
+      "to": "affected-group:workers",
       "relation": "affects"
     },
     {
       "from": "atlas-c3-ai-report-window",
-      "to": "affectedGroup:decision-subjects",
+      "to": "affected-group:decision-subjects",
       "relation": "affects"
     },
     {
       "from": "atlas-c3-ai-report-window",
-      "to": "affectedGroup:investors",
+      "to": "affected-group:investors",
       "relation": "affects"
     },
     {
       "from": "atlas-c3-ai-report-window",
-      "to": "repositorie:company-atlas-lab",
+      "to": "repository:company-atlas-lab",
       "relation": "classified_as_repositorie"
     },
     {
@@ -751,37 +751,37 @@
     },
     {
       "from": "atlas-nvidia-ai-platform-window",
-      "to": "companie:nvidia",
+      "to": "company:nvidia",
       "relation": "classified_as_companie"
     },
     {
       "from": "atlas-nvidia-ai-platform-window",
-      "to": "industrie:ai-computing-infrastructure",
+      "to": "industry:ai-computing-infrastructure",
       "relation": "classified_as_industrie"
     },
     {
       "from": "atlas-nvidia-ai-platform-window",
-      "to": "affectedGroup:ai-companies",
+      "to": "affected-group:ai-companies",
       "relation": "affects"
     },
     {
       "from": "atlas-nvidia-ai-platform-window",
-      "to": "affectedGroup:enterprise-users",
+      "to": "affected-group:enterprise-users",
       "relation": "affects"
     },
     {
       "from": "atlas-nvidia-ai-platform-window",
-      "to": "affectedGroup:infrastructure-workers",
+      "to": "affected-group:infrastructure-workers",
       "relation": "affects"
     },
     {
       "from": "atlas-nvidia-ai-platform-window",
-      "to": "affectedGroup:capital-providers",
+      "to": "affected-group:capital-providers",
       "relation": "affects"
     },
     {
       "from": "atlas-nvidia-ai-platform-window",
-      "to": "repositorie:company-atlas-lab",
+      "to": "repository:company-atlas-lab",
       "relation": "classified_as_repositorie"
     },
     {
@@ -796,37 +796,37 @@
     },
     {
       "from": "atlas-microsoft-cloud-window",
-      "to": "companie:microsoft",
+      "to": "company:microsoft",
       "relation": "classified_as_companie"
     },
     {
       "from": "atlas-microsoft-cloud-window",
-      "to": "industrie:cloud-and-enterprise-software",
+      "to": "industry:cloud-and-enterprise-software",
       "relation": "classified_as_industrie"
     },
     {
       "from": "atlas-microsoft-cloud-window",
-      "to": "affectedGroup:enterprise-users",
+      "to": "affected-group:enterprise-users",
       "relation": "affects"
     },
     {
       "from": "atlas-microsoft-cloud-window",
-      "to": "affectedGroup:software-workers",
+      "to": "affected-group:software-workers",
       "relation": "affects"
     },
     {
       "from": "atlas-microsoft-cloud-window",
-      "to": "affectedGroup:cloud-infrastructure-workers",
+      "to": "affected-group:cloud-infrastructure-workers",
       "relation": "affects"
     },
     {
       "from": "atlas-microsoft-cloud-window",
-      "to": "affectedGroup:capital-providers",
+      "to": "affected-group:capital-providers",
       "relation": "affects"
     },
     {
       "from": "atlas-microsoft-cloud-window",
-      "to": "repositorie:company-atlas-lab",
+      "to": "repository:company-atlas-lab",
       "relation": "classified_as_repositorie"
     },
     {
@@ -841,37 +841,37 @@
     },
     {
       "from": "atlas-oracle-cloud-window",
-      "to": "companie:oracle",
+      "to": "company:oracle",
       "relation": "classified_as_companie"
     },
     {
       "from": "atlas-oracle-cloud-window",
-      "to": "industrie:cloud-and-enterprise-software",
+      "to": "industry:cloud-and-enterprise-software",
       "relation": "classified_as_industrie"
     },
     {
       "from": "atlas-oracle-cloud-window",
-      "to": "affectedGroup:enterprise-users",
+      "to": "affected-group:enterprise-users",
       "relation": "affects"
     },
     {
       "from": "atlas-oracle-cloud-window",
-      "to": "affectedGroup:cloud-infrastructure-workers",
+      "to": "affected-group:cloud-infrastructure-workers",
       "relation": "affects"
     },
     {
       "from": "atlas-oracle-cloud-window",
-      "to": "affectedGroup:customers",
+      "to": "affected-group:customers",
       "relation": "affects"
     },
     {
       "from": "atlas-oracle-cloud-window",
-      "to": "affectedGroup:capital-providers",
+      "to": "affected-group:capital-providers",
       "relation": "affects"
     },
     {
       "from": "atlas-oracle-cloud-window",
-      "to": "repositorie:company-atlas-lab",
+      "to": "repository:company-atlas-lab",
       "relation": "classified_as_repositorie"
     },
     {
@@ -886,37 +886,37 @@
     },
     {
       "from": "atlas-broadcom-ai-infrastructure-window",
-      "to": "companie:broadcom",
+      "to": "company:broadcom",
       "relation": "classified_as_companie"
     },
     {
       "from": "atlas-broadcom-ai-infrastructure-window",
-      "to": "industrie:semiconductors-and-infrastructure-software",
+      "to": "industry:semiconductors-and-infrastructure-software",
       "relation": "classified_as_industrie"
     },
     {
       "from": "atlas-broadcom-ai-infrastructure-window",
-      "to": "affectedGroup:enterprise-users",
+      "to": "affected-group:enterprise-users",
       "relation": "affects"
     },
     {
       "from": "atlas-broadcom-ai-infrastructure-window",
-      "to": "affectedGroup:software-and-hardware-workers",
+      "to": "affected-group:software-and-hardware-workers",
       "relation": "affects"
     },
     {
       "from": "atlas-broadcom-ai-infrastructure-window",
-      "to": "affectedGroup:infrastructure-operators",
+      "to": "affected-group:infrastructure-operators",
       "relation": "affects"
     },
     {
       "from": "atlas-broadcom-ai-infrastructure-window",
-      "to": "affectedGroup:capital-providers",
+      "to": "affected-group:capital-providers",
       "relation": "affects"
     },
     {
       "from": "atlas-broadcom-ai-infrastructure-window",
-      "to": "repositorie:company-atlas-lab",
+      "to": "repository:company-atlas-lab",
       "relation": "classified_as_repositorie"
     },
     {
@@ -931,22 +931,22 @@
     },
     {
       "from": "trend-ai-agency-control-measure",
-      "to": "affectedGroup:ai-users",
+      "to": "affected-group:ai-users",
       "relation": "affects"
     },
     {
       "from": "trend-ai-agency-control-measure",
-      "to": "affectedGroup:workers",
+      "to": "affected-group:workers",
       "relation": "affects"
     },
     {
       "from": "trend-ai-agency-control-measure",
-      "to": "affectedGroup:households",
+      "to": "affected-group:households",
       "relation": "affects"
     },
     {
       "from": "trend-ai-agency-control-measure",
-      "to": "repositorie:trend-hunting",
+      "to": "repository:trend-hunting",
       "relation": "classified_as_repositorie"
     },
     {
@@ -961,22 +961,22 @@
     },
     {
       "from": "cultural-nber-ai-task-adoption",
-      "to": "affectedGroup:workers",
+      "to": "affected-group:workers",
       "relation": "affects"
     },
     {
       "from": "cultural-nber-ai-task-adoption",
-      "to": "affectedGroup:employers",
+      "to": "affected-group:employers",
       "relation": "affects"
     },
     {
       "from": "cultural-nber-ai-task-adoption",
-      "to": "affectedGroup:occupational-groups",
+      "to": "affected-group:occupational-groups",
       "relation": "affects"
     },
     {
       "from": "cultural-nber-ai-task-adoption",
-      "to": "repositorie:cultural-geopolitical-theme-mining",
+      "to": "repository:cultural-geopolitical-theme-mining",
       "relation": "classified_as_repositorie"
     },
     {
@@ -991,22 +991,22 @@
     },
     {
       "from": "cultural-jrc-algorithmic-management-outcomes",
-      "to": "affectedGroup:workers",
+      "to": "affected-group:workers",
       "relation": "affects"
     },
     {
       "from": "cultural-jrc-algorithmic-management-outcomes",
-      "to": "affectedGroup:managers",
+      "to": "affected-group:managers",
       "relation": "affects"
     },
     {
       "from": "cultural-jrc-algorithmic-management-outcomes",
-      "to": "affectedGroup:platform-workers",
+      "to": "affected-group:platform-workers",
       "relation": "affects"
     },
     {
       "from": "cultural-jrc-algorithmic-management-outcomes",
-      "to": "repositorie:cultural-geopolitical-theme-mining",
+      "to": "repository:cultural-geopolitical-theme-mining",
       "relation": "classified_as_repositorie"
     },
     {
@@ -1021,22 +1021,22 @@
     },
     {
       "from": "cultural-amazon-bandameeda-remedy",
-      "to": "affectedGroup:platform-workers",
+      "to": "affected-group:platform-workers",
       "relation": "affects"
     },
     {
       "from": "cultural-amazon-bandameeda-remedy",
-      "to": "affectedGroup:customers",
+      "to": "affected-group:customers",
       "relation": "affects"
     },
     {
       "from": "cultural-amazon-bandameeda-remedy",
-      "to": "affectedGroup:platform-operators",
+      "to": "affected-group:platform-operators",
       "relation": "affects"
     },
     {
       "from": "cultural-amazon-bandameeda-remedy",
-      "to": "repositorie:cultural-geopolitical-theme-mining",
+      "to": "repository:cultural-geopolitical-theme-mining",
       "relation": "classified_as_repositorie"
     },
     {
@@ -1051,22 +1051,22 @@
     },
     {
       "from": "trend-uber-kumar-review-counterexample",
-      "to": "affectedGroup:platform-workers",
+      "to": "affected-group:platform-workers",
       "relation": "affects"
     },
     {
       "from": "trend-uber-kumar-review-counterexample",
-      "to": "affectedGroup:platform-operators",
+      "to": "affected-group:platform-operators",
       "relation": "affects"
     },
     {
       "from": "trend-uber-kumar-review-counterexample",
-      "to": "affectedGroup:customers",
+      "to": "affected-group:customers",
       "relation": "affects"
     },
     {
       "from": "trend-uber-kumar-review-counterexample",
-      "to": "repositorie:trend-hunting",
+      "to": "repository:trend-hunting",
       "relation": "classified_as_repositorie"
     }
   ],

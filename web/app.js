@@ -178,9 +178,21 @@ async function loadAtlas() {
   const ingestion = await ingestionResponse.json();
   const groups = [["themes", "Themes"], ["mechanisms", "Mechanisms"], ["companies", "Companies"], ["industries", "Industries"], ["affectedGroups", "Affected groups"], ["repositories", "Repositories"]];
   byId("atlas-summary").textContent = `${atlas.sourceRecordCount} evidence records · ${atlas.edges.length} source-to-entity links · ${ingestion.repositories.filter((repository) => repository.status === "ingested").length} repositories ingested · snapshot ${atlas.sourceSnapshotDate || "not recorded"}. Connections organize the evidence; they do not prove causation.`;
-  byId("atlas-entities").innerHTML = groups.map(([key, label]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong>${escapeHtml(atlas.entities[key]?.length ?? 0)}</strong></div>`).join("");
+  byId("atlas-entities").innerHTML = groups.map(([key, label]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong>${escapeHtml(atlas.entities[key]?.length ?? 0)}</strong><div>${(atlas.entities[key] ?? []).slice(0, 8).map((entity) => `<button class="link-button atlas-entity" data-atlas-kind="${escapeHtml(key)}" data-atlas-id="${escapeHtml(entity.id)}" type="button">${escapeHtml(entity.label)}</button>`).join(" ")}</div></div>`).join("");
   const links = (atlas.edges ?? []).slice(0, 12);
   byId("atlas-links").innerHTML = links.length ? `<p class="muted">Examples of normalized links</p><ul>${links.map((edge) => `<li><code>${escapeHtml(edge.from)}</code> → <code>${escapeHtml(edge.to)}</code> · ${escapeHtml(edge.relation.replaceAll("_", " "))}</li>`).join("")}</ul>` : `<p class="muted">No normalized links are available yet.</p>`;
+  document.querySelectorAll(".atlas-entity").forEach((button) => button.addEventListener("click", () => inspectAtlasEntity(button.dataset.atlasKind, button.dataset.atlasId)));
+}
+
+async function inspectAtlasEntity(kind, id) {
+  const detail = byId("atlas-detail");
+  detail.hidden = false;
+  detail.innerHTML = `<p class="muted">Loading entity…</p>`;
+  const response = await apiFetch(`../api/atlas/entity?kind=${encodeURIComponent(kind)}&id=${encodeURIComponent(id)}`);
+  if (!response.ok) { detail.innerHTML = `<p class="error">Entity detail unavailable (${response.status}).</p>`; return; }
+  const body = await response.json();
+  detail.innerHTML = `<div class="section-heading"><p class="eyebrow">${escapeHtml(kind.replaceAll(/([A-Z])/g, " $1"))}</p><h2>${escapeHtml(body.entity.label)}</h2><p class="muted">${escapeHtml(body.entity.evidenceCount)} linked evidence record${body.entity.evidenceCount === 1 ? "" : "s"}. ${escapeHtml(body.limitation)}</p></div><div class="record-list">${body.evidence.map((record) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(record.sourceRole.replaceAll("_", " "))}</span><span>${escapeHtml(record.claimState)}</span><span>${escapeHtml(record.asOf)}</span></div><h3>${escapeHtml(record.title)}</h3><p>${escapeHtml(record.observation)}</p><p class="muted">${escapeHtml(record.sourceRepository)} · <code>${escapeHtml(record.sourceRef)}</code>${record.reportingPeriod ? ` · ${escapeHtml(record.reportingPeriod)}` : ""}</p></article>`).join("")}</div>${body.related.length ? `<h3>Related entities</h3><p>${body.related.map((related) => `<span class="limit">${escapeHtml(related.label)} · ${escapeHtml(related.evidenceCount)} records</span>`).join(" ")}</p>` : ""}`;
+  detail.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 async function loadEvidenceHistory() {

@@ -1028,6 +1028,20 @@ const server = createServer(async (request, response) => {
       const atlas = await readJson(atlasPath, await readJson(staticAtlasPath, { schemaVersion: "domain-atlas-v1", entities: {}, edges: [] }));
       return json(response, 200, atlas);
     }
+    if (url.pathname === "/api/atlas/entity") {
+      const kind = url.searchParams.get("kind");
+      const id = url.searchParams.get("id");
+      const allowedKinds = new Set(["themes", "companies", "industries", "mechanisms", "affectedGroups", "repositories"]);
+      if (!allowedKinds.has(kind) || !id) return json(response, 400, { error: "A valid entity kind and id are required." });
+      const atlas = await readJson(atlasPath, await readJson(staticAtlasPath, { entities: {}, edges: [] }));
+      const entity = (atlas.entities?.[kind] ?? []).find((candidate) => candidate.id === id);
+      if (!entity) return json(response, 404, { error: "Atlas entity not found." });
+      const packet = await readJson(packetPath, { records: [] });
+      const evidence = (packet.records ?? []).filter((record) => entity.evidenceIds.includes(record.id)).map((record) => ({ id: record.id, title: record.title, observation: record.observation, sourceRole: record.sourceRole, sourceRepository: record.sourceRepository, sourceRef: record.sourceRef, sourceDigest: record.sourceDigest, claimState: record.claimState, asOf: record.asOf, company: record.company ?? null, industry: record.industry ?? null, reportingPeriod: record.reportingPeriod ?? null, reportWindow: record.reportWindow ?? null }));
+      const relatedEntityIds = new Set((atlas.edges ?? []).filter((edge) => edge.from && entity.evidenceIds.includes(edge.from)).map((edge) => edge.to).filter((relatedId) => relatedId !== entity.id));
+      const related = Object.values(atlas.entities ?? {}).flat().filter((candidate) => relatedEntityIds.has(candidate.id)).map((candidate) => ({ id: candidate.id, label: candidate.label, evidenceCount: candidate.evidenceIds.length }));
+      return json(response, 200, { schemaVersion: "atlas-entity-read-model-v1", entity: { id: entity.id, label: entity.label, kind, evidenceCount: entity.evidenceIds.length }, evidence, related, limitation: "This page groups source-linked records around a normalized label. It does not prove that the entity caused the recorded changes or that the records are a complete account." });
+    }
     if (url.pathname === "/api/ingestion") {
       return json(response, 200, await readJson(ingestionPath, await readJson(staticIngestionPath, { schemaVersion: "research-ingestion-ledger-v1", repositories: [], records: [] })));
     }
