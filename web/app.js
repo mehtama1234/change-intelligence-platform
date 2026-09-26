@@ -80,6 +80,15 @@ async function loadOperations() {
   byId("operations-history").innerHTML = history.length ? `<table><caption>Recent refresh runs</caption><thead><tr><th>Run</th><th>Status</th><th>Steps</th><th>Ended</th></tr></thead><tbody>${history.slice().reverse().slice(0, 8).map((run) => `<tr><th scope="row"><code>${escapeHtml(run.runId)}</code></th><td>${escapeHtml(run.status)}</td><td>${run.steps.filter((step) => step.status === "complete").length}/${run.steps.length} complete</td><td>${escapeHtml(run.endedAt)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No refresh history recorded yet.</p>`;
 }
 
+async function loadEvidenceHistory() {
+  const response = await apiFetch("../api/evidence-history");
+  if (!response.ok) throw new Error(`Evidence history unavailable (${response.status})`);
+  const history = await response.json();
+  const decisions = (history.decisionHistory ?? []).slice().reverse();
+  byId("evidence-history-summary").textContent = `${history.activeResearchRecordCount} active reviewed record${history.activeResearchRecordCount === 1 ? "" : "s"} · ${history.decisionCount} decision${history.decisionCount === 1 ? "" : "s"} recorded.`;
+  byId("evidence-history-items").innerHTML = decisions.length ? decisions.slice(0, 12).map((decision) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(decision.resultingState.replaceAll("_", " "))}</span><span>${escapeHtml(decision.decision)}</span><span>${escapeHtml(decision.decidedAt)}</span></div><h3>${escapeHtml(decision.sourceId || decision.candidateId)}</h3><p>Reviewed by ${escapeHtml(decision.reviewer)}${decision.reviewerRole ? ` (${escapeHtml(decision.reviewerRole)})` : ""}. ${escapeHtml(decision.note || "No note recorded.")}</p><details><summary>Open review identity</summary><dl><dt>Candidate</dt><dd><code>${escapeHtml(decision.candidateId)}</code></dd><dt>Source digest</dt><dd><code>${escapeHtml(decision.sourceDigest || "not recorded")}</code></dd><dt>Decision ID</dt><dd><code>${escapeHtml(decision.id)}</code></dd></dl></details></article>`).join("") : `<p class="muted">No source-review decisions have been recorded yet.</p>`;
+}
+
 function showInspector(title, summary, content) {
   byId("evidence-inspector").hidden = false;
   byId("inspector-title").textContent = title;
@@ -208,7 +217,7 @@ function render() {
   const visible = records.filter((record) => (state.role === "all" || record.sourceRole === state.role) && (state.theme === "all" || record.theme === state.theme) && (state.company === "all" || record.company === state.company) && (state.industry === "all" || record.industry === state.industry));
   byId("catalog-summary").textContent = `${visible.length} of ${records.length} evidence records shown across ${new Set(visible.map((record) => record.sourceRepository)).size} repositories.`;
   byId("records").innerHTML = visible.map((record) => `<article class="record-card">
-    <div class="record-meta"><span class="role">${escapeHtml(record.sourceRole.replaceAll("_", " "))}</span><span>${escapeHtml(record.claimState)}</span><span>${escapeHtml(record.asOf)}</span></div>
+    <div class="record-meta"><span class="role">${escapeHtml(record.sourceRole.replaceAll("_", " "))}</span><span>${escapeHtml(record.claimState)}</span><span>${escapeHtml(record.asOf)}</span>${record.researchReview ? `<span>reviewed ${escapeHtml(record.researchReview.acceptedAt)}</span>` : ""}</div>
     <h3>${escapeHtml(record.title)}</h3>
     <p>${escapeHtml(record.observation)}</p>
     <button class="secondary-button inspect-record" type="button" data-record-id="${escapeHtml(record.id)}">Inspect evidence</button>
@@ -294,6 +303,7 @@ byId("token-input").value = state.token;
 loadWorkspaces().catch((error) => { setWorkspaceStatus(error.message); byId("questions-summary").textContent = error.message; });
 loadChanges().catch((error) => { byId("change-feed-summary").textContent = error.message; });
 loadOperations().catch((error) => { byId("operations-summary").textContent = error.message; });
+loadEvidenceHistory().catch((error) => { byId("evidence-history-summary").textContent = error.message; });
 
 fetch(fixtureUrl).then((response) => {
   if (!response.ok) throw new Error(`Fixture unavailable (${response.status})`);
