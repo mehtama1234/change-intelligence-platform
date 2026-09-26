@@ -4,8 +4,8 @@
   "sourceSnapshotDate": "2026-09-25",
   "operations": {
     "latestSourceScan": {
-      "generatedAt": "2026-09-26T06:57:58.202Z",
-      "runId": "scan-20260926065758202",
+      "generatedAt": "2026-09-26T06:58:37.058Z",
+      "runId": "scan-20260926065837058",
       "counts": {
         "new": 0,
         "changed": 0,
@@ -15,130 +15,9 @@
       "reviewRequired": 0,
       "reviewQueue": [],
       "reviewWork": {
-        "readyForResearcher": 4,
+        "readyForResearcher": 0,
         "blocked": 0,
-        "candidates": [
-          {
-            "id": "review-atlas-nvidia-ai-platform-window-new",
-            "sourceId": "atlas-nvidia-ai-platform-window",
-            "repository": "company-atlas-lab",
-            "state": "ready_for_researcher",
-            "action": "reacquire_and_reextract",
-            "reason": "No prior capture exists for this source.",
-            "sourcePath": "company-industry-analysis/companies/nvidia/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
-            "sourceRole": "company_report",
-            "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
-            "title": "NVIDIA's filings show platform growth without a measured deployment outcome",
-            "observation": "The NVIDIA bridge records an annual base and three subsequent quarters covering company revenue, data-center activity, supply, capacity, and export-control disclosures.",
-            "theme": "ai-work-control",
-            "mechanism": "Infrastructure revenue can rise before a customer workload, worker result, or public benefit is measured.",
-            "affectedGroups": [
-              "AI companies",
-              "enterprise users",
-              "infrastructure workers",
-              "capital providers"
-            ],
-            "claimState": "reported",
-            "asOf": "2026-09-25",
-            "sourceDigest": "75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0",
-            "sourceBytes": 2602,
-            "sourceExcerpt": "# NVIDIA — FY2026 three-quarter accounting bridge ## Purpose and period control The FY2026 quarterly sequence covers periods ended April 27, July 27 and October 26, 2025. It updates reported company revenue, Data Center revenue, margins and stated drivers. Those measures are not a customer workload, AI-result, deployment-return or social-outcome record. | Reporting window | Direct records | Bounded use | Not established | |---|---|---|---| | FY2025 | [Annual report](https://www.sec.gov/Archives/edgar/data/1045810/000104581025000023/",
-            "limits": [
-              "The bridge does not establish customer workload value, switching cost, deployment return, worker outcome, or downstream public benefit."
-            ],
-            "publication": "not_published"
-          },
-          {
-            "id": "review-atlas-microsoft-cloud-window-new",
-            "sourceId": "atlas-microsoft-cloud-window",
-            "repository": "company-atlas-lab",
-            "state": "ready_for_researcher",
-            "action": "reacquire_and_reextract",
-            "reason": "No prior capture exists for this source.",
-            "sourcePath": "company-industry-analysis/companies/microsoft/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
-            "sourceRole": "company_report",
-            "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
-            "title": "Microsoft's cloud growth does not identify the workload result",
-            "observation": "The Microsoft bridge records three quarters of reported revenue growth, Microsoft Cloud revenue, and commercial remaining performance obligations after the FY2025 annual report.",
-            "theme": "ai-work-control",
-            "mechanism": "Cloud scale and contracted obligations can expand while price, use, capacity, reliability, and user benefit remain unresolved.",
-            "affectedGroups": [
-              "enterprise users",
-              "software workers",
-              "cloud infrastructure workers",
-              "capital providers"
-            ],
-            "claimState": "reported",
-            "asOf": "2026-09-25",
-            "sourceDigest": "0c783b9df6776a6e99d2f0a641039dbf9ed0de6e38f7e52a823466e5b65dae5e",
-            "sourceBytes": 2632,
-            "sourceExcerpt": "ords the disclosed company series while preventing it from becoming a causal cloud, AI, customer, energy, workforce or social-outcome narrative. | Quarter | Total revenue change | Microsoft Cloud revenue | Commercial remaining performance obligation | Bounded reading | |---|---:|---:|---:|---| | Q1 FY2026 | +18% | $49.1bn, +26% | $392bn, +51% | Reported growth and management segment commentary; no price/use/mix/capacity decomposition. | | Q2 FY2026 | +17% | $51.5bn, +26% | $625bn, +110% | Reported growth and management segment commentary; no price/use/mix/capacity decomposition. | | Q3 FY2026 | +18% | $54.5bn, +29% | $627bn, +99% | Reported growth and management segment commentary; no price/",
-            "limits": [
-              "The bridge does not isolate AI contribution, workload use, customer value, reliability, affordability, energy effects, or worker outcomes."
-            ],
-            "publication": "not_published"
-          },
-          {
-            "id": "review-atlas-oracle-cloud-window-new",
-            "sourceId": "atlas-oracle-cloud-window",
-            "repository": "company-atlas-lab",
-            "state": "ready_for_researcher",
-            "action": "reacquire_and_reextract",
-            "reason": "No prior capture exists for this source.",
-            "sourcePath": "company-industry-analysis/companies/oracle/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
-            "sourceRole": "company_report",
-            "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
-            "title": "Oracle's quarterly revenue movement leaves the operating cause open",
-            "observation": "The Oracle bridge records three reported quarterly revenue changes after the FY2025 annual report while explicitly leaving price, use, customer, capacity, AI demand, and outcome attribution unresolved.",
-            "theme": "ai-work-control",
-            "mechanism": "Reported revenue can move without identifying the workload, capacity, contract, or user change that produced it.",
-            "affectedGroups": [
-              "enterprise users",
-              "cloud infrastructure workers",
-              "customers",
-              "capital providers"
-            ],
-            "claimState": "reported",
-            "asOf": "2026-09-25",
-            "sourceDigest": "781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583",
-            "sourceBytes": 2413,
-            "sourceExcerpt": "# Oracle — FY2026 three-quarter accounting bridge ## Purpose and period control The FY2026 quarterly filings cover periods ended August 31 and November 30, 2025, and February 28, 2026. They provide a reported company revenue series, not a customer workload, cloud-capacity, AI-demand, product-quality or stakeholder-outcome result. | Fiscal quarter | Reported revenue | Comparable prior-year quarter | Reported year-over-year change | Boundary | |---|---:|---:|---:|---| | Q1 FY2026 | $14.926bn | $13.307bn | +$1.619bn / about 12.2% | No price, use, customer, capacity or outcome attribution. | | Q2 FY2026 | $1",
-            "limits": [
-              "The bridge does not establish AI demand, cloud capacity return, customer value, durability, or public and worker outcomes."
-            ],
-            "publication": "not_published"
-          },
-          {
-            "id": "review-atlas-broadcom-ai-infrastructure-window-new",
-            "sourceId": "atlas-broadcom-ai-infrastructure-window",
-            "repository": "company-atlas-lab",
-            "state": "ready_for_researcher",
-            "action": "reacquire_and_reextract",
-            "reason": "No prior capture exists for this source.",
-            "sourcePath": "company-industry-analysis/companies/broadcom/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
-            "sourceRole": "company_report",
-            "sourceLocator": "FY2025 annual and FY2026 Q1-Q3 accounting bridge",
-            "title": "Broadcom's platform records need a separate customer-result test",
-            "observation": "The Broadcom bridge records three subsequent change windows and names unresolved price, unit, mix, integration, customer value, reliability, security, and AI-demand questions.",
-            "theme": "ai-work-control",
-            "mechanism": "A supplier can report commercial movement while the customer workflow, integration cost, and downstream result remain unmeasured.",
-            "affectedGroups": [
-              "enterprise users",
-              "software and hardware workers",
-              "infrastructure operators",
-              "capital providers"
-            ],
-            "claimState": "reported",
-            "asOf": "2026-09-25",
-            "sourceDigest": "78e50dcb48e4452ad98bf8e308e58ce80ffe85344d61d2571bf9244f98b37ad3",
-            "sourceBytes": 1197,
-            "sourceExcerpt": "---| | FY2025 | Annual base for segment, cash, capital, debt, risk and governance extraction | Customer workload demand, product return, software migration or end-user outcome | | Q1 FY2026 | First subsequent change record | Price, unit, product-mix, integration or customer value bridge | | Q2 FY2026 | Second subsequent change record | Segment cost, service, reliability or security result | | Q3 FY2026 | Third subsequent change record | AI-demand durability, customer switching or public outcome | ## Next extraction Reconcile every period to Semiconductor Solutions and Infrastructure Software revenue, direct/channel route, units, price, product mix, acquisition effects, gross profit, operatin",
-            "limits": [
-              "The bridge does not prove AI-demand durability, customer switching cost, deployment reliability, security, worker conditions, or public outcomes."
-            ],
-            "publication": "not_published"
-          }
-        ],
+        "candidates": [],
         "versionedEvidence": {
           "activeResearchRecordCount": 0,
           "decisionCount": 0,
@@ -179,12 +58,12 @@
     },
     "questionEvaluations": {
       "schemaVersion": "question-evaluation-ledger-v1",
-      "generatedAt": "2026-09-26T06:57:36.630Z",
+      "generatedAt": "2026-09-26T06:58:39.677Z",
       "evaluations": [
         {
           "questionId": "question-1790396868707-0zillf",
           "workspaceId": "demo-research",
-          "evaluatedAt": "2026-09-26T06:57:36.630Z",
+          "evaluatedAt": "2026-09-26T06:58:39.677Z",
           "state": "evidence_retrieved",
           "matchedRecordIds": [
             "trend-hunting-ai-control",
@@ -253,7 +132,7 @@
     },
     "briefings": {
       "schemaVersion": "workspace-briefing-ledger-v1",
-      "generatedAt": "2026-09-26T06:57:37.085Z",
+      "generatedAt": "2026-09-26T06:58:40.157Z",
       "briefings": [
         {
           "id": "briefing-question-1790396868707-0zillf",
@@ -266,7 +145,7 @@
           "publishedAt": "2026-09-26T04:34:31.213Z",
           "publicationId": "publication-1790397271213-qdiac3",
           "evidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
-          "generatedAt": "2026-09-26T06:57:37.085Z",
+          "generatedAt": "2026-09-26T06:58:40.157Z",
           "evidence": [
             {
               "recordId": "trend-hunting-ai-control",
@@ -354,7 +233,7 @@
     },
     "insightCandidates": {
       "schemaVersion": "insight-candidate-ledger-v1",
-      "generatedAt": "2026-09-26T06:57:38.428Z",
+      "generatedAt": "2026-09-26T06:58:41.144Z",
       "candidates": [
         {
           "id": "candidate-insight-ai-capability-control-gap-001-710b18999d68",
@@ -363,7 +242,7 @@
           "plainLanguageSummary": "The current evidence supports a narrower reading than 'AI makes work more productive': AI can remove visible tasks while decisions, measurement, correction, and dependence remain controlled by an employer, platform, or infrastructure provider.",
           "status": "published",
           "publication": "published",
-          "generatedAt": "2026-09-26T06:57:38.428Z",
+          "generatedAt": "2026-09-26T06:58:41.144Z",
           "candidateKey": "insight-ai-capability-control-gap-001",
           "evidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
           "decisionId": "insight-decision-f1302f01-b437-4f15-bceb-e1c11fbfb195",
@@ -1084,6 +963,126 @@
       "limits": [
         "The bridge does not prove AI-demand durability, customer switching cost, deployment reliability, security, worker conditions, or public outcomes."
       ]
+    },
+    {
+      "id": "trend-ai-agency-control-measure",
+      "sourceRole": "research",
+      "sourceRepository": "trend-hunting",
+      "sourceRef": "analysis/AI-AGENCY-TEST-V1.md",
+      "sourceLocator": "AI user control and trust comparison",
+      "sourceDigest": "9aa6fb9e4de05f3c241925da7f2f39426807d5ad943ae116b596843882cc3a86",
+      "sourceBytes": 1999,
+      "sourceExcerpt": ".770% | | Prepared to use AI at work | 23.083% | | Prepared to use AI in daily life | 30.249% | ## Result AI use for at least one measured task was **54.948%**. Among AI users, reported productivity exceeded reported data control by **31.498 percentage points**, and exceeded reported trust in AI information by **28.723 points**. The expense-difficulty AI-use range was **7.573 points**, a descriptive, non-monotonic comparison. The narrower agency finding is supported: exposure and perceived usefulness are more common than reported control and trust. The stronger claim—that AI gives people autonomy or improves their lives—is not established by this cross-sectional survey. ## Uncertainty and ne",
+      "title": "Reported AI productivity is more common than reported control",
+      "observation": "A weighted Census HTOPS comparison reports AI use for at least one measured task at 54.948%, while 42.493% of AI users reported greater productivity, 21.736% reported control over when they used AI, and 10.995% reported control over how their data was used.",
+      "theme": "ai-work-control",
+      "mechanism": "Perceived usefulness can spread faster than people’s reported control over the system or their data.",
+      "affectedGroups": [
+        "AI users",
+        "workers",
+        "households"
+      ],
+      "claimState": "measured",
+      "asOf": "2026-09-13",
+      "limits": [
+        "This is a cross-sectional descriptive comparison, not a causal estimate or proof that AI caused a change in autonomy or wellbeing."
+      ]
+    },
+    {
+      "id": "cultural-nber-ai-task-adoption",
+      "sourceRole": "research",
+      "sourceRepository": "cultural-geopolitical-theme-mining",
+      "sourceRef": "analysis/projects/ai-work-control/nber-w35677-task-level-adoption-layer-v1.md",
+      "sourceLocator": "direct evidence and task-level adoption comparison",
+      "sourceDigest": "c2aa137ca1e4fbf4709238b51db322e5ee36326606c2c828a56452953b8a9c92",
+      "sourceBytes": 6106,
+      "sourceExcerpt": "–64 across four waves. The worker-task regressions use 55,634 person-task observations among people who perform at least two tasks. The paper reports widespread but shallow adoption: genAI reaches over 80% of occupations and over 40% of tasks, but within most of these fewer than half of workers adopt. Only about 15% of occupations exceed 70% adoption, while no task does; the occupation/task panels exclude cells with fewer than 20 pooled observations. Exposure scores explain 5%–53% of adoption variation across occupations and 7%–44% across tasks, depending on the score. This makes occupation-level exposure an incomplete proxy for worker access or use. The public index release contains 682 DWA",
+      "title": "AI exposure does not tell us which workers adopt it",
+      "observation": "The NBER W35677 audit reports generative AI exposure across more than 80% of occupations and over 40% of tasks, while adoption within most occupations remains below half and no task exceeds 70% adoption.",
+      "theme": "ai-work-control",
+      "mechanism": "Technical exposure becomes worker use only through access, training, permission, task fit, privacy, and perceived value.",
+      "affectedGroups": [
+        "workers",
+        "employers",
+        "occupational groups"
+      ],
+      "claimState": "compared",
+      "asOf": "2026-09-13",
+      "limits": [
+        "The study does not observe employer decision rights, downstream pay, wellbeing, control, or worker outcomes, and the working paper is not a randomized workplace experiment."
+      ]
+    },
+    {
+      "id": "cultural-jrc-algorithmic-management-outcomes",
+      "sourceRole": "research",
+      "sourceRepository": "cultural-geopolitical-theme-mining",
+      "sourceRef": "analysis/projects/ai-work-control/jrc-aim-work-source-record-v1.md",
+      "sourceLocator": "AIM-WORK survey and working-conditions analysis",
+      "sourceDigest": "5577ac6f26d1d859a8c9a6f3577c709bebc69ef3dfc1ccef742db3dcec70582e",
+      "sourceBytes": 8365,
+      "sourceExcerpt": "ons.jrc.ec.europa.eu/repository/handle/JRC143072), 13 October 2025, accessed 2026-09-11. ## Design and coverage - The survey collected responses from 70,316 people aged 16–65 across all 27 EU Member States. - Fieldwork ran from 23 October 2024 to 21 January 2025. - The methodology describes a mobile-only computer-assisted telephone interview approach using random-digit dialing, translation and cognitive testing, fieldwork training and quality control, data validation, weighting, and occupation and industry coding. - The survey asks about digital devices, AI tools, digital monitoring, algorithmic management, and platformisation of work. ## Methodology audit The methodology report makes the he",
+      "title": "Some forms of algorithmic management are associated with less discretion and more stress",
+      "observation": "The JRC AIM-WORK survey and analysis cover 70,316 people across the EU and report associations between algorithmic management practices, lower autonomy, reduced ability to take breaks, greater work intensity, and work-related stress; the size and direction vary by practice.",
+      "theme": "ai-work-control",
+      "mechanism": "Automated direction, monitoring, or pace-setting can change discretion and work intensity even when the specific vendor or system is not identified.",
+      "affectedGroups": [
+        "workers",
+        "managers",
+        "platform workers"
+      ],
+      "claimState": "compared",
+      "asOf": "2026-09-15",
+      "limits": [
+        "This is weighted cross-sectional survey and association evidence; it does not identify a single cause, vendor, employer, or matched before-and-after workplace."
+      ]
+    },
+    {
+      "id": "cultural-amazon-bandameeda-remedy",
+      "sourceRole": "research",
+      "sourceRepository": "cultural-geopolitical-theme-mining",
+      "sourceRef": "analysis/projects/ai-work-control/amazon-bandameeda-deactivation-remedy-record-v1.md",
+      "sourceLocator": "adjudicated deactivation, restoration, and lost-remuneration chain",
+      "sourceDigest": "f2b548bf93149ed93ec9bddca9b09511ddb9541d73e3a0d9f9dcf6788cea9c91",
+      "sourceBytes": 7529,
+      "sourceExcerpt": "ssion's finding is case-specific and legally situated in Australia's statutory regime | | Correction / restoration | The Commission ordered Amazon to reinstate access within seven days on the same terms and conditions as before deactivation, effective 23 December 2025 | Public evidence here establishes the order, not independent post-order monitoring of continued access | | Payment | A subsequent Commission order required Amazon to pay $12,126.31 for remuneration lost because of the deactivation, payable within 35 days | This is restoration of lost remuneration under the Act, not an award of compensation; payment completion is ordered but independently confirmed receipt is not located | | An",
+      "title": "A complete individual remedy chain can exist without proving system-wide repair",
+      "observation": "In one Amazon Flex case, a worker response and request for human discussion were followed by an adjudicated finding that review and evidence were inadequate, an order to reinstate access, and a separate order for $12,126.31 in lost remuneration.",
+      "theme": "ai-work-control",
+      "mechanism": "A correction route matters only when a response is considered, the decision is revisited, access is restored, and lost income is addressed.",
+      "affectedGroups": [
+        "platform workers",
+        "customers",
+        "platform operators"
+      ],
+      "claimState": "measured",
+      "asOf": "2026-09-15",
+      "limits": [
+        "The orders establish a case-specific remedy, not payment receipt, durable access, recurrence prevention, anti-retaliation, or prevalence across Amazon or platform work."
+      ]
+    },
+    {
+      "id": "trend-uber-kumar-review-counterexample",
+      "sourceRole": "research",
+      "sourceRepository": "trend-hunting",
+      "sourceRef": "analysis/AI-V7-WORKER-COUNTEREXAMPLE-COMPARATOR-V1.md",
+      "sourceLocator": "adjudicated compliant-review dismissal",
+      "sourceDigest": "cd563ab438a730e4220e234c30d260f1238f6627f5693e1bba39aa9eebf85845",
+      "sourceBytes": 2390,
+      "sourceExcerpt": "# AI V7 worker counterexample comparator v1 **Checked:** 2026-09-17 **Status:** adjudicated compliant-review dismissal; long-run outcome open The Kumar decision is a counterexample to treating procedural review as synonymous with worker restoration. | Stage | Public evidence | Boundary | |---|---|---| | Decision and exposure | Rating-based Uber Eats deactivation; 81% rating against an 85% threshold; 97–98% of Brisbane partners met the threshold | One worker and one adjudicated threshold | | Rating trajectory | At deactivation: 81%; after the post-deactivation warning: 75%; ten ratings after the second warning averaged 70%; threshold calculated from the last 100 ratings | The trajectory shows",
+      "title": "Human review can end in a compliant dismissal rather than restoration",
+      "observation": "In a separate Uber Eats case, the Commission found that a human Community Operations member considered the worker’s response and that the deactivation was compliant; the application was dismissed and no reactivation, pay, or compensation was ordered.",
+      "theme": "ai-work-control",
+      "mechanism": "The presence of a human reviewer does not by itself determine whether a worker receives restoration; process, evidence, rule clarity, and the final disposition must be examined together.",
+      "affectedGroups": [
+        "platform workers",
+        "platform operators",
+        "customers"
+      ],
+      "claimState": "disproved_or_weakened",
+      "asOf": "2026-09-17",
+      "limits": [
+        "This counterexample does not prove ratings are accurate, that all workers receive equivalent review, or that unrecorded correction did not occur."
+      ]
     }
   ],
   "insights": [
@@ -1098,7 +1097,16 @@
         "ibis-ai-workflow-compression",
         "inc5000-coreweave-ai-infrastructure",
         "atlas-ai-work-evidence-thread",
-        "atlas-c3-ai-report-window"
+        "atlas-c3-ai-report-window",
+        "atlas-nvidia-ai-platform-window",
+        "atlas-microsoft-cloud-window",
+        "atlas-oracle-cloud-window",
+        "atlas-broadcom-ai-infrastructure-window",
+        "trend-ai-agency-control-measure",
+        "cultural-nber-ai-task-adoption",
+        "cultural-jrc-algorithmic-management-outcomes",
+        "cultural-amazon-bandameeda-remedy",
+        "trend-uber-kumar-review-counterexample"
       ],
       "strongestAlternative": "The apparent control gap may be temporary because early deployments have not yet matured into stable workflow changes.",
       "whatWouldChangeOurMind": [
