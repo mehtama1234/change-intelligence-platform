@@ -50,6 +50,9 @@ for (const source of map.sources) {
     affectedGroups: source.affectedGroups,
     claimState: source.claimState,
     asOf: source.asOf,
+    ...(source.company ? { company: source.company } : {}),
+    ...(source.industry ? { industry: source.industry } : {}),
+    ...(source.reportingPeriod ? { reportingPeriod: source.reportingPeriod } : {}),
     limits: source.limits
   });
 }

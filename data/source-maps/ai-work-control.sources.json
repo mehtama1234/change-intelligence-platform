@@ -97,6 +97,25 @@
       "asOf": "2026-09-25",
       "limits": ["The thread explicitly says its sources do not establish productivity change, adoption scale, or causality."],
       "excerptTerms": ["independent", "productivity", "causality"]
+    },
+    {
+      "id": "atlas-c3-ai-report-window",
+      "sourceRole": "company_report",
+      "sourceRepository": "company-atlas-lab",
+      "sourcePath": "company-industry-analysis/companies/c3-ai/SOURCE-LEDGER.md",
+      "sourceLocator": "FY2025 10-K and FY2026 Q1-Q3 direct SEC records",
+      "title": "C3.ai's report window shows what company records can and cannot prove",
+      "observation": "C3.ai's direct-record ledger covers the FY2025 10-K and three FY2026 10-Qs. It supports reported software, customer, accounting, deployment, risk, and financial facts, but does not independently measure accuracy, productivity, decision quality, privacy, worker conditions, or end-user outcomes.",
+      "company": "C3.ai",
+      "industry": "enterprise AI software",
+      "theme": "ai-work-control",
+      "mechanism": "A company's annual and quarterly reports can show commercial movement and stated deployments while leaving the lived result of an AI workflow unmeasured.",
+      "affectedGroups": ["enterprise customers", "workers", "decision subjects", "investors"],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "reportingPeriod": "FY2025 annual report plus FY2026 Q1, Q2, and Q3",
+      "limits": ["The report window does not identify an organization, model version, affected person, decision, input, output, error, override, appeal, remedy, or later outcome."],
+      "excerptTerms": ["FY2025 10-K", "FY2026 Q1", "does not independently measure"]
     }
   ],
   "insight": {
@@ -109,7 +128,8 @@
       "annual-ai-cultural-disintermediation",
       "ibis-ai-workflow-compression",
       "inc5000-coreweave-ai-infrastructure",
-      "atlas-ai-work-evidence-thread"
+      "atlas-ai-work-evidence-thread",
+      "atlas-c3-ai-report-window"
     ],
     "strongestAlternative": "The apparent control gap may be temporary because early deployments have not yet matured into stable workflow changes.",
     "whatWouldChangeOurMind": [

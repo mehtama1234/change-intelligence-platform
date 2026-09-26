@@ -26,6 +26,8 @@ function render() {
     <details><summary>Open source and limits</summary><dl>
       <dt>Repository</dt><dd>${escapeHtml(record.sourceRepository)}</dd>
       <dt>Source</dt><dd><code>${escapeHtml(record.sourceRef)}</code>${record.sourceLocator ? ` · ${escapeHtml(record.sourceLocator)}` : ""}</dd>
+      ${record.company ? `<dt>Company</dt><dd>${escapeHtml(record.company)}</dd>` : ""}
+      ${record.reportingPeriod ? `<dt>Report window</dt><dd>${escapeHtml(record.reportingPeriod)}</dd>` : ""}
       <dt>Mechanism</dt><dd>${escapeHtml(record.mechanism || "Not recorded")}</dd>
       <dt>Affected groups</dt><dd>${escapeHtml((record.affectedGroups || []).join(", ") || "Not recorded")}</dd>
       <dt>Limits</dt><dd>${(record.limits || []).map((limit) => `<span class="limit">${escapeHtml(limit)}</span>`).join("")}</dd>
