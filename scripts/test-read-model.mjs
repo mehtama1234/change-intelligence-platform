@@ -59,7 +59,10 @@ try {
   if (ingestionResponse.status !== 200 || ingestion.schemaVersion !== "research-ingestion-ledger-v1" || ingestion.repositories.length !== 6 || ingestion.records.length !== packet.records.length) throw new Error("Research ingestion read model contract failed.");
   const timelineResponse = await request("/api/timeline");
   const timeline = await timelineResponse.json();
-  if (timelineResponse.status !== 200 || timeline.schemaVersion !== "research-timeline-v1" || timeline.eventCount !== sourceMap.sources.length * 2) throw new Error("Research timeline contract failed.");
+  if (timelineResponse.status !== 200 || timeline.schemaVersion !== "research-timeline-v1" || timeline.eventCount !== sourceMap.sources.length * 2 || !timeline.impactSummary || !Array.isArray(timeline.impactChains)) throw new Error("Research timeline contract failed.");
+  const filteredTimelineResponse = await request("/api/timeline?eventType=source_scan&source=trend-hunting-ai-control");
+  const filteredTimeline = await filteredTimelineResponse.json();
+  if (filteredTimelineResponse.status !== 200 || !filteredTimeline.events.length || filteredTimeline.events.some((event) => event.eventType !== "source_scan" || event.sourceId !== "trend-hunting-ai-control")) throw new Error("Filtered research timeline contract failed.");
   const usageResponse = await request("/api/usage?workspace=demo-research");
   const usage = await usageResponse.json();
   if (usageResponse.status !== 200 || usage.schemaVersion !== "workspace-usage-v1" || usage.workspaceId !== "demo-research") throw new Error("Workspace usage contract failed.");

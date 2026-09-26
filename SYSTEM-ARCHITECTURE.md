@@ -109,6 +109,11 @@ delivery is held while that alert is open; a later availability check records
 the recovery and allows the next delivery to be prepared. The recovery closes
 the operational alert but does not erase the outage history.
 
+The timeline read model groups these records into an impact chain with the
+outage time, recovery time, affected workspaces, held deliveries, and released
+deliveries. It supports source, event-type, and time filters while applying the
+same workspace visibility rules as the other customer read models.
+
 ## Storage
 
 Use separate stores for:

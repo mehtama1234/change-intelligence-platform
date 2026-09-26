@@ -1292,8 +1292,21 @@ const server = createServer(async (request, response) => {
         ...pilotDeliveries.map((delivery) => ({ eventType: "customer_delivery", targetId: delivery.id, workspaceId: delivery.workspaceId, status: delivery.status, deliveryStatus: delivery.status, refreshRunId: delivery.refreshRunId, unavailableSourceIds: delivery.snapshot?.unavailableSourceIds ?? [], occurredAt: delivery.generatedAt }))
       ];
       const visible = (event) => !event.workspaceId || !access.workspaceIds || access.workspaceIds.includes(event.workspaceId);
-      const events = allEvents.filter(visible).sort((a, b) => String(a.occurredAt).localeCompare(String(b.occurredAt)));
-      return json(response, 200, { schemaVersion: "research-timeline-v1", eventCount: events.length, events });
+      const visibleEvents = allEvents.filter(visible).sort((a, b) => String(a.occurredAt).localeCompare(String(b.occurredAt)));
+      const sourceFilter = url.searchParams.get("source");
+      const eventTypeFilter = url.searchParams.get("eventType");
+      const since = Date.parse(url.searchParams.get("since") ?? "");
+      const matches = (event) => (!sourceFilter || event.sourceId === sourceFilter || event.unavailableSourceIds?.includes(sourceFilter)) && (!eventTypeFilter || event.eventType === eventTypeFilter) && (!Number.isFinite(since) || Date.parse(event.occurredAt) >= since);
+      const events = visibleEvents.filter(matches);
+      const availabilityEvents = visibleEvents.filter((event) => event.eventType === "source_availability");
+      const deliveryEvents = visibleEvents.filter((event) => event.eventType === "customer_delivery");
+      const impactChains = availabilityEvents.filter((event) => event.status.endsWith("_to_unavailable")).map((outage) => {
+        const recovery = availabilityEvents.find((event) => event.sourceId === outage.sourceId && event.status.endsWith("_to_available") && Date.parse(event.occurredAt) > Date.parse(outage.occurredAt));
+        const affectedDeliveries = deliveryEvents.filter((delivery) => delivery.unavailableSourceIds.includes(outage.sourceId) && Date.parse(delivery.occurredAt) >= Date.parse(outage.occurredAt) && (!recovery || Date.parse(delivery.occurredAt) <= Date.parse(recovery.occurredAt)));
+        return { sourceId: outage.sourceId, outageAt: outage.occurredAt, recoveredAt: recovery?.occurredAt ?? null, state: recovery ? "recovered" : "active", affectedWorkspaces: [...new Set(affectedDeliveries.map((delivery) => delivery.workspaceId))], heldDeliveryIds: affectedDeliveries.filter((delivery) => delivery.status === "held_for_review").map((delivery) => delivery.targetId), releasedDeliveryIds: affectedDeliveries.filter((delivery) => delivery.status === "prepared").map((delivery) => delivery.targetId) };
+      }).filter((chain) => !sourceFilter || chain.sourceId === sourceFilter);
+      const impactSummary = { chains: impactChains.length, activeOutages: impactChains.filter((chain) => chain.state === "active").length, recoveredOutages: impactChains.filter((chain) => chain.state === "recovered").length, affectedWorkspaces: new Set(impactChains.flatMap((chain) => chain.affectedWorkspaces)).size, heldDeliveries: impactChains.reduce((total, chain) => total + chain.heldDeliveryIds.length, 0), releasedDeliveries: impactChains.reduce((total, chain) => total + chain.releasedDeliveryIds.length, 0) };
+      return json(response, 200, { schemaVersion: "research-timeline-v1", eventCount: events.length, events, impactSummary, impactChains });
     }
     if (url.pathname === "/api/refresh") return json(response, 200, await readJson(refreshPath, { schemaVersion: "refresh-receipt-v1", status: "not_run", steps: [] }));
     if (url.pathname === "/api/workspaces") {
