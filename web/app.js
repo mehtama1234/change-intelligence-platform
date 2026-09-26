@@ -33,7 +33,7 @@ async function loadWorkspaces() {
   if (!workspaces.some((workspace) => workspace.id === state.workspaceId)) state.workspaceId = workspaces[0].id;
   select.value = state.workspaceId;
   setWorkspaceStatus(state.token ? "Connected." : "Demo workspace.");
-  await Promise.all([loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists(), loadComparisonViews()]);
+  await Promise.all([loadChanges(), loadOperations(), loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists(), loadComparisonViews()]);
 }
 
 async function loadComparisonViews() {
@@ -641,7 +641,7 @@ byId("question-form").addEventListener("submit", async (event) => {
   }
 });
 
-byId("workspace-select").addEventListener("change", async (event) => { state.workspaceId = event.target.value; await Promise.all([loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists(), loadEvidenceHistory(), loadInsightReview()]); });
+byId("workspace-select").addEventListener("change", async (event) => { state.workspaceId = event.target.value; await Promise.all([loadChanges(), loadComparisonViews(), loadOperations(), loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists(), loadEvidenceHistory(), loadInsightReview()]); });
 byId("watchlist-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const status = byId("watchlist-status");
