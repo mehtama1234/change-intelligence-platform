@@ -10,6 +10,7 @@ const reviewPath = resolve(root, "data/processed/runs/ai-work-control/latest-rev
 const historyPath = resolve(root, "data/processed/runs/ai-work-control/versioned-evidence-ledger.json");
 const refreshPath = resolve(root, "data/processed/runs/ai-work-control/latest-refresh.json");
 const alertsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-alerts.json");
+const questionsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-questions.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 
@@ -64,6 +65,22 @@ const server = createServer(async (request, response) => {
       await writeFile(alertsPath, `${JSON.stringify(ledger, null, 2)}\n`);
       return json(response, 200, alert);
     }
+    if (request.method === "POST" && url.pathname === "/api/questions") {
+      const body = await requestBody(request);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === body.actorId);
+      const question = String(body.question ?? "").trim();
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot save questions." });
+      if (question.length < 8 || question.length > 500) return json(response, 400, { error: "Question must be between 8 and 500 characters." });
+      const ledger = await readJson(questionsPath, { schemaVersion: "workspace-question-ledger-v1", questions: [] });
+      const now = new Date().toISOString();
+      const saved = { id: `question-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, workspaceId: workspace.id, question, scope: body.scope ?? { watchlistIds: [] }, state: "active", createdBy: member.id, createdRole: member.role, createdAt: now, updatedAt: now, lastEvaluatedAt: null };
+      ledger.questions.push(saved);
+      ledger.updatedAt = now;
+      await writeFile(questionsPath, `${JSON.stringify(ledger, null, 2)}\n`);
+      return json(response, 201, saved);
+    }
     if (request.method !== "GET") return json(response, 405, { error: "Only GET and alert acknowledgement POST are supported." });
     if (url.pathname === "/api/health") return json(response, 200, { status: "ok", service: "change-intelligence-read-model", generatedAt: new Date().toISOString() });
     if (url.pathname === "/api/packet") return json(response, 200, await readJson(packetPath, { error: "Packet has not been built." }));
@@ -75,6 +92,11 @@ const server = createServer(async (request, response) => {
       const ledger = await readJson(alertsPath, { alerts: [] });
       const workspaceId = url.searchParams.get("workspace");
       return json(response, 200, workspaceId ? ledger.alerts.filter((alert) => alert.workspaceId === workspaceId) : ledger.alerts);
+    }
+    if (url.pathname === "/api/questions") {
+      const ledger = await readJson(questionsPath, { schemaVersion: "workspace-question-ledger-v1", questions: [] });
+      const workspaceId = url.searchParams.get("workspace");
+      return json(response, 200, workspaceId ? ledger.questions.filter((question) => question.workspaceId === workspaceId) : ledger.questions);
     }
     if (url.pathname === "/") {
       response.writeHead(302, { Location: "/web/index.html" });

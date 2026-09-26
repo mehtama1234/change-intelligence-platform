@@ -70,6 +70,33 @@ byId("role-filter").addEventListener("change", (event) => {
   render();
 });
 
+async function loadQuestions() {
+  const response = await fetch("../api/questions?workspace=demo-research");
+  if (!response.ok) throw new Error(`Questions unavailable (${response.status})`);
+  const questions = await response.json();
+  byId("questions-summary").textContent = `${questions.length} saved question${questions.length === 1 ? "" : "s"}.`;
+  byId("questions-items").innerHTML = questions.length ? questions.map((question) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(question.state)}</span><span>${escapeHtml(question.createdBy)}</span></div><h3>${escapeHtml(question.question)}</h3><p class="muted">Saved ${escapeHtml(question.createdAt)} · Last evaluated: ${escapeHtml(question.lastEvaluatedAt || "not yet")}</p></article>`).join("") : `<p class="muted">No saved questions yet.</p>`;
+}
+
+byId("question-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const input = byId("question-input");
+  const status = byId("question-status");
+  status.textContent = "Saving…";
+  try {
+    const response = await fetch("../api/questions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", actorId: "demo-researcher", question: input.value }) });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Question could not be saved.");
+    input.value = "";
+    status.textContent = "Saved.";
+    await loadQuestions();
+  } catch (error) {
+    status.textContent = error.message;
+  }
+});
+
+loadQuestions().catch((error) => { byId("questions-summary").textContent = error.message; });
+
 fetch(fixtureUrl).then((response) => {
   if (!response.ok) throw new Error(`Fixture unavailable (${response.status})`);
   return response.json();

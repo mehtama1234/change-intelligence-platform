@@ -41,6 +41,11 @@ label { color: var(--muted); font-size: .9rem; }
 select { margin-left: 6px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); }
 .record-list { display: grid; gap: 12px; }
 .record-card { padding: 22px; }
+.question-form { margin-bottom: 18px; padding: 18px; background: var(--accent-soft); border: 1px solid var(--line); border-radius: 12px; }
+.question-form label { display: block; margin-bottom: 7px; font-weight: 700; color: var(--ink); }
+.question-form div { display: flex; gap: 8px; }
+.question-form input { min-width: 0; flex: 1; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+button { padding: 10px 14px; border: 0; border-radius: 8px; background: var(--accent); color: white; font: inherit; font-weight: 700; cursor: pointer; }
 .muted { color: var(--muted); }
 .table-wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
 table { width: 100%; border-collapse: collapse; min-width: 480px; }

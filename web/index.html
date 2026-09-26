@@ -65,6 +65,20 @@
         <div id="alerts-items" class="record-list" aria-live="polite"></div>
       </section>
 
+      <section id="workspace-questions" aria-labelledby="questions-title">
+        <div class="section-heading">
+          <p class="eyebrow">Customer workspace · saved questions</p>
+          <h2 id="questions-title">Questions to keep watching</h2>
+          <p id="questions-summary" class="muted">Loading saved questions…</p>
+        </div>
+        <form id="question-form" class="question-form">
+          <label for="question-input">Save a research question</label>
+          <div><input id="question-input" name="question" minlength="8" maxlength="500" placeholder="What changed, and what evidence would prove it matters?" required><button type="submit">Save question</button></div>
+          <p id="question-status" class="muted" role="status"></p>
+        </form>
+        <div id="questions-items" class="record-list" aria-live="polite"></div>
+      </section>
+
       <section id="report-history" aria-labelledby="report-title" hidden>
         <div class="section-heading">
           <p class="eyebrow">Annual structure · quarterly movement</p>
