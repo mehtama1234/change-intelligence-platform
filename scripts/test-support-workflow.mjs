@@ -34,6 +34,8 @@ try {
   if (outsiderRead.status !== 403) throw new Error(`Outsider was able to read support request: ${outsiderRead.status}`);
   const operatorRead = await get("/api/operator/support-requests", "operator-token");
   if (operatorRead.status !== 200 || !(await operatorRead.json()).requests.some((item) => item.id === request.id)) throw new Error("Operator support queue did not expose the request.");
+  const overview = await (await get("/api/operator/pilot-overview", "operator-token")).json();
+  if (overview.aggregate.openSupportRequests !== 1 || overview.aggregate.urgentSupportRequests !== 1 || overview.workspaces.find((workspace) => workspace.id === "demo-research")?.openSupportRequests !== 1) throw new Error("Operator overview did not aggregate open and urgent support workload.");
   const updated = await post(`/api/operator/support-requests/${encodeURIComponent(request.id)}/state`, "operator-token", { status: "resolved", note: "The source trace was checked and the handoff was corrected for the next cycle." }, "support-resolve-1");
   if (updated.status !== 200) throw new Error(`Support request resolution failed: ${updated.status}`);
   const resolved = await (await get("/api/support-requests?workspace=demo-research", "pilot-token")).json();

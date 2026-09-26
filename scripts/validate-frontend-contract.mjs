@@ -87,6 +87,8 @@ const required = [
   [operatorApp, "pilotMeasures", "operator pilot proof measures"],
   [operatorApp, "medianAnswerTimeMinutes", "operator answer-time measure"],
   [operatorApp, "missedImportantChanges", "operator missed-change measure"],
+  [operatorApp, "openSupportRequests", "operator open-support measure"],
+  [operatorApp, "urgentSupportRequests", "operator urgent-support measure"],
   [app, "delete-workspace-data", "workspace deletion control"],
   [app, "/diff?workspace=", "source difference API"],
   [app, "source-diff", "source difference inspector"],
