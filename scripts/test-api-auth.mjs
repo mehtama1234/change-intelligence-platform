@@ -116,6 +116,8 @@ try {
   if (provisionedOnboarding.status !== 200 || provisionedOnboardingBody.status !== "needs_setup") throw new Error("Provisioned workspace did not enter onboarding.");
   const outsiderProvisionedOnboarding = await fetch(`${base}/api/workspace-onboarding?workspace=${encodeURIComponent(provisionBody.id)}`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderProvisionedOnboarding.status !== 403) throw new Error("Provisioned workspace leaked to an outsider.");
+  const outsiderProvisionedSchedule = await fetch(`${base}/api/workspace-schedule?workspace=${encodeURIComponent(provisionBody.id)}`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderProvisionedSchedule.status !== 403) throw new Error("Provisioned workspace schedule leaked to an outsider.");
   const persistedRegistry = JSON.parse(await readFile(`${runtimeDir}/workspace-registry.json`, "utf8"));
   if (!persistedRegistry.workspaces?.some((workspace) => workspace.id === provisionBody.id)) throw new Error("Workspace registry did not persist the provisioned workspace.");
   const invitedMemberWorkspaces = await (await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer new-researcher-token" } })).json();

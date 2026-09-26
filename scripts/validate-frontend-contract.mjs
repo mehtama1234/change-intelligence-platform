@@ -66,6 +66,7 @@ const required = [
   [app, "../api/workspace-retention?workspace=", "workspace retention API"],
   [app, "../api/workspace-deletion", "workspace deletion API"],
   [app, "../api/workspace-onboarding?workspace=", "workspace onboarding API"],
+  [app, "../api/workspace-schedule?workspace=", "workspace schedule API"],
   [operatorApp, "onboarding?.status", "operator onboarding summary"],
   [app, "delete-workspace-data", "workspace deletion control"],
   [app, "/diff?workspace=", "source difference API"],

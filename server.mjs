@@ -606,6 +606,15 @@ function buildWorkspaceOnboarding({ workspace, profile, questions, watchlists, p
   return { schemaVersion: "workspace-onboarding-v1", workspaceId: workspace.id, workspaceName: workspace.name, status: missing.length ? "needs_setup" : deliveries.length ? "active" : "ready_for_first_delivery", steps, nextAction: missing[0]?.detail ?? (deliveries.length ? "Review the latest handoff and record what it changed." : "Run a refresh to generate the first handoff."), limitation: "This checklist proves configuration and recorded activity only. It does not prove that the pilot is useful or that a partner will renew." };
 }
 
+function buildWorkspaceSchedule({ workspaceId, profile, deliveries, scheduler }) {
+  const latestDelivery = deliveries.slice().sort((a, b) => String(b.generatedAt).localeCompare(String(a.generatedAt)))[0] ?? null;
+  if (!profile) return { schemaVersion: "workspace-schedule-v1", workspaceId, status: "not_configured", eligible: false, cadence: null, nextScheduledAt: null, latestDeliveryAt: null, latestDeliveryId: null, schedulerStatus: scheduler?.status ?? "unknown", explanation: "Configure the pilot before this workspace enters the recurring refresh schedule." };
+  if (!latestDelivery) return { schemaVersion: "workspace-schedule-v1", workspaceId, status: "queued_for_first_refresh", eligible: true, cadence: profile.cadence, nextScheduledAt: profile.nextReviewAt ?? null, latestDeliveryAt: null, latestDeliveryId: null, schedulerStatus: scheduler?.status ?? "unknown", explanation: "The configured workspace will be included in the next eligible refresh; the first run will create a reviewable handoff." };
+  const cadenceMs = { weekly: 7 * 86400000, monthly: 31 * 86400000, quarterly: 93 * 86400000 }[profile.cadence] ?? null;
+  const nextScheduledAt = profile.nextReviewAt ?? (cadenceMs && Date.parse(latestDelivery.generatedAt) ? new Date(Date.parse(latestDelivery.generatedAt) + cadenceMs).toISOString() : null);
+  return { schemaVersion: "workspace-schedule-v1", workspaceId, status: "first_delivery_ready", eligible: true, cadence: profile.cadence, nextScheduledAt, latestDeliveryAt: latestDelivery.generatedAt, latestDeliveryId: latestDelivery.id, latestDeliveryStatus: latestDelivery.status, schedulerStatus: scheduler?.status ?? "unknown", explanation: "A reviewable handoff exists. The next scheduled refresh will continue this workspace's cadence." };
+}
+
 function buildOperatorPortfolioReadiness({ workspaces, snapshots }) {
   const latestByWorkspace = new Map();
   for (const snapshot of snapshots) {
@@ -2012,6 +2021,15 @@ const server = createServer(async (request, response) => {
       const profile = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles.find((candidate) => candidate.workspaceId === workspace.id) ?? null;
       const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
       return json(response, 200, buildWorkspaceOnboarding({ workspace, profile, questions, watchlists, privateSources, deliveries }));
+    }
+    if (url.pathname === "/api/workspace-schedule") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      if (!access.workspaceId) return json(response, 400, { error: "Choose one workspace to inspect scheduling." });
+      const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
+      const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries.filter((delivery) => delivery.workspaceId === access.workspaceId);
+      const scheduler = await readJson(schedulerStatusPath, { status: "not_started" });
+      return json(response, 200, buildWorkspaceSchedule({ workspaceId: access.workspaceId, profile: profiles.find((profile) => profile.workspaceId === access.workspaceId) ?? null, deliveries, scheduler }));
     }
     if (url.pathname === "/api/pilot-deliveries") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

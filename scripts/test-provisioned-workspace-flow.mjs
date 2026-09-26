@@ -59,6 +59,8 @@ try {
   if (question.workspaceId !== workspaceId) throw new Error("Question was not assigned to the provisioned workspace.");
   const before = await (await fetch(`${base}/api/workspace-onboarding?workspace=${encodeURIComponent(workspaceId)}`, { headers: auth })).json();
   if (before.status !== "ready_for_first_delivery") throw new Error(`Expected readiness for first delivery, received ${before.status}.`);
+  const queuedSchedule = await (await fetch(`${base}/api/workspace-schedule?workspace=${encodeURIComponent(workspaceId)}`, { headers: auth })).json();
+  if (queuedSchedule.status !== "queued_for_first_refresh" || queuedSchedule.eligible !== true) throw new Error(`Configured workspace did not enter the next-refresh queue: ${JSON.stringify(queuedSchedule)}`);
   await stopServer(server);
   server = null;
 
@@ -73,6 +75,8 @@ try {
   const afterResponse = await fetch(`${base}/api/workspace-onboarding?workspace=${encodeURIComponent(workspaceId)}`, { headers: auth });
   const after = await afterResponse.json();
   if (after.status !== "active" || after.steps.find((step) => step.id === "first_delivery")?.status !== "ready") throw new Error(`Onboarding did not become active after the first handoff: ${JSON.stringify(after)}`);
+  const deliveredSchedule = await (await fetch(`${base}/api/workspace-schedule?workspace=${encodeURIComponent(workspaceId)}`, { headers: auth })).json();
+  if (deliveredSchedule.status !== "first_delivery_ready" || deliveredSchedule.latestDeliveryId !== deliveries.deliveries[0].id) throw new Error(`Workspace schedule did not record the first handoff: ${JSON.stringify(deliveredSchedule)}`);
   const operatorOverview = await (await fetch(`${base}/api/operator/pilot-overview`, { headers: operatorAuth })).json();
   const operatorWorkspace = operatorOverview.workspaces.find((candidate) => candidate.id === workspaceId);
   if (!operatorWorkspace || operatorWorkspace.onboarding?.status !== "active" || operatorWorkspace.deliveries !== 1) throw new Error("Operator overview did not include the provisioned workspace's first handoff.");

@@ -147,6 +147,10 @@ Activation notices use the normal workspace-scoped notification read model.
 The notice contains no invitation link or secret and is created at most once
 per workspace, so provider retries cannot create duplicate customer messages.
 
+Schedule state uses the same membership check as onboarding and delivery
+records. It exposes timing and delivery identifiers, not another workspace's
+questions, evidence, or private source material.
+
 Token-authenticated write requests must also send an `Idempotency-Key`. A
 retry with the same key replays the original result instead of creating a
 second question, decision, publication, or acknowledgment.

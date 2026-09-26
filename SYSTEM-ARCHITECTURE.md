@@ -267,3 +267,9 @@ notification in the existing delivery-notification ledger. It points the
 confirmed customer to the onboarding checklist; it does not claim that the
 pilot is configured or that the first delivery exists. The same notification
 is visible only to members of that workspace.
+
+The workspace schedule read model then distinguishes a configured tenant
+queued for its first eligible refresh from one with a first delivery ready. It
+derives this state from the durable pilot profile, delivery ledger, and
+scheduler status; it does not claim that a scheduled run succeeded until the
+delivery record exists.

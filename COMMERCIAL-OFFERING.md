@@ -150,3 +150,8 @@ The customer-facing sequence is now explicit: account confirmed, onboarding
 notice shown, setup checklist completed, first refresh run, and reviewable
 handoff delivered. Each step remains observable, so the operator can see where
 a partner is waiting without reading the partner's private research.
+
+The operator and customer can now tell the difference between “configured and
+waiting for the next refresh” and “the first handoff is ready.” That prevents
+onboarding from ending at account creation and makes the first paid service
+moment measurable.
