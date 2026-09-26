@@ -5,10 +5,10 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
-const packet = JSON.parse(await readFile(resolve(root, "data/processed/ai-work-control.packet.json"), "utf8"));
+const packet = JSON.parse(await readFile(resolve(root, process.env.INSIGHT_PACKET_PATH ?? "data/processed/ai-work-control.packet.json"), "utf8"));
 const records = new Map(packet.records.map((record) => [record.id, record]));
-const decisionsPath = resolve(root, "data/processed/runs/ai-work-control/insight-decisions.json");
-const publicationsPath = resolve(root, "data/processed/runs/ai-work-control/insight-publications.json");
+const decisionsPath = resolve(root, process.env.INSIGHT_DECISIONS_PATH ?? "data/processed/runs/ai-work-control/insight-decisions.json");
+const publicationsPath = resolve(root, process.env.INSIGHT_PUBLICATIONS_PATH ?? "data/processed/runs/ai-work-control/insight-publications.json");
 const decisions = existsSync(decisionsPath) ? JSON.parse(await readFile(decisionsPath, "utf8")) : { decisions: [] };
 const publications = existsSync(publicationsPath) ? JSON.parse(await readFile(publicationsPath, "utf8")) : { publications: [] };
 const latestDecision = new Map();
@@ -21,7 +21,8 @@ const candidates = packet.insights.map((insight) => {
     sourceRepository: record.sourceRepository,
     sourceRef: record.sourceRef,
     sourceRole: record.sourceRole,
-    sourceDigest: record.sourceDigest
+    sourceDigest: record.sourceDigest,
+    ...(record.researchReview ? { researchReview: record.researchReview } : {})
   }));
   const evidenceDigest = createHash("sha256").update(JSON.stringify(evidence.map((item) => [item.recordId, item.sourceDigest]))).digest("hex");
   const candidateKey = insight.id;
@@ -50,7 +51,7 @@ const candidates = packet.insights.map((insight) => {
   };
 });
 const result = { schemaVersion: "insight-candidate-ledger-v1", generatedAt: new Date().toISOString(), candidates };
-const outputDir = resolve(root, "data/processed/runs/ai-work-control");
+const outputDir = resolve(root, process.env.INSIGHT_OUTPUT_DIR ?? "data/processed/runs/ai-work-control");
 await mkdir(outputDir, { recursive: true });
 await writeFile(resolve(outputDir, "insight-candidates.json"), `${JSON.stringify(result, null, 2)}\n`);
 console.log(JSON.stringify({ candidates: candidates.length, needsResearcherReview: candidates.filter((candidate) => candidate.status === "needs_researcher_review").length }, null, 2));

@@ -6,18 +6,18 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const sourceRoot = process.env.RESEARCH_ROOT ?? "/home/mehta/git-repo";
-const mapPath = resolve(root, "data/source-maps/ai-work-control.sources.json");
-const outputPath = resolve(root, "data/processed/ai-work-control.packet.json");
+const mapPath = resolve(root, process.env.SOURCE_MAP_PATH ?? "data/source-maps/ai-work-control.sources.json");
+const outputPath = resolve(root, process.env.PACKET_OUTPUT_PATH ?? "data/processed/ai-work-control.packet.json");
 const captureManifestPath = resolve(root, "data/raw/ai-work-control/c3-ai/manifest.json");
 const xbrlExtractPath = resolve(root, "data/processed/ai-work-control/c3-ai.xbrl.json");
-const sourceScanPath = resolve(root, "data/processed/runs/ai-work-control/latest-source-scan.json");
-const reviewWorkPath = resolve(root, "data/processed/runs/ai-work-control/latest-review-work.json");
-const reviewDecisionsPath = resolve(root, "data/processed/runs/ai-work-control/review-decisions.json");
-const evidenceLedgerPath = resolve(root, "data/processed/runs/ai-work-control/versioned-evidence-ledger.json");
-const alertsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-alerts.json");
-const questionEvaluationsPath = resolve(root, "data/processed/runs/ai-work-control/question-evaluations.json");
-const briefingsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-briefings.json");
-const insightCandidatesPath = resolve(root, "data/processed/runs/ai-work-control/insight-candidates.json");
+const sourceScanPath = resolve(root, process.env.SOURCE_SCAN_PATH ?? "data/processed/runs/ai-work-control/latest-source-scan.json");
+const reviewWorkPath = resolve(root, process.env.REVIEW_WORK_PATH ?? "data/processed/runs/ai-work-control/latest-review-work.json");
+const reviewDecisionsPath = resolve(root, process.env.REVIEW_DECISIONS_PATH ?? "data/processed/runs/ai-work-control/review-decisions.json");
+const evidenceLedgerPath = resolve(root, process.env.EVIDENCE_LEDGER_PATH ?? "data/processed/runs/ai-work-control/versioned-evidence-ledger.json");
+const alertsPath = resolve(root, process.env.ALERTS_PATH ?? "data/processed/runs/ai-work-control/workspace-alerts.json");
+const questionEvaluationsPath = resolve(root, process.env.QUESTION_EVALUATIONS_PATH ?? "data/processed/runs/ai-work-control/question-evaluations.json");
+const briefingsPath = resolve(root, process.env.BRIEFINGS_PATH ?? "data/processed/runs/ai-work-control/workspace-briefings.json");
+const insightCandidatesPath = resolve(root, process.env.INSIGHT_CANDIDATES_PATH ?? "data/processed/runs/ai-work-control/insight-candidates.json");
 const map = JSON.parse(await readFile(mapPath, "utf8"));
 const sourceScan = existsSync(sourceScanPath) ? JSON.parse(await readFile(sourceScanPath, "utf8")) : undefined;
 const reviewWork = existsSync(reviewWorkPath) ? JSON.parse(await readFile(reviewWorkPath, "utf8")) : undefined;
@@ -170,6 +170,21 @@ for (const source of map.sources) {
     ...(reportWindow ? { reportWindow } : {}),
     limits: source.limits
   });
+}
+
+const acceptedVersions = evidenceLedger?.records ?? [];
+for (const version of acceptedVersions) {
+  if (version.state !== "accepted_for_research" || !version.record?.id) continue;
+  const current = records.find((record) => record.id === version.record.id);
+  if (!current || current.sourceDigest !== version.sourceDigest) continue;
+  current.researchReview = {
+    state: version.state,
+    versionId: version.versionId,
+    decisionId: version.decisionId,
+    reviewer: version.acceptedBy,
+    acceptedAt: version.acceptedAt,
+    sourceReviewRun: evidenceLedger.sourceReviewRun
+  };
 }
 
 const packet = {

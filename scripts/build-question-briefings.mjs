@@ -5,12 +5,12 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
-const packetPath = resolve(root, "data/processed/ai-work-control.packet.json");
-const questionsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-questions.json");
-const evaluationsPath = resolve(root, "data/processed/runs/ai-work-control/question-evaluations.json");
+const packetPath = resolve(root, process.env.PACKET_OUTPUT_PATH ?? "data/processed/ai-work-control.packet.json");
+const questionsPath = resolve(root, process.env.QUESTIONS_PATH ?? "data/processed/runs/ai-work-control/workspace-questions.json");
+const evaluationsPath = resolve(root, process.env.QUESTION_EVALUATIONS_PATH ?? "data/processed/runs/ai-work-control/question-evaluations.json");
 const outputDir = resolve(root, "data/processed/runs/ai-work-control");
-const outputPath = resolve(outputDir, "workspace-briefings.json");
-const publicationsPath = resolve(outputDir, "briefing-publications.json");
+const outputPath = process.env.BRIEFINGS_PATH ? resolve(process.env.BRIEFINGS_PATH) : resolve(outputDir, "workspace-briefings.json");
+const publicationsPath = process.env.BRIEFING_PUBLICATIONS_PATH ? resolve(process.env.BRIEFING_PUBLICATIONS_PATH) : resolve(outputDir, "briefing-publications.json");
 const packet = JSON.parse(await readFile(packetPath, "utf8"));
 const questions = existsSync(questionsPath) ? JSON.parse(await readFile(questionsPath, "utf8")) : { questions: [] };
 const evaluations = existsSync(evaluationsPath) ? JSON.parse(await readFile(evaluationsPath, "utf8")) : { evaluations: [] };
@@ -28,7 +28,8 @@ const briefings = questions.questions.filter((question) => question.state === "a
     sourceRef: record.sourceRef,
     observation: record.observation,
     limits: record.limits,
-    sourceDigest: record.sourceDigest
+    sourceDigest: record.sourceDigest,
+    ...(record.researchReview ? { researchReview: record.researchReview } : {})
   }));
   const evidenceDigest = createHash("sha256").update(JSON.stringify(evidence.map((item) => [item.recordId, item.sourceDigest]))).digest("hex");
   const publication = publicationByBriefing.get(`briefing-${question.id}`);

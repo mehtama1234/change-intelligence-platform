@@ -31,6 +31,9 @@ for (const [candidateId, decision] of latestByCandidate) {
     decisionId: decision.id,
     record: {
       id: candidate.sourceId,
+      sourceDigest: candidate.sourceDigest,
+      sourceBytes: candidate.sourceBytes,
+      sourceExcerpt: candidate.sourceExcerpt,
       sourceRole: candidate.sourceRole,
       sourceRepository: candidate.repository,
       sourceRef: candidate.sourcePath,
@@ -42,7 +45,13 @@ for (const [candidateId, decision] of latestByCandidate) {
       affectedGroups: candidate.affectedGroups,
       claimState: candidate.claimState,
       asOf: candidate.asOf,
-      limits: candidate.limits
+      limits: candidate.limits,
+      researchReview: {
+        state: "accepted_for_research",
+        decisionId: decision.id,
+        reviewer: decision.reviewer,
+        acceptedAt: decision.decidedAt
+      }
     }
   });
 }
