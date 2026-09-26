@@ -121,6 +121,11 @@ try {
   const operatorCloseout = await fetch(`${base}/api/operator/pilot-closeout?workspace=demo-research`, { headers: { Authorization: "Bearer operator-token" } });
   const operatorCloseoutBody = await operatorCloseout.json();
   if (operatorCloseout.status !== 200 || operatorCloseoutBody.schemaVersion !== "pilot-closeout-packet-v1" || operatorCloseoutBody.workspace?.id !== "demo-research" || !operatorCloseout.headers.get("content-disposition")?.includes("demo-research-pilot-closeout.json") || JSON.stringify(operatorCloseoutBody).includes("private note")) throw new Error("Operator pilot closeout export contract or privacy boundary failed.");
+  const outsiderCohort = await fetch(`${base}/api/operator/pilot-cohort`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderCohort.status !== 403) throw new Error(`Expected non-operator cohort export to return 403, received ${outsiderCohort.status}`);
+  const operatorCohort = await fetch(`${base}/api/operator/pilot-cohort`, { headers: { Authorization: "Bearer operator-token" } });
+  const operatorCohortBody = await operatorCohort.json();
+  if (operatorCohort.status !== 200 || operatorCohortBody.schemaVersion !== "operator-pilot-cohort-v1" || !operatorCohortBody.cohort || !Array.isArray(operatorCohortBody.workspaces) || !operatorCohort.headers.get("content-disposition")?.includes("pilot-cohort-report.json") || JSON.stringify(operatorCohortBody).includes("private note")) throw new Error("Operator cohort export contract or privacy boundary failed.");
   const provisioningKey = "operator-workspace-provisioning";
   const provision = await fetch(`${base}/api/operator/workspaces`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": provisioningKey, "content-type": "application/json" }, body: JSON.stringify({ name: "New partner workspace", ownerId: "new-owner", members: [{ id: "new-researcher", role: "researcher" }] }) });
   const provisionBody = await provision.json();

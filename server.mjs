@@ -785,6 +785,26 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
   };
 }
 
+function buildOperatorCohortReport({ overview }) {
+  const workspaces = overview.workspaces ?? [];
+  const readiness = overview.portfolioReadiness ?? { counts: { improve: 0, continue: 0, expand: 0, stop: 0, not_available: 0 }, workspaces: [] };
+  const byId = new Map(readiness.workspaces.map((workspace) => [workspace.id, workspace]));
+  return {
+    schemaVersion: "operator-pilot-cohort-v1",
+    generatedAt: new Date().toISOString(),
+    cohort: {
+      workspaceCount: workspaces.length,
+      configuredPilots: workspaces.filter((workspace) => workspace.pilotConfigured).length,
+      firstDeliveries: workspaces.filter((workspace) => workspace.deliveries > 0).length,
+      reviewedPilots: workspaces.filter((workspace) => workspace.reviewedDeliveries > 0).length,
+      checkpointEligible: workspaces.filter((workspace) => workspace.reviewedDeliveries >= 3).length,
+      recommendations: readiness.counts
+    },
+    workspaces: workspaces.map((workspace) => ({ id: workspace.id, name: workspace.name, onboarding: workspace.onboarding, pilotConfigured: workspace.pilotConfigured, deliveries: workspace.deliveries, reviewedDeliveries: workspace.reviewedDeliveries, usefulDeliveries: workspace.usefulDeliveries, decisionChanges: workspace.decisionChanges, latestDecision: workspace.latestDecision, pilotMeasures: workspace.pilotMeasures, recommendation: byId.get(workspace.id)?.recommendation ?? "not_available", serviceStatus: byId.get(workspace.id)?.serviceStatus ?? "not_available" })),
+    limitation: "This cohort report contains aggregate operating signals only. It excludes customer questions, review notes, source details, and private workspace content. It supports human service decisions; it does not determine whether a pilot should expand."
+  };
+}
+
 function buildAtlasComparison({ kind, ids, atlas, packet, sourceScan }) {
   const selected = ids.map((id) => (atlas.entities?.[kind] ?? []).find((candidate) => candidate.id === id)).filter(Boolean);
   const comparisons = selected.map((entity) => {
@@ -2327,6 +2347,38 @@ const server = createServer(async (request, response) => {
       await appendAudit({ requestId, action: "operator_export_pilot_closeout", targetId: workspace.id, workspaceId: workspace.id, actorId: operator.actorId, actorRole: "operator", result: "exported", occurredAt: new Date().toISOString() });
       response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="${workspace.id}-pilot-closeout.json"`, "Cache-Control": "no-store" });
       return response.end(JSON.stringify(packet));
+    }
+    if (url.pathname === "/api/operator/pilot-cohort") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const workspaces = (await configuredWorkspaces()).map((workspace) => ({ id: workspace.id, name: workspace.name }));
+      const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
+      const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
+      const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions;
+      const outcomes = store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes").outcomes;
+      const alerts = store.alertsLedger().alerts;
+      const refreshHistory = (await readJson(refreshHistoryPath, { runs: [] })).runs ?? [];
+      const sourceScan = await readJson(sourceScanPath, { sources: [] });
+      const sourceScanHistory = await readJson(sourceScanHistoryPath, { runs: [] });
+      const warningEvents = store.recordsLedger("operator_warning", "operator-warning-event-ledger-v1", "events").events;
+      const notifications = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;
+      const notificationAttempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
+      const readinessSnapshots = store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots").snapshots;
+      const questions = store.questionsLedger().questions;
+      const watchlists = store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists").watchlists;
+      const privateSources = store.recordsLedger("workspace_source", "workspace-source-ledger-v1", "sources").sources;
+      const briefings = (await readJson(briefingsPath, { briefings: [] })).briefings;
+      const auditEntries = store.auditLedger().entries;
+      const onboardingByWorkspace = new Map(workspaces.map((workspace) => [workspace.id, buildOperatorOnboardingSummary({ workspace, profile: profiles.find((profile) => profile.workspaceId === workspace.id), questionCount: questions.filter((question) => question.workspaceId === workspace.id && question.state === "active").length, watchlistCount: watchlists.filter((watchlist) => watchlist.workspaceId === workspace.id).length, acceptedPrivateSourceCount: privateSources.filter((source) => source.workspaceId === workspace.id && source.reviewState === "accepted").length, deliveryCount: deliveries.filter((delivery) => delivery.workspaceId === workspace.id).length })]));
+      const scheduler = await readJson(schedulerStatusPath, { status: "not_started" });
+      const backupScheduler = await readJson(backupSchedulerStatusPath, { status: "not_started" });
+      const notificationScheduler = await readJson(notificationSchedulerStatusPath, { status: "not_started" });
+      const schedules = new Map(workspaces.map((workspace) => [workspace.id, buildWorkspaceSchedule({ workspaceId: workspace.id, profile: profiles.find((profile) => profile.workspaceId === workspace.id) ?? null, deliveries: deliveries.filter((delivery) => delivery.workspaceId === workspace.id), scheduler })]));
+      const overview = buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, outcomes, briefings, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, readinessSnapshots, onboardingByWorkspace, schedules, schedulerStatuses: { refresh: scheduler, backup: backupScheduler, notification: notificationScheduler }, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs, remediationSlaMs: operatorRemediationSlaMs });
+      const report = buildOperatorCohortReport({ overview });
+      await appendAudit({ requestId, action: "operator_export_pilot_cohort", targetId: "pilot-cohort", workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: "exported", occurredAt: new Date().toISOString() });
+      response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": "attachment; filename=pilot-cohort-report.json", "Cache-Control": "no-store" });
+      return response.end(JSON.stringify(report));
     }
     if (url.pathname === "/api/operator/pilot-overview") {
       const operator = operatorAccess(request);

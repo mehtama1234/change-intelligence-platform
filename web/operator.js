@@ -1,5 +1,19 @@
 const byId = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[char]));
+byId("export-cohort").addEventListener("click", async () => {
+  const status = byId("operator-status");
+  const token = byId("operator-token").value.trim();
+  status.textContent = "Preparing cohort report…";
+  const response = await fetch("../api/operator/pilot-cohort", { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!response.ok) { status.textContent = response.status === 403 ? "Operator access denied." : `Could not export cohort report (${response.status}).`; return; }
+  const blob = await response.blob();
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "pilot-cohort-report.json";
+  link.click();
+  URL.revokeObjectURL(link.href);
+  status.textContent = "Cohort report downloaded.";
+});
 byId("load-overview").addEventListener("click", async () => {
   const status = byId("operator-status");
   const token = byId("operator-token").value.trim();
