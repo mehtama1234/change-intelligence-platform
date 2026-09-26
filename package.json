@@ -18,6 +18,7 @@
     "evaluate:questions": "node scripts/evaluate-questions.mjs",
     "build:question-briefings": "node scripts/build-question-briefings.mjs",
     "generate:insight-candidates": "node scripts/generate-insight-candidates.mjs",
+    "evaluate:insight-quality": "node scripts/evaluate-insight-quality.mjs",
     "sync:runtime-store": "node scripts/sync-runtime-store.mjs",
     "backup:runtime": "node scripts/backup-runtime.mjs",
     "restore:runtime": "node scripts/restore-runtime.mjs",
@@ -28,7 +29,7 @@
     "test:backup": "node scripts/test-runtime-backup.mjs",
     "test:readiness": "node scripts/test-operational-readiness.mjs",
     "test:api:auth": "node scripts/test-api-auth.mjs",
-    "ci:core": "npm run validate:fixtures && npm run validate:packet && npm run validate:adapters && npm run test:read-model && npm run test:storage && npm run test:api:auth",
+    "ci:core": "npm run validate:fixtures && npm run validate:packet && npm run validate:adapters && npm run evaluate:insight-quality && npm run test:read-model && npm run test:storage && npm run test:api:auth",
     "serve": "node server.mjs",
     "refresh": "node scripts/run-refresh-cycle.mjs",
     "scheduler": "node scripts/scheduler.mjs"

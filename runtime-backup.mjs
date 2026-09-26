@@ -14,7 +14,8 @@ const runtimeFiles = [
   "latest-source-scan.json",
   "versioned-evidence-ledger.json",
   "review-decisions.json",
-  "refresh-history.json"
+  "refresh-history.json",
+  "insight-evaluation.json"
 ];
 
 async function digest(path) {
