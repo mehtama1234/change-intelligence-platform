@@ -142,6 +142,12 @@ try {
   history.runs = [...(history.runs ?? []), { runId: receipt.runId, startedAt: receipt.startedAt, endedAt: receipt.endedAt, status: receipt.status, scope: receipt.scope, steps: receipt.steps.map(({ name, status, attempts, durationMs }) => ({ name, status, attempts, durationMs })) }].slice(-100);
   history.updatedAt = receipt.endedAt;
   await writeFile(historyPath, `${JSON.stringify(history, null, 2)}\n`);
+  try {
+    await exec(process.execPath, [resolve(root, "scripts/record-workspace-refresh-outcomes.mjs")], { cwd: root, env: { ...childEnv, REFRESH_STATUS: receipt.status, REFRESH_ENDED_AT: receipt.endedAt, REFRESH_FAILED_STEPS: JSON.stringify(failed.map((step) => step.name)) }, maxBuffer: 2 * 1024 * 1024 });
+  } catch (error) {
+    console.error(`Workspace refresh outcome recording failed: ${error.stderr ?? error.message ?? error}`);
+    process.exitCode = 1;
+  }
   console.log(JSON.stringify({ runId, status: receipt.status, steps: steps.map(({ name, status }) => ({ name, status })) }, null, 2));
   if (failed.length) process.exitCode = 1;
 } catch (error) {

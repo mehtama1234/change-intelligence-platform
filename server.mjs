@@ -55,6 +55,7 @@ const reviewEventsPath = resolve(runtimeDir, "review-events.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const workspaceRegistryPath = resolve(runtimeDir, "workspace-registry.json");
 const workspaceInvitationsPath = resolve(runtimeDir, "workspace-invitations.json");
+const workspaceRefreshOutcomesPath = resolve(runtimeDir, "workspace-refresh-outcomes.json");
 const sourceRegistryPath = resolve(root, "data/source-registry.json");
 const authMode = process.env.AUTH_MODE ?? "demo";
 const tokenActors = authMode === "token" ? JSON.parse(process.env.AUTH_TOKENS_JSON ?? "{}") : {};
@@ -1531,6 +1532,27 @@ const server = createServer(async (request, response) => {
       await storeOperation({ key: idempotencyKey, action: "activate_workspace_member", status: 200, body: responseBody, completedAt: now });
       return json(response, 200, responseBody);
     }
+    if (request.method === "POST" && url.pathname.match(/^\/api\/operator\/workspace-refresh-failures\/[^/]+\/retry$/)) {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const failureId = decodeURIComponent(url.pathname.slice("/api/operator/workspace-refresh-failures/".length, -"/retry".length));
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (!idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for operator writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const ledger = await readJson(workspaceRefreshOutcomesPath, { schemaVersion: "workspace-refresh-outcome-ledger-v1", outcomes: [] });
+      const failure = (ledger.outcomes ?? []).find((outcome) => outcome.id === failureId);
+      if (!failure) return json(response, 404, { error: "Workspace refresh failure not found." });
+      if (failure.status === "resolved") return json(response, 409, { error: "This workspace refresh failure is already resolved." });
+      const now = new Date().toISOString();
+      const updated = { ...failure, status: "retry_requested", retryRequestedAt: now, retryRequestedBy: operator.actorId };
+      ledger.outcomes = (ledger.outcomes ?? []).map((outcome) => outcome.id === failureId ? updated : outcome);
+      await writeFile(workspaceRefreshOutcomesPath, `${JSON.stringify({ ...ledger, updatedAt: now }, null, 2)}\n`);
+      const responseBody = { ...updated, nextAction: "The next scheduled refresh will retry this workspace; do not send a customer handoff until a prepared delivery exists." };
+      await appendAudit({ requestId, action: "retry_workspace_refresh", targetId: failureId, workspaceId: failure.workspaceId, actorId: operator.actorId, actorRole: "operator", result: "retry_requested", occurredAt: now });
+      await storeOperation({ key: idempotencyKey, action: "retry_workspace_refresh", status: 200, body: responseBody, completedAt: now });
+      return json(response, 200, responseBody);
+    }
     if (request.method === "POST" && url.pathname === "/api/integrations/identity-provider/events") {
       if (!identityProviderWebhookSecret) return json(response, 503, { error: "Identity-provider webhook integration is not configured." });
       const rawBody = await requestTextBody(request);
@@ -2060,6 +2082,12 @@ const server = createServer(async (request, response) => {
       if (operator.error) return json(response, operator.error.status, operator.error.body);
       const ledger = await readJson(workspaceInvitationsPath, { invitations: [] });
       return json(response, 200, { schemaVersion: "workspace-invitation-read-model-v1", invitations: ledger.invitations ?? [], limitation: "This is a provider-neutral outbox. It records what must be sent or confirmed; it does not contain credentials or send identity-provider messages itself." });
+    }
+    if (url.pathname === "/api/operator/workspace-refresh-failures") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const ledger = await readJson(workspaceRefreshOutcomesPath, { schemaVersion: "workspace-refresh-outcome-ledger-v1", outcomes: [] });
+      return json(response, 200, { schemaVersion: "workspace-refresh-failure-read-model-v1", outcomes: (ledger.outcomes ?? []).slice().sort((a, b) => String(b.observedAt).localeCompare(String(a.observedAt))), limitation: "Failures are workspace-scoped operational records. A retry request waits for the next scheduled refresh; a customer handoff is valid only when its delivery status is prepared." });
     }
     if (url.pathname === "/api/operator/notification-routes") {
       const operator = operatorAccess(request);

@@ -160,3 +160,8 @@ The operator queue now shows whether each partner is still waiting for its
 first refresh or already has a reviewable handoff. The handoff retains the
 refresh run that produced it, giving the service team a concrete way to find a
 missed delivery and explain what happened.
+
+If a refresh fails for one partner, the operator sees that partner's failed
+run and can request a retry without sending an incomplete handoff. The
+customer sees a delivery notification only after the retry produces a
+reviewable prepared delivery.

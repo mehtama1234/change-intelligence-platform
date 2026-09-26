@@ -151,6 +151,11 @@ Schedule state uses the same membership check as onboarding and delivery
 records. It exposes timing and delivery identifiers, not another workspace's
 questions, evidence, or private source material.
 
+Workspace refresh failure records expose only workspace ID, run ID, failed
+step names, status, and retry timing to operators. Customers do not receive a
+handoff notification merely because a refresh failed; a prepared delivery is
+required before the normal delivery notice is valid.
+
 Token-authenticated write requests must also send an `Idempotency-Key`. A
 retry with the same key replays the original result instead of creating a
 second question, decision, publication, or acknowledgment.

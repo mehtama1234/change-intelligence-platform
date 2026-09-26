@@ -274,6 +274,12 @@ derives this state from the durable pilot profile, delivery ledger, and
 scheduler status; it does not claim that a scheduled run succeeded until the
 delivery record exists.
 
+After each refresh, the service records a workspace outcome for every
+configured pilot. A partial run, missing delivery, or held delivery creates an
+open operational item; a prepared delivery resolves it. Operators can request
+one retry with an idempotency key, and the next scheduled refresh performs the
+retry. This keeps customer delivery separate from internal recovery work.
+
 The aggregate operator view includes the same schedule state for each tenant,
 so a configured workspace waiting for its first refresh is visible without
 exposing its questions or evidence. A failed refresh remains a global

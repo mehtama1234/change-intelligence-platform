@@ -118,6 +118,17 @@ try {
   if (outsiderProvisionedOnboarding.status !== 403) throw new Error("Provisioned workspace leaked to an outsider.");
   const outsiderProvisionedSchedule = await fetch(`${base}/api/workspace-schedule?workspace=${encodeURIComponent(provisionBody.id)}`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderProvisionedSchedule.status !== 403) throw new Error("Provisioned workspace schedule leaked to an outsider.");
+  const outsiderRefreshFailures = await fetch(`${base}/api/operator/workspace-refresh-failures`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderRefreshFailures.status !== 403) throw new Error("Workspace refresh failure queue leaked to a non-operator.");
+  const operatorRefreshFailures = await fetch(`${base}/api/operator/workspace-refresh-failures`, { headers: { Authorization: "Bearer operator-token" } });
+  const operatorRefreshFailuresBody = await operatorRefreshFailures.json();
+  if (operatorRefreshFailures.status !== 200 || operatorRefreshFailuresBody.schemaVersion !== "workspace-refresh-failure-read-model-v1" || !Array.isArray(operatorRefreshFailuresBody.outcomes)) throw new Error("Operator workspace refresh failure queue contract failed.");
+  await writeFile(`${runtimeDir}/workspace-refresh-outcomes.json`, `${JSON.stringify({ schemaVersion: "workspace-refresh-outcome-ledger-v1", outcomes: [{ id: "workspace-refresh-failure-auth-test", workspaceId: provisionBody.id, profileId: "pilot-test", runId: "failed-refresh-test", status: "open", reason: "refresh_failed", failedSteps: ["build-question-briefings"], observedAt: new Date().toISOString(), retryRequestedAt: null, retryRequestedBy: null }] }, null, 2)}\n`);
+  const workspaceRetry = await fetch(`${base}/api/operator/workspace-refresh-failures/workspace-refresh-failure-auth-test/retry`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": "workspace-refresh-retry-auth-test" } });
+  const workspaceRetryBody = await workspaceRetry.json();
+  if (workspaceRetry.status !== 200 || workspaceRetryBody.status !== "retry_requested" || workspaceRetryBody.workspaceId !== provisionBody.id) throw new Error("Operator workspace refresh retry did not persist.");
+  const workspaceRetryAgain = await fetch(`${base}/api/operator/workspace-refresh-failures/workspace-refresh-failure-auth-test/retry`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": "workspace-refresh-retry-auth-test" } });
+  if (workspaceRetryAgain.status !== 200 || JSON.stringify(await workspaceRetryAgain.json()) !== JSON.stringify(workspaceRetryBody)) throw new Error("Workspace refresh retry was not idempotent.");
   const persistedRegistry = JSON.parse(await readFile(`${runtimeDir}/workspace-registry.json`, "utf8"));
   if (!persistedRegistry.workspaces?.some((workspace) => workspace.id === provisionBody.id)) throw new Error("Workspace registry did not persist the provisioned workspace.");
   const invitedMemberWorkspaces = await (await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer new-researcher-token" } })).json();

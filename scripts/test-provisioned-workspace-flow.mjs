@@ -73,6 +73,8 @@ try {
   if (deliveriesResponse.status !== 200 || deliveries.deliveries.length !== 1 || deliveries.deliveries[0].workspaceId !== workspaceId || deliveries.deliveries[0].status !== "prepared") throw new Error(`First provisioned handoff was not available as a prepared delivery: ${JSON.stringify(deliveries)}`);
   const refreshReceipt = JSON.parse(await readFile(`${runtimeDir}/latest-refresh.json`, "utf8"));
   if (refreshReceipt.status !== "complete" || deliveries.deliveries[0].refreshRunId !== "provisioned-flow-refresh") throw new Error(`The actual refresh cycle did not complete for the provisioned workspace: ${JSON.stringify(refreshReceipt)}`);
+  const refreshOutcomes = JSON.parse(await readFile(`${runtimeDir}/workspace-refresh-outcomes.json`, "utf8"));
+  if (!Array.isArray(refreshOutcomes.outcomes) || refreshOutcomes.outcomes.some((outcome) => outcome.workspaceId === workspaceId && outcome.status !== "resolved")) throw new Error(`Workspace refresh outcome ledger did not record a clean first run: ${JSON.stringify(refreshOutcomes)}`);
   const handoffNotifications = await (await fetch(`${base}/api/workspace-delivery-notifications?workspace=${encodeURIComponent(workspaceId)}`, { headers: auth })).json();
   if (!handoffNotifications.notifications.some((notification) => notification.type === "pilot_delivery" && notification.deliveryId === deliveries.deliveries[0].id && notification.status === "pending")) throw new Error("The actual refresh cycle did not create the first handoff notification.");
   const afterResponse = await fetch(`${base}/api/workspace-onboarding?workspace=${encodeURIComponent(workspaceId)}`, { headers: auth });
