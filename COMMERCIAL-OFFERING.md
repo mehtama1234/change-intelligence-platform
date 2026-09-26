@@ -38,6 +38,11 @@ The internal system remains broad. The first paid product is narrow and useful.
 Weekly changes, monthly theme briefings, quarterly company updates, source
 traces, evidence boundaries, and watchlist alerts.
 
+Each cycle also produces a workspace update in plain language: what needs
+review now, which evidence gaps remain, which briefings changed, and what the
+customer should check next. It is a working handoff for the team, not an
+automatic business recommendation.
+
 ### Team workspace
 
 Private watchlists, competitors, themes, saved questions, shared briefings,

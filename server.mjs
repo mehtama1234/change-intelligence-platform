@@ -186,6 +186,33 @@ function buildPilotMetrics({ workspaceId, auditEntries, alerts, outcomes, briefi
   };
 }
 
+function buildWorkspaceUpdate({ workspaceId, workspaceName, refresh, readiness, coverage, metrics, alerts, questions, briefings }) {
+  const openAlerts = alerts.filter((alert) => alert.state === "open");
+  const activeQuestions = questions.filter((question) => question.state === "active");
+  const activeBriefings = briefings.filter((briefing) => ["draft", "published", "stale"].includes(briefing.state));
+  const staleBriefings = activeBriefings.filter((briefing) => briefing.state === "stale");
+  const actions = [];
+  if (openAlerts.length) actions.push({ type: "review_alerts", count: openAlerts.length, label: "Review open change alerts." });
+  if (staleBriefings.length) actions.push({ type: "re_review_briefings", count: staleBriefings.length, label: "Re-check briefings whose evidence changed." });
+  if (activeQuestions.length) actions.push({ type: "check_questions", count: activeQuestions.length, label: "Check whether saved questions have enough new evidence." });
+  if (coverage.summary.missing || coverage.summary.partial) actions.push({ type: "close_evidence_gaps", count: coverage.summary.missing + coverage.summary.partial, label: "Close or explain incomplete evidence coverage." });
+  const headline = openAlerts.length ? `${openAlerts.length} change${openAlerts.length === 1 ? "" : "s"} need review.` : "No open change alerts need review.";
+  return {
+    schemaVersion: "workspace-update-v1",
+    workspaceId,
+    workspaceName,
+    generatedAt: new Date().toISOString(),
+    headline,
+    freshness: { refreshStatus: refresh.status ?? "not_run", refreshRunId: refresh.runId ?? null, refreshEndedAt: refresh.endedAt ?? null, readiness: readiness.status },
+    changes: openAlerts.slice(0, 12).map((alert) => ({ id: alert.id, severity: alert.severity, watchlistName: alert.watchlistName, kind: alert.kind, reason: alert.reason, sourceId: alert.sourceId, createdAt: alert.createdAt })),
+    actions,
+    coverage: coverage.summary,
+    activity: metrics.measures,
+    briefings: activeBriefings.slice().sort((a, b) => String(b.updatedAt ?? b.createdAt ?? "").localeCompare(String(a.updatedAt ?? a.createdAt ?? ""))).slice(0, 8).map((briefing) => ({ id: briefing.id, title: briefing.title, state: briefing.state, updatedAt: briefing.updatedAt ?? briefing.createdAt ?? null })),
+    limitation: "This is a current workspace handoff, not a claim that every change matters or that the recorded activity caused a business result. Open the source and evidence chain before acting."
+  };
+}
+
 async function appendAudit(entry) {
   store.appendAudit(entry);
   await writeFile(auditPath, `${JSON.stringify(store.auditLedger(), null, 2)}\n`);
@@ -555,6 +582,25 @@ const server = createServer(async (request, response) => {
       const briefingLedger = await readJson(briefingsPath, { briefings: [] });
       const briefings = briefingLedger.briefings.filter((briefing) => !access.workspaceIds || access.workspaceIds.includes(briefing.workspaceId));
       return json(response, 200, buildPilotMetrics({ workspaceId: access.workspaceId, auditEntries: entries, alerts, outcomes, briefings }));
+    }
+    if (url.pathname === "/api/workspace-update") {
+      const workspaceId = url.searchParams.get("workspace");
+      const access = await workspaceAccess(request, workspaceId);
+      if (denyWorkspaceRead(response, access)) return;
+      const workspace = workspaceId ? await workspaceConfig(workspaceId) : null;
+      const entries = store.auditLedger().entries.filter((entry) => !access.workspaceIds || access.workspaceIds.includes(entry.workspaceId));
+      const alerts = store.alertsLedger().alerts.filter((alert) => !access.workspaceIds || access.workspaceIds.includes(alert.workspaceId));
+      const outcomes = store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes").outcomes.filter((outcome) => !access.workspaceIds || access.workspaceIds.includes(outcome.workspaceId));
+      const questions = store.questionsLedger().questions.filter((question) => !access.workspaceIds || access.workspaceIds.includes(question.workspaceId));
+      const briefingLedger = await readJson(briefingsPath, { briefings: [] });
+      const briefings = briefingLedger.briefings.filter((briefing) => !access.workspaceIds || access.workspaceIds.includes(briefing.workspaceId));
+      const packet = await readJson(packetPath, { domain: null, sourceSnapshotDate: null, records: [], insights: [] });
+      const registry = await readJson(sourceRegistryPath, { repositories: [] });
+      const refresh = await readJson(refreshPath, { status: "not_run", steps: [] });
+      const coverage = buildCoverage(packet, registry);
+      const readiness = await readinessReport();
+      const metrics = buildPilotMetrics({ workspaceId: access.workspaceId, auditEntries: entries, alerts, outcomes, briefings });
+      return json(response, 200, buildWorkspaceUpdate({ workspaceId: access.workspaceId, workspaceName: workspace?.name ?? access.workspaceId ?? "All workspaces", refresh, readiness, coverage, metrics, alerts, questions, briefings }));
     }
     if (url.pathname === "/metrics") {
       const readiness = await readinessReport();

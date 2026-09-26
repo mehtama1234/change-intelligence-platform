@@ -54,6 +54,9 @@ try {
   const pilotResponse = await request("/api/pilot-metrics?workspace=demo-research");
   const pilot = await pilotResponse.json();
   if (pilotResponse.status !== 200 || pilot.schemaVersion !== "pilot-metrics-v1" || pilot.workspaceId !== "demo-research" || !Number.isInteger(pilot.measures.alertsSeen) || !pilot.interpretation.includes("do not prove")) throw new Error("Pilot metrics contract failed.");
+  const updateResponse = await request("/api/workspace-update?workspace=demo-research");
+  const update = await updateResponse.json();
+  if (updateResponse.status !== 200 || update.schemaVersion !== "workspace-update-v1" || update.workspaceId !== "demo-research" || !update.headline || !update.freshness || !update.limitation.includes("not a claim")) throw new Error("Workspace update contract failed.");
   const evidenceResponse = await request("/api/evidence/trend-hunting-ai-control?workspace=demo-research");
   const evidence = await evidenceResponse.json();
   if (evidenceResponse.status !== 200 || evidence.schemaVersion !== "evidence-inspection-v1" || evidence.record.id !== "trend-hunting-ai-control" || !evidence.source.excerpt || !evidence.insightLinks.length) throw new Error("Evidence inspection contract failed.");

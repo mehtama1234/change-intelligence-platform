@@ -72,11 +72,12 @@ async function loadChanges() {
 
 async function loadOperations() {
   const workspace = encodeURIComponent(state.workspaceId);
-  const [response, usageResponse, metricsResponse] = await Promise.all([apiFetch("../api/operations"), apiFetch(`../api/usage?workspace=${workspace}`), apiFetch(`../api/pilot-metrics?workspace=${workspace}`)]);
-  if (!response.ok || !usageResponse.ok || !metricsResponse.ok) throw new Error(`Operations unavailable (${response.status})`);
+  const [response, usageResponse, metricsResponse, updateResponse] = await Promise.all([apiFetch("../api/operations"), apiFetch(`../api/usage?workspace=${workspace}`), apiFetch(`../api/pilot-metrics?workspace=${workspace}`), apiFetch(`../api/workspace-update?workspace=${workspace}`)]);
+  if (!response.ok || !usageResponse.ok || !metricsResponse.ok || !updateResponse.ok) throw new Error(`Operations unavailable (${response.status})`);
   const operations = await response.json();
   const usage = await usageResponse.json();
   const pilot = await metricsResponse.json();
+  const update = await updateResponse.json();
   const readiness = operations.readiness;
   const refresh = operations.refresh;
   byId("operations-summary").textContent = `Last run ${refresh.runId || "not recorded"} · ${refresh.status} · ${refresh.endedAt || "no completion time"}.`;
@@ -100,6 +101,7 @@ async function loadOperations() {
     <tr><th scope="row">Decision feedback</th><td>${escapeHtml(measures.decisionFeedbackRecords)} recorded · ${escapeHtml(measures.decisionsUsingBriefings)} used</td><td>Whether a briefing entered a real decision.</td></tr>
     <tr><th scope="row">Later result</th><td>${escapeHtml(measures.knownDecisionResults)} known · ${escapeHtml(measures.readingsHeld)} held · ${escapeHtml(measures.readingsChanged)} changed · ${escapeHtml(measures.readingsWrong)} wrong</td><td>What users later recorded about the reading.</td></tr>
   </tbody></table><p class="muted">${escapeHtml(pilot.interpretation)}</p>`;
+  byId("workspace-update").innerHTML = `<article class="record-card"><div class="record-meta"><span class="role">customer handoff</span><span>${escapeHtml(update.freshness.readiness)}</span><span>${escapeHtml(update.freshness.refreshStatus)}</span></div><h3>${escapeHtml(update.headline)}</h3><p>${escapeHtml(update.limitation)}</p><h4>Next actions</h4>${update.actions.length ? `<ul>${update.actions.map((action) => `<li>${escapeHtml(action.label)} (${escapeHtml(action.count)})</li>`).join("")}</ul>` : `<p class="muted">No follow-up action is currently recorded.</p>`}<details><summary>Open current changes</summary>${update.changes.length ? `<ul>${update.changes.map((change) => `<li><strong>${escapeHtml(change.watchlistName)}</strong> — ${escapeHtml(change.reason)}</li>`).join("")}</ul>` : `<p class="muted">No open changes.</p>`}</details></article>`;
   const history = operations.refreshHistory ?? [];
   byId("operations-history").innerHTML = history.length ? `<table><caption>Recent refresh runs</caption><thead><tr><th>Run</th><th>Status</th><th>Steps</th><th>Ended</th></tr></thead><tbody>${history.slice().reverse().slice(0, 8).map((run) => `<tr><th scope="row"><code>${escapeHtml(run.runId)}</code></th><td>${escapeHtml(run.status)}</td><td>${run.steps.filter((step) => step.status === "complete").length}/${run.steps.length} complete</td><td>${escapeHtml(run.endedAt)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No refresh history recorded yet.</p>`;
 }

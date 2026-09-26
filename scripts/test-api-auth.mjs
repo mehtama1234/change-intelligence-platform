@@ -42,6 +42,10 @@ try {
   if (memberTimeline.status !== 200 || memberTimelineBody.events.some((event) => event.id === "private-event")) throw new Error("Workspace timeline leaked an event from another workspace.");
   const outsiderUsage = await fetch(`${base}/api/usage?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderUsage.status !== 403) throw new Error(`Expected non-member usage read to return 403, received ${outsiderUsage.status}`);
+  const outsiderUpdate = await fetch(`${base}/api/workspace-update?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderUpdate.status !== 403) throw new Error(`Expected non-member workspace update read to return 403, received ${outsiderUpdate.status}`);
+  const memberUpdate = await fetch(`${base}/api/workspace-update?workspace=demo-research`, { headers: authHeaders });
+  if (memberUpdate.status !== 200) throw new Error(`Workspace member update read failed: ${memberUpdate.status}`);
   const memberUsage = await fetch(`${base}/api/usage?workspace=demo-research`, { headers: authHeaders });
   if (memberUsage.status !== 200) throw new Error(`Workspace member usage read failed: ${memberUsage.status}`);
   const outsiderEvidence = await fetch(`${base}/api/evidence/trend-hunting-ai-control?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
