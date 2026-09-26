@@ -313,7 +313,7 @@ const server = createServer(async (request, response) => {
       if (!candidate) return json(response, 404, { error: "Source-review candidate not found." });
       const now = new Date().toISOString();
       const previousDecision = store.recordsLedger("review_decision", "review-decision-ledger-v1", "decisions").decisions.filter((item) => item.candidateId === candidate.id).at(-1);
-      const decision = { id: `review-decision-${randomUUID()}`, candidateId: candidate.id, sourceId: candidate.sourceId, sourceDigest: candidate.sourceDigest ?? null, reviewer: member.id, reviewerRole: member.role, decision: body.decision, resultingState: resultingStates[body.decision], note: String(body.note ?? "").slice(0, 2000), decidedAt: now, publication: "not_published" };
+      const decision = { id: `review-decision-${randomUUID()}`, candidateId: candidate.id, sourceId: candidate.sourceId, workspaceId: workspace.id, sourceDigest: candidate.sourceDigest ?? null, reviewer: member.id, reviewerRole: member.role, decision: body.decision, resultingState: resultingStates[body.decision], note: String(body.note ?? "").slice(0, 2000), decidedAt: now, publication: "not_published" };
       store.commitRecord({ kind: "review_decision", record: decision, audit: { requestId, action: "review_source", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: decision.resultingState, occurredAt: now }, operation: { key: idempotencyKey, action: "review_source", status: 200, body: decision, completedAt: now } });
       await writeFile(reviewDecisionsPath, `${JSON.stringify(store.recordsLedger("review_decision", "review-decision-ledger-v1", "decisions"), null, 2)}\n`);
       store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "source_review", reviewType: previousDecision ? "re_review" : "initial_review", targetId: candidate.id, sourceId: candidate.sourceId, reviewer: member.id, reviewerRole: member.role, sourceDigest: candidate.sourceDigest ?? null, previousDecisionId: previousDecision?.id ?? null, outcome: decision.resultingState, occurredAt: now, decisionId: decision.id }]);
@@ -470,23 +470,30 @@ const server = createServer(async (request, response) => {
     }
     if (url.pathname === "/api/review-work") return json(response, 200, await readJson(reviewPath, { schemaVersion: "source-review-work-v1", reviewRequired: 0, candidates: [] }));
     if (url.pathname === "/api/evidence-history") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
       const records = store.recordsLedger("evidence_version", "versioned-evidence-ledger-v1", "records").records;
-      const decisionHistory = store.recordsLedger("review_decision", "review-decision-ledger-v1", "decisions").decisions;
-      const reviewEvents = store.recordsLedger("review_event", "review-event-ledger-v1", "events").events;
+      const visible = (item) => !item.workspaceId || !access.workspaceIds || access.workspaceIds.includes(item.workspaceId);
+      const decisionHistory = store.recordsLedger("review_decision", "review-decision-ledger-v1", "decisions").decisions.filter(visible);
+      const reviewEvents = store.recordsLedger("review_event", "review-event-ledger-v1", "events").events.filter(visible);
       const sourceSnapshots = store.recordsLedger("source_scan", "source-snapshot-ledger-v1", "sources").sources;
       return json(response, 200, { schemaVersion: "versioned-evidence-ledger-v1", activeResearchRecordCount: records.length, decisionCount: decisionHistory.length, records, decisionHistory, reviewEvents, sourceSnapshots });
     }
     if (url.pathname === "/api/timeline") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
       const sourceSnapshots = store.recordsLedger("source_scan", "source-snapshot-ledger-v1", "sources").sources;
       const reviewEvents = store.recordsLedger("review_event", "review-event-ledger-v1", "events").events;
       const briefingPublications = store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications").publications;
       const insightPublications = store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications").publications;
-      const events = [
+      const allEvents = [
         ...sourceSnapshots.map((snapshot) => ({ eventType: "source_scan", targetId: snapshot.id, sourceId: snapshot.id, status: snapshot.status, previousDigest: snapshot.previousSha256 ?? null, currentDigest: snapshot.sha256 ?? null, occurredAt: snapshot.checkedAt })),
         ...reviewEvents,
         ...briefingPublications.map((publication) => ({ eventType: "briefing_publish", targetId: publication.briefingId, workspaceId: publication.workspaceId, reviewer: publication.publishedBy, currentEvidenceDigest: publication.evidenceDigest, occurredAt: publication.publishedAt, publicationId: publication.id })),
         ...insightPublications.map((publication) => ({ eventType: "insight_publish", targetId: publication.candidateId, candidateKey: publication.candidateKey, workspaceId: publication.workspaceId, reviewer: publication.publisher, currentEvidenceDigest: publication.evidenceDigest, occurredAt: publication.publishedAt, publicationId: publication.id }))
-      ].sort((a, b) => String(a.occurredAt).localeCompare(String(b.occurredAt)));
+      ];
+      const visible = (event) => !event.workspaceId || !access.workspaceIds || access.workspaceIds.includes(event.workspaceId);
+      const events = allEvents.filter(visible).sort((a, b) => String(a.occurredAt).localeCompare(String(b.occurredAt)));
       return json(response, 200, { schemaVersion: "research-timeline-v1", eventCount: events.length, events });
     }
     if (url.pathname === "/api/refresh") return json(response, 200, await readJson(refreshPath, { schemaVersion: "refresh-receipt-v1", status: "not_run", steps: [] }));

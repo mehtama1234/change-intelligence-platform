@@ -81,7 +81,8 @@ async function loadOperations() {
 }
 
 async function loadEvidenceHistory() {
-  const [response, timelineResponse] = await Promise.all([apiFetch("../api/evidence-history"), apiFetch("../api/timeline")]);
+  const workspace = encodeURIComponent(state.workspaceId);
+  const [response, timelineResponse] = await Promise.all([apiFetch(`../api/evidence-history?workspace=${workspace}`), apiFetch(`../api/timeline?workspace=${workspace}`)]);
   if (!response.ok || !timelineResponse.ok) throw new Error(`Evidence history unavailable (${response.status})`);
   const history = await response.json();
   const timeline = await timelineResponse.json();
@@ -319,7 +320,7 @@ byId("question-form").addEventListener("submit", async (event) => {
   }
 });
 
-byId("workspace-select").addEventListener("change", async (event) => { state.workspaceId = event.target.value; await Promise.all([loadQuestions(), loadAlerts()]); });
+byId("workspace-select").addEventListener("change", async (event) => { state.workspaceId = event.target.value; await Promise.all([loadQuestions(), loadAlerts(), loadEvidenceHistory()]); });
 byId("save-token").addEventListener("click", async () => {
   const token = byId("token-input").value.trim();
   if (token) { state.token = token; sessionStorage.setItem("change-intelligence-token", token); } else { state.token = ""; sessionStorage.removeItem("change-intelligence-token"); }

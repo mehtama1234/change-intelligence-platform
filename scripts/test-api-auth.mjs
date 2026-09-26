@@ -32,6 +32,10 @@ try {
   if (visibleQuestions.status !== 200) throw new Error(`Authenticated workspace read failed: ${visibleQuestions.status}`);
   const outsiderRead = await fetch(`${base}/api/questions?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderRead.status !== 403) throw new Error(`Expected non-member workspace read to return 403, received ${outsiderRead.status}`);
+  const outsiderTimeline = await fetch(`${base}/api/timeline?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderTimeline.status !== 403) throw new Error(`Expected non-member timeline read to return 403, received ${outsiderTimeline.status}`);
+  const memberTimeline = await fetch(`${base}/api/timeline?workspace=demo-research`, { headers: authHeaders });
+  if (memberTimeline.status !== 200) throw new Error(`Workspace member timeline read failed: ${memberTimeline.status}`);
   const outsiderWorkspaces = await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer outsider-token" } });
   const outsiderWorkspaceList = await outsiderWorkspaces.json();
   if (outsiderWorkspaces.status !== 200 || outsiderWorkspaceList.length !== 0) throw new Error("Non-member should see no workspaces.");
