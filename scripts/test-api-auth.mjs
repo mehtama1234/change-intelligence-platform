@@ -8,7 +8,7 @@ const base = `http://127.0.0.1:${port}`;
 const runtimeDir = `/tmp/change-intelligence-api-auth-${Date.now()}`;
 const child = spawn(process.execPath, [resolve(root, "server.mjs")], {
   cwd: root,
-  env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher" }) },
+  env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher", "outsider-token": "outside-user" }) },
   stdio: ["ignore", "pipe", "pipe"]
 });
 let output = "";
@@ -25,6 +25,16 @@ try {
     await new Promise((resolveSleep) => setTimeout(resolveSleep, 100));
   }
   if (!healthy) throw new Error(`API did not start. ${output}`);
+  const unauthenticatedRead = await fetch(`${base}/api/questions?workspace=demo-research`);
+  if (unauthenticatedRead.status !== 401) throw new Error(`Expected unauthenticated workspace read to return 401, received ${unauthenticatedRead.status}`);
+  const authHeaders = { Authorization: "Bearer research-token" };
+  const visibleQuestions = await fetch(`${base}/api/questions?workspace=demo-research`, { headers: authHeaders });
+  if (visibleQuestions.status !== 200) throw new Error(`Authenticated workspace read failed: ${visibleQuestions.status}`);
+  const outsiderRead = await fetch(`${base}/api/questions?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderRead.status !== 403) throw new Error(`Expected non-member workspace read to return 403, received ${outsiderRead.status}`);
+  const outsiderWorkspaces = await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer outsider-token" } });
+  const outsiderWorkspaceList = await outsiderWorkspaces.json();
+  if (outsiderWorkspaces.status !== 200 || outsiderWorkspaceList.length !== 0) throw new Error("Non-member should see no workspaces.");
   const unauthenticated = await fetch(`${base}/api/questions`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", question: "Unauthenticated question" }) });
   if (unauthenticated.status !== 401) throw new Error(`Expected 401, received ${unauthenticated.status}`);
   const idempotencyKey = `auth-smoke-${Date.now()}`;
@@ -36,7 +46,7 @@ try {
   const retryResult = await retry.json();
   if (retry.status !== 201 || retryResult.id !== result.id) throw new Error(`Idempotent retry did not replay original result: ${JSON.stringify(retryResult)}`);
   if (!authenticated.headers.get("x-request-id")) throw new Error("Write response did not include a request ID.");
-  const auditResponse = await fetch(`${base}/api/audit?workspace=demo-research`);
+  const auditResponse = await fetch(`${base}/api/audit?workspace=demo-research`, { headers: authHeaders });
   const audit = await auditResponse.json();
   if (!audit.some((entry) => entry.targetId === result.id && entry.actorId === "demo-researcher")) throw new Error("Question audit receipt was not written.");
   console.log("API authentication smoke test passed: unauthenticated=401, token actor=demo-researcher.");

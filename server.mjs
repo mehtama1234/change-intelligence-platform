@@ -57,6 +57,31 @@ async function workspaceConfig(id) {
   return undefined;
 }
 
+async function workspaceAccess(request, requestedWorkspaceId) {
+  if (authMode !== "token") return { workspaceId: requestedWorkspaceId ?? null, workspaceIds: null, actorId: authenticatedActor(request, {}) };
+  const actorId = authenticatedActor(request, {});
+  if (!actorId) return { error: { status: 401, body: { error: "Authentication required." } } };
+  const files = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
+  const workspaces = [];
+  for (const file of files) {
+    const workspace = JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"));
+    if (workspace.members?.some((member) => member.id === actorId)) workspaces.push(workspace);
+  }
+  if (requestedWorkspaceId) {
+    const requested = await workspaceConfig(requestedWorkspaceId);
+    if (!requested) return { error: { status: 404, body: { error: "Workspace not found." } } };
+    if (!workspaces.some((workspace) => workspace.id === requestedWorkspaceId)) return { error: { status: 403, body: { error: "You are not a member of this workspace." } } };
+    return { workspaceId: requestedWorkspaceId, workspaceIds: [requestedWorkspaceId], actorId };
+  }
+  return { workspaceId: null, workspaceIds: workspaces.map((workspace) => workspace.id), actorId };
+}
+
+function denyWorkspaceRead(response, access) {
+  if (!access.error) return false;
+  json(response, access.error.status, access.error.body);
+  return true;
+}
+
 async function readJson(path, fallback) {
   try { return JSON.parse(await readFile(path, "utf8")); } catch (error) {
     if (error.code === "ENOENT") return fallback;
@@ -226,7 +251,7 @@ const server = createServer(async (request, response) => {
       await storeOperation({ key: idempotencyKey, action: "publish_insight", status: 200, body: publication, completedAt: publication.publishedAt });
       return json(response, 200, publication);
     }
-    if (request.method !== "GET") return json(response, 405, { error: "Only GET and alert acknowledgement POST are supported." });
+    if (request.method !== "GET") return json(response, 405, { error: "This method is not supported for this endpoint." });
     if (url.pathname === "/api/health") return json(response, 200, { status: "ok", service: "change-intelligence-read-model", authMode, generatedAt: new Date().toISOString() });
     if (url.pathname === "/api/packet") return json(response, 200, await readJson(packetPath, { error: "Packet has not been built." }));
     if (url.pathname.startsWith("/api/evidence/")) {
@@ -282,31 +307,51 @@ const server = createServer(async (request, response) => {
     if (url.pathname === "/api/review-work") return json(response, 200, await readJson(reviewPath, { schemaVersion: "source-review-work-v1", reviewRequired: 0, candidates: [] }));
     if (url.pathname === "/api/evidence-history") return json(response, 200, await readJson(historyPath, { schemaVersion: "versioned-evidence-ledger-v1", records: [], decisionHistory: [] }));
     if (url.pathname === "/api/refresh") return json(response, 200, await readJson(refreshPath, { schemaVersion: "refresh-receipt-v1", status: "not_run", steps: [] }));
-    if (url.pathname === "/api/workspaces") return json(response, 200, (await readJson(alertsPath, { workspaces: [] })).workspaces ?? []);
+    if (url.pathname === "/api/workspaces") {
+      const access = await workspaceAccess(request);
+      if (denyWorkspaceRead(response, access)) return;
+      const configs = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
+      const workspaces = [];
+      for (const file of configs) {
+        const workspace = JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"));
+        if (!access.workspaceIds || access.workspaceIds.includes(workspace.id)) workspaces.push({ id: workspace.id, name: workspace.name, memberCount: workspace.members?.length ?? 0 });
+      }
+      return json(response, 200, workspaces);
+    }
     if (url.pathname === "/api/alerts") {
       const ledger = await readJson(alertsPath, { alerts: [] });
       const workspaceId = url.searchParams.get("workspace");
-      return json(response, 200, workspaceId ? ledger.alerts.filter((alert) => alert.workspaceId === workspaceId) : ledger.alerts);
+      const access = await workspaceAccess(request, workspaceId);
+      if (denyWorkspaceRead(response, access)) return;
+      return json(response, 200, access.workspaceIds ? ledger.alerts.filter((alert) => access.workspaceIds.includes(alert.workspaceId)) : ledger.alerts);
     }
     if (url.pathname === "/api/questions") {
       const ledger = await readJson(questionsPath, { schemaVersion: "workspace-question-ledger-v1", questions: [] });
       const workspaceId = url.searchParams.get("workspace");
-      return json(response, 200, workspaceId ? ledger.questions.filter((question) => question.workspaceId === workspaceId) : ledger.questions);
+      const access = await workspaceAccess(request, workspaceId);
+      if (denyWorkspaceRead(response, access)) return;
+      return json(response, 200, access.workspaceIds ? ledger.questions.filter((question) => access.workspaceIds.includes(question.workspaceId)) : ledger.questions);
     }
     if (url.pathname === "/api/question-evaluations") {
       const ledger = await readJson(questionEvaluationsPath, { schemaVersion: "question-evaluation-ledger-v1", evaluations: [] });
       const workspaceId = url.searchParams.get("workspace");
-      return json(response, 200, workspaceId ? ledger.evaluations.filter((evaluation) => evaluation.workspaceId === workspaceId) : ledger.evaluations);
+      const access = await workspaceAccess(request, workspaceId);
+      if (denyWorkspaceRead(response, access)) return;
+      return json(response, 200, access.workspaceIds ? ledger.evaluations.filter((evaluation) => access.workspaceIds.includes(evaluation.workspaceId)) : ledger.evaluations);
     }
     if (url.pathname === "/api/briefings") {
       const ledger = await readJson(briefingsPath, { schemaVersion: "workspace-briefing-ledger-v1", briefings: [] });
       const workspaceId = url.searchParams.get("workspace");
-      return json(response, 200, workspaceId ? ledger.briefings.filter((briefing) => briefing.workspaceId === workspaceId) : ledger.briefings);
+      const access = await workspaceAccess(request, workspaceId);
+      if (denyWorkspaceRead(response, access)) return;
+      return json(response, 200, access.workspaceIds ? ledger.briefings.filter((briefing) => access.workspaceIds.includes(briefing.workspaceId)) : ledger.briefings);
     }
     if (url.pathname === "/api/audit") {
       const ledger = await readJson(auditPath, { schemaVersion: "audit-log-v1", entries: [] });
       const workspaceId = url.searchParams.get("workspace");
-      return json(response, 200, workspaceId ? ledger.entries.filter((entry) => entry.workspaceId === workspaceId) : ledger.entries);
+      const access = await workspaceAccess(request, workspaceId);
+      if (denyWorkspaceRead(response, access)) return;
+      return json(response, 200, access.workspaceIds ? ledger.entries.filter((entry) => access.workspaceIds.includes(entry.workspaceId)) : ledger.entries);
     }
     if (url.pathname === "/") {
       response.writeHead(302, { Location: "/web/index.html" });

@@ -16,6 +16,12 @@ Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map
 before checking the member's workspace role.
 
+Token-authenticated reads of workspace data use the same membership check. A
+request without a token receives `401`; a signed-in user who is not a member of
+the requested workspace receives `403`; a request without a workspace filter
+returns only workspaces where that actor is a member. The domain evidence packet
+and source-linked inspection endpoints are not customer-private workspace data.
+
 Token-authenticated write requests must also send an `Idempotency-Key`. A
 retry with the same key replays the original result instead of creating a
 second question, decision, publication, or acknowledgment.
