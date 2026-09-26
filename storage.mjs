@@ -139,6 +139,10 @@ export function createRuntimeStore(runtimeDir) {
 
   return {
     databasePath,
+    health() {
+      const result = db.prepare("PRAGMA integrity_check").get();
+      return { databasePath, integrity: result?.integrity_check === "ok" ? "ok" : result?.integrity_check ?? "unknown" };
+    },
     importLegacy,
     questionsLedger,
     operationsLedger,

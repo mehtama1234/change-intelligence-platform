@@ -39,6 +39,12 @@ checksum-manifested backup. Restore into an explicit `RUNTIME_DATA_DIR` with
 `npm run restore:runtime`; the backup test exercises database and compatibility
 ledger recovery before a deployment is trusted.
 
+Operational probes are separate: `/api/health` is a liveness check, while
+`/api/readiness` returns `200` only when the database is intact, the latest
+refresh is recent and complete, source data is present, runtime synchronization
+completed, and a valid backup manifest exists. A failed readiness check returns
+`503` with the failing condition so an operator can act on it.
+
 This token map is a small deployment adapter, not a replacement for an
 identity provider. A production deployment should place a real identity and
 token-validation service in front of the API, keep secrets outside the

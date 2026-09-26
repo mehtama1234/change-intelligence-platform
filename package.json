@@ -25,6 +25,7 @@
     "test:storage": "node scripts/test-storage-persistence.mjs",
     "test:mutations": "node scripts/test-mutation-persistence.mjs",
     "test:backup": "node scripts/test-runtime-backup.mjs",
+    "test:readiness": "node scripts/test-operational-readiness.mjs",
     "test:api:auth": "node scripts/test-api-auth.mjs",
     "serve": "node server.mjs",
     "refresh": "node scripts/run-refresh-cycle.mjs",

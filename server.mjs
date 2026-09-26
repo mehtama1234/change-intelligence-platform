@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
-import { readFile, readdir, writeFile, mkdir } from "node:fs/promises";
+import { readFile, readdir, writeFile, mkdir, stat } from "node:fs/promises";
 import { resolve, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntimeStore, importRuntimeLedgers } from "./storage.mjs";
@@ -28,6 +28,9 @@ const reviewDecisionsPath = resolve(runtimeDir, "review-decisions.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const authMode = process.env.AUTH_MODE ?? "demo";
 const tokenActors = authMode === "token" ? JSON.parse(process.env.AUTH_TOKENS_JSON ?? "{}") : {};
+const backupDir = process.env.BACKUP_DIR ? resolve(root, process.env.BACKUP_DIR) : undefined;
+const maxRefreshAgeMs = Number(process.env.MAX_REFRESH_AGE_MS ?? 7 * 24 * 60 * 60 * 1000);
+const maxSourceAgeMs = Number(process.env.MAX_SOURCE_AGE_MS ?? 14 * 24 * 60 * 60 * 1000);
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 await mkdir(runtimeDir, { recursive: true });
 const store = createRuntimeStore(runtimeDir);
@@ -120,6 +123,33 @@ async function replayOperation(key) {
 async function storeOperation(operation) {
   store.storeOperation(operation);
   await writeFile(operationsPath, `${JSON.stringify(store.operationsLedger(), null, 2)}\n`);
+}
+
+function ageMs(value, now) {
+  const timestamp = Date.parse(value ?? "");
+  return Number.isFinite(timestamp) ? Math.max(0, now - timestamp) : null;
+}
+
+async function readinessReport() {
+  const now = Date.now();
+  const refresh = await readJson(refreshPath, { status: "not_run", steps: [] });
+  const sourceScan = await readJson(sourceScanPath, { counts: {}, sources: [] });
+  const backupManifest = backupDir ? await readJson(resolve(backupDir, "manifest.json"), undefined) : undefined;
+  const refreshAge = ageMs(refresh.endedAt, now);
+  const sourceTimes = (sourceScan.sources ?? []).map((source) => ageMs(source.checkedAt, now)).filter((value) => value !== null);
+  const sourceAge = sourceTimes.length ? Math.max(...sourceTimes) : null;
+  const failedSteps = (refresh.steps ?? []).filter((step) => step.status === "failed").map((step) => step.name);
+  const syncStep = (refresh.steps ?? []).find((step) => step.name === "sync-runtime-store");
+  const database = store.health();
+  const checks = {
+    database: { status: database.integrity === "ok" ? "ok" : "failed", integrity: database.integrity },
+    refresh: { status: refresh.status === "complete" && refreshAge !== null && refreshAge <= maxRefreshAgeMs && failedSteps.length === 0 ? "ok" : "failed", runId: refresh.runId ?? null, ageMs: refreshAge, maxAgeMs: maxRefreshAgeMs, failedSteps },
+    sourceScan: { status: sourceScan.counts?.missing === 0 && sourceAge !== null && sourceAge <= maxSourceAgeMs ? "ok" : "failed", ageMs: sourceAge, maxAgeMs: maxSourceAgeMs, missing: sourceScan.counts?.missing ?? null, sourceCount: sourceScan.sources?.length ?? 0 },
+    runtimeSync: { status: syncStep?.status === "complete" ? "ok" : "failed", attempts: syncStep?.attempts ?? null },
+    backup: backupDir ? { status: backupManifest?.schemaVersion === "runtime-backup-v1" ? "ok" : "failed", createdAt: backupManifest?.createdAt ?? null, ageMs: ageMs(backupManifest?.createdAt, now), directory: backupDir } : { status: "not_configured", createdAt: null, ageMs: null }
+  };
+  const ready = Object.values(checks).every((check) => check.status === "ok");
+  return { schemaVersion: "operational-readiness-v1", generatedAt: new Date(now).toISOString(), status: ready ? "ready" : "degraded", checks };
 }
 
 const server = createServer(async (request, response) => {
@@ -253,7 +283,11 @@ const server = createServer(async (request, response) => {
       return json(response, 200, publication);
     }
     if (request.method !== "GET") return json(response, 405, { error: "This method is not supported for this endpoint." });
-    if (url.pathname === "/api/health") return json(response, 200, { status: "ok", service: "change-intelligence-read-model", authMode, generatedAt: new Date().toISOString() });
+    if (url.pathname === "/api/health") return json(response, 200, { status: "ok", service: "change-intelligence-read-model", authMode, database: store.health(), generatedAt: new Date().toISOString() });
+    if (url.pathname === "/api/readiness") {
+      const report = await readinessReport();
+      return json(response, report.status === "ready" ? 200 : 503, report);
+    }
     if (url.pathname === "/api/packet") return json(response, 200, await readJson(packetPath, { error: "Packet has not been built." }));
     if (url.pathname.startsWith("/api/evidence/")) {
       const recordId = decodeURIComponent(url.pathname.slice("/api/evidence/".length));
