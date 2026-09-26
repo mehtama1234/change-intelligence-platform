@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "insight-quality-golden-v1",
+  "purpose": "Failure cases that must never pass the bounded insight gate.",
+  "cases": [
+    { "id": "unsupported-certainty", "mutation": "overclaim", "expectedError": "unsupported causal or certainty" },
+    { "id": "single-source-story", "mutation": "single_repository", "expectedError": "at least two records" },
+    { "id": "no-alternative", "mutation": "missing_alternative", "expectedError": "missing strongest alternative" },
+    { "id": "no-next-test", "mutation": "missing_next_test", "expectedError": "missing next test" },
+    { "id": "no-falsifier", "mutation": "missing_falsifier", "expectedError": "missing falsifiers" }
+  ]
+}

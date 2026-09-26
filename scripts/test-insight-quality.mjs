@@ -7,17 +7,31 @@ import { promisify } from "node:util";
 
 const exec = promisify(execFile);
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
-const packetPath = resolve(root, "data/processed/ai-work-control.packet.json");
-const packet = JSON.parse(await readFile(packetPath, "utf8"));
+const packet = JSON.parse(await readFile(resolve(root, "data/processed/ai-work-control.packet.json"), "utf8"));
+const golden = JSON.parse(await readFile(resolve(root, "data/evaluations/insight-quality-golden.json"), "utf8"));
 const temp = await mkdtemp(resolve(tmpdir(), "change-intelligence-quality-"));
-const badPacketPath = resolve(temp, "bad-packet.json");
-const badPacket = structuredClone(packet);
-badPacket.insights[0].plainLanguageSummary = "The evidence proves AI causes a universal productivity gain.";
-await writeFile(badPacketPath, `${JSON.stringify(badPacket, null, 2)}\n`);
-try {
-  await exec(process.execPath, [resolve(root, "scripts/evaluate-insight-quality.mjs")], { cwd: root, env: { ...process.env, INSIGHT_PACKET_PATH: badPacketPath, INSIGHT_CANDIDATE_PATH: resolve(temp, "no-candidates.json"), INSIGHT_EVALUATION_PATH: resolve(temp, "bad-evaluation.json") } });
-  throw new Error("Insight evaluator accepted an unsupported causal claim.");
-} catch (error) {
-  if (!String(error.stderr ?? error.message).includes("unsupported causal")) throw error;
+
+function mutate(packetCopy, mutation) {
+  const insight = packetCopy.insights[0];
+  if (mutation === "overclaim") insight.plainLanguageSummary = "The evidence proves AI causes a universal productivity gain.";
+  if (mutation === "single_repository") insight.recordIds = [insight.recordIds[0]];
+  if (mutation === "missing_alternative") insight.strongestAlternative = "";
+  if (mutation === "missing_next_test") insight.nextTest = "";
+  if (mutation === "missing_falsifier") insight.whatWouldChangeOurMind = [];
 }
-console.log("Insight quality adversarial test passed: unsupported causal language is rejected.");
+
+for (const testCase of golden.cases) {
+  const badPacketPath = resolve(temp, `${testCase.id}.json`);
+  const evaluationPath = resolve(temp, `${testCase.id}-evaluation.json`);
+  const badPacket = structuredClone(packet);
+  mutate(badPacket, testCase.mutation);
+  await writeFile(badPacketPath, `${JSON.stringify(badPacket, null, 2)}\n`);
+  try {
+    await exec(process.execPath, [resolve(root, "scripts/evaluate-insight-quality.mjs")], { cwd: root, env: { ...process.env, INSIGHT_PACKET_PATH: badPacketPath, INSIGHT_CANDIDATE_PATH: resolve(temp, "no-candidates.json"), INSIGHT_EVALUATION_PATH: evaluationPath } });
+    throw new Error(`Insight evaluator accepted golden failure: ${testCase.id}`);
+  } catch (error) {
+    const output = `${error.stdout ?? ""}\n${error.stderr ?? ""}\n${error.message ?? ""}`;
+    if (!output.includes(testCase.expectedError)) throw new Error(`${testCase.id} failed with the wrong diagnostic: ${output}`);
+  }
+}
+console.log(`Insight quality golden tests passed: ${golden.cases.length} failure cases were rejected with the expected diagnostics.`);
