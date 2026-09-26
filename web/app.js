@@ -10,6 +10,7 @@ const alertActionsMarkup = (alert) => `<div class="review-actions"><button class
 function apiFetch(path, options = {}) {
   const headers = new Headers(options.headers || {});
   if (state.token) headers.set("Authorization", `Bearer ${state.token}`);
+  else headers.set("x-workspace-actor", state.actorId);
   let body = options.body;
   if (body && typeof body === "object") {
     body = { ...body, workspaceId: state.workspaceId };
@@ -732,7 +733,7 @@ byId("workspace-export").addEventListener("click", async () => {
 byId("token-input").value = state.token;
 loadWorkspaces().catch((error) => { setWorkspaceStatus(error.message); byId("questions-summary").textContent = error.message; });
 loadChanges().catch((error) => { byId("change-feed-summary").textContent = error.message; });
-loadOperations().catch((error) => { byId("operations-summary").textContent = error.message; });
+loadOperations().catch((error) => { console.error(error); byId("operations-summary").textContent = error.message; });
 loadOperatorOverview().catch(() => { byId("operator-panel").hidden = true; });
 loadCoverage().catch((error) => { byId("coverage-summary").textContent = error.message; });
 loadAtlas().catch((error) => { byId("atlas-summary").textContent = error.message; });

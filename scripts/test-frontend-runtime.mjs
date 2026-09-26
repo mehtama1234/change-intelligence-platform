@@ -70,7 +70,7 @@ const payloads = new Map([
   ["/api/workspace-commercial-readiness", { recommendation: "continue", rationale: "Collect more observations.", limitation: "Human decision required.", history: [] }],
   ["/api/workspace-pilot", { profile: { status: "active", decisionQuestion: "What evidence links AI adoption to productivity and worker control?", cadence: "monthly", nextReviewAt: "2026-10-31", successMeasures: [] } }],
   ["/api/pilot-deliveries", { deliveries: [oldDelivery, currentDelivery] }],
-  ["/api/pilot-report", { observation: { reviewedDeliveries: 0 }, usefulness: { rate: null }, decisionImpact: { changedDecision: 0, informedDecision: 0, noChange: 0 }, insightFeedback: { publishedReceiptsReferenced: 0, outcomesWithInsights: 0, byReceipt: [] }, checkpoint: { explanation: "More observations needed." }, limitation: "Recorded pilot only.", measures: [], openIssues: [], decisionHistory: [] }],
+  ["/api/pilot-report", { observation: { reviewedDeliveries: 0 }, usefulness: { rate: null }, decisionImpact: { changedDecision: 0, informedDecision: 0, noChange: 0 }, insightFeedback: { publishedReceiptsReferenced: 0, outcomesWithInsights: 0, byReceipt: [] }, checkpoint: { explanation: "More observations needed." }, limitation: "Recorded pilot only.", measures: [], openIssues: [], decisionHistory: [], deliveryHistory: [] }],
   ["/api/workspace-retention", { counts: {}, canDelete: false, warning: "No private records." }],
   ["/api/workspace-onboarding", { status: "active", nextAction: "Review the handoff.", limitation: "Configuration only.", steps: [] }],
   ["/api/workspace-schedule", { status: "first_delivery_ready", explanation: "A handoff exists.", nextScheduledAt: null }],

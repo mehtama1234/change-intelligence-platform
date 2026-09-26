@@ -2063,7 +2063,7 @@ const server = createServer(async (request, response) => {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));
       if (denyWorkspaceRead(response, access)) return;
       const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
-      return json(response, 200, { schemaVersion: "workspace-pilot-read-model-v1", workspaceId: access.workspaceId, profile: access.workspaceIds ? profiles.find((profile) => access.workspaceIds.includes(profile.workspaceId)) ?? null : profiles });
+      return json(response, 200, { schemaVersion: "workspace-pilot-read-model-v1", workspaceId: access.workspaceId, profile: access.workspaceId ? profiles.find((profile) => profile.workspaceId === access.workspaceId) ?? null : profiles });
     }
     if (url.pathname === "/api/workspace-onboarding") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));
