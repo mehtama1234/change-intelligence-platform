@@ -20,10 +20,24 @@ const watchlistLedger = existsSync(watchlistsPath) ? JSON.parse(await readFile(w
 const watchlistsByWorkspace = new Map();
 for (const watchlist of watchlistLedger.watchlists ?? []) watchlistsByWorkspace.set(watchlist.workspaceId, [...(watchlistsByWorkspace.get(watchlist.workspaceId) ?? []), watchlist]);
 const now = new Date().toISOString();
-const stopWords = new Set(["what", "will", "does", "how", "can", "the", "and", "for", "with", "that", "this", "from", "change"]);
+const stopWords = new Set(["what", "will", "does", "how", "can", "the", "and", "for", "with", "that", "this", "from", "change", "ai", "work", "use", "using", "system", "systems"]);
+const conceptGroups = {
+  control: ["control", "agency", "autonomy", "decision", "decisions", "power"],
+  correction: ["correct", "correction", "review", "appeal", "remedy", "override", "fix", "error", "errors"],
+  dependence: ["dependence", "dependent", "portability", "portable", "exit", "switching", "replace", "replacement"],
+  adoption: ["adopt", "adoption", "deploy", "deployment", "deployed", "implementation", "implemented"],
+  outcome: ["outcome", "outcomes", "productivity", "value", "benefit", "benefits", "result", "results", "impact"],
+  infrastructure: ["infrastructure", "compute", "computing", "network", "networking", "cloud", "capacity"],
+  economics: ["revenue", "margin", "growth", "price", "pricing", "cost", "scarcity", "demand"]
+};
+const conceptByTerm = new Map(Object.entries(conceptGroups).flatMap(([concept, words]) => words.map((word) => [word, concept])));
 
 function terms(question) {
   return question.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((term) => term.length > 2 && !stopWords.has(term));
+}
+
+function conceptsFor(words) {
+  return new Map(words.map((word) => [word, conceptByTerm.get(word) ?? word]));
 }
 
 const evaluations = [];
@@ -35,12 +49,17 @@ for (const question of ledger.questions.filter((item) => item.state === "active"
     for (const sourceId of watchlist?.sourceIds ?? []) requestedIds.add(sourceId);
   }
   const words = terms(question.question);
+  const questionConcepts = conceptsFor(words);
   const candidates = packet.records.filter((record) => !requestedIds.size || requestedIds.has(record.id));
   const matches = candidates.map((record) => {
-    const text = [record.title, record.observation, record.mechanism, record.theme, record.sourceRepository].join(" ").toLowerCase();
-    const matchedTerms = words.filter((word) => text.includes(word));
-    return { recordId: record.id, matchedTerms, score: matchedTerms.length };
-  }).filter((match) => match.score > 0).sort((a, b) => b.score - a.score);
+    const textTerms = new Set(terms([record.title, record.observation, record.mechanism, record.theme, record.sourceRepository].join(" ")));
+    const textConcepts = new Map([...textTerms].map((word) => [word, conceptByTerm.get(word) ?? word]));
+    const matchedTerms = words.filter((word) => textTerms.has(word));
+    const matchedConcepts = [...new Set(words.map((word) => questionConcepts.get(word)).filter((concept) => [...textConcepts.values()].includes(concept)))];
+    const explicitScope = requestedIds.has(record.id);
+    const strongMatch = matchedConcepts.length > 0;
+    return { recordId: record.id, matchedTerms, matchedConcepts, matchReason: explicitScope ? "explicit source scope" : strongMatch ? "shared evidence concept" : null, score: matchedConcepts.length * 2 + matchedTerms.length + (explicitScope ? 1 : 0) };
+  }).filter((match) => match.matchReason).sort((a, b) => b.score - a.score || a.recordId.localeCompare(b.recordId));
   evaluations.push({
     questionId: question.id,
     workspaceId: question.workspaceId,
@@ -48,7 +67,7 @@ for (const question of ledger.questions.filter((item) => item.state === "active"
     state: "evidence_retrieved",
     matchedRecordIds: matches.map((match) => match.recordId),
     matches,
-    limitation: "Text matches identify evidence to inspect; they do not answer the question or establish causation."
+    limitation: "Concept matches identify evidence to inspect; they do not answer the question or establish causation. Broad words such as AI and work are not treated as evidence concepts by themselves."
   });
   question.lastEvaluatedAt = now;
   question.lastEvaluation = { state: "evidence_retrieved", matchedRecordCount: matches.length };

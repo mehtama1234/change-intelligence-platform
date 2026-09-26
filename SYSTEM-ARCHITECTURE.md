@@ -75,6 +75,10 @@ packet and atlas generation consume that ledger when it is available.
     customer briefing only when at least one of the insight's source records is
     among the records retrieved for that question. Publication alone does not
     make an insight relevant to every customer.
+21. **Concept-based question retrieval** — gives terms such as appeal, remedy,
+    correction, switching, and deployment shared concepts, while ignoring
+    broad words such as AI and work when they appear alone. Each match records
+    its concept and reason so a researcher can see why evidence was retrieved.
 
 ## Background jobs
 
