@@ -52,10 +52,10 @@ try {
   await waitForHealth(server);
   const workspace = await post("/api/operator/workspaces", operatorAuth, { name: "Provisioned lifecycle partner", ownerId: "flow-owner" }, "flow-provision");
   const workspaceId = workspace.id;
-  const profile = await post("/api/workspace-pilot", auth, { workspaceId, decisionQuestion: "Which monitored changes should this team act on next?", decisionContext: "First lifecycle handoff test.", cadence: "monthly", successMeasures: ["Useful evidence reviewed"], nextReviewAt: "2026-10-31" }, "flow-profile");
+  const profile = await post("/api/workspace-pilot", auth, { workspaceId, decisionQuestion: "What evidence links AI adoption to productivity and worker control?", decisionContext: "First lifecycle handoff test.", cadence: "monthly", successMeasures: ["Useful evidence reviewed"], nextReviewAt: "2026-10-31" }, "flow-profile");
   if (profile.workspaceId !== workspaceId) throw new Error("Pilot profile was not assigned to the provisioned workspace.");
-  const watchlist = await post("/api/watchlists", auth, { workspaceId, name: "Lifecycle sources", repositoryIds: ["trend-hunting"] }, "flow-watchlist");
-  const question = await post("/api/questions", auth, { workspaceId, question: "Which monitored changes should this team act on next?", scope: { watchlistIds: [watchlist.id] } }, "flow-question");
+  const watchlist = await post("/api/watchlists", auth, { workspaceId, name: "AI work evidence", repositoryIds: ["cultural-geopolitical-theme-mining"] }, "flow-watchlist");
+  const question = await post("/api/questions", auth, { workspaceId, question: "What evidence links AI adoption to productivity and worker control?", scope: { watchlistIds: [watchlist.id] } }, "flow-question");
   if (question.workspaceId !== workspaceId) throw new Error("Question was not assigned to the provisioned workspace.");
   const before = await (await fetch(`${base}/api/workspace-onboarding?workspace=${encodeURIComponent(workspaceId)}`, { headers: auth })).json();
   if (before.status !== "ready_for_first_delivery") throw new Error(`Expected readiness for first delivery, received ${before.status}.`);
@@ -71,6 +71,11 @@ try {
   const deliveriesResponse = await fetch(`${base}/api/pilot-deliveries?workspace=${encodeURIComponent(workspaceId)}`, { headers: auth });
   const deliveries = await deliveriesResponse.json();
   if (deliveriesResponse.status !== 200 || deliveries.deliveries.length !== 1 || deliveries.deliveries[0].workspaceId !== workspaceId || deliveries.deliveries[0].status !== "prepared") throw new Error(`First provisioned handoff was not available as a prepared delivery: ${JSON.stringify(deliveries)}`);
+  const delivery = deliveries.deliveries[0];
+  if (delivery.briefings?.length !== 1 || delivery.briefings[0].state !== "draft" || !delivery.briefings[0].evidenceDigest) throw new Error(`First handoff did not carry a reviewable briefing: ${JSON.stringify(delivery.briefings)}`);
+  const evaluations = JSON.parse(await readFile(`${runtimeDir}/question-evaluations.json`, "utf8"));
+  const evaluation = evaluations.evaluations.find((item) => item.questionId === question.id);
+  if (evaluation?.state !== "evidence_retrieved" || evaluation.matchedRecordIds.length < 2 || !evaluation.matches.some((match) => match.matchedConcepts.includes("outcome")) || !evaluation.matches.some((match) => match.matchedConcepts.includes("control"))) throw new Error(`Question did not retrieve bounded productivity/control evidence: ${JSON.stringify(evaluation)}`);
   const refreshReceipt = JSON.parse(await readFile(`${runtimeDir}/latest-refresh.json`, "utf8"));
   if (refreshReceipt.status !== "complete" || deliveries.deliveries[0].refreshRunId !== "provisioned-flow-refresh") throw new Error(`The actual refresh cycle did not complete for the provisioned workspace: ${JSON.stringify(refreshReceipt)}`);
   const refreshOutcomes = JSON.parse(await readFile(`${runtimeDir}/workspace-refresh-outcomes.json`, "utf8"));

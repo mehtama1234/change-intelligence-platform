@@ -22,7 +22,7 @@ const workspaceSourceLedger = existsSync(workspaceSourcesPath) ? JSON.parse(awai
 const watchlistsByWorkspace = new Map();
 for (const watchlist of watchlistLedger.watchlists ?? []) watchlistsByWorkspace.set(watchlist.workspaceId, [...(watchlistsByWorkspace.get(watchlist.workspaceId) ?? []), watchlist]);
 const now = new Date().toISOString();
-const stopWords = new Set(["what", "will", "does", "how", "can", "the", "and", "for", "with", "that", "this", "from", "change", "ai", "work", "use", "using", "system", "systems"]);
+const stopWords = new Set(["what", "will", "does", "how", "can", "the", "and", "for", "with", "that", "this", "from", "change", "changes", "which", "whether", "should", "monitored", "team", "act", "next", "shows", "evidence", "links", "link", "ai", "work", "use", "using", "system", "systems"]);
 const conceptGroups = {
   control: ["control", "agency", "autonomy", "decision", "decisions", "power"],
   correction: ["correct", "correction", "review", "appeal", "remedy", "override", "fix", "error", "errors"],
