@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Change Intelligence — AI, work, and control</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <p class="eyebrow">Change Intelligence Platform · first vertical slice</p>
+      <h1>AI, work, and enterprise control</h1>
+      <p class="lede">A source-linked reading of what AI may change at work, what the current evidence supports, and what remains unproven.</p>
+    </header>
+
+    <main>
+      <section class="orientation" aria-labelledby="orientation-title">
+        <div>
+          <p class="eyebrow">Current reading</p>
+          <h2 id="orientation-title">AI can return time without returning control</h2>
+          <p id="insight-summary"></p>
+        </div>
+        <div class="status-box">
+          <span class="status-label">Evidence state</span>
+          <strong id="insight-status">Draft</strong>
+          <span>Needs further testing before publication.</span>
+        </div>
+      </section>
+
+      <section class="chain" aria-labelledby="chain-title">
+        <div class="section-heading">
+          <p class="eyebrow">How to read this</p>
+          <h2 id="chain-title">Signal → mechanism → consequence</h2>
+        </div>
+        <div class="chain-grid">
+          <article><span>01</span><h3>What we see</h3><p>AI access and adoption are spreading across work systems.</p></article>
+          <article><span>02</span><h3>What may be happening</h3><p>Some tasks get lighter while decision rights and correction work stay elsewhere.</p></article>
+          <article><span>03</span><h3>What we still need</h3><p>Compatible evidence about control, appeal, switching, and exit.</p></article>
+        </div>
+      </section>
+
+      <section aria-labelledby="evidence-title">
+        <div class="section-heading evidence-heading">
+          <div><p class="eyebrow">Source inspection</p><h2 id="evidence-title">Evidence behind the reading</h2></div>
+          <label>Show role <select id="role-filter"><option value="all">All sources</option></select></label>
+        </div>
+        <div id="records" class="record-list" aria-live="polite"></div>
+      </section>
+
+      <section class="test-panel" aria-labelledby="test-title">
+        <p class="eyebrow">Next test</p>
+        <h2 id="test-title">What would change our mind?</h2>
+        <p id="next-test"></p>
+        <ul id="falsifiers"></ul>
+      </section>
+    </main>
+    <footer><span>Sources remain separate. A connection is not proof of causation.</span><span id="as-of"></span></footer>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
