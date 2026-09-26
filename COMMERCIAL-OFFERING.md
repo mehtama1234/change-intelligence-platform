@@ -140,3 +140,8 @@ Internal operators can see the same setup state across workspaces, including
 which pilots need configuration and which are ready for a first handoff. The
 operator view contains step names and aggregate counts only; customer content
 stays in the workspace.
+
+Once connected to the customer's identity provider, confirmed accounts can
+move through the invitation outbox without manual credential handling. The
+service can then notify the customer, complete the setup checklist, and begin
+the first scheduled intelligence delivery.

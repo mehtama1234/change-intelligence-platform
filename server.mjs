@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { readFile, readdir, writeFile, mkdir, stat } from "node:fs/promises";
 import { resolve, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -59,6 +59,7 @@ const sourceRegistryPath = resolve(root, "data/source-registry.json");
 const authMode = process.env.AUTH_MODE ?? "demo";
 const tokenActors = authMode === "token" ? JSON.parse(process.env.AUTH_TOKENS_JSON ?? "{}") : {};
 const operatorActors = new Set(JSON.parse(process.env.OPERATOR_ACTORS_JSON ?? "[]"));
+const identityProviderWebhookSecret = process.env.IDENTITY_PROVIDER_WEBHOOK_SECRET ?? "";
 const backupDir = process.env.BACKUP_DIR ? resolve(root, process.env.BACKUP_DIR) : undefined;
 const maxRefreshAgeMs = Number(process.env.MAX_REFRESH_AGE_MS ?? 7 * 24 * 60 * 60 * 1000);
 const maxSourceAgeMs = Number(process.env.MAX_SOURCE_AGE_MS ?? 14 * 24 * 60 * 60 * 1000);
@@ -118,6 +119,22 @@ async function requestBody(request) {
     if (body.length > 1024 * 1024) throw Object.assign(new Error("Request body is too large."), { code: "PAYLOAD_TOO_LARGE" });
   }
   return body ? JSON.parse(body) : {};
+}
+
+async function requestTextBody(request) {
+  let body = "";
+  for await (const chunk of request) {
+    body += chunk;
+    if (body.length > 1024 * 1024) throw Object.assign(new Error("Request body is too large."), { code: "PAYLOAD_TOO_LARGE" });
+  }
+  return body;
+}
+
+function validWebhookSignature(body, header) {
+  if (!identityProviderWebhookSecret || typeof header !== "string" || !header.startsWith("sha256=")) return false;
+  const supplied = Buffer.from(header.slice("sha256=".length), "hex");
+  const expected = createHmac("sha256", identityProviderWebhookSecret).update(body).digest();
+  return supplied.length === expected.length && timingSafeEqual(supplied, expected);
 }
 
 function authenticatedActor(request, body) {
@@ -1492,6 +1509,36 @@ const server = createServer(async (request, response) => {
       const responseBody = { workspaceId, member };
       await appendAudit({ requestId, action: "activate_workspace_member", targetId: identityId, workspaceId, actorId: operator.actorId, actorRole: "operator", result: "active", occurredAt: now });
       await storeOperation({ key: idempotencyKey, action: "activate_workspace_member", status: 200, body: responseBody, completedAt: now });
+      return json(response, 200, responseBody);
+    }
+    if (request.method === "POST" && url.pathname === "/api/integrations/identity-provider/events") {
+      if (!identityProviderWebhookSecret) return json(response, 503, { error: "Identity-provider webhook integration is not configured." });
+      const rawBody = await requestTextBody(request);
+      if (!validWebhookSignature(rawBody, request.headers["x-identity-provider-signature"])) return json(response, 401, { error: "Invalid identity-provider webhook signature." });
+      let body;
+      try { body = JSON.parse(rawBody); } catch { return json(response, 400, { error: "Identity-provider webhook body must be valid JSON." }); }
+      const eventId = String(body.eventId ?? "").trim().slice(0, 160);
+      const eventType = String(body.type ?? "");
+      const identityId = String(body.identityId ?? "").trim().slice(0, 120);
+      if (eventId.length < 8 || identityId.length < 3) return json(response, 400, { error: "Webhook requires eventId and identityId." });
+      if (eventType !== "identity.confirmed") return json(response, 400, { error: "Unsupported identity-provider event type." });
+      const operationKey = `identity-provider:${eventId}`;
+      const prior = await replayOperation(operationKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const allWorkspaces = await configuredWorkspaces();
+      const matchingWorkspaces = allWorkspaces.filter((workspace) => workspace.members?.some((member) => member.id === identityId && member.status === "invited"));
+      if (!matchingWorkspaces.length) return json(response, 404, { error: "No pending workspace membership matches this confirmed identity." });
+      const now = new Date().toISOString();
+      for (const workspace of matchingWorkspaces) {
+        const updated = { ...workspace, members: workspace.members.map((member) => member.id === identityId && member.status === "invited" ? { ...member, status: "active", activatedAt: now, activatedBy: "identity-provider-webhook", confirmationEventId: eventId } : member) };
+        await persistWorkspaceRegistryEntry(updated);
+      }
+      const invitationLedger = await readJson(workspaceInvitationsPath, { invitations: [] });
+      const invitations = (invitationLedger.invitations ?? []).map((invitation) => invitation.identityId === identityId && invitation.status === "pending" ? { ...invitation, status: "activated", activatedAt: now, activatedBy: "identity-provider-webhook", confirmationEventId: eventId } : invitation);
+      await writeWorkspaceInvitations(invitations);
+      const responseBody = { eventId, identityId, activatedWorkspaceIds: matchingWorkspaces.map((workspace) => workspace.id), activatedAt: now };
+      for (const workspace of matchingWorkspaces) await appendAudit({ requestId, action: "activate_workspace_member", targetId: identityId, workspaceId: workspace.id, actorId: "identity-provider", actorRole: "integration", result: "active", occurredAt: now });
+      await storeOperation({ key: operationKey, action: "identity_provider_confirm_identity", status: 200, body: responseBody, completedAt: now });
       return json(response, 200, responseBody);
     }
     if (request.method === "GET" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/export")) {

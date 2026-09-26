@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { createHmac } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
@@ -15,7 +16,7 @@ await writeFile(`${runtimeDir}/workspace-pilot-deliveries.json`, `${JSON.stringi
 await writeFile(`${runtimeDir}/workspace-alerts.json`, `${JSON.stringify({ schemaVersion: "workspace-alert-ledger-v1", workspaces: [{ id: "demo-research", name: "Demo research workspace" }], alerts: [{ id: "remediation-alert-test", workspaceId: "demo-research", watchlistName: "AI controls", sourceId: "trend-hunting-ai-control", repository: "trend-hunting", sourcePath: "README.md", kind: "source_availability", state: "open", severity: "high", recommendedAction: "Reconnect the source.", createdAt: new Date(impactNow - 120000).toISOString() }] }, null, 2)}\n`);
 const child = spawn(process.execPath, [resolve(root, "server.mjs")], {
   cwd: root,
-  env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher", "outsider-token": "outside-user", "operator-token": "ops-user", "new-owner-token": "new-owner", "new-researcher-token": "new-researcher" }), OPERATOR_ACTORS_JSON: JSON.stringify(["ops-user"]), OPERATOR_MAX_FAILED_REFRESHES: "-1" },
+  env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher", "outsider-token": "outside-user", "operator-token": "ops-user", "new-owner-token": "new-owner", "new-researcher-token": "new-researcher", "another-viewer-token": "another-viewer" }), OPERATOR_ACTORS_JSON: JSON.stringify(["ops-user"]), IDENTITY_PROVIDER_WEBHOOK_SECRET: "identity-webhook-test-secret", OPERATOR_MAX_FAILED_REFRESHES: "-1" },
   stdio: ["ignore", "pipe", "pipe"]
 });
 let output = "";
@@ -123,6 +124,17 @@ try {
   if (invite.status !== 201) throw new Error(`Operator member invitation failed: ${invite.status}`);
   const inviteOutbox = await (await fetch(`${base}/api/operator/workspace-invitations`, { headers: { Authorization: "Bearer operator-token" } })).json();
   if (!inviteOutbox.invitations.some((invitation) => invitation.identityId === "another-viewer" && invitation.status === "pending")) throw new Error("Member invitation was not added to the outbox.");
+  const identityEvent = JSON.stringify({ eventId: "identity-confirmed-another", type: "identity.confirmed", identityId: "another-viewer" });
+  const invalidWebhook = await fetch(`${base}/api/integrations/identity-provider/events`, { method: "POST", headers: { "x-identity-provider-signature": "sha256=00", "content-type": "application/json" }, body: identityEvent });
+  if (invalidWebhook.status !== 401) throw new Error(`Invalid identity-provider signature was accepted: ${invalidWebhook.status}`);
+  const identitySignature = `sha256=${createHmac("sha256", "identity-webhook-test-secret").update(identityEvent).digest("hex")}`;
+  const webhook = await fetch(`${base}/api/integrations/identity-provider/events`, { method: "POST", headers: { "x-identity-provider-signature": identitySignature, "content-type": "application/json" }, body: identityEvent });
+  const webhookBody = await webhook.json();
+  if (webhook.status !== 200 || !webhookBody.activatedWorkspaceIds?.includes(provisionBody.id)) throw new Error(`Identity-provider confirmation did not activate the member: ${webhook.status} ${JSON.stringify(webhookBody)}`);
+  const webhookRetry = await fetch(`${base}/api/integrations/identity-provider/events`, { method: "POST", headers: { "x-identity-provider-signature": identitySignature, "content-type": "application/json" }, body: identityEvent });
+  if (webhookRetry.status !== 200 || JSON.stringify(await webhookRetry.json()) !== JSON.stringify(webhookBody)) throw new Error("Identity-provider confirmation was not idempotent.");
+  const confirmedMemberWorkspaces = await (await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer another-viewer-token" } })).json();
+  if (confirmedMemberWorkspaces.length !== 1 || confirmedMemberWorkspaces[0].id !== provisionBody.id) throw new Error("Identity-provider confirmation did not grant the confirmed member access.");
   const activated = await fetch(`${base}/api/operator/workspaces/${encodeURIComponent(provisionBody.id)}/members/new-researcher/activate`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": "workspace-member-activate" }, body: "{}" });
   if (activated.status !== 200) throw new Error(`Operator member activation failed: ${activated.status}`);
   const activatedWorkspaces = await (await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer new-researcher-token" } })).json();

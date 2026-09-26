@@ -254,3 +254,10 @@ the workspace, identity ID, role, provider boundary, and state (`pending` or
 `activated`). This gives an external identity-provider adapter a durable item
 to consume without putting credentials, reset links, or provider secrets in
 the change-intelligence service.
+
+The provider boundary is a signed webhook at
+`/api/integrations/identity-provider/events`. It accepts only
+`identity.confirmed` events, verifies an HMAC signature, uses the provider's
+event ID for idempotency, activates matching invited memberships, and records
+the confirmation in the invitation ledger and audit log. A missing webhook
+secret disables the endpoint rather than allowing unsigned activation.

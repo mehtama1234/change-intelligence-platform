@@ -137,6 +137,12 @@ or password-reset data. A provider adapter must handle those sensitive values
 outside this service and report confirmation back through the operator
 activation boundary.
 
+Identity confirmation events must use an HMAC signature over the exact request
+body. Replayed event IDs return the original result, while an event with no
+matching pending membership is rejected. The webhook receives an identity ID
+and event metadata only; it does not receive provider access tokens or
+credentials.
+
 Token-authenticated write requests must also send an `Idempotency-Key`. A
 retry with the same key replays the original result instead of creating a
 second question, decision, publication, or acknowledgment.
