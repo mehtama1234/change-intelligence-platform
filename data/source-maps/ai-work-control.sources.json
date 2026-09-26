@@ -396,5 +396,30 @@
     "nextTest": "Track one named AI-mediated workflow from company deployment through worker or customer use, correction, appeal, and exit evidence.",
     "status": "draft",
     "refreshBy": "2026-12-31"
-  }
+  },
+  "additionalInsights": [
+    {
+      "id": "insight-ai-specialist-layer-before-outcomes-002",
+      "title": "AI demand is building specialist layers before results are clear",
+      "plainLanguageSummary": "The current records show AI-related businesses appearing at several layers—compute, networking, implementation, comparison, and fundraising tools—while the customer result is still mostly unmeasured. This supports a map of where activity is forming, not a claim that the activity creates value.",
+      "recordIds": [
+        "inc5000-coreweave-ai-infrastructure",
+        "inc5000-luma-ai-networking",
+        "inc5000-caylent-ai-delivery",
+        "inc5000-insurify-ai-decisions",
+        "inc5000-veradata-donor-analytics",
+        "ibis-ai-workflow-compression",
+        "atlas-nvidia-ai-platform-window"
+      ],
+      "strongestAlternative": "The apparent specialist-layer pattern may mostly reflect how the Inc. 5000 and industry sources classify growing companies, rather than a durable change in how customers buy or use AI.",
+      "whatWouldChangeOurMind": [
+        "Independent customer records show that these specialist services persist after initial experimentation and produce repeatable, measurable results.",
+        "Longitudinal evidence shows customers can compare, correct, replace, or exit these systems without material loss of control.",
+        "The businesses lose their distinct role as general-purpose platforms absorb the work without reducing customer choice or increasing dependence."
+      ],
+      "nextTest": "For one named customer workflow, trace the supplier, implementation step, actual use, correction path, switching option, and later result across at least two reporting periods.",
+      "status": "draft",
+      "refreshBy": "2026-12-31"
+    }
+  ]
 }

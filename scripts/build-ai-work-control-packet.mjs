@@ -232,7 +232,7 @@ const packet = {
     }
   } : {}),
   records,
-  insights: [map.insight]
+  insights: [map.insight, ...(map.additionalInsights ?? [])]
 };
 
 await mkdir(resolve(root, "data/processed"), { recursive: true });

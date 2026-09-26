@@ -436,12 +436,12 @@
     },
     "questionEvaluations": {
       "schemaVersion": "question-evaluation-ledger-v1",
-      "generatedAt": "2026-09-26T09:18:13.763Z",
+      "generatedAt": "2026-09-26T10:10:55.326Z",
       "evaluations": [
         {
           "questionId": "question-1790396868707-0zillf",
           "workspaceId": "demo-research",
-          "evaluatedAt": "2026-09-26T09:18:13.763Z",
+          "evaluatedAt": "2026-09-26T10:10:55.326Z",
           "state": "evidence_retrieved",
           "matchedRecordIds": [
             "trend-hunting-ai-control",
@@ -510,7 +510,7 @@
     },
     "briefings": {
       "schemaVersion": "workspace-briefing-ledger-v1",
-      "generatedAt": "2026-09-26T09:18:14.318Z",
+      "generatedAt": "2026-09-26T10:10:57.914Z",
       "briefings": [
         {
           "id": "briefing-question-1790396868707-0zillf",
@@ -523,7 +523,7 @@
           "publishedAt": "2026-09-26T04:34:31.213Z",
           "publicationId": "publication-1790397271213-qdiac3",
           "evidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
-          "generatedAt": "2026-09-26T09:18:14.318Z",
+          "generatedAt": "2026-09-26T10:10:57.914Z",
           "evidence": [
             {
               "recordId": "trend-hunting-ai-control",
@@ -611,7 +611,7 @@
     },
     "insightCandidates": {
       "schemaVersion": "insight-candidate-ledger-v1",
-      "generatedAt": "2026-09-26T09:18:15.527Z",
+      "generatedAt": "2026-09-26T10:10:25.000Z",
       "candidates": [
         {
           "id": "candidate-insight-ai-capability-control-gap-001-d49f41b81c49",
@@ -622,7 +622,7 @@
           "publication": "needs_republish",
           "staleReason": "The evidence digest changed after the last publication. Re-review the changed evidence before publishing again.",
           "previousEvidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
-          "generatedAt": "2026-09-26T09:18:15.527Z",
+          "generatedAt": "2026-09-26T10:10:25.000Z",
           "candidateKey": "insight-ai-capability-control-gap-001",
           "evidenceDigest": "d49f41b81c499015a01374eebe317b9dfde6f4a37a8b908213e95e712efc7c38",
           "evidence": [
@@ -745,6 +745,110 @@
             "Company and independent records show that workers can understand, correct, and leave AI-mediated decisions without material penalty."
           ],
           "nextTest": "Track one named AI-mediated workflow from company deployment through worker or customer use, correction, appeal, and exit evidence.",
+          "limits": [
+            "This candidate was assembled from current evidence references; it is not a new causal finding."
+          ]
+        },
+        {
+          "id": "candidate-insight-ai-specialist-layer-before-outcomes-002-c45cdefc1214",
+          "insightId": "insight-ai-specialist-layer-before-outcomes-002",
+          "title": "AI demand is building specialist layers before results are clear",
+          "plainLanguageSummary": "The current records show AI-related businesses appearing at several layers—compute, networking, implementation, comparison, and fundraising tools—while the customer result is still mostly unmeasured. This supports a map of where activity is forming, not a claim that the activity creates value.",
+          "status": "needs_researcher_review",
+          "publication": "not_published",
+          "generatedAt": "2026-09-26T10:10:25.000Z",
+          "candidateKey": "insight-ai-specialist-layer-before-outcomes-002",
+          "evidenceDigest": "c45cdefc1214943831d91a4eac1a43837b4d3cafaeef27ef9f8019c5744e7c7e",
+          "evidence": [
+            {
+              "recordId": "inc5000-coreweave-ai-infrastructure",
+              "sourceRepository": "inc5000-analysis",
+              "sourceRef": "data/processed/featured.json",
+              "sourceRole": "private_company",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a"
+            },
+            {
+              "recordId": "inc5000-luma-ai-networking",
+              "sourceRepository": "inc5000-analysis",
+              "sourceRef": "data/processed/featured.json",
+              "sourceRole": "private_company",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+              "researchReview": {
+                "state": "accepted_for_research",
+                "versionId": "inc5000-luma-ai-networking-48fc203e7770",
+                "decisionId": "decision-e5608d69-2622-454b-a1b2-7271950319df",
+                "reviewer": "codex-researcher",
+                "acceptedAt": "2026-09-26T10:06:49.430Z",
+                "sourceReviewRun": "scan-20260926100219763"
+              }
+            },
+            {
+              "recordId": "inc5000-caylent-ai-delivery",
+              "sourceRepository": "inc5000-analysis",
+              "sourceRef": "data/processed/featured.json",
+              "sourceRole": "private_company",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+              "researchReview": {
+                "state": "accepted_for_research",
+                "versionId": "inc5000-caylent-ai-delivery-48fc203e7770",
+                "decisionId": "decision-08b03b2d-5144-49e2-b9fc-3fbbee750a86",
+                "reviewer": "codex-researcher",
+                "acceptedAt": "2026-09-26T10:06:49.813Z",
+                "sourceReviewRun": "scan-20260926100219763"
+              }
+            },
+            {
+              "recordId": "inc5000-insurify-ai-decisions",
+              "sourceRepository": "inc5000-analysis",
+              "sourceRef": "data/processed/featured.json",
+              "sourceRole": "private_company",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+              "researchReview": {
+                "state": "accepted_for_research",
+                "versionId": "inc5000-insurify-ai-decisions-48fc203e7770",
+                "decisionId": "decision-8dfdd78f-a34f-4bcf-9f61-92a5b6011b36",
+                "reviewer": "codex-researcher",
+                "acceptedAt": "2026-09-26T10:06:50.227Z",
+                "sourceReviewRun": "scan-20260926100219763"
+              }
+            },
+            {
+              "recordId": "inc5000-veradata-donor-analytics",
+              "sourceRepository": "inc5000-analysis",
+              "sourceRef": "data/processed/featured.json",
+              "sourceRole": "private_company",
+              "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+              "researchReview": {
+                "state": "accepted_for_research",
+                "versionId": "inc5000-veradata-donor-analytics-48fc203e7770",
+                "decisionId": "decision-8430961a-a93a-4cbf-9619-de028600a1b7",
+                "reviewer": "codex-researcher",
+                "acceptedAt": "2026-09-26T10:06:50.620Z",
+                "sourceReviewRun": "scan-20260926100219763"
+              }
+            },
+            {
+              "recordId": "ibis-ai-workflow-compression",
+              "sourceRepository": "ibis-industries",
+              "sourceRef": "writeups_ai.json",
+              "sourceRole": "industry",
+              "sourceDigest": "0d3dab9e8b23ea41b5ea11c224388642acbe5b5bcb8c27707542321255ad88ce"
+            },
+            {
+              "recordId": "atlas-nvidia-ai-platform-window",
+              "sourceRepository": "company-atlas-lab",
+              "sourceRef": "company-industry-analysis/companies/nvidia/THREE-QUARTER-ACCOUNTING-BRIDGE.md",
+              "sourceRole": "company_report",
+              "sourceDigest": "75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0"
+            }
+          ],
+          "strongestAlternative": "The apparent specialist-layer pattern may mostly reflect how the Inc. 5000 and industry sources classify growing companies, rather than a durable change in how customers buy or use AI.",
+          "whatWouldChangeOurMind": [
+            "Independent customer records show that these specialist services persist after initial experimentation and produce repeatable, measurable results.",
+            "Longitudinal evidence shows customers can compare, correct, replace, or exit these systems without material loss of control.",
+            "The businesses lose their distinct role as general-purpose platforms absorb the work without reducing customer choice or increasing dependence."
+          ],
+          "nextTest": "For one named customer workflow, trace the supplier, implementation step, actual use, correction path, switching option, and later result across at least two reporting periods.",
           "limits": [
             "This candidate was assembled from current evidence references; it is not a new causal finding."
           ]
@@ -1692,6 +1796,29 @@
         "Company and independent records show that workers can understand, correct, and leave AI-mediated decisions without material penalty."
       ],
       "nextTest": "Track one named AI-mediated workflow from company deployment through worker or customer use, correction, appeal, and exit evidence.",
+      "status": "draft",
+      "refreshBy": "2026-12-31"
+    },
+    {
+      "id": "insight-ai-specialist-layer-before-outcomes-002",
+      "title": "AI demand is building specialist layers before results are clear",
+      "plainLanguageSummary": "The current records show AI-related businesses appearing at several layers—compute, networking, implementation, comparison, and fundraising tools—while the customer result is still mostly unmeasured. This supports a map of where activity is forming, not a claim that the activity creates value.",
+      "recordIds": [
+        "inc5000-coreweave-ai-infrastructure",
+        "inc5000-luma-ai-networking",
+        "inc5000-caylent-ai-delivery",
+        "inc5000-insurify-ai-decisions",
+        "inc5000-veradata-donor-analytics",
+        "ibis-ai-workflow-compression",
+        "atlas-nvidia-ai-platform-window"
+      ],
+      "strongestAlternative": "The apparent specialist-layer pattern may mostly reflect how the Inc. 5000 and industry sources classify growing companies, rather than a durable change in how customers buy or use AI.",
+      "whatWouldChangeOurMind": [
+        "Independent customer records show that these specialist services persist after initial experimentation and produce repeatable, measurable results.",
+        "Longitudinal evidence shows customers can compare, correct, replace, or exit these systems without material loss of control.",
+        "The businesses lose their distinct role as general-purpose platforms absorb the work without reducing customer choice or increasing dependence."
+      ],
+      "nextTest": "For one named customer workflow, trace the supplier, implementation step, actual use, correction path, switching option, and later result across at least two reporting periods.",
       "status": "draft",
       "refreshBy": "2026-12-31"
     }
