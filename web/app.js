@@ -1,5 +1,5 @@
 const fixtureUrl = "../api/packet";
-const state = { packet: null, role: "all", theme: "all", company: "all", industry: "all", timelineType: "all", timelineQuery: "", timelineEvents: [], workspaceId: "demo-research", actorId: "demo-researcher", token: sessionStorage.getItem("change-intelligence-token") || "" };
+const state = { packet: null, role: "all", theme: "all", company: "all", industry: "all", timelineType: "all", timelineQuery: "", timelineEvents: [], insightInspections: new Map(), workspaceId: "demo-research", actorId: "demo-researcher", token: sessionStorage.getItem("change-intelligence-token") || "" };
 
 const byId = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
@@ -299,7 +299,9 @@ async function inspectInsight(insightId) {
   const response = await apiFetch(`../api/insights/${encodeURIComponent(insightId)}?workspace=${encodeURIComponent(state.workspaceId)}`);
   if (!response.ok) throw new Error("Insight could not be loaded.");
   const inspection = await response.json();
-  const { insight, evidence, review, boundaries } = inspection;
+  const { insight, evidence, review, reviewHistory, boundaries } = inspection;
+  const decisions = reviewHistory?.decisions ?? [];
+  const publications = reviewHistory?.publications ?? [];
   showInspector(insight.title, `${review?.status?.replaceAll("_", " ") || "not yet reviewed"} · refresh by ${insight.refreshBy}`, `
     <article class="inspection-card">
       <p>${escapeHtml(insight.plainLanguageSummary)}</p>
@@ -308,6 +310,8 @@ async function inspectInsight(insightId) {
       <h3>Strongest alternative</h3><p>${escapeHtml(boundaries.strongestAlternative)}</p>
       <h3>What would change our mind</h3><ul>${boundaries.whatWouldChangeOurMind.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
       <h3>Next test</h3><p>${escapeHtml(boundaries.nextTest)}</p>
+      <h3>Approval history</h3>
+      ${decisions.length || publications.length ? `<ol class="review-history">${[...decisions.map((item) => ({ ...item, historyType: "decision", at: item.decidedAt, by: item.reviewer, text: `${item.decision} · ${item.note || "No note"}` })), ...publications.map((item) => ({ ...item, historyType: "publication", at: item.publishedAt, by: item.publisher, text: `published · ${item.note || "No note"}` }))].sort((a, b) => String(b.at).localeCompare(String(a.at))).map((item) => `<li><strong>${escapeHtml(item.historyType)}</strong> · ${escapeHtml(item.text)}<span>${escapeHtml(item.by || "researcher")} · ${escapeHtml(item.at || "time not recorded")}</span></li>`).join("")}</ol>` : `<p class="muted">No approval or publication event has been recorded.</p>`}
     </article>`);
 }
 
@@ -317,6 +321,65 @@ async function inspectBriefing(briefingId) {
   const briefing = (await response.json()).find((item) => item.id === briefingId);
   if (!briefing) throw new Error("Briefing is not available in this workspace.");
   showInspector(briefing.title, `${briefing.state} · ${briefing.publication}`, `<article class="inspection-card"><p>${escapeHtml(briefing.reading)}</p><h3>Evidence boundary</h3><p>${escapeHtml(briefing.boundary)}</p><h3>Next test</h3><p>${escapeHtml(briefing.nextTest)}</p>${briefing.staleReason ? `<p class="error">${escapeHtml(briefing.staleReason)}</p>` : ""}<p>Evidence records: ${escapeHtml(briefing.evidence.map((item) => item.recordId).join(", ") || "none")}</p></article>`);
+}
+
+function insightDefinition(candidate) {
+  return state.packet?.insights?.find((insight) => insight.id === candidate.insightId || insight.id === candidate.candidateKey);
+}
+
+function renderInsightReview() {
+  const candidates = state.packet?.operations?.insightCandidates?.candidates ?? [];
+  const counts = candidates.reduce((result, candidate) => { result[candidate.status] = (result[candidate.status] || 0) + 1; return result; }, {});
+  byId("insight-review-summary").textContent = `${candidates.length} bounded insight${candidates.length === 1 ? "" : "s"}; ${counts.needs_researcher_review || 0} awaiting review, ${counts.accepted_for_publication || 0} accepted for publication, ${counts.published || 0} published. Publication requires an explicit human action.`;
+  byId("insight-review-items").innerHTML = candidates.length ? candidates.map((candidate) => {
+    const insight = insightDefinition(candidate) ?? {};
+    const inspection = state.insightInspections.get(candidate.candidateKey);
+    const history = inspection?.reviewHistory ?? {};
+    const decisions = history.decisions ?? [];
+    const publications = history.publications ?? [];
+    const evidence = candidate.evidence ?? [];
+    const action = ["needs_researcher_review", "stale"].includes(candidate.status) ? `<div class="review-actions"><button class="insight-decision" data-candidate-id="${escapeHtml(candidate.id)}" data-decision="accept" type="button">Accept for publication review</button><button class="insight-decision" data-candidate-id="${escapeHtml(candidate.id)}" data-decision="defer" type="button">Defer</button><button class="insight-decision" data-candidate-id="${escapeHtml(candidate.id)}" data-decision="correct" type="button">Needs correction</button></div>` : candidate.status === "accepted_for_publication" ? `<div class="publication-box"><label><input class="publication-confirm" type="checkbox"> I inspected the linked evidence, alternative explanation, limits, and falsifiers.</label><textarea class="publication-note" maxlength="2000" placeholder="Publication note (optional)"></textarea><button class="publish-insight-candidate" data-candidate-id="${escapeHtml(candidate.id)}" type="button" disabled>Publish this bounded insight</button></div>` : candidate.status === "published" ? `<p class="success">Published by ${escapeHtml(candidate.publishedBy || "researcher")} on ${escapeHtml(candidate.publishedAt || "time not recorded")}.</p>` : `<p class="muted">Decision recorded by ${escapeHtml(candidate.decidedBy || "researcher")}. ${escapeHtml(candidate.decisionNote || "")}</p>`;
+    const historyItems = [...decisions.map((item) => ({ kind: "decision", at: item.decidedAt, by: item.reviewer, text: `${item.decision} · ${item.note || "No note"}` })), ...publications.map((item) => ({ kind: "publication", at: item.publishedAt, by: item.publisher, text: `published · ${item.note || "No note"}` }))].sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    return `<article class="record-card insight-review-card"><div class="record-meta"><span class="role">${escapeHtml(candidate.status.replaceAll("_", " "))}</span><span>${escapeHtml(candidate.publication.replaceAll("_", " "))}</span><span>evidence ${escapeHtml(candidate.evidenceDigest.slice(0, 12))}</span></div><h3>${escapeHtml(candidate.title || insight.title || candidate.candidateKey)}</h3><p>${escapeHtml(candidate.plainLanguageSummary || insight.plainLanguageSummary || "No summary recorded.")}</p>${candidate.staleReason ? `<p class="error">${escapeHtml(candidate.staleReason)}</p>` : ""}<div class="insight-review-grid"><div><h4>Evidence used</h4><div class="chain-list">${evidence.map((item) => `<button class="chain-item inspect-record" data-record-id="${escapeHtml(item.recordId)}" type="button"><strong>${escapeHtml(item.recordId)}</strong><span>${escapeHtml(item.sourceRepository)} · ${escapeHtml(item.sourceRole)}</span></button>`).join("")}</div></div><div><h4>Limits and tests</h4><p><strong>Strongest alternative:</strong> ${escapeHtml(candidate.strongestAlternative || insight.strongestAlternative || "Not recorded.")}</p><p><strong>Next test:</strong> ${escapeHtml(candidate.nextTest || insight.nextTest || "Not recorded.")}</p><ul>${(candidate.whatWouldChangeOurMind || insight.whatWouldChangeOurMind || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div></div><details><summary>Approval history (${historyItems.length})</summary>${historyItems.length ? `<ol class="review-history">${historyItems.map((item) => `<li><strong>${escapeHtml(item.kind)}</strong> · ${escapeHtml(item.text)}<span>${escapeHtml(item.by || "researcher")} · ${escapeHtml(item.at || "time not recorded")}</span></li>`).join("")}</ol>` : `<p class="muted">No approval or publication event has been recorded.</p>`}</details>${action}<p class="insight-action-status muted" role="status"></p></article>`;
+  }).join("") : `<p class="muted">No bounded insight candidates are available.</p>`;
+  document.querySelectorAll(".publication-confirm").forEach((checkbox) => checkbox.addEventListener("change", () => { const box = checkbox.closest(".publication-box"); box.querySelector(".publish-insight-candidate").disabled = !checkbox.checked; }));
+  document.querySelectorAll(".insight-decision").forEach((button) => button.addEventListener("click", async () => {
+    const decision = button.dataset.decision;
+    const note = decision === "correct" ? window.prompt("What needs to be corrected before this insight can proceed?") : decision === "defer" ? window.prompt("Why should publication wait?") : "Reviewed the evidence, alternative explanation, limits, and falsifiers.";
+    if (["correct", "defer"].includes(decision) && !note?.trim()) return;
+    button.disabled = true;
+    const status = button.closest(".insight-review-card").querySelector(".insight-action-status");
+    status.textContent = "Saving review decision…";
+    const response = await apiFetch(`../api/insight-candidates/${encodeURIComponent(button.dataset.candidateId)}/decision`, { method: "POST", body: { decision, note } });
+    if (!response.ok) { status.textContent = `Could not save review decision (${response.status}).`; button.disabled = false; return; }
+    await refreshInsightReview();
+  }));
+  document.querySelectorAll(".publish-insight-candidate").forEach((button) => button.addEventListener("click", async () => {
+    const box = button.closest(".publication-box");
+    const status = button.closest(".insight-review-card").querySelector(".insight-action-status");
+    button.disabled = true;
+    status.textContent = "Publishing receipt…";
+    const response = await apiFetch(`../api/insight-candidates/${encodeURIComponent(button.dataset.candidateId)}/publish`, { method: "POST", body: { note: box.querySelector(".publication-note").value.trim() } });
+    if (!response.ok) { status.textContent = `Could not publish this insight (${response.status}).`; button.disabled = false; return; }
+    await refreshInsightReview();
+  }));
+}
+
+async function loadInsightReview() {
+  if (!state.packet) return;
+  const entries = await Promise.all((state.packet.insights ?? []).map(async (insight) => {
+    const response = await apiFetch(`../api/insights/${encodeURIComponent(insight.id)}?workspace=${encodeURIComponent(state.workspaceId)}`);
+    return response.ok ? [insight.id, await response.json()] : [insight.id, null];
+  }));
+  state.insightInspections = new Map(entries.filter(([, inspection]) => inspection));
+  renderInsightReview();
+}
+
+async function refreshInsightReview() {
+  const response = await apiFetch("../api/packet");
+  if (response.ok) state.packet = await response.json();
+  await loadInsightReview();
+  render();
 }
 
 function render() {
@@ -330,16 +393,11 @@ function render() {
   const insightCandidate = state.packet.operations?.insightCandidates?.candidates?.[0];
   if (insightCandidate) {
     byId("insight-status").textContent = insightCandidate.status.replaceAll("_", " ");
-    byId("insight-review-actions").innerHTML = ["needs_researcher_review", "stale"].includes(insightCandidate.status) ? `${insightCandidate.staleReason ? `<p class="muted">${escapeHtml(insightCandidate.staleReason)}</p>` : ""}<button id="accept-insight" type="button">${insightCandidate.status === "stale" ? "Re-review changed evidence" : "Accept for publication review"}</button>` : insightCandidate.status === "accepted_for_publication" ? `<button id="publish-insight" type="button">Publish insight</button>` : insightCandidate.status === "published" ? `<span>Published by ${escapeHtml(insightCandidate.publishedBy || "researcher")}.</span>` : `<span>Decision recorded by ${escapeHtml(insightCandidate.decidedBy || "researcher")}.</span>`;
-    byId("accept-insight")?.addEventListener("click", async () => {
-      const response = await apiFetch(`../api/insight-candidates/${encodeURIComponent(insightCandidate.id)}/decision`, { method: "POST", body: { decision: "accept", note: "Accepted for publication review after evidence inspection." } });
-      if (response.ok) byId("insight-review-actions").textContent = "Accepted for publication review.";
-    });
-    byId("publish-insight")?.addEventListener("click", async () => {
-      const response = await apiFetch(`../api/insight-candidates/${encodeURIComponent(insightCandidate.id)}/publish`, { method: "POST", body: { note: "Published after review." } });
-      if (response.ok) byId("insight-review-actions").textContent = "Published.";
-    });
+    byId("insight-review-actions").innerHTML = `<p class="muted">Detailed evidence review and publication controls are below.</p><button id="focus-insight-review" class="secondary-button" type="button">Open insight review queue</button>`;
+    byId("focus-insight-review").onclick = () => byId("insight-review-panel").scrollIntoView({ behavior: "smooth", block: "start" });
   }
+
+  renderInsightReview();
 
   byId("inspect-insight").onclick = () => inspectInsight(insight.id).catch((error) => showInspector("Inspection unavailable", error.message, ""));
 
@@ -500,7 +558,7 @@ byId("question-form").addEventListener("submit", async (event) => {
   }
 });
 
-byId("workspace-select").addEventListener("change", async (event) => { state.workspaceId = event.target.value; await Promise.all([loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists(), loadEvidenceHistory()]); });
+byId("workspace-select").addEventListener("change", async (event) => { state.workspaceId = event.target.value; await Promise.all([loadQuestions(), loadAlerts(), loadDecisionOutcomes(), loadWatchlists(), loadEvidenceHistory(), loadInsightReview()]); });
 byId("watchlist-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const status = byId("watchlist-status");
@@ -529,6 +587,7 @@ fetch(fixtureUrl).then((response) => {
 }).then((packet) => {
   state.packet = packet;
   render();
+  return loadInsightReview();
 }).catch((error) => {
   byId("records").innerHTML = `<p class="error">The evidence packet could not be loaded: ${escapeHtml(error.message)}</p>`;
 });

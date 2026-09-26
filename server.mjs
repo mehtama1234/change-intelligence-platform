@@ -654,10 +654,22 @@ const server = createServer(async (request, response) => {
       const candidate = candidates.candidates.find((item) => item.id === candidateId);
       if (!candidate) return json(response, 404, { error: "Insight candidate not found." });
       const wasStale = candidate.status === "stale";
-      const decision = { id: `insight-decision-${randomUUID()}`, candidateKey: candidate.candidateKey, candidateId, evidenceDigest: candidate.evidenceDigest, reviewer: member.id, reviewerRole: member.role, decision: body.decision, note: String(body.note ?? "").slice(0, 2000), decidedAt: new Date().toISOString(), publication: "not_published" };
+      const decision = { id: `insight-decision-${randomUUID()}`, candidateKey: candidate.candidateKey, candidateId, workspaceId: workspace.id, evidenceDigest: candidate.evidenceDigest, reviewer: member.id, reviewerRole: member.role, decision: body.decision, note: String(body.note ?? "").slice(0, 2000), decidedAt: new Date().toISOString(), publication: "not_published" };
       if (wasStale) decision.previousEvidenceDigest = candidate.previousEvidenceDigest ?? null;
       store.commitRecord({ kind: "insight_decision", record: decision, audit: { requestId, action: "decide_insight", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: decision.decision, occurredAt: decision.decidedAt }, operation: { key: idempotencyKey, action: "decide_insight", status: 200, body: decision, completedAt: decision.decidedAt } });
       await writeFile(insightDecisionsPath, `${JSON.stringify(store.recordsLedger("insight_decision", "insight-decision-ledger-v1", "decisions"), null, 2)}\n`);
+      const resultingStatus = { accept: "accepted_for_publication", defer: "deferred", reject: "rejected", correct: "correction_required" }[decision.decision];
+      candidate.status = resultingStatus;
+      candidate.publication = "not_published";
+      candidate.decisionId = decision.id;
+      candidate.decidedBy = decision.reviewer;
+      candidate.decidedAt = decision.decidedAt;
+      candidate.decisionNote = decision.note;
+      if (resultingStatus !== "stale") {
+        delete candidate.staleReason;
+        delete candidate.previousEvidenceDigest;
+      }
+      await writeFile(insightCandidatesPath, `${JSON.stringify(candidates, null, 2)}\n`);
       if (wasStale) {
         store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "insight_re_review", reviewType: "re_review", targetId: candidate.id, candidateKey: candidate.candidateKey, workspaceId: workspace.id, reviewer: member.id, reviewerRole: member.role, previousEvidenceDigest: decision.previousEvidenceDigest, currentEvidenceDigest: decision.evidenceDigest, outcome: decision.decision, occurredAt: decision.decidedAt, decisionId: decision.id }]);
         await writeReviewEvents();
@@ -712,6 +724,12 @@ const server = createServer(async (request, response) => {
       const publication = { id: `insight-publication-${randomUUID()}`, candidateKey: candidate.candidateKey, candidateId, workspaceId: workspace.id, evidenceDigest: candidate.evidenceDigest, publisher: member.id, publisherRole: member.role, publishedAt: new Date().toISOString(), note: String(body.note ?? "").slice(0, 2000) };
       store.commitRecord({ kind: "insight_publication", record: publication, audit: { requestId, action: "publish_insight", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "published", occurredAt: publication.publishedAt }, operation: { key: idempotencyKey, action: "publish_insight", status: 200, body: publication, completedAt: publication.publishedAt } });
       await writeFile(insightPublicationsPath, `${JSON.stringify(store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications"), null, 2)}\n`);
+      candidate.status = "published";
+      candidate.publication = "published";
+      candidate.publicationId = publication.id;
+      candidate.publishedBy = publication.publisher;
+      candidate.publishedAt = publication.publishedAt;
+      await writeFile(insightCandidatesPath, `${JSON.stringify(candidates, null, 2)}\n`);
       return json(response, 200, publication);
     }
     if (request.method === "POST" && url.pathname === "/api/watchlists") {
@@ -1141,7 +1159,11 @@ const server = createServer(async (request, response) => {
     if (url.pathname === "/api/ingestion") {
       return json(response, 200, await readJson(ingestionPath, await readJson(staticIngestionPath, { schemaVersion: "research-ingestion-ledger-v1", repositories: [], records: [] })));
     }
-    if (url.pathname === "/api/packet") return json(response, 200, publicPacket(await readJson(packetPath, { error: "Packet has not been built." })));
+    if (url.pathname === "/api/packet") {
+      const packet = await readJson(packetPath, { error: "Packet has not been built." });
+      const runtimeCandidates = await readJson(insightCandidatesPath, undefined);
+      return json(response, 200, publicPacket(runtimeCandidates ? { ...packet, operations: { ...(packet.operations ?? {}), insightCandidates: runtimeCandidates } } : packet));
+    }
     if (url.pathname.startsWith("/api/evidence/")) {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));
       if (denyWorkspaceRead(response, access)) return;
@@ -1183,13 +1205,19 @@ const server = createServer(async (request, response) => {
       if (!insight) return json(response, 404, { error: "Insight not found." });
       if (access.workspaceId) await appendAudit({ requestId, action: "inspect_insight", targetId: insight.id, workspaceId: access.workspaceId, actorId: access.actorId ?? null, actorRole: null, result: "opened", occurredAt: new Date().toISOString() });
       const recordsById = new Map(packet.records.map((record) => [record.id, record]));
-      const candidate = packet.operations?.insightCandidates?.candidates?.find((item) => item.candidateKey === insight.id || item.id === insight.id);
+      const runtimeCandidates = await readJson(insightCandidatesPath, undefined);
+      const candidate = (runtimeCandidates?.candidates ?? packet.operations?.insightCandidates?.candidates ?? []).find((item) => item.candidateKey === insight.id || item.id === insight.id);
+      const visible = (item) => !item.workspaceId || !access.workspaceId || item.workspaceId === access.workspaceId;
+      const decisions = store.recordsLedger("insight_decision", "insight-decision-ledger-v1", "decisions").decisions.filter((item) => item.candidateKey === insight.id && visible(item));
+      const publications = store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications").publications.filter((item) => item.candidateKey === insight.id && visible(item));
+      const reviewEvents = store.recordsLedger("review_event", "review-event-ledger-v1", "events").events.filter((item) => (item.candidateKey === insight.id || item.targetId === candidate?.id) && visible(item));
       return json(response, 200, {
         schemaVersion: "insight-inspection-v1",
         insight,
         evidence: (insight.recordIds ?? []).map((recordId) => recordsById.get(recordId)).filter(Boolean),
         candidate: candidate ?? null,
-        review: candidate ? { status: candidate.status, publication: candidate.publication, evidenceDigest: candidate.evidenceDigest } : null,
+        review: candidate ? { status: candidate.status, publication: candidate.publication, evidenceDigest: candidate.evidenceDigest, decisionId: candidate.decisionId ?? null, decidedBy: candidate.decidedBy ?? null, decidedAt: candidate.decidedAt ?? null, decisionNote: candidate.decisionNote ?? null, publicationId: candidate.publicationId ?? null, publishedBy: candidate.publishedBy ?? null, publishedAt: candidate.publishedAt ?? null } : null,
+        reviewHistory: { decisions, publications, events: reviewEvents },
         boundaries: {
           strongestAlternative: insight.strongestAlternative,
           whatWouldChangeOurMind: insight.whatWouldChangeOurMind ?? [],
