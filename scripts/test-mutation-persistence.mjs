@@ -101,7 +101,7 @@ try {
   if (!watchlists.some((watchlist) => watchlist.name === "Durability watchlist")) throw new Error("Watchlist did not survive restart.");
   const comparisonViewsResponse = await fetch(`${base}/api/comparison-views?workspace=demo-research`, { headers: auth });
   const comparisonViews = await comparisonViewsResponse.json();
-  if (comparisonViewsResponse.status !== 200 || !comparisonViews.some((view) => view.name === "AI platform comparison" && view.entityIds.length === 2)) throw new Error("Comparison view did not survive restart.");
+  if (comparisonViewsResponse.status !== 200 || !comparisonViews.some((view) => view.name === "AI platform comparison" && view.entityIds.length === 2 && ["current", "changed"].includes(view.freshness.status))) throw new Error("Comparison view did not survive restart or refresh status was missing.");
   const pilotProfile = await (await fetch(`${base}/api/workspace-pilot?workspace=demo-research`, { headers: auth })).json();
   if (pilotProfile.profile?.decisionQuestion !== "Which control changes should this team act on next?" || pilotProfile.profile?.cadence !== "monthly") throw new Error("Pilot profile did not survive restart.");
   const restoredDeliveries = await (await fetch(`${base}/api/pilot-deliveries?workspace=demo-research`, { headers: auth })).json();

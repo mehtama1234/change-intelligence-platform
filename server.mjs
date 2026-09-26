@@ -405,6 +405,21 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
   };
 }
 
+function buildAtlasComparison({ kind, ids, atlas, packet, sourceScan }) {
+  const selected = ids.map((id) => (atlas.entities?.[kind] ?? []).find((candidate) => candidate.id === id)).filter(Boolean);
+  const comparisons = selected.map((entity) => {
+    const record = (packet.records ?? []).find((candidate) => entity.evidenceIds.includes(candidate.id) && candidate.reportWindow);
+    const columns = record?.reportWindow?.columns ?? [];
+    return { id: entity.id, label: entity.label, recordId: record?.id ?? null, sourceRef: record?.sourceRef ?? null, sourceDigest: record?.sourceDigest ?? null, columns, quarters: record?.reportWindow?.quarters ?? [], annualBaseline: record?.reportWindow?.annualBaseline ?? null, reading: record?.reportWindow?.reading ?? null };
+  });
+  const sharedColumns = comparisons.length ? comparisons.reduce((shared, comparison) => shared.filter((column) => comparison.columns.includes(column)), comparisons[0].columns) : [];
+  const incompatibilities = comparisons.filter((comparison) => comparison.columns.length === 0 || sharedColumns.length !== comparison.columns.length).map((comparison) => ({ entityId: comparison.id, entity: comparison.label, missingFromSharedView: comparison.columns.filter((column) => !sharedColumns.includes(column)), reason: comparison.columns.length ? "This entity reports a different column set." : "No comparable annual-plus-quarterly report window is available." }));
+  const sourceIds = comparisons.map((comparison) => comparison.recordId).filter(Boolean);
+  const changedSources = (sourceScan?.sources ?? []).filter((source) => sourceIds.includes(source.id) && source.status !== "unchanged").map((source) => ({ id: source.id, status: source.status, checkedAt: source.checkedAt, reason: source.reviewReason }));
+  const latestPeriods = comparisons.map((comparison) => ({ entityId: comparison.id, entity: comparison.label, period: comparison.quarters.at(-1)?.period ?? comparison.annualBaseline ?? null }));
+  return { schemaVersion: "atlas-comparison-read-model-v1", kind, selected: comparisons.map(({ id, label, recordId }) => ({ id, label, recordId })), compatibleColumns: sharedColumns, comparisons, incompatibilities, comparable: sharedColumns.length > 0 && incompatibilities.length === 0, freshness: { status: changedSources.length ? "changed" : "current", changedSources, latestPeriods, checkedAt: sourceScan?.generatedAt ?? null }, limitation: "Only identically labelled columns are compared. Different definitions, units, periods, currencies, or reporting boundaries remain incompatible and are not ranked." };
+}
+
 async function appendAudit(entry) {
   store.appendAudit(entry);
   await writeFile(auditPath, `${JSON.stringify(store.auditLedger(), null, 2)}\n`);
@@ -1082,14 +1097,8 @@ const server = createServer(async (request, response) => {
       const packet = await readJson(packetPath, { records: [] });
       const selected = ids.map((id) => (atlas.entities?.[kind] ?? []).find((candidate) => candidate.id === id)).filter(Boolean);
       if (selected.length !== ids.length) return json(response, 404, { error: "One or more comparison entities were not found." });
-      const comparisons = selected.map((entity) => {
-        const record = (packet.records ?? []).find((candidate) => entity.evidenceIds.includes(candidate.id) && candidate.reportWindow);
-        const columns = record?.reportWindow?.columns ?? [];
-        return { id: entity.id, label: entity.label, recordId: record?.id ?? null, sourceRef: record?.sourceRef ?? null, columns, quarters: record?.reportWindow?.quarters ?? [], annualBaseline: record?.reportWindow?.annualBaseline ?? null, reading: record?.reportWindow?.reading ?? null };
-      });
-      const sharedColumns = comparisons.length ? comparisons.reduce((shared, comparison) => shared.filter((column) => comparison.columns.includes(column)), comparisons[0].columns) : [];
-      const incompatibilities = comparisons.filter((comparison) => comparison.columns.length === 0 || sharedColumns.length !== comparison.columns.length).map((comparison) => ({ entityId: comparison.id, entity: comparison.label, missingFromSharedView: comparison.columns.filter((column) => !sharedColumns.includes(column)), reason: comparison.columns.length ? "This entity reports a different column set." : "No comparable annual-plus-quarterly report window is available." }));
-      return json(response, 200, { schemaVersion: "atlas-comparison-read-model-v1", kind, selected: comparisons.map(({ id, label, recordId }) => ({ id, label, recordId })), compatibleColumns: sharedColumns, comparisons, incompatibilities, comparable: sharedColumns.length > 0 && incompatibilities.length === 0, limitation: "Only identically labelled columns are compared. Different definitions, units, periods, currencies, or reporting boundaries remain incompatible and are not ranked." });
+      const sourceScan = await readJson(sourceScanPath, { sources: [] });
+      return json(response, 200, buildAtlasComparison({ kind, ids, atlas, packet, sourceScan }));
     }
     if (url.pathname === "/api/ingestion") {
       return json(response, 200, await readJson(ingestionPath, await readJson(staticIngestionPath, { schemaVersion: "research-ingestion-ledger-v1", repositories: [], records: [] })));
@@ -1279,7 +1288,11 @@ const server = createServer(async (request, response) => {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));
       if (denyWorkspaceRead(response, access)) return;
       const views = store.recordsLedger("comparison_view", "workspace-comparison-view-ledger-v1", "views").views;
-      return json(response, 200, access.workspaceIds ? views.filter((view) => access.workspaceIds.includes(view.workspaceId)) : views);
+      const visible = access.workspaceIds ? views.filter((view) => access.workspaceIds.includes(view.workspaceId)) : views;
+      const atlas = await readJson(atlasPath, await readJson(staticAtlasPath, { entities: {}, edges: [] }));
+      const packet = await readJson(packetPath, { records: [] });
+      const sourceScan = await readJson(sourceScanPath, { sources: [] });
+      return json(response, 200, visible.map((view) => ({ ...view, freshness: buildAtlasComparison({ kind: view.kind, ids: view.entityIds, atlas, packet, sourceScan }).freshness })));
     }
     if (url.pathname === "/api/alerts") {
       const workspaceId = url.searchParams.get("workspace");
