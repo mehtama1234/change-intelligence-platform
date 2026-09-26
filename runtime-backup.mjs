@@ -17,6 +17,7 @@ const runtimeFiles = [
   "research-ingestion.json",
   "domain-atlas.json",
   "workspace-comparison-views.json",
+  "workspace-notification-preferences.json",
   "versioned-evidence-ledger.json",
   "review-decisions.json",
   "review-events.json",

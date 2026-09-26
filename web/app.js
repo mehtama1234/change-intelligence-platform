@@ -37,11 +37,20 @@ async function loadWorkspaces() {
 }
 
 async function loadComparisonViews() {
-  const response = await apiFetch(`../api/comparison-views?workspace=${encodeURIComponent(state.workspaceId)}`);
-  if (!response.ok) throw new Error(`Saved comparisons unavailable (${response.status})`);
+  const [response, preferenceResponse, notificationResponse] = await Promise.all([
+    apiFetch(`../api/comparison-views?workspace=${encodeURIComponent(state.workspaceId)}`),
+    apiFetch(`../api/notification-preferences?workspace=${encodeURIComponent(state.workspaceId)}`),
+    apiFetch(`../api/workspace-notifications?workspace=${encodeURIComponent(state.workspaceId)}`)
+  ]);
+  if (!response.ok || !preferenceResponse.ok || !notificationResponse.ok) throw new Error(`Saved comparison notifications unavailable (${response.status}/${preferenceResponse.status}/${notificationResponse.status})`);
   const views = await response.json();
+  const preferences = await preferenceResponse.json();
+  const notifications = await notificationResponse.json();
   byId("atlas-saved-comparisons").innerHTML = views.length ? `<h3>Saved comparisons</h3>${views.slice().reverse().map((view) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(view.kind)}</span><span>${escapeHtml(view.freshness?.status || "not checked")}</span><span>${escapeHtml(view.createdAt)}</span></div><h3>${escapeHtml(view.name)}</h3><p>${escapeHtml(view.entityLabels.join(" · "))}</p>${view.freshness?.changedSources?.length ? `<p class="error">Refresh changed ${escapeHtml(view.freshness.changedSources.length)} source${view.freshness.changedSources.length === 1 ? "" : "s"}; review this comparison.</p>` : ""}<button class="link-button reopen-comparison" data-comparison-kind="${escapeHtml(view.kind)}" data-comparison-ids="${escapeHtml(view.entityIds.join(","))}" type="button">Reopen comparison</button></article>`).join("")}` : `<p class="muted">No saved comparisons yet.</p>`;
+  byId("atlas-comparison-alerts-enabled").checked = preferences.preferences?.comparisonAlerts !== false;
+  byId("atlas-comparison-alert-history").innerHTML = notifications.alerts.length ? `<h3>Saved-comparison alert history</h3>${notifications.alerts.slice().reverse().map((alert) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(alert.notificationState.replaceAll("_", " "))}</span><span>${escapeHtml(alert.severity)}</span><span>${escapeHtml(alert.createdAt)}</span></div><h3>${escapeHtml(alert.name || "Saved comparison")}</h3><p>${escapeHtml(alert.reason)}</p><p class="muted">${escapeHtml(alert.state)} · ${escapeHtml(alert.kind.replaceAll("_", " "))}</p></article>`).join("")}` : `<p class="muted">No saved-comparison alerts yet. The system will keep this history when a refresh changes the comparison evidence.</p>`;
   document.querySelectorAll(".reopen-comparison").forEach((button) => button.addEventListener("click", () => { const kind = byId("atlas-compare-kind"); const entities = byId("atlas-compare-entities"); kind.value = button.dataset.comparisonKind; kind.dispatchEvent(new Event("change")); const ids = new Set(button.dataset.comparisonIds.split(",")); [...entities.options].forEach((option) => { option.selected = ids.has(option.value); }); compareAtlasEntities(kind.value, [...ids]); }));
+  byId("atlas-notification-preferences-form").onsubmit = async (event) => { event.preventDefault(); const status = byId("atlas-notification-preferences-status"); const result = await apiFetch("../api/notification-preferences", { method: "POST", body: { comparisonAlerts: byId("atlas-comparison-alerts-enabled").checked, sourceAlerts: true } }); status.textContent = result.ok ? "Notification preference saved." : `Could not save notification preference (${result.status}).`; if (result.ok) await loadComparisonViews(); };
 }
 
 async function loadWatchlists() {
