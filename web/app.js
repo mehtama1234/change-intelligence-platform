@@ -61,6 +61,25 @@ async function loadChanges() {
   byId("change-feed-items").innerHTML = visible.length ? visible.map((change) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(change.status)}</span><span>${change.needsReview ? "needs review" : "no review"}</span><span>${escapeHtml(change.repository)}</span></div><h3>${escapeHtml(change.sourcePath)}</h3><p>${escapeHtml(change.reason || "No source change recorded.")}</p><details><summary>Open source hashes</summary><dl><dt>Previous</dt><dd><code>${escapeHtml(change.previousSha256 || "none")}</code></dd><dt>Current</dt><dd><code>${escapeHtml(change.currentSha256 || "missing")}</code></dd><dt>Checked</dt><dd>${escapeHtml(change.checkedAt)}</dd></dl></details></article>`).join("") : `<p class="muted">No source bytes changed in the latest scan.</p>`;
 }
 
+async function loadOperations() {
+  const response = await apiFetch("../api/operations");
+  if (!response.ok) throw new Error(`Operations unavailable (${response.status})`);
+  const operations = await response.json();
+  const readiness = operations.readiness;
+  const refresh = operations.refresh;
+  byId("operations-summary").textContent = `Last run ${refresh.runId || "not recorded"} · ${refresh.status} · ${refresh.endedAt || "no completion time"}.`;
+  const checks = [
+    ["Readiness", readiness.status],
+    ["Refresh", readiness.checks.refresh.status],
+    ["Source scan", readiness.checks.sourceScan.status],
+    ["Runtime sync", readiness.checks.runtimeSync.status],
+    ["Backup", readiness.checks.backup.status]
+  ];
+  byId("operations-cards").innerHTML = checks.map(([label, status]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong class="operation-${escapeHtml(status)}">${escapeHtml(status)}</strong></div>`).join("");
+  const history = operations.refreshHistory ?? [];
+  byId("operations-history").innerHTML = history.length ? `<table><caption>Recent refresh runs</caption><thead><tr><th>Run</th><th>Status</th><th>Steps</th><th>Ended</th></tr></thead><tbody>${history.slice().reverse().slice(0, 8).map((run) => `<tr><th scope="row"><code>${escapeHtml(run.runId)}</code></th><td>${escapeHtml(run.status)}</td><td>${run.steps.filter((step) => step.status === "complete").length}/${run.steps.length} complete</td><td>${escapeHtml(run.endedAt)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No refresh history recorded yet.</p>`;
+}
+
 function showInspector(title, summary, content) {
   byId("evidence-inspector").hidden = false;
   byId("inspector-title").textContent = title;
@@ -261,6 +280,7 @@ byId("save-token").addEventListener("click", async () => {
 byId("token-input").value = state.token;
 loadWorkspaces().catch((error) => { setWorkspaceStatus(error.message); byId("questions-summary").textContent = error.message; });
 loadChanges().catch((error) => { byId("change-feed-summary").textContent = error.message; });
+loadOperations().catch((error) => { byId("operations-summary").textContent = error.message; });
 
 fetch(fixtureUrl).then((response) => {
   if (!response.ok) throw new Error(`Fixture unavailable (${response.status})`);

@@ -45,6 +45,12 @@ section { margin-bottom: 56px; }
 .catalog-filters label { display: grid; gap: 4px; color: var(--ink); font-weight: 700; }
 .catalog-filters select { margin: 0; min-width: 180px; }
 #change-feed { border-top: 1px solid var(--line); padding-top: 2rem; }
+.operations-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px; }
+.operation-card { display: grid; gap: 4px; padding: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+.operation-card span { color: var(--muted); font-size: .8rem; }
+.operation-card strong { text-transform: capitalize; }
+.operation-ok, .operation-ready { color: var(--accent); }
+.operation-degraded, .operation-failed, .operation-not_configured { color: var(--warning); }
 .chain-grid p, .record-card p, .test-panel p { color: var(--muted); }
 .evidence-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
 label { color: var(--muted); font-size: .9rem; }
@@ -84,6 +90,7 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 22px
   .site-header, main, footer { width: min(100% - 24px, 1100px); }
   .site-header { padding-top: 38px; }
   .orientation, .chain-grid { grid-template-columns: 1fr; }
+  .operations-cards { grid-template-columns: repeat(2, 1fr); }
   .orientation { padding: 22px; }
   .evidence-heading, footer { display: block; }
   select { margin: 4px 0 0; }
