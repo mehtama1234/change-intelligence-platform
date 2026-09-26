@@ -90,7 +90,7 @@ try {
   if (usageResponse.status !== 200 || usage.schemaVersion !== "workspace-usage-v1" || usage.workspaceId !== "demo-research") throw new Error("Workspace usage contract failed.");
   const pilotResponse = await request("/api/pilot-metrics?workspace=demo-research");
   const pilot = await pilotResponse.json();
-  if (pilotResponse.status !== 200 || pilot.schemaVersion !== "pilot-metrics-v1" || pilot.workspaceId !== "demo-research" || !Number.isInteger(pilot.measures.alertsSeen) || !pilot.interpretation.includes("do not prove")) throw new Error("Pilot metrics contract failed.");
+  if (pilotResponse.status !== 200 || pilot.schemaVersion !== "pilot-metrics-v1" || pilot.workspaceId !== "demo-research" || !Number.isInteger(pilot.measures.alertsSeen) || !Number.isInteger(pilot.measures.sourceTraceInspections) || !Number.isInteger(pilot.measures.briefingReuseCount) || !Object.hasOwn(pilot.measures, "briefingReuseRate") || !Object.hasOwn(pilot.measures, "medianCorrectionResponseMs") || !pilot.interpretation.includes("do not prove")) throw new Error("Pilot metrics contract failed.");
   const updateResponse = await request("/api/workspace-update?workspace=demo-research");
   const update = await updateResponse.json();
   if (updateResponse.status !== 200 || update.schemaVersion !== "workspace-update-v1" || update.workspaceId !== "demo-research" || !update.headline || !update.freshness || !update.limitation.includes("not a claim")) throw new Error("Workspace update contract failed.");

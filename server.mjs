@@ -258,7 +258,11 @@ function buildPilotMetrics({ workspaceId, auditEntries, alerts, outcomes, briefi
   const resolvedAlerts = alerts.filter((alert) => alert.state === "resolved" || alert.resolutionDisposition);
   const responseTimes = resolvedAlerts.map((alert) => alert.responseTimeMs).filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
   const median = responseTimes.length ? responseTimes[Math.floor(responseTimes.length / 2)] : null;
+  const correctionResponseTimes = resolvedAlerts.filter((alert) => alert.resolutionDisposition === "needs_correction").map((alert) => alert.responseTimeMs).filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
+  const medianCorrectionResponseMs = correctionResponseTimes.length ? correctionResponseTimes[Math.floor(correctionResponseTimes.length / 2)] : null;
   const knownOutcomes = outcomes.filter((outcome) => ["held", "changed", "wrong"].includes(outcome.outcomeState));
+  const publishedBriefings = auditEntries.filter((entry) => entry.action === "publish_briefing").length;
+  const reusedBriefingIds = new Set(outcomes.filter((outcome) => outcome.decisionState === "used").map((outcome) => outcome.briefingId).filter(Boolean));
   return {
     schemaVersion: "pilot-metrics-v1",
     workspaceId,
@@ -271,10 +275,14 @@ function buildPilotMetrics({ workspaceId, auditEntries, alerts, outcomes, briefi
       falseAlerts: resolvedAlerts.filter((alert) => alert.resolutionDisposition === "false_positive").length,
       alertsNeedingCorrection: resolvedAlerts.filter((alert) => alert.resolutionDisposition === "needs_correction").length,
       medianAlertResponseMs: median,
-      briefingsPublished: auditEntries.filter((entry) => entry.action === "publish_briefing").length,
+      medianCorrectionResponseMs,
+      sourceTraceInspections: auditEntries.filter((entry) => ["inspect_evidence", "inspect_insight"].includes(entry.action)).length,
+      briefingsPublished: publishedBriefings,
       briefingsExported: auditEntries.filter((entry) => entry.action === "export_briefing").length,
       decisionFeedbackRecords: outcomes.length,
       decisionsUsingBriefings: outcomes.filter((outcome) => outcome.decisionState === "used").length,
+      briefingReuseCount: reusedBriefingIds.size,
+      briefingReuseRate: publishedBriefings ? reusedBriefingIds.size / publishedBriefings : null,
       decisionOutcomesWithInsights: outcomes.filter((outcome) => outcome.insightProvenance?.length).length,
       insightReceiptsUsed: outcomes.filter((outcome) => outcome.decisionState === "used").reduce((total, outcome) => total + (outcome.insightProvenance?.length ?? 0), 0),
       publishedInsightReceiptsUsed: outcomes.filter((outcome) => outcome.decisionState === "used").reduce((total, outcome) => total + (outcome.insightProvenance ?? []).filter((insight) => insight.state === "published").length, 0),

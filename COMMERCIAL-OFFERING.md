@@ -59,6 +59,12 @@ checkpoint. The partner records one of four choices—improve, continue, expand,
 or stop—with the reason and next step. The system preserves that decision as
 part of the pilot history; it does not make the commercial decision silently.
 
+The pilot scorecard makes the proof questions explicit: how often people open
+the evidence behind a claim, how often a published briefing is reused in a
+recorded decision, how many alerts are marked false, and how long it takes to
+respond when an alert needs correction. A missing observation remains “not
+measured”; the product does not turn silence into a positive result.
+
 The history view keeps every refresh in order, including whether it was
 reviewed, useful, and connected to a decision. This lets a buyer see whether
 the product is becoming dependable over time instead of judging it from one
