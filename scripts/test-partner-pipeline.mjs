@@ -35,7 +35,7 @@ try {
   if (!workspaceResponse.ok || workspaceBody.partnerLeadId !== lead.id) throw new Error(`Provisioning did not link the invited partner lead to the new workspace: ${JSON.stringify(workspaceBody)}`);
   const pipelineResponse = await fetch(`${base}/api/operator/partner-pipeline`, { headers });
   const pipeline = await pipelineResponse.json();
-  if (pipelineResponse.status !== 200 || pipeline.schemaVersion !== "partner-pipeline-read-model-v1" || pipeline.counts.onboarding !== 1 || pipeline.leads[0]?.history?.length !== 5 || pipeline.leads[0]?.workspaceId !== workspaceBody.id) throw new Error("Partner pipeline read model or workspace link failed.");
+  if (pipelineResponse.status !== 200 || pipeline.schemaVersion !== "partner-pipeline-read-model-v1" || pipeline.counts.onboarding !== 1 || pipeline.leads[0]?.history?.length !== 5 || pipeline.leads[0]?.workspaceId !== workspaceBody.id || pipeline.leads[0]?.workspaceSummary?.name !== "Northstar Operations pilot" || pipeline.leads[0]?.workspaceSummary?.pilotConfigured !== false || pipeline.leads[0]?.workspaceSummary?.deliveries !== 0) throw new Error("Partner pipeline read model or workspace link failed.");
   const ledger = JSON.parse(await readFile(resolve(runtimeDir, "partner-leads.json"), "utf8"));
   if (ledger.leads[0]?.status !== "onboarding" || ledger.leads[0]?.history?.length !== 5 || ledger.leads[0]?.workspaceId !== workspaceBody.id) throw new Error("Partner lead workspace link was not durable.");
   const invalid = await post(`/api/operator/partner-pipeline/${encodeURIComponent(lead.id)}/state`, { status: "expanded", note: "Invalid jump." }, "partner-invalid");

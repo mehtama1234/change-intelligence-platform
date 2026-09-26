@@ -250,4 +250,7 @@ links the two records and moves the lead to `onboarding` in the same durable
 operation. The workspace can then be configured with its decision question,
 source scope, cadence, and success measures. The lead ID is kept visible in
 the operator view so the handoff can be checked without searching private
-customer data.
+customer data. The same view shows only bounded workspace signals—whether the
+pilot is configured, how many deliveries were reviewed, whether a decision
+impact was recorded, and the current offer state—never customer questions or
+review notes.

@@ -2624,7 +2624,20 @@ const server = createServer(async (request, response) => {
       const operator = operatorAccess(request);
       if (operator.error) return json(response, operator.error.status, operator.error.body);
       const statuses = ["identified", "qualified", "contacted", "invited", "onboarding", "pilot", "expanded", "paused", "declined"];
-      const leads = store.recordsLedger("partner_lead", "partner-lead-ledger-v1", "leads").leads.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+      const workspaces = await configuredWorkspaces();
+      const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
+      const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries;
+      const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions;
+      const offers = store.recordsLedger("commercial_offer", "workspace-commercial-offer-ledger-v1", "offers").offers;
+      const leads = store.recordsLedger("partner_lead", "partner-lead-ledger-v1", "leads").leads.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).map((lead) => {
+        const workspace = workspaces.find((candidate) => candidate.id === lead.workspaceId);
+        if (!workspace) return { ...lead, workspaceSummary: null };
+        const workspaceDeliveries = deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
+        const reviewedDeliveries = workspaceDeliveries.filter((delivery) => delivery.review);
+        const workspaceDecisions = decisions.filter((decision) => decision.workspaceId === workspace.id).sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)));
+        const workspaceOffers = offers.filter((offer) => offer.workspaceId === workspace.id).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+        return { ...lead, workspaceSummary: { id: workspace.id, name: workspace.name, pilotConfigured: profiles.some((profile) => profile.workspaceId === workspace.id), deliveries: workspaceDeliveries.length, reviewedDeliveries: reviewedDeliveries.length, usefulDeliveries: reviewedDeliveries.filter((delivery) => delivery.review.usefulness === "useful").length, decisionImpact: reviewedDeliveries.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, latestDecision: workspaceDecisions[0]?.decision ?? null, commercialOfferStatus: workspaceOffers[0]?.status ?? "not_proposed" } };
+      });
       const counts = Object.fromEntries(statuses.map((status) => [status, leads.filter((lead) => lead.status === status).length]));
       await appendAudit({ requestId, action: "read_partner_pipeline", targetId: "partner-pipeline", workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: "read", occurredAt: new Date().toISOString() });
       return json(response, 200, { schemaVersion: "partner-pipeline-read-model-v1", statuses, counts, leads, limitation: "This pipeline is operator-only. It records commercial follow-up and does not send messages or make an automated qualification decision." });
