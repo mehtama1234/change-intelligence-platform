@@ -36,6 +36,7 @@ const childEnv = {
   INSIGHT_OUTPUT_DIR: runDir,
   INSIGHT_CANDIDATE_PATH: resolve(runDir, "insight-candidates.json"),
   INSIGHT_EVALUATION_PATH: resolve(runDir, "insight-evaluation.json"),
+  ATLAS_OUTPUT_PATH: resolve(runDir, "domain-atlas.json"),
   SEC_CAPTURE_DIR: secCaptureDir,
   SEC_MANIFEST_PATH: secManifestPath,
   SEC_XBRL_PATH: secXbrlPath
@@ -88,6 +89,7 @@ try {
   await runStep("process-review-work", "process-source-review.mjs");
   await runStep("materialize-evidence", "materialize-evidence-versions.mjs");
   await runStep("build-packet", "build-ai-work-control-packet.mjs");
+  await runStep("build-domain-atlas", "build-domain-atlas.mjs");
   await runStep("evaluate-questions", "evaluate-questions.mjs");
   await runStep("build-question-briefings", "build-question-briefings.mjs");
   await runStep("publish-question-evaluations", "build-ai-work-control-packet.mjs");

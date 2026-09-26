@@ -1,0 +1,1074 @@
+{
+  "schemaVersion": "domain-atlas-v1",
+  "generatedAt": "2026-09-26T09:14:35.638Z",
+  "domain": "ai-work-control",
+  "sourceSnapshotDate": "2026-09-25",
+  "sourceRecordCount": 16,
+  "entities": {
+    "themes": [
+      {
+        "id": "theme:ai-work-control",
+        "label": "ai-work-control",
+        "evidenceIds": [
+          "trend-hunting-ai-control",
+          "cultural-ai-capability-dependence",
+          "annual-ai-cultural-disintermediation",
+          "ibis-ai-workflow-compression",
+          "inc5000-coreweave-ai-infrastructure",
+          "atlas-ai-work-evidence-thread",
+          "atlas-c3-ai-report-window",
+          "atlas-nvidia-ai-platform-window",
+          "atlas-microsoft-cloud-window",
+          "atlas-oracle-cloud-window",
+          "atlas-broadcom-ai-infrastructure-window",
+          "trend-ai-agency-control-measure",
+          "cultural-nber-ai-task-adoption",
+          "cultural-jrc-algorithmic-management-outcomes",
+          "cultural-amazon-bandameeda-remedy",
+          "trend-uber-kumar-review-counterexample"
+        ]
+      }
+    ],
+    "mechanisms": [
+      {
+        "id": "mechanism:a-company-narrative-becomes-more-useful-when-it-is-compared-with-independent-measures-rather-than-treated-as-proof-of-an-outcome",
+        "label": "A company narrative becomes more useful when it is compared with independent measures rather than treated as proof of an outcome.",
+        "evidenceIds": [
+          "atlas-ai-work-evidence-thread"
+        ]
+      },
+      {
+        "id": "mechanism:a-company-s-annual-and-quarterly-reports-can-show-commercial-movement-and-stated-deployments-while-leaving-the-lived-result-of-an-ai-workflow-unmeasured",
+        "label": "A company's annual and quarterly reports can show commercial movement and stated deployments while leaving the lived result of an AI workflow unmeasured.",
+        "evidenceIds": [
+          "atlas-c3-ai-report-window"
+        ]
+      },
+      {
+        "id": "mechanism:a-correction-route-matters-only-when-a-response-is-considered-the-decision-is-revisited-access-is-restored-and-lost-income-is-addressed",
+        "label": "A correction route matters only when a response is considered, the decision is revisited, access is restored, and lost income is addressed.",
+        "evidenceIds": [
+          "cultural-amazon-bandameeda-remedy"
+        ]
+      },
+      {
+        "id": "mechanism:a-physical-and-financial-infrastructure-bottleneck-can-create-a-specialized-layer-that-captures-demand-before-ai-becomes-an-ordinary-workflow",
+        "label": "A physical and financial infrastructure bottleneck can create a specialized layer that captures demand before AI becomes an ordinary workflow.",
+        "evidenceIds": [
+          "inc5000-coreweave-ai-infrastructure"
+        ]
+      },
+      {
+        "id": "mechanism:a-service-can-make-work-possible-while-increasing-reliance-on-a-provider-or-system-that-users-cannot-easily-replace",
+        "label": "A service can make work possible while increasing reliance on a provider or system that users cannot easily replace.",
+        "evidenceIds": [
+          "cultural-ai-capability-dependence"
+        ]
+      },
+      {
+        "id": "mechanism:a-supplier-can-report-commercial-movement-while-the-customer-workflow-integration-cost-and-downstream-result-remain-unmeasured",
+        "label": "A supplier can report commercial movement while the customer workflow, integration cost, and downstream result remain unmeasured.",
+        "evidenceIds": [
+          "atlas-broadcom-ai-infrastructure-window"
+        ]
+      },
+      {
+        "id": "mechanism:a-tool-can-increase-capability-while-decision-rights-measurement-and-correction-remain-with-an-employer-or-platform",
+        "label": "A tool can increase capability while decision rights, measurement, and correction remain with an employer or platform.",
+        "evidenceIds": [
+          "trend-hunting-ai-control"
+        ]
+      },
+      {
+        "id": "mechanism:automated-direction-monitoring-or-pace-setting-can-change-discretion-and-work-intensity-even-when-the-specific-vendor-or-system-is-not-identified",
+        "label": "Automated direction, monitoring, or pace-setting can change discretion and work intensity even when the specific vendor or system is not identified.",
+        "evidenceIds": [
+          "cultural-jrc-algorithmic-management-outcomes"
+        ]
+      },
+      {
+        "id": "mechanism:automation-lowers-the-price-of-repeatable-execution-and-can-move-scarce-value-toward-higher-context-work",
+        "label": "Automation lowers the price of repeatable execution and can move scarce value toward higher-context work.",
+        "evidenceIds": [
+          "ibis-ai-workflow-compression"
+        ]
+      },
+      {
+        "id": "mechanism:cloud-scale-and-contracted-obligations-can-expand-while-price-use-capacity-reliability-and-user-benefit-remain-unresolved",
+        "label": "Cloud scale and contracted obligations can expand while price, use, capacity, reliability, and user benefit remain unresolved.",
+        "evidenceIds": [
+          "atlas-microsoft-cloud-window"
+        ]
+      },
+      {
+        "id": "mechanism:infrastructure-revenue-can-rise-before-a-customer-workload-worker-result-or-public-benefit-is-measured",
+        "label": "Infrastructure revenue can rise before a customer workload, worker result, or public benefit is measured.",
+        "evidenceIds": [
+          "atlas-nvidia-ai-platform-window"
+        ]
+      },
+      {
+        "id": "mechanism:perceived-usefulness-can-spread-faster-than-people-s-reported-control-over-the-system-or-their-data",
+        "label": "Perceived usefulness can spread faster than people’s reported control over the system or their data.",
+        "evidenceIds": [
+          "trend-ai-agency-control-measure"
+        ]
+      },
+      {
+        "id": "mechanism:reported-revenue-can-move-without-identifying-the-workload-capacity-contract-or-user-change-that-produced-it",
+        "label": "Reported revenue can move without identifying the workload, capacity, contract, or user change that produced it.",
+        "evidenceIds": [
+          "atlas-oracle-cloud-window"
+        ]
+      },
+      {
+        "id": "mechanism:technical-exposure-becomes-worker-use-only-through-access-training-permission-task-fit-privacy-and-perceived-value",
+        "label": "Technical exposure becomes worker use only through access, training, permission, task fit, privacy, and perceived value.",
+        "evidenceIds": [
+          "cultural-nber-ai-task-adoption"
+        ]
+      },
+      {
+        "id": "mechanism:the-presence-of-a-human-reviewer-does-not-by-itself-determine-whether-a-worker-receives-restoration-process-evidence-rule-clarity-and-the-final-disposition-must-be-examined-together",
+        "label": "The presence of a human reviewer does not by itself determine whether a worker receives restoration; process, evidence, rule clarity, and the final disposition must be examined together.",
+        "evidenceIds": [
+          "trend-uber-kumar-review-counterexample"
+        ]
+      },
+      {
+        "id": "mechanism:when-routine-work-becomes-cheap-value-and-bargaining-power-can-move-toward-owners-of-distribution-context-judgment-and-workflow-control",
+        "label": "When routine work becomes cheap, value and bargaining power can move toward owners of distribution, context, judgment, and workflow control.",
+        "evidenceIds": [
+          "annual-ai-cultural-disintermediation"
+        ]
+      }
+    ],
+    "companies": [
+      {
+        "id": "companie:broadcom",
+        "label": "Broadcom",
+        "evidenceIds": [
+          "atlas-broadcom-ai-infrastructure-window"
+        ]
+      },
+      {
+        "id": "companie:c3-ai",
+        "label": "C3.ai",
+        "evidenceIds": [
+          "atlas-c3-ai-report-window"
+        ]
+      },
+      {
+        "id": "companie:microsoft",
+        "label": "Microsoft",
+        "evidenceIds": [
+          "atlas-microsoft-cloud-window"
+        ]
+      },
+      {
+        "id": "companie:nvidia",
+        "label": "NVIDIA",
+        "evidenceIds": [
+          "atlas-nvidia-ai-platform-window"
+        ]
+      },
+      {
+        "id": "companie:oracle",
+        "label": "Oracle",
+        "evidenceIds": [
+          "atlas-oracle-cloud-window"
+        ]
+      }
+    ],
+    "industries": [
+      {
+        "id": "industrie:ai-computing-infrastructure",
+        "label": "AI computing infrastructure",
+        "evidenceIds": [
+          "atlas-nvidia-ai-platform-window"
+        ]
+      },
+      {
+        "id": "industrie:cloud-and-enterprise-software",
+        "label": "cloud and enterprise software",
+        "evidenceIds": [
+          "atlas-microsoft-cloud-window",
+          "atlas-oracle-cloud-window"
+        ]
+      },
+      {
+        "id": "industrie:enterprise-ai-software",
+        "label": "enterprise AI software",
+        "evidenceIds": [
+          "atlas-c3-ai-report-window"
+        ]
+      },
+      {
+        "id": "industrie:semiconductors-and-infrastructure-software",
+        "label": "semiconductors and infrastructure software",
+        "evidenceIds": [
+          "atlas-broadcom-ai-infrastructure-window"
+        ]
+      }
+    ],
+    "affectedGroups": [
+      {
+        "id": "affectedGroup:agencies",
+        "label": "agencies",
+        "evidenceIds": [
+          "ibis-ai-workflow-compression"
+        ]
+      },
+      {
+        "id": "affectedGroup:ai-companies",
+        "label": "AI companies",
+        "evidenceIds": [
+          "inc5000-coreweave-ai-infrastructure",
+          "atlas-nvidia-ai-platform-window"
+        ]
+      },
+      {
+        "id": "affectedGroup:ai-users",
+        "label": "AI users",
+        "evidenceIds": [
+          "trend-ai-agency-control-measure"
+        ]
+      },
+      {
+        "id": "affectedGroup:capital-providers",
+        "label": "capital providers",
+        "evidenceIds": [
+          "inc5000-coreweave-ai-infrastructure",
+          "atlas-nvidia-ai-platform-window",
+          "atlas-microsoft-cloud-window",
+          "atlas-oracle-cloud-window",
+          "atlas-broadcom-ai-infrastructure-window"
+        ]
+      },
+      {
+        "id": "affectedGroup:cloud-infrastructure-workers",
+        "label": "cloud infrastructure workers",
+        "evidenceIds": [
+          "atlas-microsoft-cloud-window",
+          "atlas-oracle-cloud-window"
+        ]
+      },
+      {
+        "id": "affectedGroup:customers",
+        "label": "customers",
+        "evidenceIds": [
+          "trend-hunting-ai-control",
+          "annual-ai-cultural-disintermediation",
+          "atlas-ai-work-evidence-thread",
+          "atlas-oracle-cloud-window",
+          "cultural-amazon-bandameeda-remedy",
+          "trend-uber-kumar-review-counterexample"
+        ]
+      },
+      {
+        "id": "affectedGroup:decision-subjects",
+        "label": "decision subjects",
+        "evidenceIds": [
+          "atlas-c3-ai-report-window"
+        ]
+      },
+      {
+        "id": "affectedGroup:design-workers",
+        "label": "design workers",
+        "evidenceIds": [
+          "ibis-ai-workflow-compression"
+        ]
+      },
+      {
+        "id": "affectedGroup:employers",
+        "label": "employers",
+        "evidenceIds": [
+          "trend-hunting-ai-control",
+          "cultural-nber-ai-task-adoption"
+        ]
+      },
+      {
+        "id": "affectedGroup:enterprise-customers",
+        "label": "enterprise customers",
+        "evidenceIds": [
+          "atlas-c3-ai-report-window"
+        ]
+      },
+      {
+        "id": "affectedGroup:enterprise-users",
+        "label": "enterprise users",
+        "evidenceIds": [
+          "inc5000-coreweave-ai-infrastructure",
+          "atlas-nvidia-ai-platform-window",
+          "atlas-microsoft-cloud-window",
+          "atlas-oracle-cloud-window",
+          "atlas-broadcom-ai-infrastructure-window"
+        ]
+      },
+      {
+        "id": "affectedGroup:households",
+        "label": "households",
+        "evidenceIds": [
+          "trend-ai-agency-control-measure"
+        ]
+      },
+      {
+        "id": "affectedGroup:infrastructure-operators",
+        "label": "infrastructure operators",
+        "evidenceIds": [
+          "atlas-broadcom-ai-infrastructure-window"
+        ]
+      },
+      {
+        "id": "affectedGroup:infrastructure-workers",
+        "label": "infrastructure workers",
+        "evidenceIds": [
+          "inc5000-coreweave-ai-infrastructure",
+          "atlas-nvidia-ai-platform-window"
+        ]
+      },
+      {
+        "id": "affectedGroup:investors",
+        "label": "investors",
+        "evidenceIds": [
+          "atlas-c3-ai-report-window"
+        ]
+      },
+      {
+        "id": "affectedGroup:managers",
+        "label": "managers",
+        "evidenceIds": [
+          "cultural-jrc-algorithmic-management-outcomes"
+        ]
+      },
+      {
+        "id": "affectedGroup:occupational-groups",
+        "label": "occupational groups",
+        "evidenceIds": [
+          "cultural-nber-ai-task-adoption"
+        ]
+      },
+      {
+        "id": "affectedGroup:organizations",
+        "label": "organizations",
+        "evidenceIds": [
+          "cultural-ai-capability-dependence"
+        ]
+      },
+      {
+        "id": "affectedGroup:platform-operators",
+        "label": "platform operators",
+        "evidenceIds": [
+          "cultural-amazon-bandameeda-remedy",
+          "trend-uber-kumar-review-counterexample"
+        ]
+      },
+      {
+        "id": "affectedGroup:platform-owners",
+        "label": "platform owners",
+        "evidenceIds": [
+          "annual-ai-cultural-disintermediation"
+        ]
+      },
+      {
+        "id": "affectedGroup:platform-workers",
+        "label": "platform workers",
+        "evidenceIds": [
+          "cultural-jrc-algorithmic-management-outcomes",
+          "cultural-amazon-bandameeda-remedy",
+          "trend-uber-kumar-review-counterexample"
+        ]
+      },
+      {
+        "id": "affectedGroup:platforms",
+        "label": "platforms",
+        "evidenceIds": [
+          "ibis-ai-workflow-compression"
+        ]
+      },
+      {
+        "id": "affectedGroup:public-institutions",
+        "label": "public institutions",
+        "evidenceIds": [
+          "cultural-ai-capability-dependence"
+        ]
+      },
+      {
+        "id": "affectedGroup:researchers",
+        "label": "researchers",
+        "evidenceIds": [
+          "atlas-ai-work-evidence-thread"
+        ]
+      },
+      {
+        "id": "affectedGroup:service-firms",
+        "label": "service firms",
+        "evidenceIds": [
+          "annual-ai-cultural-disintermediation"
+        ]
+      },
+      {
+        "id": "affectedGroup:small-businesses",
+        "label": "small businesses",
+        "evidenceIds": [
+          "ibis-ai-workflow-compression"
+        ]
+      },
+      {
+        "id": "affectedGroup:software-and-hardware-workers",
+        "label": "software and hardware workers",
+        "evidenceIds": [
+          "atlas-broadcom-ai-infrastructure-window"
+        ]
+      },
+      {
+        "id": "affectedGroup:software-workers",
+        "label": "software workers",
+        "evidenceIds": [
+          "atlas-microsoft-cloud-window"
+        ]
+      },
+      {
+        "id": "affectedGroup:workers",
+        "label": "workers",
+        "evidenceIds": [
+          "trend-hunting-ai-control",
+          "cultural-ai-capability-dependence",
+          "annual-ai-cultural-disintermediation",
+          "atlas-ai-work-evidence-thread",
+          "atlas-c3-ai-report-window",
+          "trend-ai-agency-control-measure",
+          "cultural-nber-ai-task-adoption",
+          "cultural-jrc-algorithmic-management-outcomes"
+        ]
+      }
+    ],
+    "repositories": [
+      {
+        "id": "repositorie:annual-report-research",
+        "label": "annual-report-research",
+        "evidenceIds": [
+          "annual-ai-cultural-disintermediation"
+        ]
+      },
+      {
+        "id": "repositorie:company-atlas-lab",
+        "label": "company-atlas-lab",
+        "evidenceIds": [
+          "atlas-ai-work-evidence-thread",
+          "atlas-c3-ai-report-window",
+          "atlas-nvidia-ai-platform-window",
+          "atlas-microsoft-cloud-window",
+          "atlas-oracle-cloud-window",
+          "atlas-broadcom-ai-infrastructure-window"
+        ]
+      },
+      {
+        "id": "repositorie:cultural-geopolitical-theme-mining",
+        "label": "cultural-geopolitical-theme-mining",
+        "evidenceIds": [
+          "cultural-ai-capability-dependence",
+          "cultural-nber-ai-task-adoption",
+          "cultural-jrc-algorithmic-management-outcomes",
+          "cultural-amazon-bandameeda-remedy"
+        ]
+      },
+      {
+        "id": "repositorie:ibis-industries",
+        "label": "ibis-industries",
+        "evidenceIds": [
+          "ibis-ai-workflow-compression"
+        ]
+      },
+      {
+        "id": "repositorie:inc5000-analysis",
+        "label": "inc5000-analysis",
+        "evidenceIds": [
+          "inc5000-coreweave-ai-infrastructure"
+        ]
+      },
+      {
+        "id": "repositorie:trend-hunting",
+        "label": "trend-hunting",
+        "evidenceIds": [
+          "trend-hunting-ai-control",
+          "trend-ai-agency-control-measure",
+          "trend-uber-kumar-review-counterexample"
+        ]
+      }
+    ]
+  },
+  "edges": [
+    {
+      "from": "trend-hunting-ai-control",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "trend-hunting-ai-control",
+      "to": "mechanism:a-tool-can-increase-capability-while-decision-rights-measurement-and-correction-remain-with-an-employer-or-platform",
+      "relation": "explains"
+    },
+    {
+      "from": "trend-hunting-ai-control",
+      "to": "affectedGroup:workers",
+      "relation": "affects"
+    },
+    {
+      "from": "trend-hunting-ai-control",
+      "to": "affectedGroup:customers",
+      "relation": "affects"
+    },
+    {
+      "from": "trend-hunting-ai-control",
+      "to": "affectedGroup:employers",
+      "relation": "affects"
+    },
+    {
+      "from": "trend-hunting-ai-control",
+      "to": "repositorie:trend-hunting",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "cultural-ai-capability-dependence",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "cultural-ai-capability-dependence",
+      "to": "mechanism:a-service-can-make-work-possible-while-increasing-reliance-on-a-provider-or-system-that-users-cannot-easily-replace",
+      "relation": "explains"
+    },
+    {
+      "from": "cultural-ai-capability-dependence",
+      "to": "affectedGroup:workers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-ai-capability-dependence",
+      "to": "affectedGroup:organizations",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-ai-capability-dependence",
+      "to": "affectedGroup:public-institutions",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-ai-capability-dependence",
+      "to": "repositorie:cultural-geopolitical-theme-mining",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "annual-ai-cultural-disintermediation",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "annual-ai-cultural-disintermediation",
+      "to": "mechanism:when-routine-work-becomes-cheap-value-and-bargaining-power-can-move-toward-owners-of-distribution-context-judgment-and-workflow-control",
+      "relation": "explains"
+    },
+    {
+      "from": "annual-ai-cultural-disintermediation",
+      "to": "affectedGroup:workers",
+      "relation": "affects"
+    },
+    {
+      "from": "annual-ai-cultural-disintermediation",
+      "to": "affectedGroup:service-firms",
+      "relation": "affects"
+    },
+    {
+      "from": "annual-ai-cultural-disintermediation",
+      "to": "affectedGroup:customers",
+      "relation": "affects"
+    },
+    {
+      "from": "annual-ai-cultural-disintermediation",
+      "to": "affectedGroup:platform-owners",
+      "relation": "affects"
+    },
+    {
+      "from": "annual-ai-cultural-disintermediation",
+      "to": "repositorie:annual-report-research",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "ibis-ai-workflow-compression",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "ibis-ai-workflow-compression",
+      "to": "mechanism:automation-lowers-the-price-of-repeatable-execution-and-can-move-scarce-value-toward-higher-context-work",
+      "relation": "explains"
+    },
+    {
+      "from": "ibis-ai-workflow-compression",
+      "to": "affectedGroup:design-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "ibis-ai-workflow-compression",
+      "to": "affectedGroup:agencies",
+      "relation": "affects"
+    },
+    {
+      "from": "ibis-ai-workflow-compression",
+      "to": "affectedGroup:small-businesses",
+      "relation": "affects"
+    },
+    {
+      "from": "ibis-ai-workflow-compression",
+      "to": "affectedGroup:platforms",
+      "relation": "affects"
+    },
+    {
+      "from": "ibis-ai-workflow-compression",
+      "to": "repositorie:ibis-industries",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "inc5000-coreweave-ai-infrastructure",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "inc5000-coreweave-ai-infrastructure",
+      "to": "mechanism:a-physical-and-financial-infrastructure-bottleneck-can-create-a-specialized-layer-that-captures-demand-before-ai-becomes-an-ordinary-workflow",
+      "relation": "explains"
+    },
+    {
+      "from": "inc5000-coreweave-ai-infrastructure",
+      "to": "affectedGroup:ai-companies",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-coreweave-ai-infrastructure",
+      "to": "affectedGroup:enterprise-users",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-coreweave-ai-infrastructure",
+      "to": "affectedGroup:infrastructure-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-coreweave-ai-infrastructure",
+      "to": "affectedGroup:capital-providers",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-coreweave-ai-infrastructure",
+      "to": "repositorie:inc5000-analysis",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "atlas-ai-work-evidence-thread",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "atlas-ai-work-evidence-thread",
+      "to": "mechanism:a-company-narrative-becomes-more-useful-when-it-is-compared-with-independent-measures-rather-than-treated-as-proof-of-an-outcome",
+      "relation": "explains"
+    },
+    {
+      "from": "atlas-ai-work-evidence-thread",
+      "to": "affectedGroup:workers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-ai-work-evidence-thread",
+      "to": "affectedGroup:customers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-ai-work-evidence-thread",
+      "to": "affectedGroup:researchers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-ai-work-evidence-thread",
+      "to": "repositorie:company-atlas-lab",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "atlas-c3-ai-report-window",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "atlas-c3-ai-report-window",
+      "to": "mechanism:a-company-s-annual-and-quarterly-reports-can-show-commercial-movement-and-stated-deployments-while-leaving-the-lived-result-of-an-ai-workflow-unmeasured",
+      "relation": "explains"
+    },
+    {
+      "from": "atlas-c3-ai-report-window",
+      "to": "companie:c3-ai",
+      "relation": "classified_as_companie"
+    },
+    {
+      "from": "atlas-c3-ai-report-window",
+      "to": "industrie:enterprise-ai-software",
+      "relation": "classified_as_industrie"
+    },
+    {
+      "from": "atlas-c3-ai-report-window",
+      "to": "affectedGroup:enterprise-customers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-c3-ai-report-window",
+      "to": "affectedGroup:workers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-c3-ai-report-window",
+      "to": "affectedGroup:decision-subjects",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-c3-ai-report-window",
+      "to": "affectedGroup:investors",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-c3-ai-report-window",
+      "to": "repositorie:company-atlas-lab",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "atlas-nvidia-ai-platform-window",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "atlas-nvidia-ai-platform-window",
+      "to": "mechanism:infrastructure-revenue-can-rise-before-a-customer-workload-worker-result-or-public-benefit-is-measured",
+      "relation": "explains"
+    },
+    {
+      "from": "atlas-nvidia-ai-platform-window",
+      "to": "companie:nvidia",
+      "relation": "classified_as_companie"
+    },
+    {
+      "from": "atlas-nvidia-ai-platform-window",
+      "to": "industrie:ai-computing-infrastructure",
+      "relation": "classified_as_industrie"
+    },
+    {
+      "from": "atlas-nvidia-ai-platform-window",
+      "to": "affectedGroup:ai-companies",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-nvidia-ai-platform-window",
+      "to": "affectedGroup:enterprise-users",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-nvidia-ai-platform-window",
+      "to": "affectedGroup:infrastructure-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-nvidia-ai-platform-window",
+      "to": "affectedGroup:capital-providers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-nvidia-ai-platform-window",
+      "to": "repositorie:company-atlas-lab",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "atlas-microsoft-cloud-window",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "atlas-microsoft-cloud-window",
+      "to": "mechanism:cloud-scale-and-contracted-obligations-can-expand-while-price-use-capacity-reliability-and-user-benefit-remain-unresolved",
+      "relation": "explains"
+    },
+    {
+      "from": "atlas-microsoft-cloud-window",
+      "to": "companie:microsoft",
+      "relation": "classified_as_companie"
+    },
+    {
+      "from": "atlas-microsoft-cloud-window",
+      "to": "industrie:cloud-and-enterprise-software",
+      "relation": "classified_as_industrie"
+    },
+    {
+      "from": "atlas-microsoft-cloud-window",
+      "to": "affectedGroup:enterprise-users",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-microsoft-cloud-window",
+      "to": "affectedGroup:software-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-microsoft-cloud-window",
+      "to": "affectedGroup:cloud-infrastructure-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-microsoft-cloud-window",
+      "to": "affectedGroup:capital-providers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-microsoft-cloud-window",
+      "to": "repositorie:company-atlas-lab",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "atlas-oracle-cloud-window",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "atlas-oracle-cloud-window",
+      "to": "mechanism:reported-revenue-can-move-without-identifying-the-workload-capacity-contract-or-user-change-that-produced-it",
+      "relation": "explains"
+    },
+    {
+      "from": "atlas-oracle-cloud-window",
+      "to": "companie:oracle",
+      "relation": "classified_as_companie"
+    },
+    {
+      "from": "atlas-oracle-cloud-window",
+      "to": "industrie:cloud-and-enterprise-software",
+      "relation": "classified_as_industrie"
+    },
+    {
+      "from": "atlas-oracle-cloud-window",
+      "to": "affectedGroup:enterprise-users",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-oracle-cloud-window",
+      "to": "affectedGroup:cloud-infrastructure-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-oracle-cloud-window",
+      "to": "affectedGroup:customers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-oracle-cloud-window",
+      "to": "affectedGroup:capital-providers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-oracle-cloud-window",
+      "to": "repositorie:company-atlas-lab",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "atlas-broadcom-ai-infrastructure-window",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "atlas-broadcom-ai-infrastructure-window",
+      "to": "mechanism:a-supplier-can-report-commercial-movement-while-the-customer-workflow-integration-cost-and-downstream-result-remain-unmeasured",
+      "relation": "explains"
+    },
+    {
+      "from": "atlas-broadcom-ai-infrastructure-window",
+      "to": "companie:broadcom",
+      "relation": "classified_as_companie"
+    },
+    {
+      "from": "atlas-broadcom-ai-infrastructure-window",
+      "to": "industrie:semiconductors-and-infrastructure-software",
+      "relation": "classified_as_industrie"
+    },
+    {
+      "from": "atlas-broadcom-ai-infrastructure-window",
+      "to": "affectedGroup:enterprise-users",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-broadcom-ai-infrastructure-window",
+      "to": "affectedGroup:software-and-hardware-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-broadcom-ai-infrastructure-window",
+      "to": "affectedGroup:infrastructure-operators",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-broadcom-ai-infrastructure-window",
+      "to": "affectedGroup:capital-providers",
+      "relation": "affects"
+    },
+    {
+      "from": "atlas-broadcom-ai-infrastructure-window",
+      "to": "repositorie:company-atlas-lab",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "trend-ai-agency-control-measure",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "trend-ai-agency-control-measure",
+      "to": "mechanism:perceived-usefulness-can-spread-faster-than-people-s-reported-control-over-the-system-or-their-data",
+      "relation": "explains"
+    },
+    {
+      "from": "trend-ai-agency-control-measure",
+      "to": "affectedGroup:ai-users",
+      "relation": "affects"
+    },
+    {
+      "from": "trend-ai-agency-control-measure",
+      "to": "affectedGroup:workers",
+      "relation": "affects"
+    },
+    {
+      "from": "trend-ai-agency-control-measure",
+      "to": "affectedGroup:households",
+      "relation": "affects"
+    },
+    {
+      "from": "trend-ai-agency-control-measure",
+      "to": "repositorie:trend-hunting",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "cultural-nber-ai-task-adoption",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "cultural-nber-ai-task-adoption",
+      "to": "mechanism:technical-exposure-becomes-worker-use-only-through-access-training-permission-task-fit-privacy-and-perceived-value",
+      "relation": "explains"
+    },
+    {
+      "from": "cultural-nber-ai-task-adoption",
+      "to": "affectedGroup:workers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-nber-ai-task-adoption",
+      "to": "affectedGroup:employers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-nber-ai-task-adoption",
+      "to": "affectedGroup:occupational-groups",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-nber-ai-task-adoption",
+      "to": "repositorie:cultural-geopolitical-theme-mining",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "cultural-jrc-algorithmic-management-outcomes",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "cultural-jrc-algorithmic-management-outcomes",
+      "to": "mechanism:automated-direction-monitoring-or-pace-setting-can-change-discretion-and-work-intensity-even-when-the-specific-vendor-or-system-is-not-identified",
+      "relation": "explains"
+    },
+    {
+      "from": "cultural-jrc-algorithmic-management-outcomes",
+      "to": "affectedGroup:workers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-jrc-algorithmic-management-outcomes",
+      "to": "affectedGroup:managers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-jrc-algorithmic-management-outcomes",
+      "to": "affectedGroup:platform-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-jrc-algorithmic-management-outcomes",
+      "to": "repositorie:cultural-geopolitical-theme-mining",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "cultural-amazon-bandameeda-remedy",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "cultural-amazon-bandameeda-remedy",
+      "to": "mechanism:a-correction-route-matters-only-when-a-response-is-considered-the-decision-is-revisited-access-is-restored-and-lost-income-is-addressed",
+      "relation": "explains"
+    },
+    {
+      "from": "cultural-amazon-bandameeda-remedy",
+      "to": "affectedGroup:platform-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-amazon-bandameeda-remedy",
+      "to": "affectedGroup:customers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-amazon-bandameeda-remedy",
+      "to": "affectedGroup:platform-operators",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-amazon-bandameeda-remedy",
+      "to": "repositorie:cultural-geopolitical-theme-mining",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "trend-uber-kumar-review-counterexample",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "trend-uber-kumar-review-counterexample",
+      "to": "mechanism:the-presence-of-a-human-reviewer-does-not-by-itself-determine-whether-a-worker-receives-restoration-process-evidence-rule-clarity-and-the-final-disposition-must-be-examined-together",
+      "relation": "explains"
+    },
+    {
+      "from": "trend-uber-kumar-review-counterexample",
+      "to": "affectedGroup:platform-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "trend-uber-kumar-review-counterexample",
+      "to": "affectedGroup:platform-operators",
+      "relation": "affects"
+    },
+    {
+      "from": "trend-uber-kumar-review-counterexample",
+      "to": "affectedGroup:customers",
+      "relation": "affects"
+    },
+    {
+      "from": "trend-uber-kumar-review-counterexample",
+      "to": "repositorie:trend-hunting",
+      "relation": "classified_as_repositorie"
+    }
+  ],
+  "limitation": "The atlas normalizes labels and source links; a relationship is a research connection, not proof of causation."
+}

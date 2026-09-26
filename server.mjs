@@ -9,6 +9,8 @@ const root = resolve(fileURLToPath(new URL(".", import.meta.url)));
 const port = Number(process.env.PORT ?? 8780);
 const runtimeDir = resolve(root, process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control");
 const packetPath = resolve(root, process.env.PACKET_PATH ?? "data/processed/ai-work-control.packet.json");
+const atlasPath = resolve(runtimeDir, "domain-atlas.json");
+const staticAtlasPath = resolve(root, "data/processed/ai-work-control.atlas.json");
 const reviewPath = resolve(runtimeDir, "latest-review-work.json");
 const historyPath = resolve(runtimeDir, "versioned-evidence-ledger.json");
 const refreshPath = resolve(runtimeDir, "latest-refresh.json");
@@ -1019,6 +1021,10 @@ const server = createServer(async (request, response) => {
       const packet = await readJson(packetPath, { domain: null, sourceSnapshotDate: null, records: [] });
       const registry = await readJson(sourceRegistryPath, { repositories: [] });
       return json(response, 200, buildCoverage(packet, registry));
+    }
+    if (url.pathname === "/api/atlas") {
+      const atlas = await readJson(atlasPath, await readJson(staticAtlasPath, { schemaVersion: "domain-atlas-v1", entities: {}, edges: [] }));
+      return json(response, 200, atlas);
     }
     if (url.pathname === "/api/packet") return json(response, 200, publicPacket(await readJson(packetPath, { error: "Packet has not been built." })));
     if (url.pathname.startsWith("/api/evidence/")) {

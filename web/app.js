@@ -171,6 +171,17 @@ async function loadCoverage() {
   byId("coverage-reports").innerHTML = coverage.reportWindows.length ? `<table><caption>Public-company histories currently available</caption><thead><tr><th>Company</th><th>Annual baseline</th><th>Quarters</th><th>Captured sources</th><th>Status</th></tr></thead><tbody>${coverage.reportWindows.map((report) => `<tr><th scope="row">${escapeHtml(report.company || "Unnamed company")}</th><td>${escapeHtml(report.annualBaseline || "not recorded")}</td><td>${escapeHtml(report.quarterCount)}</td><td>${escapeHtml(report.sourceRefs)}</td><td>${escapeHtml(report.captureStatus)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No annual-plus-quarterly company history is available yet.</p>`;
 }
 
+async function loadAtlas() {
+  const response = await apiFetch("../api/atlas");
+  if (!response.ok) throw new Error(`Domain atlas unavailable (${response.status})`);
+  const atlas = await response.json();
+  const groups = [["themes", "Themes"], ["mechanisms", "Mechanisms"], ["companies", "Companies"], ["industries", "Industries"], ["affectedGroups", "Affected groups"], ["repositories", "Repositories"]];
+  byId("atlas-summary").textContent = `${atlas.sourceRecordCount} evidence records · ${atlas.edges.length} source-to-entity links · snapshot ${atlas.sourceSnapshotDate || "not recorded"}. Connections organize the evidence; they do not prove causation.`;
+  byId("atlas-entities").innerHTML = groups.map(([key, label]) => `<div class="operation-card"><span>${escapeHtml(label)}</span><strong>${escapeHtml(atlas.entities[key]?.length ?? 0)}</strong></div>`).join("");
+  const links = (atlas.edges ?? []).slice(0, 12);
+  byId("atlas-links").innerHTML = links.length ? `<p class="muted">Examples of normalized links</p><ul>${links.map((edge) => `<li><code>${escapeHtml(edge.from)}</code> → <code>${escapeHtml(edge.to)}</code> · ${escapeHtml(edge.relation.replaceAll("_", " "))}</li>`).join("")}</ul>` : `<p class="muted">No normalized links are available yet.</p>`;
+}
+
 async function loadEvidenceHistory() {
   const workspace = encodeURIComponent(state.workspaceId);
   const [response, timelineResponse] = await Promise.all([apiFetch(`../api/evidence-history?workspace=${workspace}`), apiFetch(`../api/timeline?workspace=${workspace}`)]);
@@ -452,6 +463,7 @@ loadWorkspaces().catch((error) => { setWorkspaceStatus(error.message); byId("que
 loadChanges().catch((error) => { byId("change-feed-summary").textContent = error.message; });
 loadOperations().catch((error) => { byId("operations-summary").textContent = error.message; });
 loadCoverage().catch((error) => { byId("coverage-summary").textContent = error.message; });
+loadAtlas().catch((error) => { byId("atlas-summary").textContent = error.message; });
 loadEvidenceHistory().catch((error) => { byId("evidence-history-summary").textContent = error.message; });
 
 fetch(fixtureUrl).then((response) => {

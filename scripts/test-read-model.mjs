@@ -45,6 +45,9 @@ try {
   const coverageResponse = await request("/api/coverage");
   const coverage = await coverageResponse.json();
   if (coverageResponse.status !== 200 || coverage.schemaVersion !== "coverage-read-model-v1" || coverage.reportWindows.length !== 5 || coverage.requirements.find((item) => item.id === "public-company-history")?.status !== "ready" || coverage.repositories.length !== 6) throw new Error("Evidence coverage contract failed.");
+  const atlasResponse = await request("/api/atlas");
+  const atlas = await atlasResponse.json();
+  if (atlasResponse.status !== 200 || atlas.schemaVersion !== "domain-atlas-v1" || !atlas.entities.themes?.length || !atlas.entities.mechanisms?.length || !atlas.edges?.length) throw new Error("Domain atlas read model contract failed.");
   const timelineResponse = await request("/api/timeline");
   const timeline = await timelineResponse.json();
   if (timelineResponse.status !== 200 || timeline.schemaVersion !== "research-timeline-v1" || timeline.eventCount !== sourceMap.sources.length * 2) throw new Error("Research timeline contract failed.");

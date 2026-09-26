@@ -13,8 +13,9 @@ const env = { ...process.env, RUNTIME_DATA_DIR: runtimeDir, REFRESH_SKIP_SEC: "1
 await exec(process.execPath, [resolve(root, "scripts/run-refresh-cycle.mjs")], { cwd: root, env, maxBuffer: 10 * 1024 * 1024 });
 const receipt = JSON.parse(await readFile(resolve(runtimeDir, "latest-refresh.json"), "utf8"));
 const packet = JSON.parse(await readFile(resolve(runtimeDir, "ai-work-control.packet.json"), "utf8"));
+const atlas = JSON.parse(await readFile(resolve(runtimeDir, "domain-atlas.json"), "utf8"));
 const history = JSON.parse(await readFile(resolve(runtimeDir, "source-scan-history.json"), "utf8"));
 const alerts = JSON.parse(await readFile(resolve(runtimeDir, "workspace-alerts.json"), "utf8"));
 if (receipt.status !== "complete" || !receipt.steps.every((step) => ["complete", "skipped"].includes(step.status))) throw new Error("Isolated refresh did not complete cleanly.");
-if (!packet.records?.length || history.runs.length !== 1 || !alerts.alerts.some((alert) => alert.watchlistId === "custom-watchlist")) throw new Error("Isolated refresh did not materialize packet, source history, and custom watchlist alerts in its runtime directory.");
+if (!packet.records?.length || atlas.schemaVersion !== "domain-atlas-v1" || atlas.sourceRecordCount !== packet.records.length || history.runs.length !== 1 || !alerts.alerts.some((alert) => alert.watchlistId === "custom-watchlist")) throw new Error("Isolated refresh did not materialize packet, domain atlas, source history, and custom watchlist alerts in its runtime directory.");
 console.log("Refresh runtime test passed: the complete pipeline wrote its receipt, packet, source history, and store to the configured runtime directory.");
