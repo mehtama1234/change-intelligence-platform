@@ -1,9 +1,9 @@
 {
   "schemaVersion": "domain-atlas-v1",
-  "generatedAt": "2026-09-26T09:22:24.870Z",
+  "generatedAt": "2026-09-26T10:02:58.578Z",
   "domain": "ai-work-control",
   "sourceSnapshotDate": "2026-09-25",
-  "sourceRecordCount": 16,
+  "sourceRecordCount": 20,
   "entities": {
     "themes": [
       {
@@ -15,6 +15,10 @@
           "annual-ai-cultural-disintermediation",
           "ibis-ai-workflow-compression",
           "inc5000-coreweave-ai-infrastructure",
+          "inc5000-luma-ai-networking",
+          "inc5000-caylent-ai-delivery",
+          "inc5000-insurify-ai-decisions",
+          "inc5000-veradata-donor-analytics",
           "atlas-ai-work-evidence-thread",
           "atlas-c3-ai-report-window",
           "atlas-nvidia-ai-platform-window",
@@ -42,6 +46,13 @@
         "label": "A company's annual and quarterly reports can show commercial movement and stated deployments while leaving the lived result of an AI workflow unmeasured.",
         "evidenceIds": [
           "atlas-c3-ai-report-window"
+        ]
+      },
+      {
+        "id": "mechanism:a-comparison-service-can-reduce-search-effort-for-consumers-while-also-shaping-which-choices-prices-and-explanations-they-see",
+        "label": "A comparison service can reduce search effort for consumers while also shaping which choices, prices, and explanations they see.",
+        "evidenceIds": [
+          "inc5000-insurify-ai-decisions"
         ]
       },
       {
@@ -80,6 +91,13 @@
         ]
       },
       {
+        "id": "mechanism:as-model-workloads-grow-the-bottleneck-can-move-from-computing-chips-to-the-network-that-moves-data-between-them-creating-a-specialized-supplier-layer",
+        "label": "As model workloads grow, the bottleneck can move from computing chips to the network that moves data between them, creating a specialized supplier layer.",
+        "evidenceIds": [
+          "inc5000-luma-ai-networking"
+        ]
+      },
+      {
         "id": "mechanism:automated-direction-monitoring-or-pace-setting-can-change-discretion-and-work-intensity-even-when-the-specific-vendor-or-system-is-not-identified",
         "label": "Automated direction, monitoring, or pace-setting can change discretion and work intensity even when the specific vendor or system is not identified.",
         "evidenceIds": [
@@ -115,6 +133,13 @@
         ]
       },
       {
+        "id": "mechanism:prediction-tools-can-make-scarce-fundraising-staff-more-selective-while-moving-judgment-about-who-receives-attention-into-a-data-system",
+        "label": "Prediction tools can make scarce fundraising staff more selective while moving judgment about who receives attention into a data system.",
+        "evidenceIds": [
+          "inc5000-veradata-donor-analytics"
+        ]
+      },
+      {
         "id": "mechanism:reported-revenue-can-move-without-identifying-the-workload-capacity-contract-or-user-change-that-produced-it",
         "label": "Reported revenue can move without identifying the workload, capacity, contract, or user change that produced it.",
         "evidenceIds": [
@@ -133,6 +158,13 @@
         "label": "The presence of a human reviewer does not by itself determine whether a worker receives restoration; process, evidence, rule clarity, and the final disposition must be examined together.",
         "evidenceIds": [
           "trend-uber-kumar-review-counterexample"
+        ]
+      },
+      {
+        "id": "mechanism:when-enterprises-cannot-turn-a-model-or-cloud-plan-into-a-working-system-implementation-firms-capture-value-by-supplying-scarce-technical-knowledge-and-execution-capacity",
+        "label": "When enterprises cannot turn a model or cloud plan into a working system, implementation firms capture value by supplying scarce technical knowledge and execution capacity.",
+        "evidenceIds": [
+          "inc5000-caylent-ai-delivery"
         ]
       },
       {
@@ -159,6 +191,34 @@
         ]
       },
       {
+        "id": "company:caylent",
+        "label": "Caylent",
+        "evidenceIds": [
+          "inc5000-caylent-ai-delivery"
+        ]
+      },
+      {
+        "id": "company:coreweave",
+        "label": "CoreWeave",
+        "evidenceIds": [
+          "inc5000-coreweave-ai-infrastructure"
+        ]
+      },
+      {
+        "id": "company:insurify",
+        "label": "Insurify",
+        "evidenceIds": [
+          "inc5000-insurify-ai-decisions"
+        ]
+      },
+      {
+        "id": "company:luma-optics",
+        "label": "Luma Optics",
+        "evidenceIds": [
+          "inc5000-luma-ai-networking"
+        ]
+      },
+      {
         "id": "company:microsoft",
         "label": "Microsoft",
         "evidenceIds": [
@@ -178,14 +238,56 @@
         "evidenceIds": [
           "atlas-oracle-cloud-window"
         ]
+      },
+      {
+        "id": "company:veradata",
+        "label": "VeraData",
+        "evidenceIds": [
+          "inc5000-veradata-donor-analytics"
+        ]
       }
     ],
     "industries": [
+      {
+        "id": "industry:ai-cloud-infrastructure",
+        "label": "AI cloud infrastructure",
+        "evidenceIds": [
+          "inc5000-coreweave-ai-infrastructure"
+        ]
+      },
       {
         "id": "industry:ai-computing-infrastructure",
         "label": "AI computing infrastructure",
         "evidenceIds": [
           "atlas-nvidia-ai-platform-window"
+        ]
+      },
+      {
+        "id": "industry:ai-data-center-networking",
+        "label": "AI data-center networking",
+        "evidenceIds": [
+          "inc5000-luma-ai-networking"
+        ]
+      },
+      {
+        "id": "industry:ai-enabled-fundraising-software",
+        "label": "AI-enabled fundraising software",
+        "evidenceIds": [
+          "inc5000-veradata-donor-analytics"
+        ]
+      },
+      {
+        "id": "industry:ai-enabled-insurance-comparison",
+        "label": "AI-enabled insurance comparison",
+        "evidenceIds": [
+          "inc5000-insurify-ai-decisions"
+        ]
+      },
+      {
+        "id": "industry:cloud-and-ai-implementation-services",
+        "label": "cloud and AI implementation services",
+        "evidenceIds": [
+          "inc5000-caylent-ai-delivery"
         ]
       },
       {
@@ -224,6 +326,7 @@
         "label": "AI companies",
         "evidenceIds": [
           "inc5000-coreweave-ai-infrastructure",
+          "inc5000-luma-ai-networking",
           "atlas-nvidia-ai-platform-window"
         ]
       },
@@ -239,10 +342,18 @@
         "label": "capital providers",
         "evidenceIds": [
           "inc5000-coreweave-ai-infrastructure",
+          "inc5000-luma-ai-networking",
           "atlas-nvidia-ai-platform-window",
           "atlas-microsoft-cloud-window",
           "atlas-oracle-cloud-window",
           "atlas-broadcom-ai-infrastructure-window"
+        ]
+      },
+      {
+        "id": "affected-group:charities",
+        "label": "charities",
+        "evidenceIds": [
+          "inc5000-veradata-donor-analytics"
         ]
       },
       {
@@ -254,15 +365,30 @@
         ]
       },
       {
+        "id": "affected-group:customer-support-workers",
+        "label": "customer-support workers",
+        "evidenceIds": [
+          "inc5000-insurify-ai-decisions"
+        ]
+      },
+      {
         "id": "affected-group:customers",
         "label": "customers",
         "evidenceIds": [
           "trend-hunting-ai-control",
           "annual-ai-cultural-disintermediation",
+          "inc5000-caylent-ai-delivery",
           "atlas-ai-work-evidence-thread",
           "atlas-oracle-cloud-window",
           "cultural-amazon-bandameeda-remedy",
           "trend-uber-kumar-review-counterexample"
+        ]
+      },
+      {
+        "id": "affected-group:data-center-workers",
+        "label": "data-center workers",
+        "evidenceIds": [
+          "inc5000-luma-ai-networking"
         ]
       },
       {
@@ -277,6 +403,13 @@
         "label": "design workers",
         "evidenceIds": [
           "ibis-ai-workflow-compression"
+        ]
+      },
+      {
+        "id": "affected-group:donors",
+        "label": "donors",
+        "evidenceIds": [
+          "inc5000-veradata-donor-analytics"
         ]
       },
       {
@@ -299,6 +432,8 @@
         "label": "enterprise users",
         "evidenceIds": [
           "inc5000-coreweave-ai-infrastructure",
+          "inc5000-luma-ai-networking",
+          "inc5000-caylent-ai-delivery",
           "atlas-nvidia-ai-platform-window",
           "atlas-microsoft-cloud-window",
           "atlas-oracle-cloud-window",
@@ -310,6 +445,13 @@
         "label": "households",
         "evidenceIds": [
           "trend-ai-agency-control-measure"
+        ]
+      },
+      {
+        "id": "affected-group:implementation-teams",
+        "label": "implementation teams",
+        "evidenceIds": [
+          "inc5000-caylent-ai-delivery"
         ]
       },
       {
@@ -328,6 +470,20 @@
         ]
       },
       {
+        "id": "affected-group:insurance-shoppers",
+        "label": "insurance shoppers",
+        "evidenceIds": [
+          "inc5000-insurify-ai-decisions"
+        ]
+      },
+      {
+        "id": "affected-group:insurers",
+        "label": "insurers",
+        "evidenceIds": [
+          "inc5000-insurify-ai-decisions"
+        ]
+      },
+      {
         "id": "affected-group:investors",
         "label": "investors",
         "evidenceIds": [
@@ -342,6 +498,13 @@
         ]
       },
       {
+        "id": "affected-group:nonprofit-workers",
+        "label": "nonprofit workers",
+        "evidenceIds": [
+          "inc5000-veradata-donor-analytics"
+        ]
+      },
+      {
         "id": "affected-group:occupational-groups",
         "label": "occupational groups",
         "evidenceIds": [
@@ -353,6 +516,13 @@
         "label": "organizations",
         "evidenceIds": [
           "cultural-ai-capability-dependence"
+        ]
+      },
+      {
+        "id": "affected-group:people-served-by-nonprofits",
+        "label": "people served by nonprofits",
+        "evidenceIds": [
+          "inc5000-veradata-donor-analytics"
         ]
       },
       {
@@ -394,6 +564,13 @@
         ]
       },
       {
+        "id": "affected-group:regulators",
+        "label": "regulators",
+        "evidenceIds": [
+          "inc5000-insurify-ai-decisions"
+        ]
+      },
+      {
         "id": "affected-group:researchers",
         "label": "researchers",
         "evidenceIds": [
@@ -425,6 +602,7 @@
         "id": "affected-group:software-workers",
         "label": "software workers",
         "evidenceIds": [
+          "inc5000-caylent-ai-delivery",
           "atlas-microsoft-cloud-window"
         ]
       },
@@ -484,7 +662,11 @@
         "id": "repository:inc5000-analysis",
         "label": "inc5000-analysis",
         "evidenceIds": [
-          "inc5000-coreweave-ai-infrastructure"
+          "inc5000-coreweave-ai-infrastructure",
+          "inc5000-luma-ai-networking",
+          "inc5000-caylent-ai-delivery",
+          "inc5000-insurify-ai-decisions",
+          "inc5000-veradata-donor-analytics"
         ]
       },
       {
@@ -641,6 +823,16 @@
     },
     {
       "from": "inc5000-coreweave-ai-infrastructure",
+      "to": "company:coreweave",
+      "relation": "classified_as_companie"
+    },
+    {
+      "from": "inc5000-coreweave-ai-infrastructure",
+      "to": "industry:ai-cloud-infrastructure",
+      "relation": "classified_as_industrie"
+    },
+    {
+      "from": "inc5000-coreweave-ai-infrastructure",
       "to": "affected-group:ai-companies",
       "relation": "affects"
     },
@@ -661,6 +853,186 @@
     },
     {
       "from": "inc5000-coreweave-ai-infrastructure",
+      "to": "repository:inc5000-analysis",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "inc5000-luma-ai-networking",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "inc5000-luma-ai-networking",
+      "to": "mechanism:as-model-workloads-grow-the-bottleneck-can-move-from-computing-chips-to-the-network-that-moves-data-between-them-creating-a-specialized-supplier-layer",
+      "relation": "explains"
+    },
+    {
+      "from": "inc5000-luma-ai-networking",
+      "to": "company:luma-optics",
+      "relation": "classified_as_companie"
+    },
+    {
+      "from": "inc5000-luma-ai-networking",
+      "to": "industry:ai-data-center-networking",
+      "relation": "classified_as_industrie"
+    },
+    {
+      "from": "inc5000-luma-ai-networking",
+      "to": "affected-group:ai-companies",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-luma-ai-networking",
+      "to": "affected-group:data-center-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-luma-ai-networking",
+      "to": "affected-group:enterprise-users",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-luma-ai-networking",
+      "to": "affected-group:capital-providers",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-luma-ai-networking",
+      "to": "repository:inc5000-analysis",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "inc5000-caylent-ai-delivery",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "inc5000-caylent-ai-delivery",
+      "to": "mechanism:when-enterprises-cannot-turn-a-model-or-cloud-plan-into-a-working-system-implementation-firms-capture-value-by-supplying-scarce-technical-knowledge-and-execution-capacity",
+      "relation": "explains"
+    },
+    {
+      "from": "inc5000-caylent-ai-delivery",
+      "to": "company:caylent",
+      "relation": "classified_as_companie"
+    },
+    {
+      "from": "inc5000-caylent-ai-delivery",
+      "to": "industry:cloud-and-ai-implementation-services",
+      "relation": "classified_as_industrie"
+    },
+    {
+      "from": "inc5000-caylent-ai-delivery",
+      "to": "affected-group:enterprise-users",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-caylent-ai-delivery",
+      "to": "affected-group:software-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-caylent-ai-delivery",
+      "to": "affected-group:implementation-teams",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-caylent-ai-delivery",
+      "to": "affected-group:customers",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-caylent-ai-delivery",
+      "to": "repository:inc5000-analysis",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "inc5000-insurify-ai-decisions",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "inc5000-insurify-ai-decisions",
+      "to": "mechanism:a-comparison-service-can-reduce-search-effort-for-consumers-while-also-shaping-which-choices-prices-and-explanations-they-see",
+      "relation": "explains"
+    },
+    {
+      "from": "inc5000-insurify-ai-decisions",
+      "to": "company:insurify",
+      "relation": "classified_as_companie"
+    },
+    {
+      "from": "inc5000-insurify-ai-decisions",
+      "to": "industry:ai-enabled-insurance-comparison",
+      "relation": "classified_as_industrie"
+    },
+    {
+      "from": "inc5000-insurify-ai-decisions",
+      "to": "affected-group:insurance-shoppers",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-insurify-ai-decisions",
+      "to": "affected-group:insurers",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-insurify-ai-decisions",
+      "to": "affected-group:customer-support-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-insurify-ai-decisions",
+      "to": "affected-group:regulators",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-insurify-ai-decisions",
+      "to": "repository:inc5000-analysis",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "inc5000-veradata-donor-analytics",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "inc5000-veradata-donor-analytics",
+      "to": "mechanism:prediction-tools-can-make-scarce-fundraising-staff-more-selective-while-moving-judgment-about-who-receives-attention-into-a-data-system",
+      "relation": "explains"
+    },
+    {
+      "from": "inc5000-veradata-donor-analytics",
+      "to": "company:veradata",
+      "relation": "classified_as_companie"
+    },
+    {
+      "from": "inc5000-veradata-donor-analytics",
+      "to": "industry:ai-enabled-fundraising-software",
+      "relation": "classified_as_industrie"
+    },
+    {
+      "from": "inc5000-veradata-donor-analytics",
+      "to": "affected-group:nonprofit-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-veradata-donor-analytics",
+      "to": "affected-group:donors",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-veradata-donor-analytics",
+      "to": "affected-group:charities",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-veradata-donor-analytics",
+      "to": "affected-group:people-served-by-nonprofits",
+      "relation": "affects"
+    },
+    {
+      "from": "inc5000-veradata-donor-analytics",
       "to": "repository:inc5000-analysis",
       "relation": "classified_as_repositorie"
     },

@@ -1,9 +1,9 @@
 {
   "schemaVersion": "research-ingestion-ledger-v1",
-  "generatedAt": "2026-09-26T09:18:54.359Z",
+  "generatedAt": "2026-09-26T10:02:54.267Z",
   "domain": "ai-work-control",
   "sourceSnapshotDate": "2026-09-25",
-  "scanRunId": "scan-20260926091809959",
+  "scanRunId": "scan-20260926100219763",
   "repositories": [
     {
       "id": "trend-hunting",
@@ -42,7 +42,7 @@
       "adapter": "repository-files",
       "refresh": "monthly",
       "purpose": "private-company growth, customer pain, and business models",
-      "recordCount": 1,
+      "recordCount": 5,
       "status": "ingested"
     },
     {
@@ -83,7 +83,7 @@
       "sourceDigest": "67e2e17f48ee21d1f468944b6d1c53e4b6fc20428838ffcbb151937d7662252e",
       "sourceBytes": 25306,
       "capturePath": "raw/source-captures/trend-hunting-ai-control/67e2e17f48ee21d1f468944b6d1c53e4b6fc20428838ffcbb151937d7662252e.source",
-      "ingestedAt": "2026-09-26T09:18:54.157Z"
+      "ingestedAt": "2026-09-26T10:02:54.226Z"
     },
     {
       "id": "cultural-ai-capability-dependence",
@@ -113,7 +113,7 @@
       "sourceDigest": "88ac071286e2f746095504540db23f4164a8c5a3e1c6ee190ebcebf753e4d8fe",
       "sourceBytes": 15639,
       "capturePath": "raw/source-captures/cultural-ai-capability-dependence/88ac071286e2f746095504540db23f4164a8c5a3e1c6ee190ebcebf753e4d8fe.source",
-      "ingestedAt": "2026-09-26T09:18:54.157Z"
+      "ingestedAt": "2026-09-26T10:02:54.229Z"
     },
     {
       "id": "annual-ai-cultural-disintermediation",
@@ -144,7 +144,7 @@
       "sourceDigest": "93d9d56ee7792cdf8c73af339b9e88d5a52544fae201dd800a51ce17622c68a4",
       "sourceBytes": 28474,
       "capturePath": "raw/source-captures/annual-ai-cultural-disintermediation/93d9d56ee7792cdf8c73af339b9e88d5a52544fae201dd800a51ce17622c68a4.source",
-      "ingestedAt": "2026-09-26T09:18:54.158Z"
+      "ingestedAt": "2026-09-26T10:02:54.230Z"
     },
     {
       "id": "ibis-ai-workflow-compression",
@@ -175,7 +175,7 @@
       "sourceDigest": "0d3dab9e8b23ea41b5ea11c224388642acbe5b5bcb8c27707542321255ad88ce",
       "sourceBytes": 86295,
       "capturePath": "raw/source-captures/ibis-ai-workflow-compression/0d3dab9e8b23ea41b5ea11c224388642acbe5b5bcb8c27707542321255ad88ce.source",
-      "ingestedAt": "2026-09-26T09:18:54.158Z"
+      "ingestedAt": "2026-09-26T10:02:54.237Z"
     },
     {
       "id": "inc5000-coreweave-ai-infrastructure",
@@ -185,6 +185,8 @@
       "sourceLocator": "company=CoreWeave",
       "title": "AI demand creates a fast-growing infrastructure business",
       "observation": "The Inc. 5000 record describes CoreWeave as a specialized GPU infrastructure provider serving AI labs, startups, and enterprises facing a shortage of compute.",
+      "company": "CoreWeave",
+      "industry": "AI cloud infrastructure",
       "theme": "ai-work-control",
       "mechanism": "A physical and financial infrastructure bottleneck can create a specialized layer that captures demand before AI becomes an ordinary workflow.",
       "affectedGroups": [
@@ -206,7 +208,139 @@
       "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
       "sourceBytes": 207596,
       "capturePath": "raw/source-captures/inc5000-coreweave-ai-infrastructure/48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a.source",
-      "ingestedAt": "2026-09-26T09:18:54.197Z"
+      "ingestedAt": "2026-09-26T10:02:54.240Z"
+    },
+    {
+      "id": "inc5000-luma-ai-networking",
+      "sourceRole": "private_company",
+      "sourceRepository": "inc5000-analysis",
+      "sourcePath": "data/processed/featured.json",
+      "sourceLocator": "company=Luma Optics",
+      "title": "Luma Optics sells the network layer needed by larger AI systems",
+      "observation": "The Inc. 5000 record describes Luma Optics as a maker of optical transceiver hardware for data centers handling demanding AI workloads.",
+      "company": "Luma Optics",
+      "industry": "AI data-center networking",
+      "theme": "ai-work-control",
+      "mechanism": "As model workloads grow, the bottleneck can move from computing chips to the network that moves data between them, creating a specialized supplier layer.",
+      "affectedGroups": [
+        "AI companies",
+        "data-center workers",
+        "enterprise users",
+        "capital providers"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "limits": [
+        "The Inc. record describes the business and growth, but does not prove customer performance, deployment durability, pricing power, or worker outcomes."
+      ],
+      "excerptTerms": [
+        "Luma Optics",
+        "transceiver",
+        "AI workloads"
+      ],
+      "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+      "sourceBytes": 207596,
+      "capturePath": "raw/source-captures/inc5000-luma-ai-networking/48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a.source",
+      "ingestedAt": "2026-09-26T10:02:54.241Z"
+    },
+    {
+      "id": "inc5000-caylent-ai-delivery",
+      "sourceRole": "private_company",
+      "sourceRepository": "inc5000-analysis",
+      "sourcePath": "data/processed/featured.json",
+      "sourceLocator": "company=Caylent",
+      "title": "Caylent sells help turning AI plans into cloud systems",
+      "observation": "The Inc. 5000 record describes Caylent as an AWS-focused services company using an AI-enabled delivery approach to help enterprises deploy ideas.",
+      "company": "Caylent",
+      "industry": "cloud and AI implementation services",
+      "theme": "ai-work-control",
+      "mechanism": "When enterprises cannot turn a model or cloud plan into a working system, implementation firms capture value by supplying scarce technical knowledge and execution capacity.",
+      "affectedGroups": [
+        "enterprise users",
+        "software workers",
+        "implementation teams",
+        "customers"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "limits": [
+        "The Inc. record identifies a service and growth story, but does not establish deployment quality, customer savings, worker workload, or repeatable AI productivity."
+      ],
+      "excerptTerms": [
+        "Caylent",
+        "AI-enabled",
+        "AWS"
+      ],
+      "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+      "sourceBytes": 207596,
+      "capturePath": "raw/source-captures/inc5000-caylent-ai-delivery/48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a.source",
+      "ingestedAt": "2026-09-26T10:02:54.251Z"
+    },
+    {
+      "id": "inc5000-insurify-ai-decisions",
+      "sourceRole": "private_company",
+      "sourceRepository": "inc5000-analysis",
+      "sourcePath": "data/processed/featured.json",
+      "sourceLocator": "company=Insurify",
+      "title": "Insurify applies AI to a consumer insurance choice",
+      "observation": "The Inc. 5000 record describes Insurify as an AI-powered insurance comparison platform that helps shoppers compare policies and quotes.",
+      "company": "Insurify",
+      "industry": "AI-enabled insurance comparison",
+      "theme": "ai-work-control",
+      "mechanism": "A comparison service can reduce search effort for consumers while also shaping which choices, prices, and explanations they see.",
+      "affectedGroups": [
+        "insurance shoppers",
+        "insurers",
+        "customer-support workers",
+        "regulators"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "limits": [
+        "The Inc. record does not show quote accuracy, consumer savings, recommendation bias, coverage quality, or how users can correct an error."
+      ],
+      "excerptTerms": [
+        "Insurify",
+        "AI-powered",
+        "shoppers"
+      ],
+      "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+      "sourceBytes": 207596,
+      "capturePath": "raw/source-captures/inc5000-insurify-ai-decisions/48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a.source",
+      "ingestedAt": "2026-09-26T10:02:54.257Z"
+    },
+    {
+      "id": "inc5000-veradata-donor-analytics",
+      "sourceRole": "private_company",
+      "sourceRepository": "inc5000-analysis",
+      "sourcePath": "data/processed/featured.json",
+      "sourceLocator": "company=VeraData",
+      "title": "VeraData uses AI to help nonprofits decide whom to approach",
+      "observation": "The Inc. 5000 record describes VeraData as an AI and machine-learning company serving philanthropic organizations with donor analysis.",
+      "company": "VeraData",
+      "industry": "AI-enabled fundraising software",
+      "theme": "ai-work-control",
+      "mechanism": "Prediction tools can make scarce fundraising staff more selective while moving judgment about who receives attention into a data system.",
+      "affectedGroups": [
+        "nonprofit workers",
+        "donors",
+        "charities",
+        "people served by nonprofits"
+      ],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "limits": [
+        "The Inc. record does not measure prediction accuracy, donor treatment, fundraising results, access effects, or how staff challenge a recommendation."
+      ],
+      "excerptTerms": [
+        "VeraData",
+        "machine learning",
+        "donor"
+      ],
+      "sourceDigest": "48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a",
+      "sourceBytes": 207596,
+      "capturePath": "raw/source-captures/inc5000-veradata-donor-analytics/48fc203e77701ea15dcb744b9dc324d7828e595ec5c7a5f5f2c1a813b3ee1d2a.source",
+      "ingestedAt": "2026-09-26T10:02:54.258Z"
     },
     {
       "id": "atlas-ai-work-evidence-thread",
@@ -236,7 +370,7 @@
       "sourceDigest": "49480c7a496f62b39ee0d89f8325fca1ec9204b07c47091d5641bc7ac5f51f97",
       "sourceBytes": 3171,
       "capturePath": "raw/source-captures/atlas-ai-work-evidence-thread/49480c7a496f62b39ee0d89f8325fca1ec9204b07c47091d5641bc7ac5f51f97.source",
-      "ingestedAt": "2026-09-26T09:18:54.227Z"
+      "ingestedAt": "2026-09-26T10:02:54.258Z"
     },
     {
       "id": "atlas-c3-ai-report-window",
@@ -274,7 +408,7 @@
       "sourceDigest": "c0f1424493170ccf3ef4829cd34a6f8d0d7526768c3cf20ed3feffad4faece29",
       "sourceBytes": 1659,
       "capturePath": "raw/source-captures/atlas-c3-ai-report-window/c0f1424493170ccf3ef4829cd34a6f8d0d7526768c3cf20ed3feffad4faece29.source",
-      "ingestedAt": "2026-09-26T09:18:54.237Z"
+      "ingestedAt": "2026-09-26T10:02:54.262Z"
     },
     {
       "id": "atlas-nvidia-ai-platform-window",
@@ -319,7 +453,7 @@
       "sourceDigest": "75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0",
       "sourceBytes": 2602,
       "capturePath": "raw/source-captures/atlas-nvidia-ai-platform-window/75835471164f8d30f2477180ee4944ae1eaaa0f297e63c90b473174156a766f0.source",
-      "ingestedAt": "2026-09-26T09:18:54.238Z"
+      "ingestedAt": "2026-09-26T10:02:54.262Z"
     },
     {
       "id": "atlas-microsoft-cloud-window",
@@ -359,7 +493,7 @@
       "sourceDigest": "0c783b9df6776a6e99d2f0a641039dbf9ed0de6e38f7e52a823466e5b65dae5e",
       "sourceBytes": 2632,
       "capturePath": "raw/source-captures/atlas-microsoft-cloud-window/0c783b9df6776a6e99d2f0a641039dbf9ed0de6e38f7e52a823466e5b65dae5e.source",
-      "ingestedAt": "2026-09-26T09:18:54.238Z"
+      "ingestedAt": "2026-09-26T10:02:54.263Z"
     },
     {
       "id": "atlas-oracle-cloud-window",
@@ -399,7 +533,7 @@
       "sourceDigest": "781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583",
       "sourceBytes": 2413,
       "capturePath": "raw/source-captures/atlas-oracle-cloud-window/781c3d851caa7c868dd94b1ed1a71b48d936967140017918a1bd2a638870e583.source",
-      "ingestedAt": "2026-09-26T09:18:54.267Z"
+      "ingestedAt": "2026-09-26T10:02:54.263Z"
     },
     {
       "id": "atlas-broadcom-ai-infrastructure-window",
@@ -443,7 +577,7 @@
       "sourceDigest": "78e50dcb48e4452ad98bf8e308e58ce80ffe85344d61d2571bf9244f98b37ad3",
       "sourceBytes": 1197,
       "capturePath": "raw/source-captures/atlas-broadcom-ai-infrastructure-window/78e50dcb48e4452ad98bf8e308e58ce80ffe85344d61d2571bf9244f98b37ad3.source",
-      "ingestedAt": "2026-09-26T09:18:54.268Z"
+      "ingestedAt": "2026-09-26T10:02:54.264Z"
     },
     {
       "id": "trend-ai-agency-control-measure",
@@ -475,7 +609,7 @@
       "sourceDigest": "9aa6fb9e4de05f3c241925da7f2f39426807d5ad943ae116b596843882cc3a86",
       "sourceBytes": 1999,
       "capturePath": "raw/source-captures/trend-ai-agency-control-measure/9aa6fb9e4de05f3c241925da7f2f39426807d5ad943ae116b596843882cc3a86.source",
-      "ingestedAt": "2026-09-26T09:18:54.269Z"
+      "ingestedAt": "2026-09-26T10:02:54.264Z"
     },
     {
       "id": "cultural-nber-ai-task-adoption",
@@ -507,7 +641,7 @@
       "sourceDigest": "c2aa137ca1e4fbf4709238b51db322e5ee36326606c2c828a56452953b8a9c92",
       "sourceBytes": 6106,
       "capturePath": "raw/source-captures/cultural-nber-ai-task-adoption/c2aa137ca1e4fbf4709238b51db322e5ee36326606c2c828a56452953b8a9c92.source",
-      "ingestedAt": "2026-09-26T09:18:54.296Z"
+      "ingestedAt": "2026-09-26T10:02:54.265Z"
     },
     {
       "id": "cultural-jrc-algorithmic-management-outcomes",
@@ -539,7 +673,7 @@
       "sourceDigest": "5577ac6f26d1d859a8c9a6f3577c709bebc69ef3dfc1ccef742db3dcec70582e",
       "sourceBytes": 8365,
       "capturePath": "raw/source-captures/cultural-jrc-algorithmic-management-outcomes/5577ac6f26d1d859a8c9a6f3577c709bebc69ef3dfc1ccef742db3dcec70582e.source",
-      "ingestedAt": "2026-09-26T09:18:54.308Z"
+      "ingestedAt": "2026-09-26T10:02:54.266Z"
     },
     {
       "id": "cultural-amazon-bandameeda-remedy",
@@ -571,7 +705,7 @@
       "sourceDigest": "f2b548bf93149ed93ec9bddca9b09511ddb9541d73e3a0d9f9dcf6788cea9c91",
       "sourceBytes": 7529,
       "capturePath": "raw/source-captures/cultural-amazon-bandameeda-remedy/f2b548bf93149ed93ec9bddca9b09511ddb9541d73e3a0d9f9dcf6788cea9c91.source",
-      "ingestedAt": "2026-09-26T09:18:54.340Z"
+      "ingestedAt": "2026-09-26T10:02:54.266Z"
     },
     {
       "id": "trend-uber-kumar-review-counterexample",
@@ -603,7 +737,7 @@
       "sourceDigest": "cd563ab438a730e4220e234c30d260f1238f6627f5693e1bba39aa9eebf85845",
       "sourceBytes": 2390,
       "capturePath": "raw/source-captures/trend-uber-kumar-review-counterexample/cd563ab438a730e4220e234c30d260f1238f6627f5693e1bba39aa9eebf85845.source",
-      "ingestedAt": "2026-09-26T09:18:54.355Z"
+      "ingestedAt": "2026-09-26T10:02:54.266Z"
     }
   ]
 }
