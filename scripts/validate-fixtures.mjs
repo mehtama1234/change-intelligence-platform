@@ -3,7 +3,8 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
-const path = resolve(root, "data/fixtures/ai-work-control.records.json");
+const inputPath = process.argv[2] ?? "data/fixtures/ai-work-control.records.json";
+const path = resolve(root, inputPath);
 const packet = JSON.parse(await readFile(path, "utf8"));
 const allowedRoles = new Set([
   "trend_signal",
@@ -40,4 +41,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`Validated ${packet.records.length} evidence records and ${packet.insights.length} bounded insight.`);
+console.log(`Validated ${packet.records.length} evidence records and ${packet.insights.length} bounded insight from ${inputPath}.`);

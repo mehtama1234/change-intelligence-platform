@@ -4,6 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "validate:fixtures": "node scripts/validate-fixtures.mjs"
+    "validate:fixtures": "node scripts/validate-fixtures.mjs",
+    "validate:packet": "node scripts/validate-fixtures.mjs data/processed/ai-work-control.packet.json",
+    "build:ai-work-control": "node scripts/build-ai-work-control-packet.mjs"
   }
 }

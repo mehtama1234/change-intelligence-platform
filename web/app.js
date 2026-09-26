@@ -1,4 +1,4 @@
-const fixtureUrl = "../data/fixtures/ai-work-control.records.json";
+const fixtureUrl = "../data/processed/ai-work-control.packet.json";
 const state = { packet: null, role: "all" };
 
 const byId = (id) => document.getElementById(id);
@@ -13,7 +13,7 @@ function render() {
   byId("insight-status").textContent = insight.status;
   byId("next-test").textContent = insight.nextTest;
   byId("falsifiers").innerHTML = insight.whatWouldChangeOurMind.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
-  byId("as-of").textContent = `Fixture refreshed ${state.packet.records.map((record) => record.asOf).sort().at(-1)}`;
+  byId("as-of").textContent = `Source snapshot ${state.packet.sourceSnapshotDate}`;
 
   const roles = [...new Set(records.map((record) => record.sourceRole))].sort();
   byId("role-filter").innerHTML = `<option value="all">All sources</option>${roles.map((role) => `<option value="${escapeHtml(role)}">${escapeHtml(role.replaceAll("_", " "))}</option>`).join("")}`;

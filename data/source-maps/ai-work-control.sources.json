@@ -1,0 +1,123 @@
+{
+  "domain": "ai-work-control",
+  "snapshotDate": "2026-09-25",
+  "sources": [
+    {
+      "id": "trend-hunting-ai-control",
+      "sourceRole": "trend_signal",
+      "sourceRepository": "trend-hunting",
+      "sourcePath": "analysis/DEEP-TRENDS-CROSS-THEME-SYNTHESIS-V2.md",
+      "sourceLocator": "AI and agency lane",
+      "title": "AI capability is not the same as worker control",
+      "observation": "The synthesis separates access to AI capability from control over tasks, worker welfare, and successful remedy.",
+      "theme": "ai-work-control",
+      "mechanism": "A tool can increase capability while decision rights, measurement, and correction remain with an employer or platform.",
+      "affectedGroups": ["workers", "customers", "employers"],
+      "claimState": "interpreted",
+      "asOf": "2026-09-22",
+      "limits": ["This is a synthesis boundary, not a pooled causal estimate."],
+      "excerptTerms": ["control", "worker", "remedy"]
+    },
+    {
+      "id": "cultural-ai-capability-dependence",
+      "sourceRole": "social_cultural",
+      "sourceRepository": "cultural-geopolitical-theme-mining",
+      "sourcePath": "site/ai-work-control-073.html",
+      "sourceLocator": "AI work-control reader page",
+      "title": "Capability can arrive with dependence",
+      "observation": "The reader frames AI infrastructure as potentially building useful capability and dependence together, while keeping portability, exit, and state-control effects open.",
+      "theme": "ai-work-control",
+      "mechanism": "A service can make work possible while increasing reliance on a provider or system that users cannot easily replace.",
+      "affectedGroups": ["workers", "organizations", "public institutions"],
+      "claimState": "interpreted",
+      "asOf": "2026-09-25",
+      "limits": ["The page preserves open questions about application migration, outcomes, portability, and exit."],
+      "excerptTerms": ["capability", "dependency", "control"]
+    },
+    {
+      "id": "annual-ai-cultural-disintermediation",
+      "sourceRole": "company_report",
+      "sourceRepository": "annual-report-research",
+      "sourcePath": "site/trends/ai-cultural-disintermediation.html",
+      "sourceLocator": "AI cultural disintermediation theme page",
+      "title": "AI is changing which work remains scarce",
+      "observation": "The annual-report synthesis tracks AI as a force that can compress routine execution while increasing the value of distribution, judgment, accountability, and scarce expertise.",
+      "theme": "ai-work-control",
+      "mechanism": "When routine work becomes cheap, value and bargaining power can move toward owners of distribution, context, judgment, and workflow control.",
+      "affectedGroups": ["workers", "service firms", "customers", "platform owners"],
+      "claimState": "interpreted",
+      "asOf": "2026-08-10",
+      "limits": ["This is a cross-company annual-report synthesis, not one company's measured AI outcome."],
+      "excerptTerms": ["automation", "judgment", "control"]
+    },
+    {
+      "id": "ibis-ai-workflow-compression",
+      "sourceRole": "industry",
+      "sourceRepository": "ibis-industries",
+      "sourcePath": "writeups_ai.json",
+      "sourceLocator": "Design & the web: the fork",
+      "title": "AI can make routine execution cheaper while raising the value of strategy",
+      "observation": "The industry writeup describes AI website builders compressing template-based execution and shifting competition toward strategy, brand, personalization, and distribution.",
+      "theme": "ai-work-control",
+      "mechanism": "Automation lowers the price of repeatable execution and can move scarce value toward higher-context work.",
+      "affectedGroups": ["design workers", "agencies", "small businesses", "platforms"],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "limits": ["The writeup combines industry estimates and company examples; each underlying measure needs source-level review before a general labor claim."],
+      "excerptTerms": ["AI builders", "routine", "strategy"]
+    },
+    {
+      "id": "inc5000-coreweave-ai-infrastructure",
+      "sourceRole": "private_company",
+      "sourceRepository": "inc5000-analysis",
+      "sourcePath": "data/processed/featured.json",
+      "sourceLocator": "company=CoreWeave",
+      "title": "AI demand creates a fast-growing infrastructure business",
+      "observation": "The Inc. 5000 record describes CoreWeave as a specialized GPU infrastructure provider serving AI labs, startups, and enterprises facing a shortage of compute.",
+      "theme": "ai-work-control",
+      "mechanism": "A physical and financial infrastructure bottleneck can create a specialized layer that captures demand before AI becomes an ordinary workflow.",
+      "affectedGroups": ["AI companies", "enterprise users", "infrastructure workers", "capital providers"],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "limits": ["The Inc. record identifies a growth hypothesis and revenue band; it does not prove customer benefit, durable margins, or AI productivity."],
+      "excerptTerms": ["CoreWeave", "GPU", "AI cloud"]
+    },
+    {
+      "id": "atlas-ai-work-evidence-thread",
+      "sourceRole": "research",
+      "sourceRepository": "company-atlas-lab",
+      "sourcePath": "local-runs/ai-work-culture-insight-thread.json",
+      "sourceLocator": "fieldnotes insight thread",
+      "title": "AI work narratives need independent cultural measures",
+      "observation": "The Atlas thread places company-reported AI adoption beside editorial context, consumer measures, independent workplace measures, and an explicit open question about productivity and adoption.",
+      "theme": "ai-work-control",
+      "mechanism": "A company narrative becomes more useful when it is compared with independent measures rather than treated as proof of an outcome.",
+      "affectedGroups": ["workers", "customers", "researchers"],
+      "claimState": "reported",
+      "asOf": "2026-09-25",
+      "limits": ["The thread explicitly says its sources do not establish productivity change, adoption scale, or causality."],
+      "excerptTerms": ["independent", "productivity", "causality"]
+    }
+  ],
+  "insight": {
+    "id": "insight-ai-capability-control-gap-001",
+    "title": "AI can return time without returning control",
+    "plainLanguageSummary": "The current evidence supports a narrower reading than 'AI makes work more productive': AI can remove visible tasks while decisions, measurement, correction, and dependence remain controlled by an employer, platform, or infrastructure provider.",
+    "recordIds": [
+      "trend-hunting-ai-control",
+      "cultural-ai-capability-dependence",
+      "annual-ai-cultural-disintermediation",
+      "ibis-ai-workflow-compression",
+      "inc5000-coreweave-ai-infrastructure",
+      "atlas-ai-work-evidence-thread"
+    ],
+    "strongestAlternative": "The apparent control gap may be temporary because early deployments have not yet matured into stable workflow changes.",
+    "whatWouldChangeOurMind": [
+      "A compatible longitudinal study shows durable control, pay, and remedy improvements for affected workers.",
+      "Company and independent records show that workers can understand, correct, and leave AI-mediated decisions without material penalty."
+    ],
+    "nextTest": "Track one named AI-mediated workflow from company deployment through worker or customer use, correction, appeal, and exit evidence.",
+    "status": "draft",
+    "refreshBy": "2026-12-31"
+  }
+}
