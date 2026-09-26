@@ -26,6 +26,7 @@ const watchlistsPath = resolve(runtimeDir, "workspace-watchlists.json");
 const pilotProfilesPath = resolve(runtimeDir, "workspace-pilot-profiles.json");
 const pilotDeliveriesPath = resolve(runtimeDir, "workspace-pilot-deliveries.json");
 const pilotDecisionsPath = resolve(runtimeDir, "workspace-pilot-decisions.json");
+const operatorWarningsPath = resolve(runtimeDir, "operator-warning-events.json");
 const auditPath = resolve(runtimeDir, "audit-log.json");
 const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
 const sourceScanPath = resolve(runtimeDir, "latest-source-scan.json");
@@ -61,6 +62,7 @@ await importRuntimeLedgers(store, {
   pilotProfiles: pilotProfilesPath,
   pilotDeliveries: pilotDeliveriesPath,
   pilotDecisions: pilotDecisionsPath,
+  operatorWarnings: operatorWarningsPath,
   workspaceDir,
   sourceScan: sourceScanPath,
   evidenceLedger: evidenceLedgerPath,
@@ -266,7 +268,7 @@ function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions 
   };
 }
 
-function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries }) {
+function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries }) {
   const summaries = workspaces.map((workspace) => {
     const workspaceDeliveries = deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
     const reviewed = workspaceDeliveries.filter((delivery) => delivery.review);
@@ -301,6 +303,8 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
     const sourceAgesAtRun = (scan?.sources ?? []).map((source) => Date.parse(source.checkedAt)).filter(Number.isFinite).map((checkedAt) => Math.max(0, runEnd - checkedAt));
     return { runId: run.runId, startedAt: run.startedAt ?? null, endedAt: run.endedAt ?? null, status: run.status, failedSteps: (run.steps ?? []).filter((step) => step.status === "failed").map((step) => step.name), changedSources: scan?.counts?.changed ?? null, missingSources: scan?.counts?.missing ?? null, oldestSourceAgeMs: sourceAgesAtRun.length ? Math.max(...sourceAgesAtRun) : null, alertsSeen: runAlerts.length, usefulAlerts: runAlerts.filter((alert) => alert.resolutionDisposition === "useful").length, falseAlerts: runAlerts.filter((alert) => alert.resolutionDisposition === "false_positive").length, correctionAlerts: runAlerts.filter((alert) => alert.resolutionDisposition === "needs_correction").length, deliveriesPrepared: runDeliveries.length, deliveriesReviewed: runDeliveries.filter((delivery) => delivery.review).length };
   });
+  const warningById = new Map(warningEvents.map((event) => [event.warningId, event]));
+  const warningLifecycle = warnings.map((warning) => ({ ...warning, lifecycle: warningById.get(warning.id)?.state ?? "open", lastActionAt: warningById.get(warning.id)?.actedAt ?? null, actionNote: warningById.get(warning.id)?.note ?? null }));
   return {
     schemaVersion: "operator-pilot-overview-v1",
     generatedAt: new Date().toISOString(),
@@ -308,7 +312,7 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
     aggregate: { usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, notUsefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "not_useful").length, unclearDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "unclear").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, pilotCheckpoints: decisions.length, checkpointCounts: Object.fromEntries(["improve", "continue", "expand", "stop"].map((decision) => [decision, decisions.filter((item) => item.decision === decision).length])), auditedPilotActions: auditEntries.filter((entry) => ["configure_pilot", "review_pilot_delivery", "decide_pilot"].includes(entry.action)).length, openAlerts: alerts.filter((alert) => alert.state === "open").length, falseAlerts: alerts.filter((alert) => alert.resolutionDisposition === "false_positive").length, alertCorrections: alerts.filter((alert) => alert.resolutionDisposition === "needs_correction").length },
     operations: { latestRefreshStatus: refreshHistory.at(-1)?.status ?? "not_run", failedRefreshRuns: failedRuns.length, lastRefreshAt: refreshHistory.at(-1)?.endedAt ?? null, sourceCount: sourceScan.sources?.length ?? 0, staleSources, oldestSourceAgeMs: sourceAges.length ? Math.max(...sourceAges.map((source) => source.ageMs)) : null, delayedDeliveries, falseAlertRate },
     thresholds: { maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries },
-    warnings,
+    warnings: warningLifecycle,
     trend,
     workspaces: summaries,
     limitation: "This operator view contains aggregate pilot health only. It intentionally excludes customer questions, review notes, source details, and private workspace content. Counts describe recorded activity, not general product-market fit or causation."
@@ -712,6 +716,26 @@ const server = createServer(async (request, response) => {
       await writeFile(pilotDecisionsPath, `${JSON.stringify(store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions"), null, 2)}\n`);
       return json(response, 201, record);
     }
+    if (request.method === "POST" && url.pathname.startsWith("/api/operator/warnings/") && url.pathname.endsWith("/state")) {
+      const warningId = decodeURIComponent(url.pathname.slice("/api/operator/warnings/".length, -"/state".length));
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const body = await requestBody(request);
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (!idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for operator writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      if (!["refresh-failures", "source-freshness", "false-alert-rate", "delivery-delay"].includes(warningId)) return json(response, 400, { error: "Unknown operator warning." });
+      const state = String(body.state ?? "");
+      const note = String(body.note ?? "").trim().slice(0, 2000);
+      if (!["acknowledged", "resolved"].includes(state)) return json(response, 400, { error: "Warning state must be acknowledged or resolved." });
+      if (!note) return json(response, 400, { error: "A note is required." });
+      const now = new Date().toISOString();
+      const event = { id: `operator-warning-${warningId}`, warningId, state, note, actedBy: operator.actorId, actedAt: now };
+      store.commitRecord({ kind: "operator_warning", record: event, audit: { requestId, action: "change_operator_warning", targetId: warningId, workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: state, occurredAt: now }, operation: { key: idempotencyKey, action: "change_operator_warning", status: 200, body: event, completedAt: now } });
+      await writeFile(operatorWarningsPath, `${JSON.stringify(store.recordsLedger("operator_warning", "operator-warning-event-ledger-v1", "events"), null, 2)}\n`);
+      return json(response, 200, event);
+    }
     if (request.method === "GET" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/export")) {
       const briefingId = decodeURIComponent(url.pathname.slice("/api/briefings/".length, -"/export".length));
       const workspaceId = url.searchParams.get("workspace");
@@ -968,7 +992,8 @@ const server = createServer(async (request, response) => {
       const refreshHistory = (await readJson(refreshHistoryPath, { runs: [] })).runs ?? [];
       const sourceScan = await readJson(sourceScanPath, { sources: [] });
       const sourceScanHistory = await readJson(sourceScanHistoryPath, { runs: [] });
-      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries }));
+      const warningEvents = store.recordsLedger("operator_warning", "operator-warning-event-ledger-v1", "events").events;
+      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries }));
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

@@ -56,6 +56,7 @@ const required = [
   , [operatorHtml, 'id="operator-history"', "operator refresh history"]
   , [operatorHtml, 'id="operator-warnings"', "operator warning list"]
   , [operatorApp, "/api/operator/pilot-overview", "operator overview API"]
+  , [operatorApp, "/api/operator/warnings/", "operator warning action API"]
 ];
 const missing = required.filter(([text, value]) => !text.includes(value)).map(([, , label]) => label);
 if (missing.length) throw new Error(`Frontend contract failed: ${missing.join(", ")}`);

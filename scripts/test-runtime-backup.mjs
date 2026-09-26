@@ -12,7 +12,7 @@ const runtimeDir = resolve(rootTemp, "runtime");
 const backupDir = resolve(rootTemp, "backup");
 const restoredDir = resolve(rootTemp, "restored");
 await mkdir(runtimeDir, { recursive: true });
-for (const name of ["workspace-questions.json", "audit-log.json", "idempotency-operations.json", "workspace-alerts.json", "briefing-publications.json", "insight-decisions.json", "insight-publications.json", "workspace-pilot-profiles.json", "workspace-pilot-deliveries.json", "workspace-pilot-decisions.json", "latest-source-scan.json", "source-scan-history.json", "versioned-evidence-ledger.json", "review-decisions.json", "review-events.json", "refresh-history.json", "insight-evaluation.json"]) {
+for (const name of ["workspace-questions.json", "audit-log.json", "idempotency-operations.json", "workspace-alerts.json", "briefing-publications.json", "insight-decisions.json", "insight-publications.json", "workspace-pilot-profiles.json", "workspace-pilot-deliveries.json", "workspace-pilot-decisions.json", "operator-warning-events.json", "latest-source-scan.json", "source-scan-history.json", "versioned-evidence-ledger.json", "review-decisions.json", "review-events.json", "refresh-history.json", "insight-evaluation.json"]) {
   if (existsSync(resolve(sourceRuntime, name))) await copyFile(resolve(sourceRuntime, name), resolve(runtimeDir, name));
 }
 const store = createRuntimeStore(runtimeDir);
@@ -28,6 +28,7 @@ await importRuntimeLedgers(store, {
   pilotProfiles: resolve(runtimeDir, "workspace-pilot-profiles.json"),
   pilotDeliveries: resolve(runtimeDir, "workspace-pilot-deliveries.json")
   ,pilotDecisions: resolve(runtimeDir, "workspace-pilot-decisions.json")
+  ,operatorWarnings: resolve(runtimeDir, "operator-warning-events.json")
   ,sourceScan: resolve(runtimeDir, "latest-source-scan.json")
   ,evidenceLedger: resolve(runtimeDir, "versioned-evidence-ledger.json")
   ,reviewDecisions: resolve(runtimeDir, "review-decisions.json")
@@ -50,6 +51,7 @@ await importRuntimeLedgers(restoredStore, {
   pilotProfiles: resolve(restoredDir, "workspace-pilot-profiles.json"),
   pilotDeliveries: resolve(restoredDir, "workspace-pilot-deliveries.json")
   ,pilotDecisions: resolve(restoredDir, "workspace-pilot-decisions.json")
+  ,operatorWarnings: resolve(restoredDir, "operator-warning-events.json")
   ,sourceScan: resolve(restoredDir, "latest-source-scan.json")
   ,evidenceLedger: resolve(restoredDir, "versioned-evidence-ledger.json")
   ,reviewDecisions: resolve(restoredDir, "review-decisions.json")

@@ -11,7 +11,7 @@ await mkdir(runtimeDir, { recursive: true });
 await writeFile(`${runtimeDir}/review-events.json`, `${JSON.stringify({ schemaVersion: "review-event-ledger-v1", events: [{ id: "private-event", eventType: "briefing_republish", workspaceId: "other-private-workspace", targetId: "private-briefing", occurredAt: new Date().toISOString() }] }, null, 2)}\n`);
 const child = spawn(process.execPath, [resolve(root, "server.mjs")], {
   cwd: root,
-  env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher", "outsider-token": "outside-user", "operator-token": "ops-user" }), OPERATOR_ACTORS_JSON: JSON.stringify(["ops-user"]) },
+  env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher", "outsider-token": "outside-user", "operator-token": "ops-user" }), OPERATOR_ACTORS_JSON: JSON.stringify(["ops-user"]), OPERATOR_MAX_FAILED_REFRESHES: "-1" },
   stdio: ["ignore", "pipe", "pipe"]
 });
 let output = "";
@@ -57,6 +57,12 @@ try {
   const operatorOverview = await fetch(`${base}/api/operator/pilot-overview`, { headers: { Authorization: "Bearer operator-token" } });
   const operatorBody = await operatorOverview.json();
   if (operatorOverview.status !== 200 || operatorBody.schemaVersion !== "operator-pilot-overview-v1" || !Array.isArray(operatorBody.workspaces) || !Array.isArray(operatorBody.trend) || !Array.isArray(operatorBody.warnings) || !operatorBody.thresholds || (operatorBody.trend[0] && !Object.hasOwn(operatorBody.trend[0], "falseAlerts")) || !operatorBody.operations || !Number.isInteger(operatorBody.aggregate.openAlerts) || JSON.stringify(operatorBody).includes("private-event")) throw new Error("Operator overview contract or privacy boundary failed.");
+  const warning = operatorBody.warnings[0];
+  if (!warning) throw new Error("Operator warning fixture was not generated.");
+  const warningAction = await fetch(`${base}/api/operator/warnings/${encodeURIComponent(warning.id)}/state`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": "operator-warning-action", "content-type": "application/json" }, body: JSON.stringify({ state: "acknowledged", note: "Investigating the configured test threshold." }) });
+  if (warningAction.status !== 200) throw new Error(`Operator warning action failed: ${warningAction.status}`);
+  const acknowledgedOverview = await (await fetch(`${base}/api/operator/pilot-overview`, { headers: { Authorization: "Bearer operator-token" } })).json();
+  if (acknowledgedOverview.warnings.find((item) => item.id === warning.id)?.lifecycle !== "acknowledged") throw new Error("Operator warning state did not persist in the overview.");
   const outsiderDecision = await fetch(`${base}/api/pilot-report/decision`, { method: "POST", headers: { Authorization: "Bearer outsider-token", "Idempotency-Key": "outsider-pilot-decision", "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", decision: "continue", note: "No", nextStep: "No" }) });
   if (outsiderDecision.status !== 403) throw new Error(`Expected non-member pilot decision write to return 403, received ${outsiderDecision.status}`);
   const memberUsage = await fetch(`${base}/api/usage?workspace=demo-research`, { headers: authHeaders });
