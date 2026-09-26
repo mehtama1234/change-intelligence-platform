@@ -332,7 +332,7 @@ async function inspectInsight(insightId) {
   const response = await apiFetch(`../api/insights/${encodeURIComponent(insightId)}?workspace=${encodeURIComponent(state.workspaceId)}`);
   if (!response.ok) throw new Error("Insight could not be loaded.");
   const inspection = await response.json();
-  const { insight, evidence, review, reviewHistory, boundaries, freshness, briefingLinks } = inspection;
+  const { insight, evidence, chain, review, reviewHistory, boundaries, freshness, briefingLinks } = inspection;
   const decisions = reviewHistory?.decisions ?? [];
   const publications = reviewHistory?.publications ?? [];
   const events = reviewHistory?.events ?? [];
@@ -343,8 +343,9 @@ async function inspectInsight(insightId) {
       <p>${escapeHtml(insight.plainLanguageSummary)}</p>
       ${insight.origin ? `<p class="muted">Origin: discovered opportunity${insight.promotionId ? ` · promotion ${escapeHtml(insight.promotionId)}` : ""}.</p>` : ""}
       <h3>Currentness</h3><p class="${freshness?.state === "stale" ? "error" : ""}">${escapeHtml(freshnessMessage)}</p><dl class="inspection-details"><dt>Current evidence</dt><dd><code>${escapeHtml(freshness?.currentEvidenceDigest || "not recorded")}</code></dd><dt>Published evidence</dt><dd><code>${escapeHtml(freshness?.publishedEvidenceDigest || "not recorded")}</code></dd>${freshness?.currentClaimDigest ? `<dt>Current claim version</dt><dd><code>${escapeHtml(freshness.currentClaimDigest)}</code></dd>` : ""}</dl>
-      <h3>Evidence chain</h3>
-      <div class="chain-list">${evidence.map((record) => `<button class="chain-item inspect-record" data-record-id="${escapeHtml(record.id)}"><strong>${escapeHtml(record.title)}</strong><span>${escapeHtml(record.sourceRepository)} · ${escapeHtml(record.claimState.replaceAll("_", " "))}</span></button>`).join("")}</div>
+      <h3>Evidence chain</h3><p class="muted">${escapeHtml(chain?.limitation || "The chain separates observations, mechanisms, responses, outcomes, and counterexamples.")}</p>
+      <div class="insight-chain-stages">${(chain?.stages || []).map((stage) => `<section class="chain-stage"><div class="record-meta"><span class="role">${escapeHtml(stage.label)}</span><span>${escapeHtml(stage.status)}</span><span>${escapeHtml(stage.records.length)} source${stage.records.length === 1 ? "" : "s"}</span></div><p>${escapeHtml(stage.meaning)}</p>${stage.records.length ? `<div class="chain-list">${stage.records.map((record) => `<button class="chain-item inspect-record" data-record-id="${escapeHtml(record.id)}"><strong>${escapeHtml(record.title)}</strong><span>${escapeHtml(record.sourceRole)} · ${escapeHtml(record.claimState)}</span></button>`).join("")}</div>` : `<p class="muted">No source in this insight fills this role. Treat the gap as open.</p>`}</section>`).join("")}</div>
+      <p><strong>Affected groups named by the evidence:</strong> ${escapeHtml((chain?.affectedGroups || []).join(", ") || "not recorded")}</p>
       <h3>Strongest alternative</h3><p>${escapeHtml(boundaries.strongestAlternative)}</p>
       <h3>What would change our mind</h3><ul>${boundaries.whatWouldChangeOurMind.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
       <h3>Next test</h3><p>${escapeHtml(boundaries.nextTest)}</p>

@@ -361,6 +361,27 @@ async function readSourceDiff(source) {
   };
 }
 
+function buildInsightEvidenceChain(insight, recordsById) {
+  const evidence = (insight.recordIds ?? []).map((recordId) => recordsById.get(recordId)).filter(Boolean);
+  const recordView = (record) => ({ id: record.id, title: record.title, sourceRole: record.sourceRole, claimState: record.claimState, asOf: record.asOf ?? null, observation: record.observation, limits: record.limits ?? [] });
+  const stages = [
+    { id: "signal_or_condition", label: "Signal or condition", records: evidence.filter((record) => ["trend_signal", "social_cultural", "institutional", "geopolitical"].includes(record.sourceRole)), meaning: "What was observed before we explain it." },
+    { id: "operating_mechanism", label: "Operating mechanism", records: evidence.filter((record) => record.mechanism), meaning: "The process the sources describe; this is an explanation, not proof of causation." },
+    { id: "industry_and_company_response", label: "Industry and company response", records: evidence.filter((record) => ["industry", "private_company", "company_report"].includes(record.sourceRole)), meaning: "How organizations and markets are responding or reporting movement." },
+    { id: "affected_groups", label: "Affected groups", records: evidence.filter((record) => (record.affectedGroups ?? []).length), meaning: "Who may benefit, carry cost, do the work, or lose control." },
+    { id: "observed_result", label: "Observed result", records: evidence.filter((record) => ["measured", "compared"].includes(record.claimState) && !["company_report", "industry", "private_company"].includes(record.sourceRole)), meaning: "Independent or measured evidence about what happened in practice." },
+    { id: "counterexample", label: "Counterexample or weakening evidence", records: evidence.filter((record) => record.claimState === "disproved_or_weakened"), meaning: "Evidence that makes the main reading less certain." }
+  ].map((stage) => ({ ...stage, status: stage.records.length ? "present" : "missing", records: stage.records.map(recordView) }));
+  const affectedGroups = [...new Set(evidence.flatMap((record) => record.affectedGroups ?? []))].sort();
+  return {
+    schemaVersion: "insight-evidence-chain-v1",
+    stages,
+    affectedGroups,
+    nextTest: insight.nextTest ?? null,
+    limitation: "This chain organizes source records into distinct roles. It does not turn adjacency into causation, and a missing stage means the insight remains open rather than proven."
+  };
+}
+
 function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions, outcomes = [] }) {
   const reviewed = deliveries.filter((delivery) => delivery.review);
   const count = (items, value) => items.filter((item) => item === value).length;
@@ -1513,6 +1534,7 @@ const server = createServer(async (request, response) => {
         schemaVersion: "insight-inspection-v1",
         insight,
         evidence: (insight.recordIds ?? []).map((recordId) => recordsById.get(recordId)).filter(Boolean),
+        chain: buildInsightEvidenceChain(insight, recordsById),
         candidate: candidate ?? null,
         review: candidate ? { status: candidate.status, publication: candidate.publication, evidenceDigest: candidate.evidenceDigest, decisionId: candidate.decisionId ?? null, decidedBy: candidate.decidedBy ?? null, decidedAt: candidate.decidedAt ?? null, decisionNote: candidate.decisionNote ?? null, publicationId: candidate.publicationId ?? null, publishedBy: candidate.publishedBy ?? null, publishedAt: candidate.publishedAt ?? null } : null,
         reviewHistory: { decisions, publications, events: reviewEvents },

@@ -110,6 +110,10 @@ packet and atlas generation consume that ledger when it is available.
 29. **Captured source difference** — a researcher can compare the prior and
     current immutable captures for a changed source through a bounded line-level
     read model before re-extracting or re-reviewing downstream claims.
+30. **Insight evidence chain** — insight inspection groups cited records into
+    signal, mechanism, response, affected-group, observed-result, and
+    counterexample stages, marking missing stages as open instead of filling
+    them with inference.
 
 ## Background jobs
 

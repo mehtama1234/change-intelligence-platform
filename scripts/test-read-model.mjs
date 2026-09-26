@@ -97,7 +97,7 @@ try {
   if (evidenceResponse.status !== 200 || evidence.schemaVersion !== "evidence-inspection-v1" || evidence.record.id !== "trend-hunting-ai-control" || !evidence.source.excerpt || !evidence.insightLinks.length) throw new Error("Evidence inspection contract failed.");
   const insightResponse = await request("/api/insights/insight-ai-capability-control-gap-001?workspace=demo-research");
   const insight = await insightResponse.json();
-  if (insightResponse.status !== 200 || insight.schemaVersion !== "insight-inspection-v1" || insight.evidence.length < 1 || !insight.boundaries.strongestAlternative) throw new Error("Insight inspection contract failed.");
+  if (insightResponse.status !== 200 || insight.schemaVersion !== "insight-inspection-v1" || insight.evidence.length < 1 || !insight.boundaries.strongestAlternative || insight.chain?.schemaVersion !== "insight-evidence-chain-v1" || !insight.chain.stages.some((stage) => stage.id === "observed_result") || !insight.chain.stages.some((stage) => stage.id === "counterexample") || !insight.chain.nextTest) throw new Error("Insight inspection contract failed.");
   const missingResponse = await request("/api/evidence/not-a-real-record");
   if (missingResponse.status !== 404) throw new Error("Missing evidence should return 404.");
   console.log("Read-model inspection test passed: evidence and insight chains are source-linked.");

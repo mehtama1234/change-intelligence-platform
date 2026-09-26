@@ -124,6 +124,9 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 22px
 .inline-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .link-button { border-radius: 0.35rem; text-align: left; }
 .chain-list { display: grid; gap: 0.5rem; }
+.insight-chain-stages { display: grid; gap: .8rem; }
+.chain-stage { border: 1px solid var(--line); border-radius: 10px; padding: .85rem; background: var(--accent-soft); }
+.chain-stage > p { margin: .35rem 0 .65rem; }
 .chain-item { display: grid; gap: 0.2rem; border: 1px solid var(--line); background: var(--accent-soft); padding: 0.8rem; text-align: left; color: var(--ink); cursor: pointer; }
 .chain-item span { color: var(--muted); font-size: 0.9rem; }
 .insight-review-card { border-left: 5px solid var(--accent); }
