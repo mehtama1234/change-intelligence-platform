@@ -39,6 +39,8 @@ for (const profile of profiles) {
   const workspaceBriefings = briefings.filter((briefing) => briefing.workspaceId === profile.workspaceId);
   const openAlerts = workspaceAlerts.filter((alert) => alert.state === "open");
   const openAvailabilityAlerts = workspaceAlerts.filter((alert) => alert.kind === "source_availability" && alert.state === "open");
+  const availabilityActions = openAvailabilityAlerts.map((alert) => ({ sourceId: alert.sourceId, action: alert.recommendedAction ?? "Check the source connection, then run another availability check." }));
+  const recoveredAvailabilityAlerts = workspaceAlerts.filter((alert) => alert.kind === "source_availability" && alert.state === "resolved" && alert.resolutionDisposition === "source_recovered");
   const staleBriefings = workspaceBriefings.filter((briefing) => briefing.state === "stale");
   const linkedInsights = workspaceBriefings.flatMap((briefing) => (briefing.insightProvenance ?? []).map((insight) => ({ ...insight, briefingId: briefing.id, briefingTitle: briefing.title, briefingState: briefing.state })));
   const heldForReview = refresh.status === "partial" || staleBriefings.length > 0 || openAvailabilityAlerts.length > 0;
@@ -75,6 +77,7 @@ for (const profile of profiles) {
     },
     briefings: workspaceBriefings.map((briefing) => ({ id: briefing.id, title: briefing.title, state: briefing.state, publication: briefing.publication, evidenceDigest: briefing.evidenceDigest, staleReason: briefing.staleReason ?? null, insightProvenance: briefing.insightProvenance ?? [] })),
     insightProvenance: linkedInsights,
+    impact: { state: openAvailabilityAlerts.length ? "held_for_source_availability" : recoveredAvailabilityAlerts.length ? "source_availability_recovered" : "no_open_source_availability_issue", unavailableSources: openAvailabilityAlerts.map((alert) => ({ sourceId: alert.sourceId, repository: alert.repository, sourcePath: alert.sourcePath, reason: alert.reason, recommendedAction: alert.recommendedAction ?? "Check the source connection, then run another availability check." })), recoveredSources: recoveredAvailabilityAlerts.map((alert) => ({ sourceId: alert.sourceId, recoveredAt: alert.resolvedAt, explanation: "The source became available again; this delivery uses the next available refresh." })), nextActions: availabilityActions },
     successMeasures: profile.successMeasures,
     evaluation: { state: "requires_partner_review", reason: "The system records usage and follow-up, but does not turn free-text success measures into a claimed score automatically." },
     limitation: "This delivery is a reviewable evidence handoff. It is not a recommendation, a causal result, or proof that the pilot created business value."
