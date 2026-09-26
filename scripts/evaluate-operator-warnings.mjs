@@ -73,6 +73,8 @@ try {
     return cadenceMs[profile.cadence] && (!latest || latest + cadenceMs[profile.cadence] < now);
   });
   if (delayedDeliveries.length > maxDelayedDeliveries) warnings.push({ id: "delivery-delay", severity: "medium", workspaceIds: delayedDeliveries.map((profile) => profile.workspaceId), observedAt: nowIso, message: "Configured pilot deliveries are behind their expected cadence." });
+  const insightHeldDeliveries = (deliveries.deliveries ?? []).filter((delivery) => delivery.status === "held_for_review" && ((delivery.snapshot?.staleLinkedInsights ?? 0) > 0 || (delivery.insightProvenance ?? []).some((insight) => insight.state === "stale")));
+  if (insightHeldDeliveries.length) warnings.push({ id: "insight-review-hold", severity: "high", workspaceIds: [...new Set(insightHeldDeliveries.map((delivery) => delivery.workspaceId))], observedAt: insightHeldDeliveries.map((delivery) => delivery.generatedAt).filter(Boolean).sort()[0] ?? nowIso, message: "One or more customer handoffs are held because linked insight evidence needs researcher re-review." });
 
   const warningEvents = store.recordsLedger("operator_warning", "operator-warning-event-ledger-v1", "events").events;
   const notificationRecords = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;

@@ -386,6 +386,8 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
   if (staleSources > 0 || (sourceScan.counts?.missing ?? 0) > 0) warnings.push({ id: "source-freshness", severity: "high", observed: { stale: staleSources, missing: sourceScan.counts?.missing ?? 0 }, threshold: { maxAgeMs: maxSourceAgeMs, missing: 0 }, observedAt: sourceScan.generatedAt ?? sourceScan.sources?.map((source) => source.checkedAt).sort()[0] ?? new Date(now).toISOString(), message: "Sources are too old or unavailable for a fully current reading." });
   if (falseAlertRate !== null && falseAlertRate > maxFalseAlertRate) warnings.push({ id: "false-alert-rate", severity: "medium", observed: falseAlertRate, threshold: maxFalseAlertRate, observedAt: alerts.map((alert) => alert.resolvedAt).filter(Boolean).sort()[0] ?? new Date(now).toISOString(), message: "The recorded false-alert rate is above the operating limit; review watchlist rules and source changes." });
   if (delayedDeliveries > maxDelayedDeliveries) warnings.push({ id: "delivery-delay", severity: "medium", observed: delayedDeliveries, threshold: maxDelayedDeliveries, observedAt: new Date(now).toISOString(), message: "Configured pilot deliveries are behind their expected cadence." });
+  const insightHeldDeliveries = deliveries.filter((delivery) => delivery.status === "held_for_review" && ((delivery.snapshot?.staleLinkedInsights ?? 0) > 0 || (delivery.insightProvenance ?? []).some((insight) => insight.state === "stale")));
+  if (insightHeldDeliveries.length) warnings.push({ id: "insight-review-hold", severity: "high", observed: insightHeldDeliveries.length, workspaceIds: [...new Set(insightHeldDeliveries.map((delivery) => delivery.workspaceId))], observedAt: insightHeldDeliveries.map((delivery) => delivery.generatedAt).filter(Boolean).sort()[0] ?? new Date(now).toISOString(), message: "One or more customer handoffs are held because linked insight evidence needs researcher re-review." });
   const scansByRun = new Map((sourceScanHistory.runs ?? []).map((run) => [run.runId, run]));
   const deliveriesByRun = new Map();
   for (const delivery of deliveries) deliveriesByRun.set(delivery.refreshRunId, (deliveriesByRun.get(delivery.refreshRunId) ?? []).concat(delivery));
@@ -404,7 +406,7 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
     generatedAt: new Date().toISOString(),
     scope: { workspaceCount: workspaces.length, configuredPilots: profiles.length, deliveries: deliveries.length, reviewedDeliveries: reviewed.length },
     aggregate: { usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, notUsefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "not_useful").length, unclearDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "unclear").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, pilotCheckpoints: decisions.length, checkpointCounts: Object.fromEntries(["improve", "continue", "expand", "stop"].map((decision) => [decision, decisions.filter((item) => item.decision === decision).length])), auditedPilotActions: auditEntries.filter((entry) => ["configure_pilot", "review_pilot_delivery", "decide_pilot"].includes(entry.action)).length, openAlerts: alerts.filter((alert) => alert.state === "open").length, falseAlerts: alerts.filter((alert) => alert.resolutionDisposition === "false_positive").length, alertCorrections: alerts.filter((alert) => alert.resolutionDisposition === "needs_correction").length },
-    operations: { latestRefreshStatus: refreshHistory.at(-1)?.status ?? "not_run", failedRefreshRuns: failedRuns.length, lastRefreshAt: refreshHistory.at(-1)?.endedAt ?? null, sourceCount: sourceScan.sources?.length ?? 0, staleSources, oldestSourceAgeMs: sourceAges.length ? Math.max(...sourceAges.map((source) => source.ageMs)) : null, delayedDeliveries, falseAlertRate },
+    operations: { latestRefreshStatus: refreshHistory.at(-1)?.status ?? "not_run", failedRefreshRuns: failedRuns.length, lastRefreshAt: refreshHistory.at(-1)?.endedAt ?? null, sourceCount: sourceScan.sources?.length ?? 0, staleSources, oldestSourceAgeMs: sourceAges.length ? Math.max(...sourceAges.map((source) => source.ageMs)) : null, delayedDeliveries, heldInsightDeliveries: insightHeldDeliveries.length, falseAlertRate },
     thresholds: { maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs },
     warnings: warningLifecycle,
     deliveryHealth: buildOperatorDeliveryHealth({ notifications, attempts: notificationAttempts }),
@@ -909,7 +911,7 @@ const server = createServer(async (request, response) => {
       if (!idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for operator writes." });
       const prior = await replayOperation(idempotencyKey);
       if (prior) return json(response, prior.status, prior.body);
-      if (!["refresh-failures", "source-freshness", "false-alert-rate", "delivery-delay"].includes(warningId)) return json(response, 400, { error: "Unknown operator warning." });
+      if (!["refresh-failures", "source-freshness", "false-alert-rate", "delivery-delay", "insight-review-hold"].includes(warningId)) return json(response, 400, { error: "Unknown operator warning." });
       const state = String(body.state ?? "");
       const note = String(body.note ?? "").trim().slice(0, 2000);
       const ownerId = String(body.ownerId ?? "").trim().slice(0, 120) || operator.actorId;
@@ -918,7 +920,7 @@ const server = createServer(async (request, response) => {
       if (!["normal", "escalated"].includes(escalationState)) return json(response, 400, { error: "Escalation state must be normal or escalated." });
       if (!note) return json(response, 400, { error: "A note is required." });
       const now = new Date().toISOString();
-      const warningObservation = { "refresh-failures": null, "source-freshness": null, "false-alert-rate": null, "delivery-delay": null }[warningId];
+      const warningObservation = { "refresh-failures": null, "source-freshness": null, "false-alert-rate": null, "delivery-delay": null, "insight-review-hold": null }[warningId];
       const observedAt = body.observedAt ? String(body.observedAt).slice(0, 32) : warningObservation;
       const responseTimeMs = observedAt && Number.isFinite(Date.parse(observedAt)) ? Math.max(0, Date.parse(now) - Date.parse(observedAt)) : null;
       const event = { id: `operator-warning-${warningId}`, warningId, state, note, ownerId, escalationState, observedAt, responseTimeMs, actedBy: operator.actorId, actedAt: now };
