@@ -1,9 +1,9 @@
 {
   "schemaVersion": "domain-atlas-v1",
-  "generatedAt": "2026-09-26T10:11:04.399Z",
+  "generatedAt": "2026-09-26T15:40:36.490Z",
   "domain": "ai-work-control",
   "sourceSnapshotDate": "2026-09-25",
-  "sourceRecordCount": 20,
+  "sourceRecordCount": 23,
   "entities": {
     "themes": [
       {
@@ -27,7 +27,10 @@
           "atlas-broadcom-ai-infrastructure-window",
           "trend-ai-agency-control-measure",
           "cultural-nber-ai-task-adoption",
+          "cultural-nber-ai-access-time-boundary",
+          "cultural-nber-ai-customer-support-productivity",
           "cultural-jrc-algorithmic-management-outcomes",
+          "cultural-named-workplace-system-stage-ledger",
           "cultural-amazon-bandameeda-remedy",
           "trend-uber-kumar-review-counterexample"
         ]
@@ -63,6 +66,13 @@
         ]
       },
       {
+        "id": "mechanism:a-named-system-can-acquire-formal-governance-consent-correction-or-monetary-remedy-rules-without-producing-a-measured-worker-level-or-household-outcome",
+        "label": "A named system can acquire formal governance, consent, correction, or monetary-remedy rules without producing a measured worker-level or household outcome.",
+        "evidenceIds": [
+          "cultural-named-workplace-system-stage-ledger"
+        ]
+      },
+      {
         "id": "mechanism:a-physical-and-financial-infrastructure-bottleneck-can-create-a-specialized-layer-that-captures-demand-before-ai-becomes-an-ordinary-workflow",
         "label": "A physical and financial infrastructure bottleneck can create a specialized layer that captures demand before AI becomes an ordinary workflow.",
         "evidenceIds": [
@@ -88,6 +98,20 @@
         "label": "A tool can increase capability while decision rights, measurement, and correction remain with an employer or platform.",
         "evidenceIds": [
           "trend-hunting-ai-control"
+        ]
+      },
+      {
+        "id": "mechanism:access-to-an-ai-tool-can-change-when-work-is-done-before-it-changes-who-controls-the-work-how-tasks-are-assigned-or-where-saved-time-goes",
+        "label": "Access to an AI tool can change when work is done before it changes who controls the work, how tasks are assigned, or where saved time goes.",
+        "evidenceIds": [
+          "cultural-nber-ai-access-time-boundary"
+        ]
+      },
+      {
+        "id": "mechanism:an-ai-recommendation-tool-can-raise-measured-output-and-may-help-less-experienced-workers-more-while-access-recommendation-quality-evaluation-and-the-use-of-the-extra-capacity-remain-organizational-decisions",
+        "label": "An AI recommendation tool can raise measured output and may help less-experienced workers more, while access, recommendation quality, evaluation, and the use of the extra capacity remain organizational decisions.",
+        "evidenceIds": [
+          "cultural-nber-ai-customer-support-productivity"
         ]
       },
       {
@@ -365,6 +389,13 @@
         ]
       },
       {
+        "id": "affected-group:customer-support-agents",
+        "label": "customer-support agents",
+        "evidenceIds": [
+          "cultural-nber-ai-customer-support-productivity"
+        ]
+      },
+      {
         "id": "affected-group:customer-support-workers",
         "label": "customer-support workers",
         "evidenceIds": [
@@ -380,6 +411,7 @@
           "inc5000-caylent-ai-delivery",
           "atlas-ai-work-evidence-thread",
           "atlas-oracle-cloud-window",
+          "cultural-nber-ai-customer-support-productivity",
           "cultural-amazon-bandameeda-remedy",
           "trend-uber-kumar-review-counterexample"
         ]
@@ -417,7 +449,8 @@
         "label": "employers",
         "evidenceIds": [
           "trend-hunting-ai-control",
-          "cultural-nber-ai-task-adoption"
+          "cultural-nber-ai-task-adoption",
+          "cultural-named-workplace-system-stage-ledger"
         ]
       },
       {
@@ -441,10 +474,19 @@
         ]
       },
       {
+        "id": "affected-group:firms",
+        "label": "firms",
+        "evidenceIds": [
+          "cultural-nber-ai-access-time-boundary"
+        ]
+      },
+      {
         "id": "affected-group:households",
         "label": "households",
         "evidenceIds": [
-          "trend-ai-agency-control-measure"
+          "trend-ai-agency-control-measure",
+          "cultural-nber-ai-access-time-boundary",
+          "cultural-named-workplace-system-stage-ledger"
         ]
       },
       {
@@ -491,9 +533,32 @@
         ]
       },
       {
+        "id": "affected-group:job-applicants",
+        "label": "job applicants",
+        "evidenceIds": [
+          "cultural-named-workplace-system-stage-ledger"
+        ]
+      },
+      {
+        "id": "affected-group:knowledge-workers",
+        "label": "knowledge workers",
+        "evidenceIds": [
+          "cultural-nber-ai-access-time-boundary"
+        ]
+      },
+      {
+        "id": "affected-group:lower-skilled-workers",
+        "label": "lower-skilled workers",
+        "evidenceIds": [
+          "cultural-nber-ai-customer-support-productivity"
+        ]
+      },
+      {
         "id": "affected-group:managers",
         "label": "managers",
         "evidenceIds": [
+          "cultural-nber-ai-access-time-boundary",
+          "cultural-nber-ai-customer-support-productivity",
           "cultural-jrc-algorithmic-management-outcomes"
         ]
       },
@@ -502,6 +567,13 @@
         "label": "nonprofit workers",
         "evidenceIds": [
           "inc5000-veradata-donor-analytics"
+        ]
+      },
+      {
+        "id": "affected-group:novice-workers",
+        "label": "novice workers",
+        "evidenceIds": [
+          "cultural-nber-ai-customer-support-productivity"
         ]
       },
       {
@@ -617,7 +689,15 @@
           "atlas-c3-ai-report-window",
           "trend-ai-agency-control-measure",
           "cultural-nber-ai-task-adoption",
-          "cultural-jrc-algorithmic-management-outcomes"
+          "cultural-jrc-algorithmic-management-outcomes",
+          "cultural-named-workplace-system-stage-ledger"
+        ]
+      },
+      {
+        "id": "affected-group:works-councils",
+        "label": "works councils",
+        "evidenceIds": [
+          "cultural-named-workplace-system-stage-ledger"
         ]
       }
     ],
@@ -647,7 +727,10 @@
         "evidenceIds": [
           "cultural-ai-capability-dependence",
           "cultural-nber-ai-task-adoption",
+          "cultural-nber-ai-access-time-boundary",
+          "cultural-nber-ai-customer-support-productivity",
           "cultural-jrc-algorithmic-management-outcomes",
+          "cultural-named-workplace-system-stage-ledger",
           "cultural-amazon-bandameeda-remedy"
         ]
       },
@@ -1352,6 +1435,81 @@
       "relation": "classified_as_repositorie"
     },
     {
+      "from": "cultural-nber-ai-access-time-boundary",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "cultural-nber-ai-access-time-boundary",
+      "to": "mechanism:access-to-an-ai-tool-can-change-when-work-is-done-before-it-changes-who-controls-the-work-how-tasks-are-assigned-or-where-saved-time-goes",
+      "relation": "explains"
+    },
+    {
+      "from": "cultural-nber-ai-access-time-boundary",
+      "to": "affected-group:knowledge-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-nber-ai-access-time-boundary",
+      "to": "affected-group:managers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-nber-ai-access-time-boundary",
+      "to": "affected-group:households",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-nber-ai-access-time-boundary",
+      "to": "affected-group:firms",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-nber-ai-access-time-boundary",
+      "to": "repository:cultural-geopolitical-theme-mining",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "cultural-nber-ai-customer-support-productivity",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "cultural-nber-ai-customer-support-productivity",
+      "to": "mechanism:an-ai-recommendation-tool-can-raise-measured-output-and-may-help-less-experienced-workers-more-while-access-recommendation-quality-evaluation-and-the-use-of-the-extra-capacity-remain-organizational-decisions",
+      "relation": "explains"
+    },
+    {
+      "from": "cultural-nber-ai-customer-support-productivity",
+      "to": "affected-group:customer-support-agents",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-nber-ai-customer-support-productivity",
+      "to": "affected-group:novice-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-nber-ai-customer-support-productivity",
+      "to": "affected-group:lower-skilled-workers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-nber-ai-customer-support-productivity",
+      "to": "affected-group:customers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-nber-ai-customer-support-productivity",
+      "to": "affected-group:managers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-nber-ai-customer-support-productivity",
+      "to": "repository:cultural-geopolitical-theme-mining",
+      "relation": "classified_as_repositorie"
+    },
+    {
       "from": "cultural-jrc-algorithmic-management-outcomes",
       "to": "theme:ai-work-control",
       "relation": "classified_as_theme"
@@ -1378,6 +1536,46 @@
     },
     {
       "from": "cultural-jrc-algorithmic-management-outcomes",
+      "to": "repository:cultural-geopolitical-theme-mining",
+      "relation": "classified_as_repositorie"
+    },
+    {
+      "from": "cultural-named-workplace-system-stage-ledger",
+      "to": "theme:ai-work-control",
+      "relation": "classified_as_theme"
+    },
+    {
+      "from": "cultural-named-workplace-system-stage-ledger",
+      "to": "mechanism:a-named-system-can-acquire-formal-governance-consent-correction-or-monetary-remedy-rules-without-producing-a-measured-worker-level-or-household-outcome",
+      "relation": "explains"
+    },
+    {
+      "from": "cultural-named-workplace-system-stage-ledger",
+      "to": "affected-group:workers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-named-workplace-system-stage-ledger",
+      "to": "affected-group:works-councils",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-named-workplace-system-stage-ledger",
+      "to": "affected-group:job-applicants",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-named-workplace-system-stage-ledger",
+      "to": "affected-group:households",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-named-workplace-system-stage-ledger",
+      "to": "affected-group:employers",
+      "relation": "affects"
+    },
+    {
+      "from": "cultural-named-workplace-system-stage-ledger",
       "to": "repository:cultural-geopolitical-theme-mining",
       "relation": "classified_as_repositorie"
     },
