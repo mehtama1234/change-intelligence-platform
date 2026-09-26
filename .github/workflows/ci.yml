@@ -14,15 +14,21 @@ jobs:
     timeout-minutes: 15
     env:
       RESEARCH_ROOT: ${{ github.workspace }}/research
+      RESEARCH_REPOSITORIES_TOKEN: ${{ secrets.RESEARCH_REPOSITORIES_TOKEN }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Materialize research repositories
         run: |
           mkdir -p "$RESEARCH_ROOT"
-          for repository in annual-report-research company-atlas-lab trend-hunting cultural-geopolitical-theme-mining ibis-industries inc5000-analysis; do
+          for repository in annual-report-research trend-hunting cultural-geopolitical-theme-mining ibis-industries inc5000-analysis; do
             git clone --depth 1 --branch main "https://github.com/mehtama1234/${repository}.git" "$RESEARCH_ROOT/$repository"
           done
+          if [ -z "${RESEARCH_REPOSITORIES_TOKEN:-}" ]; then
+            echo "::error::Set the RESEARCH_REPOSITORIES_TOKEN repository secret so CI can read the private company-atlas-lab repository."
+            exit 1
+          fi
+          git -c "http.extraheader=AUTHORIZATION: bearer ${RESEARCH_REPOSITORIES_TOKEN}" clone --depth 1 --branch main "https://github.com/mehtama1234/company-atlas-lab.git" "$RESEARCH_ROOT/company-atlas-lab"
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
