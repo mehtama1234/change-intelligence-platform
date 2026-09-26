@@ -78,6 +78,11 @@ thin evidence base visible instead of allowing a polished summary to hide it.
 Lets a user select evidence, arrange a bounded story, add a question, export
 the result, and reopen it later without losing provenance.
 
+After a briefing is published, the user can record whether it affected a
+decision and later mark whether the reading held, changed, was wrong, or is
+still unknown. This creates a measured feedback loop without pretending that
+one customer's experience is a general outcome.
+
 ### Watchlist and alerts
 
 Tracks selected companies, industries, themes, policies, and evidence gaps.

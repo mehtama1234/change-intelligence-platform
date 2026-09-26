@@ -17,6 +17,8 @@ const required = [
   [html, 'id="review-queue"', "source review queue"],
   [html, 'id="evidence-history-items"', "research timeline"],
   [html, 'id="question-form"', "saved questions"],
+  [app, "decision-outcome-form", "decision feedback form"],
+  [app, "/outcome", "decision outcome API"],
   [html, 'id="report-history"', "annual quarterly report view"],
   [html, 'id="next-test"', "next-test view"],
   [html, 'aria-live="polite"', "live update announcement"],

@@ -21,6 +21,7 @@ const briefingPublicationsPath = resolve(runtimeDir, "briefing-publications.json
 const insightDecisionsPath = resolve(runtimeDir, "insight-decisions.json");
 const insightCandidatesPath = resolve(runtimeDir, "insight-candidates.json");
 const insightPublicationsPath = resolve(runtimeDir, "insight-publications.json");
+const decisionOutcomesPath = resolve(runtimeDir, "decision-outcomes.json");
 const auditPath = resolve(runtimeDir, "audit-log.json");
 const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
 const sourceScanPath = resolve(runtimeDir, "latest-source-scan.json");
@@ -47,6 +48,7 @@ await importRuntimeLedgers(store, {
   briefingPublications: briefingPublicationsPath,
   insightDecisions: insightDecisionsPath,
   insightPublications: insightPublicationsPath,
+  decisionOutcomes: decisionOutcomesPath,
   workspaceDir,
   sourceScan: sourceScanPath,
   evidenceLedger: evidenceLedgerPath,
@@ -294,6 +296,34 @@ const server = createServer(async (request, response) => {
       }
       return json(response, 200, publishedBriefing);
     }
+    if (request.method === "POST" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/outcome")) {
+      const briefingId = decodeURIComponent(url.pathname.slice("/api/briefings/".length, -"/outcome".length));
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot record decision outcomes." });
+      const ledger = await readJson(briefingsPath, { briefings: [] });
+      const briefing = ledger.briefings.find((candidate) => candidate.id === briefingId && candidate.workspaceId === workspace.id);
+      if (!briefing) return json(response, 404, { error: "Briefing not found in this workspace." });
+      const decisionState = String(body.decisionState ?? "");
+      const outcomeState = String(body.outcomeState ?? "pending");
+      if (!["used", "not_used", "deferred"].includes(decisionState)) return json(response, 400, { error: "decisionState must be used, not_used, or deferred." });
+      if (!["pending", "held", "changed", "wrong", "unknown"].includes(outcomeState)) return json(response, 400, { error: "outcomeState must be pending, held, changed, wrong, or unknown." });
+      const now = new Date().toISOString();
+      const outcome = { id: `decision-outcome-${randomUUID()}`, workspaceId: workspace.id, briefingId: briefing.id, questionId: briefing.questionId ?? null, evidenceDigest: briefing.evidenceDigest ?? null, recordedBy: member.id, recordedRole: member.role, decisionState, outcomeState, decisionSummary: String(body.decisionSummary ?? "").trim().slice(0, 2000), outcomeNote: String(body.outcomeNote ?? "").trim().slice(0, 2000), recordedAt: now, reviewAt: body.reviewAt ? String(body.reviewAt).slice(0, 32) : null };
+      store.commitRecord({ kind: "decision_outcome", record: outcome, audit: { requestId, action: "record_decision_outcome", targetId: briefing.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: outcome.outcomeState, occurredAt: now }, operation: { key: idempotencyKey, action: "record_decision_outcome", status: 201, body: outcome, completedAt: now } });
+      await writeFile(decisionOutcomesPath, `${JSON.stringify(store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes"), null, 2)}\n`);
+      store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "decision_outcome", targetId: briefing.id, workspaceId: workspace.id, reviewer: member.id, reviewerRole: member.role, outcome: outcome.outcomeState, decisionState: outcome.decisionState, occurredAt: now, decisionOutcomeId: outcome.id }]);
+      await writeReviewEvents();
+      return json(response, 201, outcome);
+    }
     if (request.method === "POST" && url.pathname.startsWith("/api/insight-candidates/") && url.pathname.endsWith("/decision")) {
       const candidateId = decodeURIComponent(url.pathname.slice("/api/insight-candidates/".length, -"/decision".length));
       const body = await requestBody(request);
@@ -421,7 +451,7 @@ const server = createServer(async (request, response) => {
       if (denyWorkspaceRead(response, access)) return;
       const entries = store.auditLedger().entries.filter((entry) => !access.workspaceIds || access.workspaceIds.includes(entry.workspaceId));
       const counts = Object.fromEntries([...new Set(entries.map((entry) => entry.action))].map((action) => [action, entries.filter((entry) => entry.action === action).length]));
-      return json(response, 200, { schemaVersion: "workspace-usage-v1", workspaceId: access.workspaceId, activity: { totalAuditEvents: entries.length, actions: counts, lastActivityAt: entries.at(-1)?.occurredAt ?? null }, measures: { questionsSaved: counts.create_question ?? 0, evidenceInspections: counts.inspect_evidence ?? 0, insightInspections: counts.inspect_insight ?? 0, sourceReviews: counts.review_source ?? 0, alertsAcknowledged: counts.acknowledge_alert ?? 0, briefingsPublished: counts.publish_briefing ?? 0, briefingsExported: counts.export_briefing ?? 0, insightsPublished: counts.publish_insight ?? 0 } });
+      return json(response, 200, { schemaVersion: "workspace-usage-v1", workspaceId: access.workspaceId, activity: { totalAuditEvents: entries.length, actions: counts, lastActivityAt: entries.at(-1)?.occurredAt ?? null }, measures: { questionsSaved: counts.create_question ?? 0, evidenceInspections: counts.inspect_evidence ?? 0, insightInspections: counts.inspect_insight ?? 0, sourceReviews: counts.review_source ?? 0, alertsAcknowledged: counts.acknowledge_alert ?? 0, briefingsPublished: counts.publish_briefing ?? 0, briefingsExported: counts.export_briefing ?? 0, insightsPublished: counts.publish_insight ?? 0, decisionOutcomesRecorded: counts.record_decision_outcome ?? 0 } });
     }
     if (url.pathname === "/metrics") {
       const readiness = await readinessReport();
@@ -537,13 +567,15 @@ const server = createServer(async (request, response) => {
       const reviewEvents = store.recordsLedger("review_event", "review-event-ledger-v1", "events").events;
       const briefingPublications = store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications").publications;
       const insightPublications = store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications").publications;
+      const decisionOutcomes = store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes").outcomes;
       const sourceHistory = await readJson(sourceScanHistoryPath, { runs: [] });
       const sourceRuns = sourceHistory.runs?.length ? sourceHistory.runs : [{ runId: null, sources: sourceSnapshots }];
       const allEvents = [
         ...sourceRuns.flatMap((run) => (run.sources ?? []).map((snapshot) => ({ eventType: "source_scan", targetId: snapshot.id, sourceId: snapshot.id, scanRunId: run.runId, status: snapshot.status, previousDigest: snapshot.previousSha256 ?? null, currentDigest: snapshot.sha256 ?? null, occurredAt: snapshot.checkedAt }))),
         ...reviewEvents,
         ...briefingPublications.map((publication) => ({ eventType: "briefing_publish", targetId: publication.briefingId, workspaceId: publication.workspaceId, reviewer: publication.publishedBy, currentEvidenceDigest: publication.evidenceDigest, occurredAt: publication.publishedAt, publicationId: publication.id })),
-        ...insightPublications.map((publication) => ({ eventType: "insight_publish", targetId: publication.candidateId, candidateKey: publication.candidateKey, workspaceId: publication.workspaceId, reviewer: publication.publisher, currentEvidenceDigest: publication.evidenceDigest, occurredAt: publication.publishedAt, publicationId: publication.id }))
+        ...insightPublications.map((publication) => ({ eventType: "insight_publish", targetId: publication.candidateId, candidateKey: publication.candidateKey, workspaceId: publication.workspaceId, reviewer: publication.publisher, currentEvidenceDigest: publication.evidenceDigest, occurredAt: publication.publishedAt, publicationId: publication.id })),
+        ...decisionOutcomes.map((outcome) => ({ eventType: "decision_outcome", targetId: outcome.briefingId, workspaceId: outcome.workspaceId, reviewer: outcome.recordedBy, status: outcome.outcomeState, decisionState: outcome.decisionState, occurredAt: outcome.recordedAt, decisionOutcomeId: outcome.id }))
       ];
       const visible = (event) => !event.workspaceId || !access.workspaceIds || access.workspaceIds.includes(event.workspaceId);
       const events = allEvents.filter(visible).sort((a, b) => String(a.occurredAt).localeCompare(String(b.occurredAt)));
@@ -588,6 +620,12 @@ const server = createServer(async (request, response) => {
       const access = await workspaceAccess(request, workspaceId);
       if (denyWorkspaceRead(response, access)) return;
       return json(response, 200, access.workspaceIds ? ledger.briefings.filter((briefing) => access.workspaceIds.includes(briefing.workspaceId)) : ledger.briefings);
+    }
+    if (url.pathname === "/api/decision-outcomes") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      const outcomes = store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes").outcomes;
+      return json(response, 200, access.workspaceIds ? outcomes.filter((outcome) => access.workspaceIds.includes(outcome.workspaceId)) : outcomes);
     }
     if (url.pathname === "/api/audit") {
       const workspaceId = url.searchParams.get("workspace");
