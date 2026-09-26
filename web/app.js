@@ -750,6 +750,19 @@ byId("pilot-kickoff-export").addEventListener("click", async () => {
   URL.revokeObjectURL(link.href);
   status.textContent = "Pilot kickoff packet downloaded.";
 });
+byId("pilot-closeout-export").addEventListener("click", async () => {
+  const status = byId("workspace-export-status");
+  status.textContent = "Preparing pilot closeout packet…";
+  const response = await apiFetch(`../api/pilot-closeout?workspace=${encodeURIComponent(state.workspaceId)}`);
+  if (!response.ok) { status.textContent = `Could not export pilot closeout packet (${response.status}).`; return; }
+  const blob = await response.blob();
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `${state.workspaceId}-pilot-closeout.json`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  status.textContent = "Pilot closeout packet downloaded.";
+});
 byId("token-input").value = state.token;
 loadWorkspaces().catch((error) => { setWorkspaceStatus(error.message); byId("questions-summary").textContent = error.message; });
 loadChanges().catch((error) => { byId("change-feed-summary").textContent = error.message; });

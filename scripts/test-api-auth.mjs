@@ -80,6 +80,11 @@ try {
   const kickoffResponse = await fetch(`${base}/api/pilot-kickoff?workspace=demo-research`, { headers: authHeaders });
   const kickoffBody = await kickoffResponse.json();
   if (kickoffResponse.status !== 200 || kickoffBody.schemaVersion !== "pilot-kickoff-packet-v1" || kickoffBody.workspace?.id !== "demo-research" || !kickoffBody.reviewProtocol?.length || !kickoffBody.boundaries?.length) throw new Error("Pilot kickoff packet read model failed.");
+  const outsiderCloseout = await fetch(`${base}/api/pilot-closeout?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderCloseout.status !== 403) throw new Error(`Expected non-member closeout export to return 403, received ${outsiderCloseout.status}`);
+  const closeoutResponse = await fetch(`${base}/api/pilot-closeout?workspace=demo-research`, { headers: authHeaders });
+  const closeoutBody = await closeoutResponse.json();
+  if (closeoutResponse.status !== 200 || closeoutBody.schemaVersion !== "pilot-closeout-packet-v1" || closeoutBody.workspace?.id !== "demo-research" || !closeoutResponse.headers.get("content-disposition")?.includes("demo-research-pilot-closeout.json")) throw new Error("Pilot closeout export contract failed.");
   const outsiderPilot = await fetch(`${base}/api/workspace-pilot?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderPilot.status !== 403) throw new Error(`Expected non-member pilot read to return 403, received ${outsiderPilot.status}`);
   const outsiderOnboarding = await fetch(`${base}/api/workspace-onboarding?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });

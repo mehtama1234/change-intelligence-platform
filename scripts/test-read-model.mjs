@@ -57,6 +57,9 @@ try {
   const kickoffResponse = await request("/api/pilot-kickoff?workspace=demo-research");
   const kickoff = await kickoffResponse.json();
   if (kickoffResponse.status !== 200 || kickoff.schemaVersion !== "pilot-kickoff-packet-v1" || kickoff.workspace.id !== "demo-research" || kickoff.checkpoint.afterReviewedDeliveries !== 3 || !kickoff.boundaries.length || !kickoff.nextAction) throw new Error("Pilot kickoff packet contract failed.");
+  const closeoutResponse = await request("/api/pilot-closeout?workspace=demo-research");
+  const closeout = await closeoutResponse.json();
+  if (closeoutResponse.status !== 200 || closeout.schemaVersion !== "pilot-closeout-packet-v1" || closeout.workspace.id !== "demo-research" || !closeout.observation || !closeout.measures || !closeout.checkpoint || !closeout.limits?.length || !closeout.nextAction) throw new Error("Pilot closeout packet contract failed.");
   await writeFile(resolve(runtimeDir, "workspace-watchlists.json"), `${JSON.stringify({ schemaVersion: "workspace-watchlist-ledger-v1", watchlists: [] }, null, 2)}\n`);
   const onboardingFeedResponse = await request("/api/change-intelligence?workspace=demo-research");
   const onboardingFeed = await onboardingFeedResponse.json();

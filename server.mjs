@@ -631,6 +631,24 @@ function buildCommercialPilotReadiness({ workspaceId, profile, learning, service
   return { schemaVersion: "commercial-pilot-readiness-v1", generatedAt: new Date().toISOString(), workspaceId, recommendation, humanCheckpointRequired: true, eligibility: { enoughReviewedDeliveries: reviewed >= 3, usefulRate: usefulnessRate, decisionImpactRecorded: learning.decisionImpact.changedDecision + learning.decisionImpact.informedDecision > 0, failedMeasures: measuresNotMet, serviceStatus: serviceReport.status }, rationale, latestRecordedDecision: learning.latestDecision ? { decision: learning.latestDecision.decision, decidedAt: learning.latestDecision.decidedAt, nextStep: learning.latestDecision.nextStep } : null, history: history.filter((snapshot) => snapshot.workspaceId === workspaceId).sort((a, b) => String(b.observedAt).localeCompare(String(a.observedAt))).slice(0, 30), limitation: "This is a decision aid based on recorded pilot observations. It does not make the commercial decision or prove general market value." };
 }
 
+function buildPilotCloseout({ workspace, profile, learning, readiness, metrics, serviceReport }) {
+  const latestDecision = learning.latestDecision ? { decision: learning.latestDecision.decision, note: learning.latestDecision.note, nextStep: learning.latestDecision.nextStep, decidedAt: learning.latestDecision.decidedAt } : null;
+  return {
+    schemaVersion: "pilot-closeout-packet-v1",
+    generatedAt: new Date().toISOString(),
+    workspace: { id: workspace.id, name: workspace.name },
+    decisionQuestion: profile?.decisionQuestion ?? null,
+    observation: learning.observation,
+    measures: metrics.measures,
+    learning: { usefulness: learning.usefulness, decisionImpact: learning.decisionImpact, corrections: learning.corrections, insightFeedback: learning.insightFeedback, successMeasures: learning.measures, openIssues: learning.openIssues },
+    service: { status: serviceReport.status, cadence: serviceReport.serviceLevel.cadence, latestDeliveryAt: serviceReport.serviceLevel.latestDeliveryAt, nextExpectedAt: serviceReport.serviceLevel.nextExpectedAt, overdue: serviceReport.serviceLevel.overdue },
+    checkpoint: { recommendation: readiness.recommendation, rationale: readiness.rationale, humanCheckpointRequired: readiness.humanCheckpointRequired, eligibility: readiness.eligibility, latestRecordedDecision: readiness.latestRecordedDecision },
+    humanDecision: latestDecision,
+    nextAction: latestDecision?.nextStep ?? (readiness.recommendation === "expand" ? "Record the partner's commercial decision and define the recurring service scope." : readiness.recommendation === "stop" ? "Record the closeout reason and preserve the pilot history." : "Collect the next reviewed delivery and update the pilot checkpoint."),
+    limits: ["This packet summarizes one workspace's recorded pilot experience.", "It does not prove causation, general market value, or performance outside this workspace.", "A recommendation is a decision aid; a human must record the commercial decision."]
+  };
+}
+
 function buildWorkspaceOnboarding({ workspace, profile, questions, watchlists, privateSources, deliveries }) {
   const acceptedPrivateSources = privateSources.filter((source) => source.reviewState === "accepted");
   const steps = [
@@ -2111,6 +2129,34 @@ const server = createServer(async (request, response) => {
       });
       await appendAudit({ requestId, action: "export_pilot_kickoff", targetId: workspace.id, workspaceId: workspace.id, actorId: access.actorId ?? null, actorRole: null, result: "exported", occurredAt: new Date().toISOString() });
       response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="${workspace.id}-pilot-kickoff.json"`, "Cache-Control": "no-store" });
+      return response.end(JSON.stringify(packet));
+    }
+    if (url.pathname === "/api/pilot-closeout") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      if (!access.workspaceId) return json(response, 400, { error: "Choose one workspace for the pilot closeout packet." });
+      const workspace = await workspaceConfig(access.workspaceId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
+      const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
+      const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions.filter((decision) => decision.workspaceId === workspace.id);
+      const outcomes = store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes").outcomes.filter((outcome) => outcome.workspaceId === workspace.id);
+      const alerts = store.alertsLedger().alerts.filter((alert) => alert.workspaceId === workspace.id);
+      const briefingLedger = await readJson(briefingsPath, { briefings: [] });
+      const briefings = briefingLedger.briefings.filter((briefing) => briefing.workspaceId === workspace.id);
+      const entries = store.auditLedger().entries.filter((entry) => entry.workspaceId === workspace.id);
+      const profile = profiles.find((candidate) => candidate.workspaceId === workspace.id) ?? null;
+      const learning = buildPilotLearningReport({ workspaceId: workspace.id, profile, deliveries, decisions, outcomes });
+      const metrics = buildPilotMetrics({ workspaceId: workspace.id, auditEntries: entries, alerts, outcomes, briefings, deliveries });
+      const notifications = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;
+      const attempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
+      const deliveryHealth = buildWorkspaceDeliveryHealth({ workspaceId: workspace.id, notifications, attempts });
+      const serviceReport = buildWorkspaceServiceReport({ workspaceId: workspace.id, profile, deliveries, learning, deliveryHealth });
+      const history = store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots").snapshots;
+      const readiness = buildCommercialPilotReadiness({ workspaceId: workspace.id, profile, learning, serviceReport, history });
+      const packet = buildPilotCloseout({ workspace, profile, learning, readiness, metrics, serviceReport });
+      await appendAudit({ requestId, action: "export_pilot_closeout", targetId: workspace.id, workspaceId: workspace.id, actorId: access.actorId ?? null, actorRole: null, result: "exported", occurredAt: new Date().toISOString() });
+      response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="${workspace.id}-pilot-closeout.json"`, "Cache-Control": "no-store" });
       return response.end(JSON.stringify(packet));
     }
     if (url.pathname === "/api/workspace-retention") {
