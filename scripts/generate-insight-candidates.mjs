@@ -1,11 +1,16 @@
 import { createHash } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const packet = JSON.parse(await readFile(resolve(root, "data/processed/ai-work-control.packet.json"), "utf8"));
 const records = new Map(packet.records.map((record) => [record.id, record]));
+const decisionsPath = resolve(root, "data/processed/runs/ai-work-control/insight-decisions.json");
+const decisions = existsSync(decisionsPath) ? JSON.parse(await readFile(decisionsPath, "utf8")) : { decisions: [] };
+const latestDecision = new Map();
+for (const decision of decisions.decisions) latestDecision.set(decision.candidateKey, decision);
 const candidates = packet.insights.map((insight) => {
   const evidence = insight.recordIds.map((id) => records.get(id)).filter(Boolean).map((record) => ({
     recordId: record.id,
@@ -15,15 +20,21 @@ const candidates = packet.insights.map((insight) => {
     sourceDigest: record.sourceDigest
   }));
   const evidenceDigest = createHash("sha256").update(JSON.stringify(evidence.map((item) => [item.recordId, item.sourceDigest]))).digest("hex");
+  const candidateKey = insight.id;
+  const decision = latestDecision.get(candidateKey);
+  const currentDecision = decision?.evidenceDigest === evidenceDigest ? decision : undefined;
+  const resultingState = currentDecision ? ({ accept: "accepted_for_publication", defer: "deferred", reject: "rejected", correct: "correction_required" }[currentDecision.decision] ?? "needs_researcher_review") : "needs_researcher_review";
   return {
     id: `candidate-${insight.id}-${evidenceDigest.slice(0, 12)}`,
     insightId: insight.id,
     title: insight.title,
     plainLanguageSummary: insight.plainLanguageSummary,
-    status: "needs_researcher_review",
+    status: resultingState,
     publication: "not_published",
     generatedAt: new Date().toISOString(),
+    candidateKey,
     evidenceDigest,
+    ...(currentDecision ? { decisionId: currentDecision.id, decidedBy: currentDecision.reviewer, decidedAt: currentDecision.decidedAt, decisionNote: currentDecision.note } : {}),
     evidence,
     strongestAlternative: insight.strongestAlternative,
     whatWouldChangeOurMind: insight.whatWouldChangeOurMind,

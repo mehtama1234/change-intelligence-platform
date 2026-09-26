@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { randomUUID } from "node:crypto";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import { resolve, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +15,8 @@ const questionsPath = resolve(root, "data/processed/runs/ai-work-control/workspa
 const questionEvaluationsPath = resolve(root, "data/processed/runs/ai-work-control/question-evaluations.json");
 const briefingsPath = resolve(root, "data/processed/runs/ai-work-control/workspace-briefings.json");
 const briefingPublicationsPath = resolve(root, "data/processed/runs/ai-work-control/briefing-publications.json");
+const insightDecisionsPath = resolve(root, "data/processed/runs/ai-work-control/insight-decisions.json");
+const insightCandidatesPath = resolve(root, "data/processed/runs/ai-work-control/insight-candidates.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 
@@ -107,6 +110,26 @@ const server = createServer(async (request, response) => {
       await writeFile(briefingsPath, `${JSON.stringify(ledger, null, 2)}\n`);
       await writeFile(briefingPublicationsPath, `${JSON.stringify(publications, null, 2)}\n`);
       return json(response, 200, { ...briefing, publication });
+    }
+    if (request.method === "POST" && url.pathname.startsWith("/api/insight-candidates/") && url.pathname.endsWith("/decision")) {
+      const candidateId = decodeURIComponent(url.pathname.slice("/api/insight-candidates/".length, -"/decision".length));
+      const body = await requestBody(request);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === body.actorId);
+      const allowedDecisions = new Set(["accept", "defer", "reject", "correct"]);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot review insights." });
+      if (!allowedDecisions.has(body.decision)) return json(response, 400, { error: "Decision must be accept, defer, reject, or correct." });
+      if (["reject", "correct"].includes(body.decision) && !String(body.note ?? "").trim()) return json(response, 400, { error: "Reject and correction decisions require a note." });
+      const candidates = await readJson(insightCandidatesPath, { candidates: [] });
+      const candidate = candidates.candidates.find((item) => item.id === candidateId);
+      if (!candidate) return json(response, 404, { error: "Insight candidate not found." });
+      const ledger = await readJson(insightDecisionsPath, { schemaVersion: "insight-decision-ledger-v1", decisions: [] });
+      const decision = { id: `insight-decision-${randomUUID()}`, candidateKey: candidate.candidateKey, candidateId, evidenceDigest: candidate.evidenceDigest, reviewer: member.id, reviewerRole: member.role, decision: body.decision, note: String(body.note ?? "").slice(0, 2000), decidedAt: new Date().toISOString(), publication: "not_published" };
+      ledger.decisions.push(decision);
+      ledger.updatedAt = decision.decidedAt;
+      await writeFile(insightDecisionsPath, `${JSON.stringify(ledger, null, 2)}\n`);
+      return json(response, 200, decision);
     }
     if (request.method !== "GET") return json(response, 405, { error: "Only GET and alert acknowledgement POST are supported." });
     if (url.pathname === "/api/health") return json(response, 200, { status: "ok", service: "change-intelligence-read-model", generatedAt: new Date().toISOString() });

@@ -14,6 +14,15 @@ function render() {
   byId("next-test").textContent = insight.nextTest;
   byId("falsifiers").innerHTML = insight.whatWouldChangeOurMind.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
   byId("as-of").textContent = `Source snapshot ${state.packet.sourceSnapshotDate}`;
+  const insightCandidate = state.packet.operations?.insightCandidates?.candidates?.[0];
+  if (insightCandidate) {
+    byId("insight-status").textContent = insightCandidate.status.replaceAll("_", " ");
+    byId("insight-review-actions").innerHTML = insightCandidate.status === "needs_researcher_review" ? `<button id="accept-insight" type="button">Accept for publication review</button>` : `<span>Decision recorded by ${escapeHtml(insightCandidate.decidedBy || "researcher")}.</span>`;
+    byId("accept-insight")?.addEventListener("click", async () => {
+      const response = await fetch(`../api/insight-candidates/${encodeURIComponent(insightCandidate.id)}/decision`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", actorId: "demo-researcher", decision: "accept", note: "Accepted for publication review after evidence inspection." }) });
+      if (response.ok) byId("insight-review-actions").textContent = "Accepted for publication review.";
+    });
+  }
 
   const sourceScan = state.packet.operations?.latestSourceScan;
   if (sourceScan) {

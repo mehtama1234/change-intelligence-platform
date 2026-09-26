@@ -234,17 +234,22 @@
     },
     "insightCandidates": {
       "schemaVersion": "insight-candidate-ledger-v1",
-      "generatedAt": "2026-09-26T04:37:47.415Z",
+      "generatedAt": "2026-09-26T04:39:48.471Z",
       "candidates": [
         {
           "id": "candidate-insight-ai-capability-control-gap-001-710b18999d68",
           "insightId": "insight-ai-capability-control-gap-001",
           "title": "AI can return time without returning control",
           "plainLanguageSummary": "The current evidence supports a narrower reading than 'AI makes work more productive': AI can remove visible tasks while decisions, measurement, correction, and dependence remain controlled by an employer, platform, or infrastructure provider.",
-          "status": "needs_researcher_review",
+          "status": "accepted_for_publication",
           "publication": "not_published",
-          "generatedAt": "2026-09-26T04:37:47.415Z",
+          "generatedAt": "2026-09-26T04:39:48.471Z",
+          "candidateKey": "insight-ai-capability-control-gap-001",
           "evidenceDigest": "710b18999d68ee013aa9ae2c9b4dd773899142301a7076f53fd852dcbcc1aac4",
+          "decisionId": "insight-decision-f1302f01-b437-4f15-bceb-e1c11fbfb195",
+          "decidedBy": "demo-researcher",
+          "decidedAt": "2026-09-26T04:39:39.341Z",
+          "decisionNote": "Inspected evidence and alternatives.",
           "evidence": [
             {
               "recordId": "trend-hunting-ai-control",
