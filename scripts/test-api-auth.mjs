@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 
@@ -6,6 +7,8 @@ const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const port = 8791;
 const base = `http://127.0.0.1:${port}`;
 const runtimeDir = `/tmp/change-intelligence-api-auth-${Date.now()}`;
+await mkdir(runtimeDir, { recursive: true });
+await writeFile(`${runtimeDir}/review-events.json`, `${JSON.stringify({ schemaVersion: "review-event-ledger-v1", events: [{ id: "private-event", eventType: "briefing_republish", workspaceId: "other-private-workspace", targetId: "private-briefing", occurredAt: new Date().toISOString() }] }, null, 2)}\n`);
 const child = spawn(process.execPath, [resolve(root, "server.mjs")], {
   cwd: root,
   env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir, AUTH_MODE: "token", AUTH_TOKENS_JSON: JSON.stringify({ "research-token": "demo-researcher", "outsider-token": "outside-user" }) },
@@ -35,7 +38,8 @@ try {
   const outsiderTimeline = await fetch(`${base}/api/timeline?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderTimeline.status !== 403) throw new Error(`Expected non-member timeline read to return 403, received ${outsiderTimeline.status}`);
   const memberTimeline = await fetch(`${base}/api/timeline?workspace=demo-research`, { headers: authHeaders });
-  if (memberTimeline.status !== 200) throw new Error(`Workspace member timeline read failed: ${memberTimeline.status}`);
+  const memberTimelineBody = await memberTimeline.json();
+  if (memberTimeline.status !== 200 || memberTimelineBody.events.some((event) => event.id === "private-event")) throw new Error("Workspace timeline leaked an event from another workspace.");
   const outsiderWorkspaces = await fetch(`${base}/api/workspaces`, { headers: { Authorization: "Bearer outsider-token" } });
   const outsiderWorkspaceList = await outsiderWorkspaces.json();
   if (outsiderWorkspaces.status !== 200 || outsiderWorkspaceList.length !== 0) throw new Error("Non-member should see no workspaces.");
