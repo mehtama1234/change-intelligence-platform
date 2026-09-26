@@ -100,6 +100,9 @@ packet and atlas generation consume that ledger when it is available.
     briefing and delivery a plain-language change type, a hold/review state,
     and explicit actions: do not rely on the old reading, inspect the changed
     evidence, and wait for re-review and republishing before acting on it.
+27. **Briefing version history** — each workspace can inspect the briefing's
+    publication versions, evidence digests, re-review events, current version,
+    and stale actions without seeing another workspace's history.
 
 ## Background jobs
 

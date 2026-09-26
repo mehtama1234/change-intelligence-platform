@@ -349,11 +349,12 @@ async function inspectInsight(insightId) {
 }
 
 async function inspectBriefing(briefingId) {
-  const response = await apiFetch(`../api/briefings?workspace=${encodeURIComponent(state.workspaceId)}`);
-  if (!response.ok) throw new Error("Briefing could not be loaded.");
+  const [response, historyResponse] = await Promise.all([apiFetch(`../api/briefings?workspace=${encodeURIComponent(state.workspaceId)}`), apiFetch(`../api/briefings/${encodeURIComponent(briefingId)}/history?workspace=${encodeURIComponent(state.workspaceId)}`)]);
+  if (!response.ok || !historyResponse.ok) throw new Error("Briefing could not be loaded.");
   const briefing = (await response.json()).find((item) => item.id === briefingId);
+  const history = await historyResponse.json();
   if (!briefing) throw new Error("Briefing is not available in this workspace.");
-  showInspector(briefing.title, `${briefing.state} · ${briefing.publication}`, `<article class="inspection-card"><p>${escapeHtml(briefing.reading)}</p><h3>Evidence boundary</h3><p>${escapeHtml(briefing.boundary)}</p><h3>Next test</h3><p>${escapeHtml(briefing.nextTest)}</p>${briefing.staleReason ? `<p class="error">${escapeHtml(briefing.staleReason)}</p><h3>What to do now</h3><ul>${(briefing.customerActions || []).map((action) => `<li>${escapeHtml(action)}</li>`).join("")}</ul>` : ""}<p>Evidence records: ${escapeHtml(briefing.evidence.map((item) => item.recordId).join(", ") || "none")}</p></article>`);
+  showInspector(briefing.title, `${briefing.state} · ${briefing.publication}`, `<article class="inspection-card"><p>${escapeHtml(briefing.reading)}</p><h3>Evidence boundary</h3><p>${escapeHtml(briefing.boundary)}</p><h3>Next test</h3><p>${escapeHtml(briefing.nextTest)}</p>${briefing.staleReason ? `<p class="error">${escapeHtml(briefing.staleReason)}</p><h3>What to do now</h3><ul>${(briefing.customerActions || []).map((action) => `<li>${escapeHtml(action)}</li>`).join("")}</ul>` : ""}<h3>Briefing versions</h3>${history.versions?.length ? `<ol class="review-history">${history.versions.map((version) => `<li><strong>${version.id === history.currentPublicationId ? "current publication" : "previous publication"}</strong> · ${escapeHtml(version.publishedAt)} · ${escapeHtml(version.publishedBy || "researcher")}<span>evidence ${escapeHtml(version.evidenceDigest?.slice(0, 12) || "not recorded")}${version.reReviewedUpdatedEvidence ? " · re-reviewed updated evidence" : ""}</span></li>`).join("")}</ol>` : `<p class="muted">No publication version has been recorded.</p>`}${history.changes?.length ? `<h3>Re-review history</h3><ul>${history.changes.map((change) => `<li>${escapeHtml(change.outcome || "re-reviewed")} · ${escapeHtml(change.occurredAt)} · ${escapeHtml(change.reviewer || "researcher")}</li>`).join("")}</ul>` : ""}<p>Evidence records: ${escapeHtml(briefing.evidence.map((item) => item.recordId).join(", ") || "none")}</p></article>`);
 }
 
 function insightDefinition(candidate) {

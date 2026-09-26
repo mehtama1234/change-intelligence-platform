@@ -1152,6 +1152,19 @@ const server = createServer(async (request, response) => {
       response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="${briefing.id}.json"`, "Cache-Control": "no-store" });
       return response.end(JSON.stringify(artifact, null, 2));
     }
+    if (request.method === "GET" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/history")) {
+      const briefingId = decodeURIComponent(url.pathname.slice("/api/briefings/".length, -"/history".length));
+      const workspaceId = url.searchParams.get("workspace");
+      const access = await workspaceAccess(request, workspaceId);
+      if (denyWorkspaceRead(response, access)) return;
+      const briefingLedger = await readJson(briefingsPath, { briefings: [] });
+      const briefing = briefingLedger.briefings.find((candidate) => candidate.id === briefingId && (!workspaceId || candidate.workspaceId === workspaceId) && (!access.workspaceIds || access.workspaceIds.includes(candidate.workspaceId)));
+      if (!briefing) return json(response, 404, { error: "Briefing not found in this workspace." });
+      const publications = store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications").publications.filter((publication) => publication.briefingId === briefing.id && (!access.workspaceIds || access.workspaceIds.includes(publication.workspaceId)));
+      const events = store.recordsLedger("review_event", "review-event-ledger-v1", "events").events.filter((event) => event.targetId === briefing.id && event.eventType === "briefing_republish" && (!access.workspaceIds || access.workspaceIds.includes(event.workspaceId)));
+      const latestPublication = publications.slice().sort((a, b) => String(a.publishedAt).localeCompare(String(b.publishedAt))).at(-1);
+      return json(response, 200, { schemaVersion: "briefing-history-v1", briefing: { id: briefing.id, workspaceId: briefing.workspaceId, title: briefing.title, state: briefing.state, publication: briefing.publication ?? "not_published", evidenceDigest: briefing.evidenceDigest ?? null, staleReason: briefing.staleReason ?? null, customerActions: briefing.customerActions ?? [], insightActions: briefing.insightActions ?? [] }, versions: publications.sort((a, b) => String(a.publishedAt).localeCompare(String(b.publishedAt))).map((publication) => ({ id: publication.id, publishedAt: publication.publishedAt, publishedBy: publication.publishedBy, evidenceDigest: publication.evidenceDigest, previousEvidenceDigest: publication.previousEvidenceDigest ?? null, reReviewedUpdatedEvidence: publication.reReviewedUpdatedEvidence ?? false })), changes: events.sort((a, b) => String(a.occurredAt).localeCompare(String(b.occurredAt))).map((event) => ({ id: event.id, occurredAt: event.occurredAt, reviewer: event.reviewer, previousEvidenceDigest: event.previousEvidenceDigest ?? null, currentEvidenceDigest: event.currentEvidenceDigest ?? null, outcome: event.outcome })), currentPublicationId: latestPublication?.id ?? null, limitation: "History records publication and re-review events. It does not prove that the briefing was useful or that a decision based on it was correct." });
+    }
     if (request.method !== "GET") return json(response, 405, { error: "This method is not supported for this endpoint." });
     if (url.pathname === "/api/health") return json(response, 200, { status: "ok", service: "change-intelligence-read-model", authMode, database: store.health(), generatedAt: new Date().toISOString() });
     if (url.pathname === "/api/readiness") {
