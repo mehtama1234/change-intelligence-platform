@@ -52,6 +52,8 @@ jobs:
           REFRESH_RETRIES: "0"
       - name: Run clean-checkout contract tests
         run: npm run ci:core
+        env:
+          INSIGHT_PACKET_PATH: ${{ github.workspace }}/data/processed/runs/ai-work-control/ai-work-control.packet.json
       - name: Run browser acceptance
         run: npm run test:frontend-browser
 
