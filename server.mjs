@@ -26,6 +26,7 @@ const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
 const sourceScanPath = resolve(runtimeDir, "latest-source-scan.json");
 const evidenceLedgerPath = resolve(runtimeDir, "versioned-evidence-ledger.json");
 const reviewDecisionsPath = resolve(runtimeDir, "review-decisions.json");
+const reviewEventsPath = resolve(runtimeDir, "review-events.json");
 const workspaceDir = resolve(root, "data/fixtures/workspaces");
 const authMode = process.env.AUTH_MODE ?? "demo";
 const tokenActors = authMode === "token" ? JSON.parse(process.env.AUTH_TOKENS_JSON ?? "{}") : {};
@@ -47,7 +48,8 @@ await importRuntimeLedgers(store, {
   workspaceDir,
   sourceScan: sourceScanPath,
   evidenceLedger: evidenceLedgerPath,
-  reviewDecisions: reviewDecisionsPath
+  reviewDecisions: reviewDecisionsPath,
+  reviewEvents: reviewEventsPath
 });
 
 const json = (response, status, body) => {
@@ -129,6 +131,10 @@ async function replayOperation(key) {
 async function storeOperation(operation) {
   store.storeOperation(operation);
   await writeFile(operationsPath, `${JSON.stringify(store.operationsLedger(), null, 2)}\n`);
+}
+
+async function writeReviewEvents() {
+  await writeFile(reviewEventsPath, `${JSON.stringify(store.recordsLedger("review_event", "review-event-ledger-v1", "events"), null, 2)}\n`);
 }
 
 function publicPacket(packet) {
@@ -240,6 +246,7 @@ const server = createServer(async (request, response) => {
       if (briefing.state === "stale" && body.confirmUpdatedEvidence !== true) return json(response, 409, { error: "This briefing is stale. Inspect the updated evidence and confirm it before republishing." });
       const now = new Date().toISOString();
       const publication = { id: `publication-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, briefingId, workspaceId: workspace.id, evidenceDigest: briefing.evidenceDigest, publishedBy: member.id, publishedRole: member.role, publishedAt: now, note: String(body.note ?? "").slice(0, 2000), ...(briefing.state === "stale" ? { reReviewedUpdatedEvidence: true, previousEvidenceDigest: briefing.previousEvidenceDigest ?? null } : {}) };
+      const wasStale = briefing.state === "stale";
       briefing.state = "published";
       briefing.publication = "published";
       briefing.publicationId = publication.id;
@@ -249,6 +256,10 @@ const server = createServer(async (request, response) => {
       const publishedBriefing = { ...briefing, publication };
       store.commitRecord({ kind: "briefing_publication", record: publication, audit: { requestId, action: "publish_briefing", targetId: briefing.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "published", occurredAt: now }, operation: { key: idempotencyKey, action: "publish_briefing", status: 200, body: publishedBriefing, completedAt: now } });
       await writeFile(briefingPublicationsPath, `${JSON.stringify(store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications"), null, 2)}\n`);
+      if (wasStale) {
+        store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "briefing_republish", reviewType: "re_review", targetId: briefing.id, workspaceId: workspace.id, reviewer: member.id, reviewerRole: member.role, previousEvidenceDigest: publication.previousEvidenceDigest, currentEvidenceDigest: publication.evidenceDigest, outcome: "republished", occurredAt: now, publicationId: publication.id }]);
+        await writeReviewEvents();
+      }
       return json(response, 200, publishedBriefing);
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/insight-candidates/") && url.pathname.endsWith("/decision")) {
@@ -270,9 +281,15 @@ const server = createServer(async (request, response) => {
       const candidates = await readJson(insightCandidatesPath, { candidates: [] });
       const candidate = candidates.candidates.find((item) => item.id === candidateId);
       if (!candidate) return json(response, 404, { error: "Insight candidate not found." });
+      const wasStale = candidate.status === "stale";
       const decision = { id: `insight-decision-${randomUUID()}`, candidateKey: candidate.candidateKey, candidateId, evidenceDigest: candidate.evidenceDigest, reviewer: member.id, reviewerRole: member.role, decision: body.decision, note: String(body.note ?? "").slice(0, 2000), decidedAt: new Date().toISOString(), publication: "not_published" };
+      if (wasStale) decision.previousEvidenceDigest = candidate.previousEvidenceDigest ?? null;
       store.commitRecord({ kind: "insight_decision", record: decision, audit: { requestId, action: "decide_insight", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: decision.decision, occurredAt: decision.decidedAt }, operation: { key: idempotencyKey, action: "decide_insight", status: 200, body: decision, completedAt: decision.decidedAt } });
       await writeFile(insightDecisionsPath, `${JSON.stringify(store.recordsLedger("insight_decision", "insight-decision-ledger-v1", "decisions"), null, 2)}\n`);
+      if (wasStale) {
+        store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "insight_re_review", reviewType: "re_review", targetId: candidate.id, candidateKey: candidate.candidateKey, workspaceId: workspace.id, reviewer: member.id, reviewerRole: member.role, previousEvidenceDigest: decision.previousEvidenceDigest, currentEvidenceDigest: decision.evidenceDigest, outcome: decision.decision, occurredAt: decision.decidedAt, decisionId: decision.id }]);
+        await writeReviewEvents();
+      }
       return json(response, 200, decision);
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/source-review/") && url.pathname.endsWith("/decision")) {
@@ -295,9 +312,12 @@ const server = createServer(async (request, response) => {
       const candidate = (reviewWork.candidates ?? []).find((item) => item.id === candidateId);
       if (!candidate) return json(response, 404, { error: "Source-review candidate not found." });
       const now = new Date().toISOString();
+      const previousDecision = store.recordsLedger("review_decision", "review-decision-ledger-v1", "decisions").decisions.filter((item) => item.candidateId === candidate.id).at(-1);
       const decision = { id: `review-decision-${randomUUID()}`, candidateId: candidate.id, sourceId: candidate.sourceId, sourceDigest: candidate.sourceDigest ?? null, reviewer: member.id, reviewerRole: member.role, decision: body.decision, resultingState: resultingStates[body.decision], note: String(body.note ?? "").slice(0, 2000), decidedAt: now, publication: "not_published" };
       store.commitRecord({ kind: "review_decision", record: decision, audit: { requestId, action: "review_source", targetId: candidate.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: decision.resultingState, occurredAt: now }, operation: { key: idempotencyKey, action: "review_source", status: 200, body: decision, completedAt: now } });
       await writeFile(reviewDecisionsPath, `${JSON.stringify(store.recordsLedger("review_decision", "review-decision-ledger-v1", "decisions"), null, 2)}\n`);
+      store.syncRecords("review_event", [{ id: `review-event-${randomUUID()}`, eventType: "source_review", reviewType: previousDecision ? "re_review" : "initial_review", targetId: candidate.id, sourceId: candidate.sourceId, reviewer: member.id, reviewerRole: member.role, sourceDigest: candidate.sourceDigest ?? null, previousDecisionId: previousDecision?.id ?? null, outcome: decision.resultingState, occurredAt: now, decisionId: decision.id }]);
+      await writeReviewEvents();
       return json(response, 200, decision);
     }
     if (request.method === "POST" && url.pathname.startsWith("/api/insight-candidates/") && url.pathname.endsWith("/publish")) {
@@ -452,8 +472,22 @@ const server = createServer(async (request, response) => {
     if (url.pathname === "/api/evidence-history") {
       const records = store.recordsLedger("evidence_version", "versioned-evidence-ledger-v1", "records").records;
       const decisionHistory = store.recordsLedger("review_decision", "review-decision-ledger-v1", "decisions").decisions;
+      const reviewEvents = store.recordsLedger("review_event", "review-event-ledger-v1", "events").events;
       const sourceSnapshots = store.recordsLedger("source_scan", "source-snapshot-ledger-v1", "sources").sources;
-      return json(response, 200, { schemaVersion: "versioned-evidence-ledger-v1", activeResearchRecordCount: records.length, decisionCount: decisionHistory.length, records, decisionHistory, sourceSnapshots });
+      return json(response, 200, { schemaVersion: "versioned-evidence-ledger-v1", activeResearchRecordCount: records.length, decisionCount: decisionHistory.length, records, decisionHistory, reviewEvents, sourceSnapshots });
+    }
+    if (url.pathname === "/api/timeline") {
+      const sourceSnapshots = store.recordsLedger("source_scan", "source-snapshot-ledger-v1", "sources").sources;
+      const reviewEvents = store.recordsLedger("review_event", "review-event-ledger-v1", "events").events;
+      const briefingPublications = store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications").publications;
+      const insightPublications = store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications").publications;
+      const events = [
+        ...sourceSnapshots.map((snapshot) => ({ eventType: "source_scan", targetId: snapshot.id, sourceId: snapshot.id, status: snapshot.status, previousDigest: snapshot.previousSha256 ?? null, currentDigest: snapshot.sha256 ?? null, occurredAt: snapshot.checkedAt })),
+        ...reviewEvents,
+        ...briefingPublications.map((publication) => ({ eventType: "briefing_publish", targetId: publication.briefingId, workspaceId: publication.workspaceId, reviewer: publication.publishedBy, currentEvidenceDigest: publication.evidenceDigest, occurredAt: publication.publishedAt, publicationId: publication.id })),
+        ...insightPublications.map((publication) => ({ eventType: "insight_publish", targetId: publication.candidateId, workspaceId: publication.workspaceId, reviewer: publication.publisher, currentEvidenceDigest: publication.evidenceDigest, occurredAt: publication.publishedAt, publicationId: publication.id }))
+      ].sort((a, b) => String(a.occurredAt).localeCompare(String(b.occurredAt)));
+      return json(response, 200, { schemaVersion: "research-timeline-v1", eventCount: events.length, events });
     }
     if (url.pathname === "/api/refresh") return json(response, 200, await readJson(refreshPath, { schemaVersion: "refresh-receipt-v1", status: "not_run", steps: [] }));
     if (url.pathname === "/api/workspaces") {

@@ -40,6 +40,9 @@ try {
   const changesResponse = await request("/api/changes?includeUnchanged=true");
   const changes = await changesResponse.json();
   if (changesResponse.status !== 200 || changes.schemaVersion !== "source-change-feed-v1" || changes.changes.length !== 7) throw new Error("Source change feed contract failed.");
+  const timelineResponse = await request("/api/timeline");
+  const timeline = await timelineResponse.json();
+  if (timelineResponse.status !== 200 || timeline.schemaVersion !== "research-timeline-v1" || timeline.eventCount !== 7) throw new Error("Research timeline contract failed.");
   const evidenceResponse = await request("/api/evidence/trend-hunting-ai-control");
   const evidence = await evidenceResponse.json();
   if (evidenceResponse.status !== 200 || evidence.schemaVersion !== "evidence-inspection-v1" || evidence.record.id !== "trend-hunting-ai-control" || !evidence.source.excerpt || !evidence.insightLinks.length) throw new Error("Evidence inspection contract failed.");

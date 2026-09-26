@@ -99,7 +99,7 @@ export function createRuntimeStore(runtimeDir) {
     return { ...operation, body: parseJson(bodyJson, {}) };
   }
 
-  const importLegacy = db.transaction(({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, sourceScan, evidenceLedger, reviewDecisions }) => {
+  const importLegacy = db.transaction(({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, sourceScan, evidenceLedger, reviewDecisions, reviewEvents }) => {
     const shouldImportQuestions = db.prepare("SELECT COUNT(*) AS count FROM questions").get().count === 0;
     const shouldImportAudit = db.prepare("SELECT COUNT(*) AS count FROM audit_entries").get().count === 0;
     const shouldImportOperations = db.prepare("SELECT COUNT(*) AS count FROM idempotency_operations").get().count === 0;
@@ -135,6 +135,7 @@ export function createRuntimeStore(runtimeDir) {
     importRecords("source_scan", sourceScan?.sources);
     importRecords("evidence_version", evidenceLedger?.records, "versionId");
     importRecords("review_decision", reviewDecisions?.decisions);
+    importRecords("review_event", reviewEvents?.events);
   });
 
   return {
@@ -191,7 +192,7 @@ export async function importRuntimeLedgers(store, paths) {
       throw error;
     }
   };
-  const [questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, sourceScan, evidenceLedger, reviewDecisions] = await Promise.all([
+  const [questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, sourceScan, evidenceLedger, reviewDecisions, reviewEvents] = await Promise.all([
     read(paths.questions, { questions: [] }),
     read(paths.audit, { entries: [] }),
     read(paths.operations, { operations: [] }),
@@ -201,7 +202,8 @@ export async function importRuntimeLedgers(store, paths) {
     read(paths.insightPublications, { publications: [] }),
     read(paths.sourceScan, { sources: [] }),
     read(paths.evidenceLedger, { records: [] }),
-    read(paths.reviewDecisions, { decisions: [] })
+    read(paths.reviewDecisions, { decisions: [] }),
+    read(paths.reviewEvents, { events: [] })
   ]);
   let workspaces = alerts.workspaces ?? [];
   if (!workspaces.length && paths.workspaceDir) {
@@ -211,7 +213,7 @@ export async function importRuntimeLedgers(store, paths) {
       return { id: workspace.id, name: workspace.name };
     }));
   }
-  store.importLegacy({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, sourceScan, evidenceLedger, reviewDecisions });
+  store.importLegacy({ questions, audit, operations, alerts, briefingPublications, insightDecisions, insightPublications, sourceScan, evidenceLedger, reviewDecisions, reviewEvents });
   store.syncRecords("alert", alerts.alerts);
   store.syncRecords("briefing_publication", briefingPublications.publications);
   store.syncRecords("insight_decision", insightDecisions.decisions);
@@ -219,6 +221,7 @@ export async function importRuntimeLedgers(store, paths) {
   store.syncRecords("source_scan", sourceScan.sources);
   store.syncRecords("evidence_version", evidenceLedger.records, "versionId");
   store.syncRecords("review_decision", reviewDecisions.decisions);
+  store.syncRecords("review_event", reviewEvents.events);
   await mkdir(resolve(paths.runtimeDir), { recursive: true });
   await writeFile(paths.questions, `${JSON.stringify(store.questionsLedger(), null, 2)}\n`);
   await writeFile(paths.audit, `${JSON.stringify(store.auditLedger(), null, 2)}\n`);
@@ -226,4 +229,5 @@ export async function importRuntimeLedgers(store, paths) {
   await writeFile(paths.briefingPublications, `${JSON.stringify(store.recordsLedger("briefing_publication", "briefing-publication-ledger-v1", "publications"), null, 2)}\n`);
   await writeFile(paths.insightDecisions, `${JSON.stringify(store.recordsLedger("insight_decision", "insight-decision-ledger-v1", "decisions"), null, 2)}\n`);
   await writeFile(paths.insightPublications, `${JSON.stringify(store.recordsLedger("insight_publication", "insight-publication-ledger-v1", "publications"), null, 2)}\n`);
+  if (paths.reviewEvents) await writeFile(paths.reviewEvents, `${JSON.stringify(store.recordsLedger("review_event", "review-event-ledger-v1", "events"), null, 2)}\n`);
 }

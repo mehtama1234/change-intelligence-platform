@@ -18,7 +18,8 @@ try {
     workspaceDir: resolve(root, "data/fixtures/workspaces"),
     sourceScan: resolve(runtimeDir, "latest-source-scan.json"),
     evidenceLedger: resolve(runtimeDir, "versioned-evidence-ledger.json"),
-    reviewDecisions: resolve(runtimeDir, "review-decisions.json")
+    reviewDecisions: resolve(runtimeDir, "review-decisions.json"),
+    reviewEvents: resolve(runtimeDir, "review-events.json")
   });
   console.log(`Synchronized runtime store: ${store.databasePath}`);
 } finally {

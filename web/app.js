@@ -81,12 +81,13 @@ async function loadOperations() {
 }
 
 async function loadEvidenceHistory() {
-  const response = await apiFetch("../api/evidence-history");
-  if (!response.ok) throw new Error(`Evidence history unavailable (${response.status})`);
+  const [response, timelineResponse] = await Promise.all([apiFetch("../api/evidence-history"), apiFetch("../api/timeline")]);
+  if (!response.ok || !timelineResponse.ok) throw new Error(`Evidence history unavailable (${response.status})`);
   const history = await response.json();
-  const decisions = (history.decisionHistory ?? []).slice().reverse();
-  byId("evidence-history-summary").textContent = `${history.activeResearchRecordCount} active reviewed record${history.activeResearchRecordCount === 1 ? "" : "s"} · ${history.decisionCount} decision${history.decisionCount === 1 ? "" : "s"} recorded.`;
-  byId("evidence-history-items").innerHTML = decisions.length ? decisions.slice(0, 12).map((decision) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(decision.resultingState.replaceAll("_", " "))}</span><span>${escapeHtml(decision.decision)}</span><span>${escapeHtml(decision.decidedAt)}</span></div><h3>${escapeHtml(decision.sourceId || decision.candidateId)}</h3><p>Reviewed by ${escapeHtml(decision.reviewer)}${decision.reviewerRole ? ` (${escapeHtml(decision.reviewerRole)})` : ""}. ${escapeHtml(decision.note || "No note recorded.")}</p><details><summary>Open review identity</summary><dl><dt>Candidate</dt><dd><code>${escapeHtml(decision.candidateId)}</code></dd><dt>Source digest</dt><dd><code>${escapeHtml(decision.sourceDigest || "not recorded")}</code></dd><dt>Decision ID</dt><dd><code>${escapeHtml(decision.id)}</code></dd></dl></details></article>`).join("") : `<p class="muted">No source-review decisions have been recorded yet.</p>`;
+  const timeline = await timelineResponse.json();
+  const events = (timeline.events ?? []).slice().reverse();
+  byId("evidence-history-summary").textContent = `${history.activeResearchRecordCount} active reviewed record${history.activeResearchRecordCount === 1 ? "" : "s"} · ${history.decisionCount} decision${history.decisionCount === 1 ? "" : "s"} · ${timeline.eventCount} timeline event${timeline.eventCount === 1 ? "" : "s"}.`;
+  byId("evidence-history-items").innerHTML = events.length ? events.slice(0, 20).map((event) => `<article class="record-card"><div class="record-meta"><span class="role">${escapeHtml(event.eventType.replaceAll("_", " "))}</span>${event.reviewType ? `<span>${escapeHtml(event.reviewType.replaceAll("_", " "))}</span>` : ""}${event.status ? `<span>${escapeHtml(event.status)}</span>` : ""}<span>${escapeHtml(event.occurredAt)}</span></div><h3>${escapeHtml(event.sourceId || event.targetId)}</h3><p>${escapeHtml(event.outcome || event.status || "Recorded event")}${event.reviewer ? ` · by ${escapeHtml(event.reviewer)}` : ""}${event.previousEvidenceDigest ? ` · previous evidence ${escapeHtml(event.previousEvidenceDigest.slice(0, 12))}` : ""}</p><details><summary>Open event identity</summary><dl><dt>Target</dt><dd><code>${escapeHtml(event.targetId)}</code></dd><dt>Current digest</dt><dd><code>${escapeHtml(event.currentEvidenceDigest || event.currentDigest || event.sourceDigest || "not recorded")}</code></dd><dt>Event ID</dt><dd><code>${escapeHtml(event.id || event.publicationId || "source-scan")}</code></dd></dl></details></article>`).join("") : `<p class="muted">No source or publication events have been recorded yet.</p>`;
 }
 
 function showInspector(title, summary, content) {

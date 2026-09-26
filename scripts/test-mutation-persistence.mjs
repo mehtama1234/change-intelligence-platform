@@ -68,7 +68,9 @@ try {
   if (!["acknowledge_alert", "publish_briefing", "decide_insight", "review_source"].every((action) => actions.has(action))) throw new Error("Mutation audit records did not survive restart.");
   const history = await (await fetch(`${base}/api/evidence-history`, { headers: auth })).json();
   if (!history.decisionHistory.some((decision) => decision.candidateId === "review-test-candidate")) throw new Error("Source review decision did not survive restart.");
-  console.log("Mutation persistence test passed: alert, briefing, insight, and source-review mutations survived restart.");
+  const timeline = await (await fetch(`${base}/api/timeline`, { headers: auth })).json();
+  if (!timeline.events.some((event) => event.eventType === "source_review") || !timeline.events.some((event) => event.eventType === "briefing_republish")) throw new Error("Review timeline events did not survive restart.");
+  console.log("Mutation persistence test passed: alert, briefing, insight, source-review, and timeline state survived restart.");
 } finally {
   if (child && child.exitCode === null) await stop(child);
 }
