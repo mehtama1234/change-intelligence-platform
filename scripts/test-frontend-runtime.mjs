@@ -68,6 +68,7 @@ const payloads = new Map([
   ["/api/workspace-delivery-health", { summary: { pending: 0, deadLetters: 0, notifications: 0, attempts: 0, retries: 0, successRate: null, averageLatencyMs: null }, limitation: "Transport only." }],
   ["/api/workspace-service-report", { status: "on_track", serviceLevel: { overdue: false, cadence: "monthly", nextExpectedAt: null }, observations: { reviewedDeliveries: 0, measures: [] }, limitation: "Recorded service state." }],
   ["/api/workspace-commercial-readiness", { recommendation: "continue", rationale: "Collect more observations.", limitation: "Human decision required.", history: [] }],
+  ["/api/workspace-commercial-offer", { schemaVersion: "workspace-commercial-offer-read-model-v1", current: null, offers: [], limitation: "Recorded offer only." }],
   ["/api/workspace-pilot", { profile: { status: "active", decisionQuestion: "What evidence links AI adoption to productivity and worker control?", cadence: "monthly", nextReviewAt: "2026-10-31", successMeasures: [] } }],
   ["/api/pilot-deliveries", { deliveries: [oldDelivery, currentDelivery] }],
   ["/api/pilot-report", { observation: { reviewedDeliveries: 0 }, usefulness: { rate: null }, decisionImpact: { changedDecision: 0, informedDecision: 0, noChange: 0 }, insightFeedback: { publishedReceiptsReferenced: 0, outcomesWithInsights: 0, byReceipt: [] }, checkpoint: { explanation: "More observations needed." }, limitation: "Recorded pilot only.", measures: [], openIssues: [], decisionHistory: [], deliveryHistory: [] }],

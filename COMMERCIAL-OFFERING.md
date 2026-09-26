@@ -209,3 +209,16 @@ The workspace also provides a pilot kickoff packet for the first customer. It
 turns the configured decision, source scope, cadence, measures, first-handoff
 state, review protocol, checkpoint choices, and product limits into one dated
 artifact that the operator and partner can use to start the engagement.
+
+## From pilot to recurring service
+
+An `expand` checkpoint is not a sale. After that human decision, the workspace
+can hold a concrete recurring offer with a named plan, service scope, delivery
+cadence, billing interval, currency, amount, dates, and terms. The partner can
+accept or decline it, and the service can mark an accepted offer active or
+ended. Every change keeps its note, actor, and time.
+
+This is a commercial handoff record, not a payment processor or invoice. The
+system does not claim that money was collected. It gives the operator and
+partner one durable answer to a practical question: what exactly are we
+agreeing to deliver after the pilot, and what happened to that agreement?

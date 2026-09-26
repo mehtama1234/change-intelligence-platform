@@ -22,6 +22,7 @@ try {
     pilotProfiles: resolve(runtimeDir, "workspace-pilot-profiles.json"),
     pilotDeliveries: resolve(runtimeDir, "workspace-pilot-deliveries.json"),
     pilotDecisions: resolve(runtimeDir, "workspace-pilot-decisions.json"),
+    commercialOffers: resolve(runtimeDir, "workspace-commercial-offers.json"),
     operatorWarnings: resolve(runtimeDir, "operator-warning-events.json"),
     operatorNotifications: resolve(runtimeDir, "operator-notification-outbox.json"),
     operatorRoutes: resolve(runtimeDir, "operator-notification-routes.json"),

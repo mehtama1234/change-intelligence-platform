@@ -41,6 +41,7 @@ const pilotProfilesPath = resolve(runtimeDir, "workspace-pilot-profiles.json");
 const pilotDeliveriesPath = resolve(runtimeDir, "workspace-pilot-deliveries.json");
 const pilotDecisionsPath = resolve(runtimeDir, "workspace-pilot-decisions.json");
 const pilotReadinessPath = resolve(runtimeDir, "pilot-readiness.json");
+const commercialOffersPath = resolve(runtimeDir, "workspace-commercial-offers.json");
 const operatorWarningsPath = resolve(runtimeDir, "operator-warning-events.json");
 const operatorNotificationsPath = resolve(runtimeDir, "operator-notification-outbox.json");
 const operatorRoutesPath = resolve(runtimeDir, "operator-notification-routes.json");
@@ -98,6 +99,7 @@ await importRuntimeLedgers(store, {
   pilotProfiles: pilotProfilesPath,
   pilotDeliveries: pilotDeliveriesPath,
   pilotDecisions: pilotDecisionsPath,
+  commercialOffers: commercialOffersPath,
   operatorWarnings: operatorWarningsPath,
   operatorNotifications: operatorNotificationsPath,
   operatorRoutes: operatorRoutesPath,
@@ -472,7 +474,7 @@ function workspaceRecords(records, workspaceId) {
   return (records ?? []).filter((record) => record.workspaceId === workspaceId);
 }
 
-function buildWorkspaceExport({ workspace, packet, questions, evaluations, briefings, watchlists, privateSources, comparisons, preferences, notifications, deliveries, pilotProfile, pilotDecisions, outcomes, briefingPublications, insightPublications, auditEntries }) {
+function buildWorkspaceExport({ workspace, packet, questions, evaluations, briefings, watchlists, privateSources, comparisons, preferences, notifications, deliveries, pilotProfile, pilotDecisions, commercialOffers, outcomes, briefingPublications, insightPublications, auditEntries }) {
   const sourceIds = new Set();
   for (const question of questions) for (const sourceId of question.scope?.sourceIds ?? []) sourceIds.add(sourceId);
   for (const briefing of briefings) for (const evidence of briefing.evidence ?? []) sourceIds.add(evidence.recordId);
@@ -494,6 +496,7 @@ function buildWorkspaceExport({ workspace, packet, questions, evaluations, brief
     notificationPreferences: safePreferences,
     deliveryNotifications: notifications,
     pilot: { profile: pilotProfile, decisions: pilotDecisions, deliveries },
+    commercialOffers,
     decisionOutcomes: outcomes,
     publicationReceipts: { briefings: briefingPublications, insights: insightPublications },
     sourceRecords,
@@ -541,6 +544,7 @@ async function persistWorkspaceLedgersAfterDeletion() {
     [pilotDeliveriesPath, store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries")],
     [pilotDecisionsPath, store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions")],
     [pilotReadinessPath, store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots")],
+    [commercialOffersPath, store.recordsLedger("commercial_offer", "workspace-commercial-offer-ledger-v1", "offers")],
     [reviewDecisionsPath, store.recordsLedger("review_decision", "review-decision-ledger-v1", "decisions")],
     [reviewEventsPath, store.recordsLedger("review_event", "review-event-ledger-v1", "events")],
     [supportRequestsPath, store.recordsLedger("support_request", "workspace-support-request-ledger-v1", "requests")],
@@ -1549,6 +1553,63 @@ const server = createServer(async (request, response) => {
       await writeFile(pilotDecisionsPath, `${JSON.stringify(store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions"), null, 2)}\n`);
       return json(response, 201, record);
     }
+    if (request.method === "POST" && url.pathname === "/api/workspace-commercial-offer") {
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot create a commercial offer." });
+      const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions.filter((decision) => decision.workspaceId === workspace.id);
+      const latestDecision = decisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)))[0];
+      if (latestDecision?.decision !== "expand") return json(response, 409, { error: "Record a human expand checkpoint before proposing a recurring offer." });
+      const offers = store.recordsLedger("commercial_offer", "workspace-commercial-offer-ledger-v1", "offers").offers.filter((offer) => offer.workspaceId === workspace.id);
+      if (offers.some((offer) => ["proposed", "accepted", "active"].includes(offer.status))) return json(response, 409, { error: "This workspace already has an open commercial offer." });
+      const planName = String(body.planName ?? "").trim().slice(0, 160);
+      const serviceScope = String(body.serviceScope ?? "").trim().slice(0, 2000);
+      const cadence = String(body.cadence ?? "");
+      const billingInterval = String(body.billingInterval ?? "");
+      const currency = String(body.currency ?? "USD").trim().toUpperCase().slice(0, 3);
+      const amountCents = Number(body.amountCents);
+      const startDate = body.startDate ? String(body.startDate).slice(0, 32) : null;
+      const renewalDate = body.renewalDate ? String(body.renewalDate).slice(0, 32) : null;
+      if (!planName || serviceScope.length < 20 || !["weekly", "monthly", "quarterly"].includes(cadence) || !["monthly", "quarterly", "annual"].includes(billingInterval) || !/^[A-Z]{3}$/.test(currency) || !Number.isInteger(amountCents) || amountCents < 0 || amountCents > 100000000) return json(response, 400, { error: "Offer requires a plan, a specific service scope, a supported cadence and billing interval, a three-letter currency, and a non-negative whole-cent amount." });
+      const now = new Date().toISOString();
+      const record = { id: `commercial-offer-${randomUUID()}`, workspaceId: workspace.id, status: "proposed", planName, serviceScope, cadence, billingInterval, amountCents, currency, startDate, renewalDate, terms: String(body.terms ?? "").trim().slice(0, 2000) || null, basedOnDecisionId: latestDecision.id, createdBy: member.id, createdRole: member.role, createdAt: now, updatedAt: now, history: [{ status: "proposed", note: "Offer proposed after the recorded human expand checkpoint.", actorId: member.id, actorRole: member.role, occurredAt: now }] };
+      store.commitRecord({ kind: "commercial_offer", record, audit: { requestId, action: "propose_commercial_offer", targetId: record.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: "proposed", occurredAt: now }, operation: { key: idempotencyKey, action: "propose_commercial_offer", status: 201, body: record, completedAt: now } });
+      await writeFile(commercialOffersPath, `${JSON.stringify(store.recordsLedger("commercial_offer", "workspace-commercial-offer-ledger-v1", "offers"), null, 2)}\n`);
+      return json(response, 201, record);
+    }
+    if (request.method === "POST" && url.pathname.startsWith("/api/workspace-commercial-offer/") && url.pathname.endsWith("/state")) {
+      const offerId = decodeURIComponent(url.pathname.slice("/api/workspace-commercial-offer/".length, -"/state".length));
+      const body = await requestBody(request);
+      const actorId = authenticatedActor(request, body);
+      if (!actorId) return json(response, 401, { error: "Authentication required." });
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (authMode === "token" && !idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for token-authenticated writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const workspace = await workspaceConfig(body.workspaceId);
+      const member = workspace?.members?.find((candidate) => candidate.id === actorId);
+      const offer = store.findRecord("commercial_offer", offerId);
+      if (!workspace || !offer || offer.workspaceId !== workspace.id) return json(response, 404, { error: "Commercial offer not found." });
+      if (!member || !["owner", "researcher"].includes(member.role)) return json(response, 403, { error: "This workspace role cannot change a commercial offer." });
+      const nextState = String(body.state ?? "");
+      const transitions = { proposed: ["accepted", "declined", "cancelled"], accepted: ["active", "cancelled"], active: ["ended", "cancelled"], declined: [], cancelled: [], ended: [] };
+      if (!transitions[offer.status]?.includes(nextState)) return json(response, 409, { error: `Cannot change an offer from ${offer.status} to ${nextState}.` });
+      const note = String(body.note ?? "").trim().slice(0, 2000);
+      if (!note) return json(response, 400, { error: "A note is required for every offer state change." });
+      const now = new Date().toISOString();
+      const updated = { ...offer, status: nextState, updatedAt: now, history: [...(offer.history ?? []), { status: nextState, note, actorId: member.id, actorRole: member.role, occurredAt: now }] };
+      store.commitRecord({ kind: "commercial_offer", record: updated, audit: { requestId, action: "change_commercial_offer", targetId: offer.id, workspaceId: workspace.id, actorId: member.id, actorRole: member.role, result: nextState, occurredAt: now }, operation: { key: idempotencyKey, action: "change_commercial_offer", status: 200, body: updated, completedAt: now } });
+      await writeFile(commercialOffersPath, `${JSON.stringify(store.recordsLedger("commercial_offer", "workspace-commercial-offer-ledger-v1", "offers"), null, 2)}\n`);
+      return json(response, 200, updated);
+    }
     if (request.method === "POST" && url.pathname.startsWith("/api/operator/warnings/") && url.pathname.endsWith("/state")) {
       const warningId = decodeURIComponent(url.pathname.slice("/api/operator/warnings/".length, -"/state".length));
       const operator = operatorAccess(request);
@@ -2158,7 +2219,7 @@ const server = createServer(async (request, response) => {
       if (!access.workspaceId) return json(response, 400, { error: "Choose one workspace to export." });
       const workspace = await workspaceConfig(access.workspaceId);
       if (!workspace) return json(response, 404, { error: "Workspace not found." });
-      const [packet, questionsLedger, evaluationsLedger, briefingsLedger, watchlistsLedger, comparisonsLedger, preferencesLedger, notificationsLedger, pilotProfilesLedger, pilotDecisionsLedger, outcomesLedger, auditLedger] = await Promise.all([
+      const [packet, questionsLedger, evaluationsLedger, briefingsLedger, watchlistsLedger, comparisonsLedger, preferencesLedger, notificationsLedger, pilotProfilesLedger, pilotDecisionsLedger, commercialOffersLedger, outcomesLedger, auditLedger] = await Promise.all([
         readJson(packetPath, { records: [] }),
         readJson(questionsPath, { questions: [] }),
         readJson(questionEvaluationsPath, { evaluations: [] }),
@@ -2169,6 +2230,7 @@ const server = createServer(async (request, response) => {
         readJson(deliveryNotificationsPath, { notifications: [] }),
         readJson(pilotProfilesPath, { profiles: [] }),
         readJson(pilotDecisionsPath, { decisions: [] }),
+        readJson(commercialOffersPath, { offers: [] }),
         readJson(decisionOutcomesPath, { outcomes: [] }),
         readJson(auditPath, { entries: [] })
       ]);
@@ -2191,6 +2253,7 @@ const server = createServer(async (request, response) => {
         deliveries: workspaceRecords(pilotDeliveries, workspace.id),
         pilotProfile: workspaceRecords(pilotProfilesLedger.profiles, workspace.id)[0] ?? null,
         pilotDecisions: workspaceRecords(pilotDecisionsLedger.decisions, workspace.id),
+        commercialOffers: workspaceRecords(commercialOffersLedger.offers, workspace.id),
         outcomes: workspaceRecords(outcomesLedger.outcomes, workspace.id),
         briefingPublications: workspaceRecords(briefingPublications, workspace.id),
         insightPublications: workspaceRecords(insightPublications, workspace.id),
@@ -2248,9 +2311,17 @@ const server = createServer(async (request, response) => {
       const history = store.recordsLedger("pilot_readiness", "pilot-readiness-ledger-v1", "snapshots").snapshots;
       const readiness = buildCommercialPilotReadiness({ workspaceId: workspace.id, profile, learning, serviceReport, history });
       const packet = buildPilotCloseout({ workspace, profile, learning, readiness, metrics, serviceReport });
+      packet.commercialOffers = store.recordsLedger("commercial_offer", "workspace-commercial-offer-ledger-v1", "offers").offers.filter((offer) => offer.workspaceId === workspace.id);
       await appendAudit({ requestId, action: "export_pilot_closeout", targetId: workspace.id, workspaceId: workspace.id, actorId: access.actorId ?? null, actorRole: null, result: "exported", occurredAt: new Date().toISOString() });
       response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="${workspace.id}-pilot-closeout.json"`, "Cache-Control": "no-store" });
       return response.end(JSON.stringify(packet));
+    }
+    if (url.pathname === "/api/workspace-commercial-offer") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      const offers = store.recordsLedger("commercial_offer", "workspace-commercial-offer-ledger-v1", "offers").offers.filter((offer) => !access.workspaceIds || access.workspaceIds.includes(offer.workspaceId));
+      const visible = access.workspaceId ? offers.filter((offer) => offer.workspaceId === access.workspaceId) : offers;
+      return json(response, 200, { schemaVersion: "workspace-commercial-offer-read-model-v1", workspaceId: access.workspaceId, current: visible.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))[0] ?? null, offers: visible.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))), limitation: "This is a recorded service offer and acceptance history. It is not a payment authorization, invoice, or guarantee of delivery." });
     }
     if (url.pathname === "/api/workspace-retention") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

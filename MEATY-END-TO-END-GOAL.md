@@ -114,6 +114,12 @@ The goal is complete only when all of the following are true:
 - the product has a repeatable paid offer, onboarding process, and support
   process.
 
+The paid-offer handoff is explicit: a recurring offer may be proposed only
+after a human `expand` checkpoint, and its scope, cadence, price, acceptance,
+activation, and later end state remain tenant-safe and auditable. Payment
+collection itself stays outside this research platform until a payment system
+is deliberately integrated.
+
 ## What we must not claim
 
 The platform must never imply that:
