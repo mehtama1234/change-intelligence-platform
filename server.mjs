@@ -551,6 +551,20 @@ function buildCommercialPilotReadiness({ workspaceId, profile, learning, service
   return { schemaVersion: "commercial-pilot-readiness-v1", generatedAt: new Date().toISOString(), workspaceId, recommendation, humanCheckpointRequired: true, eligibility: { enoughReviewedDeliveries: reviewed >= 3, usefulRate: usefulnessRate, decisionImpactRecorded: learning.decisionImpact.changedDecision + learning.decisionImpact.informedDecision > 0, failedMeasures: measuresNotMet, serviceStatus: serviceReport.status }, rationale, latestRecordedDecision: learning.latestDecision ? { decision: learning.latestDecision.decision, decidedAt: learning.latestDecision.decidedAt, nextStep: learning.latestDecision.nextStep } : null, history: history.filter((snapshot) => snapshot.workspaceId === workspaceId).sort((a, b) => String(b.observedAt).localeCompare(String(a.observedAt))).slice(0, 30), limitation: "This is a decision aid based on recorded pilot observations. It does not make the commercial decision or prove general market value." };
 }
 
+function buildWorkspaceOnboarding({ workspace, profile, questions, watchlists, privateSources, deliveries }) {
+  const acceptedPrivateSources = privateSources.filter((source) => source.reviewState === "accepted");
+  const steps = [
+    { id: "decision_question", label: "Decision to improve", status: profile?.decisionQuestion ? "ready" : "missing", detail: profile?.decisionQuestion ?? "Write the decision this pilot should help the team make." },
+    { id: "source_scope", label: "Evidence scope", status: watchlists.length || acceptedPrivateSources.length ? "ready" : "missing", detail: watchlists.length ? `${watchlists.length} watchlist${watchlists.length === 1 ? "" : "s"} configured.` : acceptedPrivateSources.length ? `${acceptedPrivateSources.length} accepted private source${acceptedPrivateSources.length === 1 ? "" : "s"} available.` : "Choose a watchlist or submit a private source for review." },
+    { id: "success_measures", label: "Success measures", status: profile?.successMeasures?.length ? "ready" : "missing", detail: profile?.successMeasures?.length ? profile.successMeasures.join("; ") : "Name how the partner will judge usefulness." },
+    { id: "delivery_cadence", label: "Delivery cadence", status: profile?.cadence && profile?.nextReviewAt ? "ready" : "missing", detail: profile?.cadence && profile?.nextReviewAt ? `${profile.cadence}; review ${profile.nextReviewAt}.` : "Set the update rhythm and first review date." },
+    { id: "saved_question", label: "Saved research question", status: questions.length ? "ready" : "missing", detail: questions.length ? `${questions.length} active question${questions.length === 1 ? "" : "s"} saved.` : "Save the first question the recurring handoff should answer." },
+    { id: "first_delivery", label: "First handoff", status: deliveries.length ? "ready" : "pending", detail: deliveries.length ? `${deliveries.length} deliver${deliveries.length === 1 ? "y" : "ies"} generated.` : "The first completed refresh will generate the reviewable handoff." }
+  ];
+  const missing = steps.filter((step) => step.status === "missing");
+  return { schemaVersion: "workspace-onboarding-v1", workspaceId: workspace.id, workspaceName: workspace.name, status: missing.length ? "needs_setup" : deliveries.length ? "active" : "ready_for_first_delivery", steps, nextAction: missing[0]?.detail ?? (deliveries.length ? "Review the latest handoff and record what it changed." : "Run a refresh to generate the first handoff."), limitation: "This checklist proves configuration and recorded activity only. It does not prove that the pilot is useful or that a partner will renew." };
+}
+
 function buildOperatorPortfolioReadiness({ workspaces, snapshots }) {
   const latestByWorkspace = new Map();
   for (const snapshot of snapshots) {
@@ -1818,6 +1832,19 @@ const server = createServer(async (request, response) => {
       if (denyWorkspaceRead(response, access)) return;
       const profiles = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles;
       return json(response, 200, { schemaVersion: "workspace-pilot-read-model-v1", workspaceId: access.workspaceId, profile: access.workspaceIds ? profiles.find((profile) => access.workspaceIds.includes(profile.workspaceId)) ?? null : profiles });
+    }
+    if (url.pathname === "/api/workspace-onboarding") {
+      const access = await workspaceAccess(request, url.searchParams.get("workspace"));
+      if (denyWorkspaceRead(response, access)) return;
+      if (!access.workspaceId) return json(response, 400, { error: "Choose one workspace to inspect onboarding." });
+      const workspace = await workspaceConfig(access.workspaceId);
+      if (!workspace) return json(response, 404, { error: "Workspace not found." });
+      const questions = store.questionsLedger().questions.filter((question) => question.workspaceId === workspace.id && question.state === "active");
+      const watchlists = store.recordsLedger("watchlist", "workspace-watchlist-ledger-v1", "watchlists").watchlists.filter((watchlist) => watchlist.workspaceId === workspace.id);
+      const privateSources = store.recordsLedger("workspace_source", "workspace-source-ledger-v1", "sources").sources.filter((source) => source.workspaceId === workspace.id);
+      const profile = store.recordsLedger("pilot_profile", "workspace-pilot-profile-ledger-v1", "profiles").profiles.find((candidate) => candidate.workspaceId === workspace.id) ?? null;
+      const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
+      return json(response, 200, buildWorkspaceOnboarding({ workspace, profile, questions, watchlists, privateSources, deliveries }));
     }
     if (url.pathname === "/api/pilot-deliveries") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

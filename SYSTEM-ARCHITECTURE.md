@@ -225,3 +225,8 @@ After acceptance, the question evaluator adds a source only to questions in
 the same workspace. Briefings carry its digest and mark it private; pending
 and rejected items are excluded. Customer evidence therefore remains useful
 without becoming cross-tenant research truth.
+
+The workspace onboarding read model turns pilot setup into an explicit
+checklist: decision question, evidence scope, success measures, cadence,
+saved question, and first handoff. It reports configuration and recorded
+activity; it does not label a pilot successful without partner evidence.

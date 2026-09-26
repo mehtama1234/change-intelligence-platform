@@ -75,6 +75,8 @@ try {
   if (readinessResponse.status !== 200 || readinessBody.schemaVersion !== "commercial-pilot-readiness-v1" || !["improve", "continue", "expand", "stop"].includes(readinessBody.recommendation) || readinessBody.humanCheckpointRequired !== true || !Array.isArray(readinessBody.history)) throw new Error("Commercial pilot readiness read model failed.");
   const outsiderPilot = await fetch(`${base}/api/workspace-pilot?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderPilot.status !== 403) throw new Error(`Expected non-member pilot read to return 403, received ${outsiderPilot.status}`);
+  const outsiderOnboarding = await fetch(`${base}/api/workspace-onboarding?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
+  if (outsiderOnboarding.status !== 403) throw new Error(`Expected non-member onboarding read to return 403, received ${outsiderOnboarding.status}`);
   const outsiderDeliveries = await fetch(`${base}/api/pilot-deliveries?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });
   if (outsiderDeliveries.status !== 403) throw new Error(`Expected non-member pilot delivery read to return 403, received ${outsiderDeliveries.status}`);
   const outsiderReport = await fetch(`${base}/api/pilot-report?workspace=demo-research`, { headers: { Authorization: "Bearer outsider-token" } });

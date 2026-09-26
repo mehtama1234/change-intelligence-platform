@@ -94,6 +94,9 @@ try {
   const profileResponse = await request("/api/workspace-pilot?workspace=demo-research");
   const profileReadModel = await profileResponse.json();
   if (profileResponse.status !== 200 || profileReadModel.schemaVersion !== "workspace-pilot-read-model-v1" || profileReadModel.workspaceId !== "demo-research") throw new Error("Workspace pilot read model contract failed.");
+  const onboardingResponse = await request("/api/workspace-onboarding?workspace=demo-research");
+  const onboarding = await onboardingResponse.json();
+  if (onboardingResponse.status !== 200 || onboarding.schemaVersion !== "workspace-onboarding-v1" || onboarding.workspaceId !== "demo-research" || !Array.isArray(onboarding.steps) || !onboarding.nextAction || !onboarding.limitation.includes("does not prove")) throw new Error("Workspace onboarding read model contract failed.");
   const deliveriesResponse = await request("/api/pilot-deliveries?workspace=demo-research");
   const deliveries = await deliveriesResponse.json();
   if (deliveriesResponse.status !== 200 || deliveries.schemaVersion !== "workspace-pilot-delivery-read-model-v1" || !Array.isArray(deliveries.deliveries)) throw new Error("Pilot delivery read model contract failed.");

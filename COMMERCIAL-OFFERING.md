@@ -111,3 +111,11 @@ Every commercial insight must show:
 - what could prove it wrong.
 
 Trust is the product, not an appendix.
+
+## Onboarding and first-cycle handoff
+
+Each workspace starts with a short configuration checklist: the decision the
+partner wants to improve, the evidence scope, success measures, delivery
+cadence, saved research question, and first reviewable handoff. The product
+shows which item is missing and the next action. This makes onboarding
+repeatable without pretending that configuration proves commercial value.
