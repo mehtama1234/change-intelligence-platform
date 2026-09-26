@@ -11,10 +11,17 @@ const scanPath = resolve(root, process.env.SOURCE_SCAN_PATH ?? `${runtimeDir}/la
 const outputDir = resolve(root, process.env.ALERT_OUTPUT_DIR ?? runtimeDir);
 const outputPath = resolve(outputDir, process.env.ALERT_OUTPUT_NAME ?? "workspace-alerts.json");
 const watchlistsPath = resolve(root, process.env.WATCHLISTS_PATH ?? `${runtimeDir}/workspace-watchlists.json`);
+const comparisonViewsPath = resolve(root, process.env.COMPARISON_VIEWS_PATH ?? `${runtimeDir}/workspace-comparison-views.json`);
+const atlasPath = resolve(root, process.env.ATLAS_PATH ?? "data/processed/ai-work-control.atlas.json");
+const packetPath = resolve(root, process.env.PACKET_PATH ?? "data/processed/ai-work-control.packet.json");
+const staticPacketPath = resolve(root, "data/processed/ai-work-control.packet.json");
 const scan = JSON.parse(await readFile(scanPath, "utf8"));
 const files = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
 const workspaces = await Promise.all(files.map(async (file) => JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"))));
 const watchlistLedger = existsSync(watchlistsPath) ? JSON.parse(await readFile(watchlistsPath, "utf8")) : { watchlists: [] };
+const comparisonLedger = existsSync(comparisonViewsPath) ? JSON.parse(await readFile(comparisonViewsPath, "utf8")) : { views: [] };
+const atlas = existsSync(atlasPath) ? JSON.parse(await readFile(atlasPath, "utf8")) : { entities: {} };
+const packet = existsSync(packetPath) ? JSON.parse(await readFile(packetPath, "utf8")) : existsSync(staticPacketPath) ? JSON.parse(await readFile(staticPacketPath, "utf8")) : { records: [] };
 const watchlistsByWorkspace = new Map();
 for (const watchlist of watchlistLedger.watchlists ?? []) watchlistsByWorkspace.set(watchlist.workspaceId, [...(watchlistsByWorkspace.get(watchlist.workspaceId) ?? []), watchlist]);
 const existing = existsSync(outputPath) ? JSON.parse(await readFile(outputPath, "utf8")) : { schemaVersion: "workspace-alert-ledger-v1", alerts: [] };
@@ -39,6 +46,21 @@ for (const workspace of workspaces) {
       });
       alertsSeenThisRun += 1;
     }
+  }
+  for (const view of comparisonLedger.views ?? []) {
+    if (view.workspaceId !== workspace.id) continue;
+    const selected = (view.entityIds ?? []).map((id) => (atlas.entities?.[view.kind] ?? []).find((entity) => entity.id === id)).filter(Boolean);
+    const sourceIds = selected.flatMap((entity) => entity.evidenceIds ?? []).filter((id, index, values) => values.indexOf(id) === index);
+    const changed = (scan.sources ?? []).filter((item) => sourceIds.includes(item.id) && item.status !== "unchanged");
+    const records = selected.map((entity) => (packet.records ?? []).find((record) => entity.evidenceIds?.includes(record.id) && record.reportWindow)).filter(Boolean);
+    const sharedColumns = records.length ? records.reduce((shared, record) => shared.filter((column) => (record.reportWindow.columns ?? []).includes(column)), records[0].reportWindow.columns ?? []) : [];
+    const incompatible = records.length !== selected.length || !sharedColumns.length;
+    if (!changed.length && !incompatible) continue;
+    const fingerprint = `${changed.map((item) => `${item.id}:${item.status}:${item.sha256 ?? "missing"}`).join("|")}|${records.map((record) => (record.reportWindow.columns ?? []).join(",")).join("|")}`;
+    const id = `alert-${createHash("sha256").update(`${workspace.id}:comparison:${view.id}:${fingerprint}`).digest("hex").slice(0, 20)}`;
+    const prior = existingById.get(id);
+    existingById.set(id, { id, workspaceId: workspace.id, watchlistId: null, watchlistName: view.name, comparisonViewId: view.id, sourceId: changed[0]?.id ?? null, repository: "comparison", sourcePath: `comparison:${view.kind}`, state: prior?.state ?? "open", severity: incompatible ? "high" : "medium", kind: incompatible ? "comparison_incompatible" : "comparison_refresh", reason: incompatible ? "The saved comparison no longer has a complete shared metric set; review definitions before comparing." : "A source behind this saved comparison changed; reopen the comparison and review the new period.", scanRunId: scan.runId, createdAt: prior?.createdAt ?? new Date().toISOString(), lastSeenAt: new Date().toISOString() });
+    alertsSeenThisRun += 1;
   }
 }
 
