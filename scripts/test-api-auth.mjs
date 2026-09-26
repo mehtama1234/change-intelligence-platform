@@ -68,7 +68,9 @@ try {
   if (warningAction.status !== 200) throw new Error(`Operator warning action failed: ${warningAction.status}`);
   const acknowledgedOverview = await (await fetch(`${base}/api/operator/pilot-overview`, { headers: { Authorization: "Bearer operator-token" } })).json();
   const acknowledgedWarning = acknowledgedOverview.warnings.find((item) => item.id === warning.id);
-  if (acknowledgedWarning?.lifecycle !== "acknowledged" || acknowledgedWarning.ownerId !== "ops-owner" || acknowledgedWarning.escalationState !== "escalated" || !Number.isFinite(acknowledgedWarning.responseTimeMs) || !acknowledgedWarning.ackDeadlineAt) throw new Error("Operator warning state, ownership, escalation, deadline, or response time did not persist in the overview.");
+  if (acknowledgedWarning?.lifecycle !== "acknowledged" || acknowledgedWarning.ownerId !== "ops-owner" || acknowledgedWarning.escalationState !== "escalated" || !Number.isFinite(acknowledgedWarning.responseTimeMs) || !acknowledgedWarning.ackDeadlineAt || acknowledgedOverview.deliveryHealth?.schemaVersion !== "operator-delivery-health-v1") throw new Error("Operator warning state, ownership, escalation, deadline, response time, or delivery health did not persist in the overview.");
+  const deliveryHealth = await (await fetch(`${base}/api/operator/delivery-health`, { headers: { Authorization: "Bearer operator-token" } })).json();
+  if (deliveryHealth.schemaVersion !== "operator-delivery-health-v1" || !deliveryHealth.summary || !Array.isArray(deliveryHealth.byRecipient)) throw new Error("Operator delivery health read model failed.");
   const notificationResponse = await fetch(`${base}/api/operator/notifications`, { headers: { Authorization: "Bearer operator-token" } });
   const notificationBody = await notificationResponse.json();
   const notification = notificationBody.notifications?.find((item) => item.warningId === warning.id);

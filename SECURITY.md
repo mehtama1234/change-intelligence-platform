@@ -52,6 +52,9 @@ command; changes are persisted, idempotent, and audited.
 Each destination has a named ID and validated HTTP(S) URL. Notification records
 store only the destination ID; the delivery worker records every attempt in a
 separate ledger, including success, retry, or dead-letter outcome.
+The operator delivery-health read model exposes counts, success rate, retry
+count, latency, and recipient/workspace breakdowns without exposing message
+bodies.
 
 Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map

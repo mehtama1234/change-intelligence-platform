@@ -275,7 +275,18 @@ function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions 
   };
 }
 
-function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs }) {
+function buildOperatorDeliveryHealth({ notifications, attempts }) {
+  const terminal = notifications.filter((notification) => ["delivered", "dead_letter"].includes(notification.status));
+  const latencies = notifications.map((notification) => Number.isFinite(Date.parse(notification.deliveredAt)) && Number.isFinite(Date.parse(notification.createdAt)) ? Date.parse(notification.deliveredAt) - Date.parse(notification.createdAt) : null).filter((value) => value !== null);
+  const group = (key) => [...new Set(notifications.map((notification) => notification[key] ?? "unscoped"))].map((value) => {
+    const scoped = notifications.filter((notification) => (notification[key] ?? "unscoped") === value);
+    const scopedTerminal = scoped.filter((notification) => ["delivered", "dead_letter"].includes(notification.status));
+    return { [key]: value, notifications: scoped.length, delivered: scoped.filter((notification) => notification.status === "delivered").length, deadLetters: scoped.filter((notification) => notification.status === "dead_letter").length, pending: scoped.filter((notification) => notification.status === "pending").length, attempts: attempts.filter((attempt) => scoped.some((notification) => notification.id === attempt.notificationId)).length, successRate: scopedTerminal.length ? scoped.filter((notification) => notification.status === "delivered").length / scopedTerminal.length : null };
+  });
+  return { schemaVersion: "operator-delivery-health-v1", generatedAt: new Date().toISOString(), summary: { notifications: notifications.length, attempts: attempts.length, delivered: notifications.filter((notification) => notification.status === "delivered").length, deadLetters: notifications.filter((notification) => notification.status === "dead_letter").length, pending: notifications.filter((notification) => notification.status === "pending").length, retries: attempts.filter((attempt) => attempt.attempt > 1).length, successRate: terminal.length ? notifications.filter((notification) => notification.status === "delivered").length / terminal.length : null, averageLatencyMs: latencies.length ? Math.round(latencies.reduce((sum, value) => sum + value, 0) / latencies.length) : null }, byRecipient: group("recipient"), byWorkspace: group("workspaceId"), recentAttempts: attempts.slice().sort((a, b) => String(b.attemptedAt).localeCompare(String(a.attemptedAt))).slice(0, 30).map(({ error, ...attempt }) => ({ ...attempt, error: error ?? null })) };
+}
+
+function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs }) {
   const summaries = workspaces.map((workspace) => {
     const workspaceDeliveries = deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
     const reviewed = workspaceDeliveries.filter((delivery) => delivery.review);
@@ -320,6 +331,7 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
     operations: { latestRefreshStatus: refreshHistory.at(-1)?.status ?? "not_run", failedRefreshRuns: failedRuns.length, lastRefreshAt: refreshHistory.at(-1)?.endedAt ?? null, sourceCount: sourceScan.sources?.length ?? 0, staleSources, oldestSourceAgeMs: sourceAges.length ? Math.max(...sourceAges.map((source) => source.ageMs)) : null, delayedDeliveries, falseAlertRate },
     thresholds: { maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs },
     warnings: warningLifecycle,
+    deliveryHealth: buildOperatorDeliveryHealth({ notifications, attempts: notificationAttempts }),
     trend,
     workspaces: summaries,
     limitation: "This operator view contains aggregate pilot health only. It intentionally excludes customer questions, review notes, source details, and private workspace content. Counts describe recorded activity, not general product-market fit or causation."
@@ -1045,6 +1057,13 @@ const server = createServer(async (request, response) => {
       const settings = store.recordsLedger("operator_notification_route", "operator-notification-route-ledger-v1", "settings").settings[0] ?? { id: "operator-notification-routes", default: [], warningIds: {}, workspaces: {} };
       return json(response, 200, { schemaVersion: "operator-notification-route-read-model-v1", settings });
     }
+    if (url.pathname === "/api/operator/delivery-health") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const notifications = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;
+      const notificationAttempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
+      return json(response, 200, buildOperatorDeliveryHealth({ notifications, attempts: notificationAttempts }));
+    }
     if (url.pathname === "/api/operator/pilot-overview") {
       const operator = operatorAccess(request);
       if (operator.error) return json(response, operator.error.status, operator.error.body);
@@ -1061,7 +1080,9 @@ const server = createServer(async (request, response) => {
       const sourceScan = await readJson(sourceScanPath, { sources: [] });
       const sourceScanHistory = await readJson(sourceScanHistoryPath, { runs: [] });
       const warningEvents = store.recordsLedger("operator_warning", "operator-warning-event-ledger-v1", "events").events;
-      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs }));
+      const notifications = store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications;
+      const notificationAttempts = store.recordsLedger("operator_notification_attempt", "operator-notification-attempt-ledger-v1", "attempts").attempts;
+      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, notifications, notificationAttempts, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs }));
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

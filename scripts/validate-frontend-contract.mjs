@@ -56,11 +56,13 @@ const required = [
   , [operatorHtml, 'id="operator-history"', "operator refresh history"]
   , [operatorHtml, 'id="operator-warnings"', "operator warning list"]
   , [operatorHtml, 'id="operator-notifications"', "operator notification outbox"]
+  , [operatorHtml, 'id="operator-delivery-health"', "operator delivery health"]
   , [operatorHtml, 'id="operator-routing-json"', "operator routing settings"]
   , [operatorApp, "/api/operator/pilot-overview", "operator overview API"]
   , [operatorApp, "/api/operator/warnings/", "operator warning action API"]
   , [operatorApp, "/api/operator/notifications", "operator notification API"]
   , [operatorApp, "/api/operator/notification-routes", "operator routing API"]
+  , [operatorApp, "deliveryHealth", "operator delivery health read model"]
 ];
 const missing = required.filter(([text, value]) => !text.includes(value)).map(([, , label]) => label);
 if (missing.length) throw new Error(`Frontend contract failed: ${missing.join(", ")}`);
