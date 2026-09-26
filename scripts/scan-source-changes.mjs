@@ -53,7 +53,9 @@ const reviewQueue = sources.filter((source) => source.needsReview).map((source) 
   id: `review-${source.id}-${source.status}`,
   sourceId: source.id,
   repository: source.repository,
+  sourcePath: source.path,
   state: "needs_review",
+  action: source.status === "missing" ? "investigate_source_loss" : "reacquire_and_reextract",
   reason: source.reviewReason,
   previousSha256: source.previousSha256,
   currentSha256: source.sha256

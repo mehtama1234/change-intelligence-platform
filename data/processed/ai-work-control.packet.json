@@ -2,6 +2,20 @@
   "schemaVersion": "change-intelligence-packet-v1",
   "domain": "ai-work-control",
   "sourceSnapshotDate": "2026-09-25",
+  "operations": {
+    "latestSourceScan": {
+      "generatedAt": "2026-09-26T03:40:50.047Z",
+      "runId": "scan-20260926034050",
+      "counts": {
+        "new": 0,
+        "changed": 0,
+        "unchanged": 7,
+        "missing": 0
+      },
+      "reviewRequired": 0,
+      "reviewQueue": []
+    }
+  },
   "records": [
     {
       "id": "trend-hunting-ai-control",

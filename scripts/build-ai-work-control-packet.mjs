@@ -10,7 +10,9 @@ const mapPath = resolve(root, "data/source-maps/ai-work-control.sources.json");
 const outputPath = resolve(root, "data/processed/ai-work-control.packet.json");
 const captureManifestPath = resolve(root, "data/raw/ai-work-control/c3-ai/manifest.json");
 const xbrlExtractPath = resolve(root, "data/processed/ai-work-control/c3-ai.xbrl.json");
+const sourceScanPath = resolve(root, "data/processed/runs/ai-work-control/latest-source-scan.json");
 const map = JSON.parse(await readFile(mapPath, "utf8"));
+const sourceScan = existsSync(sourceScanPath) ? JSON.parse(await readFile(sourceScanPath, "utf8")) : undefined;
 
 function stripMarkup(text) {
   return text
@@ -160,6 +162,17 @@ const packet = {
   schemaVersion: "change-intelligence-packet-v1",
   domain: map.domain,
   sourceSnapshotDate: map.snapshotDate,
+  ...(sourceScan ? {
+    operations: {
+      latestSourceScan: {
+        generatedAt: sourceScan.generatedAt,
+        runId: sourceScan.runId,
+        counts: sourceScan.counts,
+        reviewRequired: sourceScan.reviewRequired,
+        reviewQueue: sourceScan.reviewQueue
+      }
+    }
+  } : {}),
   records,
   insights: [map.insight]
 };
