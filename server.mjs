@@ -254,12 +254,14 @@ function buildCoverage(packet, registry) {
   return { schemaVersion: "coverage-read-model-v1", domain: packet.domain ?? null, sourceSnapshotDate: packet.sourceSnapshotDate ?? null, repositories, reportWindows, outcomeBridges, requirements, summary: { ready: requirements.filter((item) => item.status === "ready").length, partial: requirements.filter((item) => item.status === "partial").length, missing: requirements.filter((item) => item.status === "missing").length } };
 }
 
-function buildPilotMetrics({ workspaceId, auditEntries, alerts, outcomes, briefings }) {
+function buildPilotMetrics({ workspaceId, auditEntries, alerts, outcomes, briefings, deliveries = [] }) {
   const resolvedAlerts = alerts.filter((alert) => alert.state === "resolved" || alert.resolutionDisposition);
   const responseTimes = resolvedAlerts.map((alert) => alert.responseTimeMs).filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
   const median = responseTimes.length ? responseTimes[Math.floor(responseTimes.length / 2)] : null;
   const correctionResponseTimes = resolvedAlerts.filter((alert) => alert.resolutionDisposition === "needs_correction").map((alert) => alert.responseTimeMs).filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
   const medianCorrectionResponseMs = correctionResponseTimes.length ? correctionResponseTimes[Math.floor(correctionResponseTimes.length / 2)] : null;
+  const deliveryReviewTimes = deliveries.map((delivery) => delivery.review && Number.isFinite(Date.parse(delivery.generatedAt)) && Number.isFinite(Date.parse(delivery.review.reviewedAt)) ? Math.max(0, Date.parse(delivery.review.reviewedAt) - Date.parse(delivery.generatedAt)) : null).filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
+  const medianDeliveryReviewMs = deliveryReviewTimes.length ? deliveryReviewTimes[Math.floor(deliveryReviewTimes.length / 2)] : null;
   const knownOutcomes = outcomes.filter((outcome) => ["held", "changed", "wrong"].includes(outcome.outcomeState));
   const publishedBriefings = auditEntries.filter((entry) => entry.action === "publish_briefing").length;
   const reusedBriefingIds = new Set(outcomes.filter((outcome) => outcome.decisionState === "used").map((outcome) => outcome.briefingId).filter(Boolean));
@@ -276,6 +278,7 @@ function buildPilotMetrics({ workspaceId, auditEntries, alerts, outcomes, briefi
       alertsNeedingCorrection: resolvedAlerts.filter((alert) => alert.resolutionDisposition === "needs_correction").length,
       medianAlertResponseMs: median,
       medianCorrectionResponseMs,
+      medianDeliveryReviewMs,
       sourceTraceInspections: auditEntries.filter((entry) => ["inspect_evidence", "inspect_insight"].includes(entry.action)).length,
       briefingsPublished: publishedBriefings,
       briefingsExported: auditEntries.filter((entry) => entry.action === "export_briefing").length,
@@ -703,12 +706,12 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
     const workspaceAlerts = alerts.filter((alert) => alert.workspaceId === workspace.id);
     const workspaceOutcomes = outcomes.filter((outcome) => outcome.workspaceId === workspace.id);
     const workspaceBriefings = briefings.filter((briefing) => briefing.workspaceId === workspace.id);
-    const pilotMeasures = buildPilotMetrics({ workspaceId: workspace.id, auditEntries: workspaceAudit, alerts: workspaceAlerts, outcomes: workspaceOutcomes, briefings: workspaceBriefings }).measures;
+    const pilotMeasures = buildPilotMetrics({ workspaceId: workspace.id, auditEntries: workspaceAudit, alerts: workspaceAlerts, outcomes: workspaceOutcomes, briefings: workspaceBriefings, deliveries: workspaceDeliveries }).measures;
     const profile = profiles.find((candidate) => candidate.workspaceId === workspace.id);
     const latestDeliveryAt = workspaceDeliveries.map((delivery) => delivery.generatedAt).sort().at(-1) ?? null;
     const cadenceMs = { weekly: 7 * 86400000, monthly: 31 * 86400000, quarterly: 93 * 86400000 }[profile?.cadence] ?? null;
     const deliveryDelayed = Boolean(profile && cadenceMs && (!latestDeliveryAt || Date.parse(latestDeliveryAt) + cadenceMs < Date.now()));
-    return { id: workspace.id, name: workspace.name, pilotConfigured: Boolean(profile), deliveries: workspaceDeliveries.length, reviewedDeliveries: reviewed.length, usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, latestDeliveryAt, deliveryDelayed, latestDecision: workspaceDecisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)))[0]?.decision ?? null, pilotMeasures: { sourceTraceInspections: pilotMeasures.sourceTraceInspections, briefingReuseCount: pilotMeasures.briefingReuseCount, briefingReuseRate: pilotMeasures.briefingReuseRate, falseAlerts: pilotMeasures.falseAlerts, medianCorrectionResponseMs: pilotMeasures.medianCorrectionResponseMs }, schedule: schedules.get(workspace.id) ?? null, onboarding: onboardingByWorkspace.get(workspace.id) ?? { workspaceId: workspace.id, status: "needs_setup", missingSteps: ["decision_question", "source_scope", "success_measures", "delivery_cadence", "saved_question"], deliveryCount: workspaceDeliveries.length } };
+    return { id: workspace.id, name: workspace.name, pilotConfigured: Boolean(profile), deliveries: workspaceDeliveries.length, reviewedDeliveries: reviewed.length, usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, latestDeliveryAt, deliveryDelayed, latestDecision: workspaceDecisions.slice().sort((a, b) => String(b.decidedAt).localeCompare(String(a.decidedAt)))[0]?.decision ?? null, pilotMeasures: { sourceTraceInspections: pilotMeasures.sourceTraceInspections, briefingReuseCount: pilotMeasures.briefingReuseCount, briefingReuseRate: pilotMeasures.briefingReuseRate, falseAlerts: pilotMeasures.falseAlerts, medianCorrectionResponseMs: pilotMeasures.medianCorrectionResponseMs, medianDeliveryReviewMs: pilotMeasures.medianDeliveryReviewMs }, schedule: schedules.get(workspace.id) ?? null, onboarding: onboardingByWorkspace.get(workspace.id) ?? { workspaceId: workspace.id, status: "needs_setup", missingSteps: ["decision_question", "source_scope", "success_measures", "delivery_cadence", "saved_question"], deliveryCount: workspaceDeliveries.length } };
   });
   const reviewed = deliveries.filter((delivery) => delivery.review);
   const now = Date.now();
@@ -1742,9 +1745,10 @@ const server = createServer(async (request, response) => {
       const entries = store.auditLedger().entries.filter((entry) => !access.workspaceIds || access.workspaceIds.includes(entry.workspaceId));
       const alerts = store.alertsLedger().alerts.filter((alert) => !access.workspaceIds || access.workspaceIds.includes(alert.workspaceId));
       const outcomes = store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes").outcomes.filter((outcome) => !access.workspaceIds || access.workspaceIds.includes(outcome.workspaceId));
+      const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries.filter((delivery) => !access.workspaceIds || access.workspaceIds.includes(delivery.workspaceId));
       const briefingLedger = await readJson(briefingsPath, { briefings: [] });
       const briefings = briefingLedger.briefings.filter((briefing) => !access.workspaceIds || access.workspaceIds.includes(briefing.workspaceId));
-      return json(response, 200, buildPilotMetrics({ workspaceId: access.workspaceId, auditEntries: entries, alerts, outcomes, briefings }));
+      return json(response, 200, buildPilotMetrics({ workspaceId: access.workspaceId, auditEntries: entries, alerts, outcomes, briefings, deliveries }));
     }
     if (url.pathname === "/api/workspace-update") {
       const workspaceId = url.searchParams.get("workspace");
@@ -1754,6 +1758,7 @@ const server = createServer(async (request, response) => {
       const entries = store.auditLedger().entries.filter((entry) => !access.workspaceIds || access.workspaceIds.includes(entry.workspaceId));
       const alerts = store.alertsLedger().alerts.filter((alert) => !access.workspaceIds || access.workspaceIds.includes(alert.workspaceId));
       const outcomes = store.recordsLedger("decision_outcome", "decision-outcome-ledger-v1", "outcomes").outcomes.filter((outcome) => !access.workspaceIds || access.workspaceIds.includes(outcome.workspaceId));
+      const deliveries = store.recordsLedger("pilot_delivery", "workspace-pilot-delivery-ledger-v1", "deliveries").deliveries.filter((delivery) => !access.workspaceIds || access.workspaceIds.includes(delivery.workspaceId));
       const questions = store.questionsLedger().questions.filter((question) => !access.workspaceIds || access.workspaceIds.includes(question.workspaceId));
       const briefingLedger = await readJson(briefingsPath, { briefings: [] });
       const briefings = briefingLedger.briefings.filter((briefing) => !access.workspaceIds || access.workspaceIds.includes(briefing.workspaceId));
@@ -1762,7 +1767,7 @@ const server = createServer(async (request, response) => {
       const refresh = await readJson(refreshPath, { status: "not_run", steps: [] });
       const coverage = buildCoverage(packet, registry);
       const readiness = await readinessReport();
-      const metrics = buildPilotMetrics({ workspaceId: access.workspaceId, auditEntries: entries, alerts, outcomes, briefings });
+      const metrics = buildPilotMetrics({ workspaceId: access.workspaceId, auditEntries: entries, alerts, outcomes, briefings, deliveries });
       return json(response, 200, buildWorkspaceUpdate({ workspaceId: access.workspaceId, workspaceName: workspace?.name ?? access.workspaceId ?? "All workspaces", refresh, readiness, coverage, metrics, alerts, questions, briefings }));
     }
     if (url.pathname === "/api/workspace-delivery-health") {

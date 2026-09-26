@@ -169,6 +169,7 @@ async function loadOperations() {
   const measures = pilot.measures;
   const responseTime = measures.medianAlertResponseMs === null ? "not recorded" : `${Math.round(measures.medianAlertResponseMs / 60000)} min`;
   const correctionResponseTime = measures.medianCorrectionResponseMs === null ? "not recorded" : `${Math.round(measures.medianCorrectionResponseMs / 60000)} min`;
+  const deliveryReviewTime = measures.medianDeliveryReviewMs === null ? "not recorded" : `${Math.round(measures.medianDeliveryReviewMs / 60000)} min`;
   const briefingReuseRate = measures.briefingReuseRate === null ? "not measured" : `${Math.round(measures.briefingReuseRate * 100)}%`;
   byId("pilot-scorecard").innerHTML = `<table><caption>Pilot scorecard · recorded workspace experience</caption><thead><tr><th>Measure</th><th>Value</th><th>What it tells us</th></tr></thead><tbody>
     <tr><th scope="row">Useful alerts</th><td>${escapeHtml(measures.usefulAlerts)} / ${escapeHtml(measures.alertsResolved)} resolved</td><td>Whether people found reviewed alerts worth acting on.</td></tr>
@@ -178,6 +179,7 @@ async function loadOperations() {
     <tr><th scope="row">Briefings exported</th><td>${escapeHtml(measures.briefingsExported)}</td><td>Briefings taken out of the reader for use elsewhere.</td></tr>
     <tr><th scope="row">Briefing reuse</th><td>${escapeHtml(measures.briefingReuseCount)} briefing${measures.briefingReuseCount === 1 ? "" : "s"} reused · ${escapeHtml(briefingReuseRate)}</td><td>How often a published briefing was recorded as part of a decision.</td></tr>
     <tr><th scope="row">Correction response</th><td>${escapeHtml(correctionResponseTime)}</td><td>How quickly the workspace responded to an alert marked as needing correction.</td></tr>
+    <tr><th scope="row">Delivery review time</th><td>${escapeHtml(deliveryReviewTime)}</td><td>How long it took the partner to review a delivered handoff.</td></tr>
     <tr><th scope="row">Decision feedback</th><td>${escapeHtml(measures.decisionFeedbackRecords)} recorded · ${escapeHtml(measures.decisionsUsingBriefings)} used</td><td>Whether a briefing entered a real decision.</td></tr>
     <tr><th scope="row">Published insight receipts used</th><td>${escapeHtml(measures.publishedInsightReceiptsUsed)} across ${escapeHtml(measures.decisionOutcomesWithInsights)} outcomes</td><td>Which recorded decisions were linked to the exact insight receipts in the briefing.</td></tr>
     <tr><th scope="row">Later result</th><td>${escapeHtml(measures.knownDecisionResults)} known · ${escapeHtml(measures.readingsHeld)} held · ${escapeHtml(measures.readingsChanged)} changed · ${escapeHtml(measures.readingsWrong)} wrong</td><td>What users later recorded about the reading.</td></tr>

@@ -61,9 +61,10 @@ part of the pilot history; it does not make the commercial decision silently.
 
 The pilot scorecard makes the proof questions explicit: how often people open
 the evidence behind a claim, how often a published briefing is reused in a
-recorded decision, how many alerts are marked false, and how long it takes to
-respond when an alert needs correction. A missing observation remains “not
-measured”; the product does not turn silence into a positive result.
+recorded decision, how many alerts are marked false, how long correction takes,
+and how long the partner takes to review a delivered handoff. A missing
+observation remains “not measured”; the product does not turn silence into a
+positive result.
 
 The history view keeps every refresh in order, including whether it was
 reviewed, useful, and connected to a decision. This lets a buyer see whether

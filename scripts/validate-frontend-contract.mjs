@@ -92,6 +92,7 @@ const required = [
   [app, "../api/pilot-metrics?workspace=", "pilot metrics API"],
   [app, "Source-trace inspections", "pilot source-trace measure"],
   [app, "Briefing reuse", "pilot briefing-reuse measure"],
+  [app, "Delivery review time", "pilot delivery-review measure"],
   [app, "../api/workspace-update?workspace=", "workspace update API"],
   [app, "../api/workspace-delivery-health?workspace=", "workspace delivery health API"],
   [app, "../api/workspace-service-report?workspace=", "workspace service report API"],
