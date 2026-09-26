@@ -27,13 +27,16 @@ for (const publication of insightPublications.publications ?? []) insightPublica
 const recordsById = new Map(packet.records.map((record) => [record.id, record]));
 const evaluationByQuestion = new Map(evaluations.evaluations.map((evaluation) => [evaluation.questionId, evaluation]));
 
-function insightProvenanceForWorkspace(workspaceId) {
+function insightProvenanceForQuestion(workspaceId, matchedRecordIds) {
+  const matched = new Set(matchedRecordIds ?? []);
   return [...insightPublicationsByKey.entries()].flatMap(([candidateKey, candidatePublications]) => {
     const publication = candidatePublications.filter((item) => !item.workspaceId || item.workspaceId === workspaceId).sort((a, b) => String(a.publishedAt).localeCompare(String(b.publishedAt))).at(-1);
     if (!publication) return [];
     const candidate = candidateByKey.get(candidateKey);
     const insight = insightById.get(candidateKey);
     if (!candidate || !insight) return [];
+    const insightRecordIds = new Set((candidate.evidence ?? []).map((item) => item.recordId));
+    if (!([...insightRecordIds].some((recordId) => matched.has(recordId)))) return [];
     const currentPublication = candidate.status === "published" && publication.evidenceDigest === candidate.evidenceDigest;
     return [{
       insightId: insight.id,
@@ -69,7 +72,7 @@ const briefings = questions.questions.filter((question) => question.state === "a
     sourceDigest: record.sourceDigest,
     ...(record.researchReview ? { researchReview: record.researchReview } : {})
   }));
-  const insightProvenance = insightProvenanceForWorkspace(question.workspaceId);
+  const insightProvenance = insightProvenanceForQuestion(question.workspaceId, evaluation?.matchedRecordIds);
   const briefingDigestInput = insightProvenance.length ? { evidence: evidence.map((item) => [item.recordId, item.sourceDigest]), insights: insightProvenance.map((item) => [item.candidateKey, item.publicationId, item.publicationEvidenceDigest, item.currentEvidenceDigest, item.state]) } : evidence.map((item) => [item.recordId, item.sourceDigest]);
   const briefingEvidenceDigest = createHash("sha256").update(JSON.stringify(briefingDigestInput)).digest("hex");
   const publication = publicationByBriefing.get(`briefing-${question.id}`);

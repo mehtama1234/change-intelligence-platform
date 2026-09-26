@@ -71,6 +71,10 @@ packet and atlas generation consume that ledger when it is available.
     count of customer deliveries held by that source. It contains operational
     metadata only; it does not copy customer questions, review notes, or
     briefing content into the operator view.
+20. **Question-to-insight relevance gate** — links a published insight to a
+    customer briefing only when at least one of the insight's source records is
+    among the records retrieved for that question. Publication alone does not
+    make an insight relevant to every customer.
 
 ## Background jobs
 
