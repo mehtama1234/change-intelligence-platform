@@ -63,6 +63,9 @@ packet and atlas generation consume that ledger when it is available.
     try so operators can see reliability by recipient and destination.
 17. **Pilot readiness history** — records the commercial decision aid after each
     refresh, preserving the evidence that led to each recommendation.
+18. **Source availability monitor** — checks source reachability on every cycle,
+    records source-level outage and recovery transitions, and keeps those
+    checks separate from full ingestion cadence.
 
 ## Background jobs
 
@@ -100,6 +103,11 @@ The system should create review work, not silently publish uncertain claims.
 The scheduler status is operational evidence, not proof that a refresh produced
 good research. Operators must still inspect the refresh receipt, failed steps,
 source freshness, and review queues before treating a delivery as ready.
+
+An unavailable source creates a source-specific workspace alert. A customer
+delivery is held while that alert is open; a later availability check records
+the recovery and allows the next delivery to be prepared. The recovery closes
+the operational alert but does not erase the outage history.
 
 ## Storage
 

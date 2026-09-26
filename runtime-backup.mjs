@@ -33,6 +33,7 @@ const runtimeFiles = [
   "refresh-scope-state.json",
   "latest-source-availability.json",
   "source-availability-history.json",
+  "source-availability-events.json",
   "refresh-history.json",
   "insight-evaluation.json"
 ];

@@ -1,0 +1,27 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const exec = promisify(execFile);
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
+const runtimeDir = `/tmp/change-intelligence-availability-delivery-${Date.now()}`;
+await mkdir(runtimeDir, { recursive: true });
+const write = async (name, value) => writeFile(resolve(runtimeDir, name), `${JSON.stringify(value, null, 2)}\n`);
+await write("workspace-pilot-profiles.json", { profiles: [{ id: "profile-demo", workspaceId: "demo-research", cadence: "monthly", decisionQuestion: "Which source-backed changes matter?", nextReviewAt: "2026-10-31", successMeasures: ["Useful evidence"] }] });
+await write("workspace-alerts.json", { alerts: [{ id: "availability-alert", workspaceId: "demo-research", watchlistName: "AI controls", sourceId: "trend-hunting-ai-control", kind: "source_availability", state: "open", reason: "Source is missing", severity: "high", createdAt: new Date().toISOString() }] });
+await write("latest-source-availability.json", { schemaVersion: "source-availability-receipt-v1", checkedAt: new Date().toISOString(), counts: { available: 19, unavailable: 1 }, sources: [{ id: "trend-hunting-ai-control", status: "unavailable" }] });
+await write("workspace-briefings.json", { briefings: [] });
+await write("decision-outcomes.json", { outcomes: [] });
+await write("audit-log.json", { entries: [] });
+await write("latest-refresh.json", { status: "complete", runId: "availability-refresh" });
+await exec(process.execPath, [resolve(root, "scripts/build-pilot-deliveries.mjs")], { cwd: root, env: { ...process.env, RUNTIME_DATA_DIR: runtimeDir, REFRESH_RUN_ID: "availability-refresh" } });
+let ledger = JSON.parse(await readFile(resolve(runtimeDir, "workspace-pilot-deliveries.json"), "utf8"));
+if (ledger.deliveries[0]?.status !== "held_for_review" || ledger.deliveries[0]?.snapshot.openAvailabilityAlerts !== 1 || !JSON.parse(await readFile(resolve(runtimeDir, "workspace-delivery-notifications.json"), "utf8")).notifications[0]?.unavailableSourceIds?.includes("trend-hunting-ai-control")) throw new Error("Unavailable source did not hold customer delivery and notification.");
+await write("workspace-alerts.json", { alerts: [{ id: "availability-alert", workspaceId: "demo-research", watchlistName: "AI controls", sourceId: "trend-hunting-ai-control", kind: "source_availability", state: "resolved", resolutionDisposition: "source_recovered", reason: "Source returned", severity: "high", createdAt: new Date().toISOString() }] });
+await write("latest-source-availability.json", { schemaVersion: "source-availability-receipt-v1", checkedAt: new Date().toISOString(), counts: { available: 20, unavailable: 0 }, sources: [{ id: "trend-hunting-ai-control", status: "available" }] });
+await exec(process.execPath, [resolve(root, "scripts/build-pilot-deliveries.mjs")], { cwd: root, env: { ...process.env, RUNTIME_DATA_DIR: runtimeDir, REFRESH_RUN_ID: "availability-recovered" } });
+ledger = JSON.parse(await readFile(resolve(runtimeDir, "workspace-pilot-deliveries.json"), "utf8"));
+if (ledger.deliveries.at(-1)?.status !== "prepared") throw new Error("Recovered source did not allow a new prepared customer delivery.");
+console.log("Availability delivery test passed: an outage held delivery, and a recovered source allowed the next delivery.");

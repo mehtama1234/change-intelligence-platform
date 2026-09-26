@@ -8,6 +8,7 @@ const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const workspaceDir = resolve(root, process.env.WORKSPACE_CONFIG_DIR ?? "data/fixtures/workspaces");
 const runtimeDir = process.env.RUNTIME_DATA_DIR ?? "data/processed/runs/ai-work-control";
 const scanPath = resolve(root, process.env.SOURCE_SCAN_PATH ?? `${runtimeDir}/latest-source-scan.json`);
+const availabilityPath = resolve(root, process.env.SOURCE_AVAILABILITY_PATH ?? `${runtimeDir}/latest-source-availability.json`);
 const outputDir = resolve(root, process.env.ALERT_OUTPUT_DIR ?? runtimeDir);
 const outputPath = resolve(outputDir, process.env.ALERT_OUTPUT_NAME ?? "workspace-alerts.json");
 const watchlistsPath = resolve(root, process.env.WATCHLISTS_PATH ?? `${runtimeDir}/workspace-watchlists.json`);
@@ -16,6 +17,7 @@ const atlasPath = resolve(root, process.env.ATLAS_PATH ?? "data/processed/ai-wor
 const packetPath = resolve(root, process.env.PACKET_PATH ?? "data/processed/ai-work-control.packet.json");
 const staticPacketPath = resolve(root, "data/processed/ai-work-control.packet.json");
 const scan = JSON.parse(await readFile(scanPath, "utf8"));
+const availability = existsSync(availabilityPath) ? JSON.parse(await readFile(availabilityPath, "utf8")) : { sources: [] };
 const files = (await readdir(workspaceDir)).filter((file) => file.endsWith(".json"));
 const workspaces = await Promise.all(files.map(async (file) => JSON.parse(await readFile(resolve(workspaceDir, file), "utf8"))));
 const watchlistLedger = existsSync(watchlistsPath) ? JSON.parse(await readFile(watchlistsPath, "utf8")) : { watchlists: [] };
@@ -27,6 +29,24 @@ for (const watchlist of watchlistLedger.watchlists ?? []) watchlistsByWorkspace.
 const existing = existsSync(outputPath) ? JSON.parse(await readFile(outputPath, "utf8")) : { schemaVersion: "workspace-alert-ledger-v1", alerts: [] };
 const existingById = new Map(existing.alerts.map((alert) => [alert.id, alert]));
 let alertsSeenThisRun = 0;
+
+for (const workspace of workspaces) {
+  for (const watchlist of watchlistsByWorkspace.get(workspace.id) ?? workspace.watchlists ?? []) {
+    for (const source of availability.sources ?? []) {
+      if (!watchlist.sourceIds.includes(source.id) && !watchlist.repositoryIds.includes(source.repository)) continue;
+      const alertId = `availability-alert-${createHash("sha256").update(`${workspace.id}:${watchlist.id}:${source.id}`).digest("hex").slice(0, 20)}`;
+      const prior = existingById.get(alertId);
+      if (source.status === "available") {
+        if (prior && prior.state !== "resolved") existingById.set(alertId, { ...prior, state: "resolved", resolvedAt: availability.checkedAt, resolutionDisposition: "source_recovered", resolutionNote: "Source became available again during an availability check.", lastSeenAt: availability.checkedAt });
+        continue;
+      }
+      const status = source.reason === "missing" ? "missing" : "unavailable";
+      if (!watchlist.alertOn.includes("missing") && !watchlist.alertOn.includes("changed")) continue;
+      existingById.set(alertId, { id: alertId, workspaceId: workspace.id, watchlistId: watchlist.id, watchlistName: watchlist.name, sourceId: source.id, repository: source.repository, sourcePath: source.sourcePath, state: prior?.state === "resolved" ? "open" : prior?.state ?? "open", severity: "high", kind: "source_availability", reason: `Source is ${status}; availability was checked at ${availability.checkedAt}.`, scanRunId: availability.runId, availabilityStatus: status, createdAt: prior?.createdAt ?? availability.checkedAt, lastSeenAt: availability.checkedAt });
+      alertsSeenThisRun += 1;
+    }
+  }
+}
 
 for (const workspace of workspaces) {
   for (const watchlist of watchlistsByWorkspace.get(workspace.id) ?? workspace.watchlists ?? []) {

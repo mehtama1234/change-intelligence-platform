@@ -1,8 +1,8 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, readFile, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const exec = promisify(execFile);
@@ -12,4 +12,18 @@ const sourceRoot = await mkdtemp(resolve(tmpdir(), "change-intelligence-empty-so
 await exec(process.execPath, [resolve(root, "scripts/check-source-availability.mjs")], { cwd: root, env: { ...process.env, RUNTIME_DATA_DIR: runtimeDir, RESEARCH_ROOT: sourceRoot } });
 const receipt = JSON.parse(await readFile(resolve(runtimeDir, "latest-source-availability.json"), "utf8"));
 if (receipt.schemaVersion !== "source-availability-receipt-v1" || receipt.counts.unavailable !== receipt.sources.length || receipt.counts.unavailable !== 20 || receipt.repositories.some((repository) => repository.status !== "unavailable")) throw new Error("Source availability did not report unavailable repositories independently of the refresh scan.");
-console.log("Source availability test passed: all missing source files were recorded as unavailable with repository-level summaries.");
+const source = JSON.parse(await readFile(resolve(root, "data/source-maps/ai-work-control.sources.json"), "utf8")).sources[0];
+await (await import("node:fs/promises")).writeFile(resolve(runtimeDir, "latest-source-scan.json"), `${JSON.stringify({ sources: [], reviewQueue: [], counts: {} }, null, 2)}\n`);
+await exec(process.execPath, [resolve(root, "scripts/evaluate-watchlists.mjs")], { cwd: root, env: { ...process.env, RUNTIME_DATA_DIR: runtimeDir, RESEARCH_ROOT: sourceRoot, ALERT_OUTPUT_DIR: runtimeDir } });
+const outageAlerts = JSON.parse(await readFile(resolve(runtimeDir, "workspace-alerts.json"), "utf8"));
+if (!outageAlerts.alerts.some((alert) => alert.kind === "source_availability" && alert.state === "open" && alert.sourceId === source.id)) throw new Error("Source outage did not produce a source-specific workspace alert.");
+const sourcePath = resolve(sourceRoot, source.sourceRepository, source.sourcePath);
+await mkdir(dirname(sourcePath), { recursive: true });
+await writeFile(sourcePath, "source returned\n");
+await exec(process.execPath, [resolve(root, "scripts/check-source-availability.mjs")], { cwd: root, env: { ...process.env, RUNTIME_DATA_DIR: runtimeDir, RESEARCH_ROOT: sourceRoot } });
+const recovered = JSON.parse(await readFile(resolve(runtimeDir, "latest-source-availability.json"), "utf8"));
+const events = JSON.parse(await readFile(resolve(runtimeDir, "source-availability-events.json"), "utf8"));
+await exec(process.execPath, [resolve(root, "scripts/evaluate-watchlists.mjs")], { cwd: root, env: { ...process.env, RUNTIME_DATA_DIR: runtimeDir, RESEARCH_ROOT: sourceRoot, ALERT_OUTPUT_DIR: runtimeDir } });
+const recoveredAlerts = JSON.parse(await readFile(resolve(runtimeDir, "workspace-alerts.json"), "utf8"));
+if (recovered.sources.find((item) => item.id === source.id)?.status !== "available" || !recovered.transitions.some((event) => event.sourceId === source.id && event.fromStatus === "unavailable" && event.toStatus === "available") || !events.events.some((event) => event.sourceId === source.id && event.toStatus === "available") || !recoveredAlerts.alerts.some((alert) => alert.kind === "source_availability" && alert.sourceId === source.id && alert.state === "resolved" && alert.resolutionDisposition === "source_recovered")) throw new Error("Source availability did not record a source recovery transition and close the source-specific alert.");
+console.log("Source availability test passed: outages were recorded and a returned source produced a durable recovery event.");
