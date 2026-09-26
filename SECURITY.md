@@ -30,7 +30,11 @@ operator response returns the observed value and threshold beside each warning.
 Operator warning acknowledgments and resolutions require the same explicit
 operator allowlist, an idempotency key, a note, and an audit receipt. The
 warning record also preserves the assigned operator, escalation state, and
-response time.
+response time. Escalation creates a private notification-outbox record addressed
+to that operator; dispatching it requires an operator token, an idempotency key,
+and a note, and produces its own audit receipt. The default acknowledgment
+deadline is four hours and is exposed as a timestamp so an operator can judge
+whether the warning is overdue.
 
 Write requests must then send `Authorization: Bearer token-value`. The server
 ignores any actor ID in the request body and uses the server-side token map

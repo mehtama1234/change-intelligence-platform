@@ -27,6 +27,7 @@ const pilotProfilesPath = resolve(runtimeDir, "workspace-pilot-profiles.json");
 const pilotDeliveriesPath = resolve(runtimeDir, "workspace-pilot-deliveries.json");
 const pilotDecisionsPath = resolve(runtimeDir, "workspace-pilot-decisions.json");
 const operatorWarningsPath = resolve(runtimeDir, "operator-warning-events.json");
+const operatorNotificationsPath = resolve(runtimeDir, "operator-notification-outbox.json");
 const auditPath = resolve(runtimeDir, "audit-log.json");
 const operationsPath = resolve(runtimeDir, "idempotency-operations.json");
 const sourceScanPath = resolve(runtimeDir, "latest-source-scan.json");
@@ -45,6 +46,7 @@ const maxSourceAgeMs = Number(process.env.MAX_SOURCE_AGE_MS ?? 14 * 24 * 60 * 60
 const maxFalseAlertRate = Number(process.env.OPERATOR_MAX_FALSE_ALERT_RATE ?? 0.4);
 const maxFailedRefreshes = Number(process.env.OPERATOR_MAX_FAILED_REFRESHES ?? 0);
 const maxDelayedDeliveries = Number(process.env.OPERATOR_MAX_DELAYED_DELIVERIES ?? 0);
+const operatorWarningAckSlaMs = Number(process.env.OPERATOR_WARNING_ACK_SLA_MS ?? 4 * 60 * 60 * 1000);
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 await mkdir(runtimeDir, { recursive: true });
 const store = createRuntimeStore(runtimeDir);
@@ -63,6 +65,7 @@ await importRuntimeLedgers(store, {
   pilotDeliveries: pilotDeliveriesPath,
   pilotDecisions: pilotDecisionsPath,
   operatorWarnings: operatorWarningsPath,
+  operatorNotifications: operatorNotificationsPath,
   workspaceDir,
   sourceScan: sourceScanPath,
   evidenceLedger: evidenceLedgerPath,
@@ -268,7 +271,7 @@ function buildPilotLearningReport({ workspaceId, profile, deliveries, decisions 
   };
 }
 
-function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries }) {
+function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs }) {
   const summaries = workspaces.map((workspace) => {
     const workspaceDeliveries = deliveries.filter((delivery) => delivery.workspaceId === workspace.id);
     const reviewed = workspaceDeliveries.filter((delivery) => delivery.review);
@@ -304,14 +307,14 @@ function buildOperatorPilotOverview({ workspaces, profiles, deliveries, decision
     return { runId: run.runId, startedAt: run.startedAt ?? null, endedAt: run.endedAt ?? null, status: run.status, failedSteps: (run.steps ?? []).filter((step) => step.status === "failed").map((step) => step.name), changedSources: scan?.counts?.changed ?? null, missingSources: scan?.counts?.missing ?? null, oldestSourceAgeMs: sourceAgesAtRun.length ? Math.max(...sourceAgesAtRun) : null, alertsSeen: runAlerts.length, usefulAlerts: runAlerts.filter((alert) => alert.resolutionDisposition === "useful").length, falseAlerts: runAlerts.filter((alert) => alert.resolutionDisposition === "false_positive").length, correctionAlerts: runAlerts.filter((alert) => alert.resolutionDisposition === "needs_correction").length, deliveriesPrepared: runDeliveries.length, deliveriesReviewed: runDeliveries.filter((delivery) => delivery.review).length };
   });
   const warningById = new Map(warningEvents.map((event) => [event.warningId, event]));
-  const warningLifecycle = warnings.map((warning) => ({ ...warning, lifecycle: warningById.get(warning.id)?.state ?? "open", ownerId: warningById.get(warning.id)?.ownerId ?? null, escalationState: warningById.get(warning.id)?.escalationState ?? "normal", lastActionAt: warningById.get(warning.id)?.actedAt ?? null, responseTimeMs: warningById.get(warning.id)?.responseTimeMs ?? null, actionNote: warningById.get(warning.id)?.note ?? null }));
+  const warningLifecycle = warnings.map((warning) => ({ ...warning, ackDeadlineAt: Number.isFinite(Date.parse(warning.observedAt)) ? new Date(Date.parse(warning.observedAt) + warningAckSlaMs).toISOString() : null, lifecycle: warningById.get(warning.id)?.state ?? "open", ownerId: warningById.get(warning.id)?.ownerId ?? null, escalationState: warningById.get(warning.id)?.escalationState ?? "normal", lastActionAt: warningById.get(warning.id)?.actedAt ?? null, responseTimeMs: warningById.get(warning.id)?.responseTimeMs ?? null, actionNote: warningById.get(warning.id)?.note ?? null }));
   return {
     schemaVersion: "operator-pilot-overview-v1",
     generatedAt: new Date().toISOString(),
     scope: { workspaceCount: workspaces.length, configuredPilots: profiles.length, deliveries: deliveries.length, reviewedDeliveries: reviewed.length },
     aggregate: { usefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "useful").length, notUsefulDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "not_useful").length, unclearDeliveries: reviewed.filter((delivery) => delivery.review.usefulness === "unclear").length, decisionChanges: reviewed.filter((delivery) => ["changed_decision", "informed_decision"].includes(delivery.review.decisionImpact)).length, pilotCheckpoints: decisions.length, checkpointCounts: Object.fromEntries(["improve", "continue", "expand", "stop"].map((decision) => [decision, decisions.filter((item) => item.decision === decision).length])), auditedPilotActions: auditEntries.filter((entry) => ["configure_pilot", "review_pilot_delivery", "decide_pilot"].includes(entry.action)).length, openAlerts: alerts.filter((alert) => alert.state === "open").length, falseAlerts: alerts.filter((alert) => alert.resolutionDisposition === "false_positive").length, alertCorrections: alerts.filter((alert) => alert.resolutionDisposition === "needs_correction").length },
     operations: { latestRefreshStatus: refreshHistory.at(-1)?.status ?? "not_run", failedRefreshRuns: failedRuns.length, lastRefreshAt: refreshHistory.at(-1)?.endedAt ?? null, sourceCount: sourceScan.sources?.length ?? 0, staleSources, oldestSourceAgeMs: sourceAges.length ? Math.max(...sourceAges.map((source) => source.ageMs)) : null, delayedDeliveries, falseAlertRate },
-    thresholds: { maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries },
+    thresholds: { maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs },
     warnings: warningLifecycle,
     trend,
     workspaces: summaries,
@@ -739,8 +742,34 @@ const server = createServer(async (request, response) => {
       const responseTimeMs = observedAt && Number.isFinite(Date.parse(observedAt)) ? Math.max(0, Date.parse(now) - Date.parse(observedAt)) : null;
       const event = { id: `operator-warning-${warningId}`, warningId, state, note, ownerId, escalationState, observedAt, responseTimeMs, actedBy: operator.actorId, actedAt: now };
       store.commitRecord({ kind: "operator_warning", record: event, audit: { requestId, action: "change_operator_warning", targetId: warningId, workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: state, occurredAt: now }, operation: { key: idempotencyKey, action: "change_operator_warning", status: 200, body: event, completedAt: now } });
+      if (escalationState === "escalated") {
+        const notification = { id: `operator-notification-${warningId}`, warningId, channel: "operator-outbox", recipient: ownerId, status: "pending", subject: `Escalated operator warning: ${warningId}`, body: note, createdBy: operator.actorId, createdAt: now, dispatchedAt: null, dispatchNote: null };
+        store.syncRecords("operator_notification", [notification]);
+        store.appendAudit({ requestId, action: "queue_operator_notification", targetId: notification.id, workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: "pending", occurredAt: now });
+        await writeFile(operatorNotificationsPath, `${JSON.stringify(store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications"), null, 2)}\n`);
+      }
       await writeFile(operatorWarningsPath, `${JSON.stringify(store.recordsLedger("operator_warning", "operator-warning-event-ledger-v1", "events"), null, 2)}\n`);
       return json(response, 200, event);
+    }
+    if (request.method === "POST" && url.pathname.startsWith("/api/operator/notifications/") && url.pathname.endsWith("/dispatch")) {
+      const notificationId = decodeURIComponent(url.pathname.slice("/api/operator/notifications/".length, -"/dispatch".length));
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      const body = await requestBody(request);
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (!idempotencyKey) return json(response, 400, { error: "Idempotency-Key is required for operator writes." });
+      const prior = await replayOperation(idempotencyKey);
+      if (prior) return json(response, prior.status, prior.body);
+      const priorNotification = store.findRecord("operator_notification", notificationId);
+      if (!priorNotification) return json(response, 404, { error: "Operator notification not found." });
+      if (priorNotification.status !== "pending") return json(response, 409, { error: "Only pending notifications can be dispatched." });
+      const note = String(body.note ?? "").trim().slice(0, 2000);
+      if (!note) return json(response, 400, { error: "A dispatch note is required." });
+      const now = new Date().toISOString();
+      const notification = { ...priorNotification, status: "dispatched", dispatchedAt: now, dispatchedBy: operator.actorId, dispatchNote: note };
+      store.commitRecord({ kind: "operator_notification", record: notification, audit: { requestId, action: "dispatch_operator_notification", targetId: notification.id, workspaceId: null, actorId: operator.actorId, actorRole: "operator", result: "dispatched", occurredAt: now }, operation: { key: idempotencyKey, action: "dispatch_operator_notification", status: 200, body: notification, completedAt: now } });
+      await writeFile(operatorNotificationsPath, `${JSON.stringify(store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications"), null, 2)}\n`);
+      return json(response, 200, notification);
     }
     if (request.method === "GET" && url.pathname.startsWith("/api/briefings/") && url.pathname.endsWith("/export")) {
       const briefingId = decodeURIComponent(url.pathname.slice("/api/briefings/".length, -"/export".length));
@@ -983,6 +1012,11 @@ const server = createServer(async (request, response) => {
       const decisions = store.recordsLedger("pilot_decision", "workspace-pilot-decision-ledger-v1", "decisions").decisions.filter((decision) => !access.workspaceIds || access.workspaceIds.includes(decision.workspaceId));
       return json(response, 200, buildPilotLearningReport({ workspaceId: access.workspaceId, profile, deliveries: visible, decisions }));
     }
+    if (url.pathname === "/api/operator/notifications") {
+      const operator = operatorAccess(request);
+      if (operator.error) return json(response, operator.error.status, operator.error.body);
+      return json(response, 200, { schemaVersion: "operator-notification-outbox-v1", notifications: store.recordsLedger("operator_notification", "operator-notification-outbox-v1", "notifications").notifications.map(({ body, ...notification }) => notification) });
+    }
     if (url.pathname === "/api/operator/pilot-overview") {
       const operator = operatorAccess(request);
       if (operator.error) return json(response, operator.error.status, operator.error.body);
@@ -999,7 +1033,7 @@ const server = createServer(async (request, response) => {
       const sourceScan = await readJson(sourceScanPath, { sources: [] });
       const sourceScanHistory = await readJson(sourceScanHistoryPath, { runs: [] });
       const warningEvents = store.recordsLedger("operator_warning", "operator-warning-event-ledger-v1", "events").events;
-      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries }));
+      return json(response, 200, buildOperatorPilotOverview({ workspaces, profiles, deliveries, decisions, auditEntries: store.auditLedger().entries, refreshHistory, sourceScan, sourceScanHistory, alerts, warningEvents, maxSourceAgeMs, maxFalseAlertRate, maxFailedRefreshes, maxDelayedDeliveries, warningAckSlaMs: operatorWarningAckSlaMs }));
     }
     if (url.pathname === "/api/watchlists") {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

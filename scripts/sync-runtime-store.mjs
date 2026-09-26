@@ -19,6 +19,7 @@ try {
     pilotDeliveries: resolve(runtimeDir, "workspace-pilot-deliveries.json"),
     pilotDecisions: resolve(runtimeDir, "workspace-pilot-decisions.json"),
     operatorWarnings: resolve(runtimeDir, "operator-warning-events.json"),
+    operatorNotifications: resolve(runtimeDir, "operator-notification-outbox.json"),
     workspaceDir: resolve(root, "data/fixtures/workspaces"),
     sourceScan: resolve(runtimeDir, "latest-source-scan.json"),
     evidenceLedger: resolve(runtimeDir, "versioned-evidence-ledger.json"),

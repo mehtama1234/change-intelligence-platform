@@ -63,7 +63,13 @@ try {
   if (warningAction.status !== 200) throw new Error(`Operator warning action failed: ${warningAction.status}`);
   const acknowledgedOverview = await (await fetch(`${base}/api/operator/pilot-overview`, { headers: { Authorization: "Bearer operator-token" } })).json();
   const acknowledgedWarning = acknowledgedOverview.warnings.find((item) => item.id === warning.id);
-  if (acknowledgedWarning?.lifecycle !== "acknowledged" || acknowledgedWarning.ownerId !== "ops-owner" || acknowledgedWarning.escalationState !== "escalated" || !Number.isFinite(acknowledgedWarning.responseTimeMs)) throw new Error("Operator warning state, ownership, escalation, or response time did not persist in the overview.");
+  if (acknowledgedWarning?.lifecycle !== "acknowledged" || acknowledgedWarning.ownerId !== "ops-owner" || acknowledgedWarning.escalationState !== "escalated" || !Number.isFinite(acknowledgedWarning.responseTimeMs) || !acknowledgedWarning.ackDeadlineAt) throw new Error("Operator warning state, ownership, escalation, deadline, or response time did not persist in the overview.");
+  const notificationResponse = await fetch(`${base}/api/operator/notifications`, { headers: { Authorization: "Bearer operator-token" } });
+  const notificationBody = await notificationResponse.json();
+  const notification = notificationBody.notifications?.find((item) => item.warningId === warning.id);
+  if (notificationResponse.status !== 200 || notificationBody.schemaVersion !== "operator-notification-outbox-v1" || notification?.status !== "pending" || notification.recipient !== "ops-owner") throw new Error("Escalation did not create a private operator notification outbox item.");
+  const dispatch = await fetch(`${base}/api/operator/notifications/${encodeURIComponent(notification.id)}/dispatch`, { method: "POST", headers: { Authorization: "Bearer operator-token", "Idempotency-Key": "operator-notification-dispatch", "content-type": "application/json" }, body: JSON.stringify({ note: "Dispatched to the assigned operator queue." }) });
+  if (dispatch.status !== 200 || (await dispatch.json()).status !== "dispatched") throw new Error("Operator notification dispatch did not persist.");
   const outsiderDecision = await fetch(`${base}/api/pilot-report/decision`, { method: "POST", headers: { Authorization: "Bearer outsider-token", "Idempotency-Key": "outsider-pilot-decision", "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "demo-research", decision: "continue", note: "No", nextStep: "No" }) });
   if (outsiderDecision.status !== 403) throw new Error(`Expected non-member pilot decision write to return 403, received ${outsiderDecision.status}`);
   const memberUsage = await fetch(`${base}/api/usage?workspace=demo-research`, { headers: authHeaders });

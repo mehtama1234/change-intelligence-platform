@@ -16,6 +16,8 @@ const runtimeFiles = [
   "versioned-evidence-ledger.json",
   "review-decisions.json",
   "review-events.json",
+  "operator-warning-events.json",
+  "operator-notification-outbox.json",
   "refresh-history.json",
   "insight-evaluation.json"
 ];
