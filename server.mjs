@@ -262,12 +262,13 @@ function buildWorkspaceUpdate({ workspaceId, workspaceName, refresh, readiness, 
   };
 }
 
-function buildChangeIntelligenceFeed({ packet, scan, briefings = [], candidates = [], watchlists = [], workspaceIds = null }) {
+function buildChangeIntelligenceFeed({ packet, scan, briefings = [], candidates = [], watchlists = [], workspaceId = null, workspaceIds = null }) {
   const recordsById = new Map((packet.records ?? []).map((record) => [record.id, record]));
   const recordsByPath = new Map((packet.records ?? []).map((record) => [record.sourceRef, record]));
   const candidatesByKey = new Map(candidates.map((candidate) => [candidate.candidateKey, candidate]));
-  const visibleBriefings = briefings.filter((briefing) => !workspaceIds || workspaceIds.includes(briefing.workspaceId));
-  const visibleWatchlists = watchlists.filter((watchlist) => !workspaceIds || workspaceIds.includes(watchlist.workspaceId));
+  const visibleWorkspace = (item) => workspaceIds ? workspaceIds.includes(item.workspaceId) : (!workspaceId || item.workspaceId === workspaceId);
+  const visibleBriefings = briefings.filter(visibleWorkspace);
+  const visibleWatchlists = watchlists.filter(visibleWorkspace);
   const scopedSourceIds = new Set(visibleWatchlists.flatMap((watchlist) => watchlist.sourceIds ?? []));
   const scopedRepositoryIds = new Set(visibleWatchlists.flatMap((watchlist) => watchlist.repositoryIds ?? []));
   const hasWatchlistScope = visibleWatchlists.length > 0;
@@ -1426,7 +1427,7 @@ const server = createServer(async (request, response) => {
         readJson(insightCandidatesPath, { candidates: [] }),
         readJson(watchlistsPath, { watchlists: [] })
       ]);
-      return json(response, 200, buildChangeIntelligenceFeed({ packet, scan, briefings: briefingLedger.briefings ?? [], candidates: candidateLedger.candidates ?? [], watchlists: watchlistLedger.watchlists ?? [], workspaceIds: access.workspaceIds }));
+      return json(response, 200, buildChangeIntelligenceFeed({ packet, scan, briefings: briefingLedger.briefings ?? [], candidates: candidateLedger.candidates ?? [], watchlists: watchlistLedger.watchlists ?? [], workspaceId: access.workspaceId, workspaceIds: access.workspaceIds }));
     }
     if (request.method === "GET" && url.pathname.startsWith("/api/change-intelligence/") && url.pathname.endsWith("/diff")) {
       const access = await workspaceAccess(request, url.searchParams.get("workspace"));

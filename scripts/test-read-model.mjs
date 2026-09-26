@@ -18,7 +18,7 @@ await mkdir(resolve(runtimeDir, "raw/source-captures/test-source"), { recursive:
 await writeFile(resolve(runtimeDir, "raw/source-captures/test-source/old.source"), "same line\nremoved line\n");
 await writeFile(resolve(runtimeDir, "raw/source-captures/test-source/new.source"), "same line\nadded line\n");
 await writeFile(resolve(runtimeDir, "source-capture-ledger.json"), `${JSON.stringify({ schemaVersion: "source-capture-ledger-v1", captures: [{ id: changedSourceId, sha256: "old-source-digest-0", capturePath: "raw/source-captures/test-source/old.source" }, { id: changedSourceId, sha256: "new-source-digest-0", capturePath: "raw/source-captures/test-source/new.source" }] }, null, 2)}\n`);
-await writeFile(resolve(runtimeDir, "workspace-watchlists.json"), `${JSON.stringify({ schemaVersion: "workspace-watchlist-ledger-v1", watchlists: [{ id: "read-model-watchlist", workspaceId: "demo-research", name: "First source only", sourceIds: [changedSourceId], repositoryIds: [], alertOn: ["changed"] }] }, null, 2)}\n`);
+await writeFile(resolve(runtimeDir, "workspace-watchlists.json"), `${JSON.stringify({ schemaVersion: "workspace-watchlist-ledger-v1", watchlists: [{ id: "read-model-watchlist", workspaceId: "demo-research", name: "First source only", sourceIds: [changedSourceId], repositoryIds: [], alertOn: ["changed"] }, { id: "other-workspace-watchlist", workspaceId: "other-workspace", name: "Other source only", sourceIds: [sourceMap.sources[1].id], repositoryIds: [], alertOn: ["changed"] }] }, null, 2)}\n`);
 const child = spawn(process.execPath, [resolve(root, "server.mjs")], {
   cwd: root,
   env: { ...process.env, PORT: String(port), RUNTIME_DATA_DIR: runtimeDir },
