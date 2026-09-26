@@ -10,12 +10,14 @@ const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const runDir = resolve(root, "data/processed/runs/ai-work-control");
 const lockPath = resolve(runDir, "refresh.lock");
 const receiptPath = resolve(runDir, "latest-refresh.json");
+const historyPath = resolve(runDir, "refresh-history.json");
 const runId = `refresh-${new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 14)}`;
 const steps = [];
 let lock;
 
 async function runStep(name, script, optional = false) {
   const startedAt = new Date().toISOString();
+  const startedEpoch = Date.now();
   const maxAttempts = Math.max(1, Number(process.env.REFRESH_RETRIES ?? 2) + 1);
   let lastError;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
@@ -25,7 +27,7 @@ async function runStep(name, script, optional = false) {
         env: process.env,
         maxBuffer: 10 * 1024 * 1024
       });
-      steps.push({ name, status: "complete", attempts: attempt, startedAt, endedAt: new Date().toISOString(), output: result.stdout.trim().slice(-2000) });
+      steps.push({ name, status: "complete", attempts: attempt, startedAt, endedAt: new Date().toISOString(), durationMs: Date.now() - startedEpoch, output: result.stdout.trim().slice(-2000) });
       return;
     } catch (error) {
       lastError = error;
@@ -33,7 +35,7 @@ async function runStep(name, script, optional = false) {
     }
   }
   const status = optional ? "warning" : "failed";
-  steps.push({ name, status, attempts: maxAttempts, startedAt, endedAt: new Date().toISOString(), exitCode: lastError?.code, output: `${lastError?.stdout ?? ""}${lastError?.stderr ?? ""}`.trim().slice(-2000) });
+  steps.push({ name, status, attempts: maxAttempts, startedAt, endedAt: new Date().toISOString(), durationMs: Date.now() - startedEpoch, exitCode: lastError?.code, output: `${lastError?.stdout ?? ""}${lastError?.stderr ?? ""}`.trim().slice(-2000) });
 }
 
 try {
@@ -66,6 +68,10 @@ try {
     steps
   };
   await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
+  const history = existsSync(historyPath) ? JSON.parse(await readFile(historyPath, "utf8")) : { schemaVersion: "refresh-history-v1", runs: [] };
+  history.runs = [...(history.runs ?? []), { runId: receipt.runId, startedAt: receipt.startedAt, endedAt: receipt.endedAt, status: receipt.status, steps: receipt.steps.map(({ name, status, attempts, durationMs }) => ({ name, status, attempts, durationMs })) }].slice(-100);
+  history.updatedAt = receipt.endedAt;
+  await writeFile(historyPath, `${JSON.stringify(history, null, 2)}\n`);
   console.log(JSON.stringify({ runId, status: receipt.status, steps: steps.map(({ name, status }) => ({ name, status })) }, null, 2));
   if (failed.length) process.exitCode = 1;
 } catch (error) {

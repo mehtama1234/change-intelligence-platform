@@ -12,6 +12,7 @@ const packetPath = resolve(root, "data/processed/ai-work-control.packet.json");
 const reviewPath = resolve(runtimeDir, "latest-review-work.json");
 const historyPath = resolve(runtimeDir, "versioned-evidence-ledger.json");
 const refreshPath = resolve(runtimeDir, "latest-refresh.json");
+const refreshHistoryPath = resolve(runtimeDir, "refresh-history.json");
 const alertsPath = resolve(runtimeDir, "workspace-alerts.json");
 const questionsPath = resolve(runtimeDir, "workspace-questions.json");
 const questionEvaluationsPath = resolve(runtimeDir, "question-evaluations.json");
@@ -52,6 +53,11 @@ await importRuntimeLedgers(store, {
 const json = (response, status, body) => {
   response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
   response.end(JSON.stringify(body));
+};
+
+const text = (response, status, body, contentType = "text/plain; version=0.0.4; charset=utf-8") => {
+  response.writeHead(status, { "Content-Type": contentType, "Cache-Control": "no-store" });
+  response.end(body);
 };
 
 async function requestBody(request) {
@@ -287,6 +293,28 @@ const server = createServer(async (request, response) => {
     if (url.pathname === "/api/readiness") {
       const report = await readinessReport();
       return json(response, report.status === "ready" ? 200 : 503, report);
+    }
+    if (url.pathname === "/api/operations") {
+      const readiness = await readinessReport();
+      const refresh = await readJson(refreshPath, { status: "not_run", steps: [] });
+      const history = await readJson(refreshHistoryPath, { schemaVersion: "refresh-history-v1", runs: [] });
+      const sourceScan = await readJson(sourceScanPath, { counts: {}, sources: [] });
+      return json(response, 200, { schemaVersion: "operations-read-model-v1", generatedAt: new Date().toISOString(), readiness, refresh, refreshHistory: history.runs ?? [], sourceScan: { counts: sourceScan.counts, sourceCount: sourceScan.sources?.length ?? 0 }, database: store.health() });
+    }
+    if (url.pathname === "/metrics") {
+      const readiness = await readinessReport();
+      const values = [
+        ["change_intelligence_ready", readiness.status === "ready" ? 1 : 0],
+        ["change_intelligence_database_integrity", readiness.checks.database.status === "ok" ? 1 : 0],
+        ["change_intelligence_refresh_ok", readiness.checks.refresh.status === "ok" ? 1 : 0],
+        ["change_intelligence_source_scan_ok", readiness.checks.sourceScan.status === "ok" ? 1 : 0],
+        ["change_intelligence_runtime_sync_ok", readiness.checks.runtimeSync.status === "ok" ? 1 : 0],
+        ["change_intelligence_backup_ok", readiness.checks.backup.status === "ok" ? 1 : 0],
+        ["change_intelligence_sources_missing", readiness.checks.sourceScan.missing ?? -1],
+        ["change_intelligence_refresh_age_seconds", readiness.checks.refresh.ageMs === null ? -1 : Math.round(readiness.checks.refresh.ageMs / 1000)],
+        ["change_intelligence_backup_age_seconds", readiness.checks.backup.ageMs === null ? -1 : Math.round(readiness.checks.backup.ageMs / 1000)]
+      ];
+      return text(response, 200, `${values.map(([name, value]) => `${name} ${value}`).join("\n")}\n`);
     }
     if (url.pathname === "/api/packet") return json(response, 200, await readJson(packetPath, { error: "Packet has not been built." }));
     if (url.pathname.startsWith("/api/evidence/")) {

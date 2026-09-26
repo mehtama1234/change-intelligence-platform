@@ -1,0 +1,7 @@
+.git
+node_modules
+data/processed/runs
+data/backups
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

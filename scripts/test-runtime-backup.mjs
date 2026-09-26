@@ -12,7 +12,7 @@ const runtimeDir = resolve(rootTemp, "runtime");
 const backupDir = resolve(rootTemp, "backup");
 const restoredDir = resolve(rootTemp, "restored");
 await mkdir(runtimeDir, { recursive: true });
-for (const name of ["workspace-questions.json", "audit-log.json", "idempotency-operations.json", "workspace-alerts.json", "briefing-publications.json", "insight-decisions.json", "insight-publications.json", "latest-source-scan.json", "versioned-evidence-ledger.json", "review-decisions.json"]) {
+for (const name of ["workspace-questions.json", "audit-log.json", "idempotency-operations.json", "workspace-alerts.json", "briefing-publications.json", "insight-decisions.json", "insight-publications.json", "latest-source-scan.json", "versioned-evidence-ledger.json", "review-decisions.json", "refresh-history.json"]) {
   if (existsSync(resolve(sourceRuntime, name))) await copyFile(resolve(sourceRuntime, name), resolve(runtimeDir, name));
 }
 const store = createRuntimeStore(runtimeDir);
